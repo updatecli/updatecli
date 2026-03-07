@@ -772,6 +772,234 @@ var (
 			ExpectedUpdateErr:   fmt.Errorf("actions validation error:\n%s", ErrBadConfig),
 			ExpectedValidateErr: fmt.Errorf("actions validation error:\n%s", ErrBadConfig),
 		},
+		// Testing pipes with source function - replace dots with underscores
+		{
+			ID: "10",
+			Config: Config{
+				Spec: Spec{
+					Name: "jenkins - {{ source \"default\" | replace \".\" \"_\" }}",
+					Sources: map[string]source.Config{
+						"default": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Get Version",
+								Kind: "jenkins",
+							},
+						},
+					},
+				},
+			},
+			Context: context{
+				Sources: map[string]mockSourceContext{
+					"default": {
+						Output: "2.289.2",
+						Result: result.Source{
+							Result: result.SUCCESS,
+						},
+					},
+				},
+			},
+			ExpectedConfig: Config{
+				Spec: Spec{
+					Name: "jenkins - 2_289_2",
+					Sources: map[string]source.Config{
+						"default": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Get Version",
+								Kind: "jenkins",
+							},
+						},
+					},
+				},
+			},
+			ExpectedUpdateErr:   nil,
+			ExpectedValidateErr: nil,
+		},
+		// Testing pipes with source function - replace dots and dashes
+		{
+			ID: "10.1",
+			Config: Config{
+				Spec: Spec{
+					Name: "jenkins - {{ source \"default\" | replace \".\" \"_\" | replace \"-\" \"_\" }}",
+					Sources: map[string]source.Config{
+						"default": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Get Version",
+								Kind: "jenkins",
+							},
+						},
+					},
+				},
+			},
+			Context: context{
+				Sources: map[string]mockSourceContext{
+					"default": {
+						Output: "2.289.2-beta",
+						Result: result.Source{
+							Result: result.SUCCESS,
+						},
+					},
+				},
+			},
+			ExpectedConfig: Config{
+				Spec: Spec{
+					Name: "jenkins - 2_289_2_beta",
+					Sources: map[string]source.Config{
+						"default": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Get Version",
+								Kind: "jenkins",
+							},
+						},
+					},
+				},
+			},
+			ExpectedUpdateErr:   nil,
+			ExpectedValidateErr: nil,
+		},
+		// Testing pipes with source function - uppercase transformation
+		{
+			ID: "10.2",
+			Config: Config{
+				Spec: Spec{
+					Name: "jenkins - {{ source \"default\" | upper }}",
+					Sources: map[string]source.Config{
+						"default": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Get Version",
+								Kind: "jenkins",
+							},
+						},
+					},
+				},
+			},
+			Context: context{
+				Sources: map[string]mockSourceContext{
+					"default": {
+						Output: "2.289.2",
+						Result: result.Source{
+							Result: result.SUCCESS,
+						},
+					},
+				},
+			},
+			ExpectedConfig: Config{
+				Spec: Spec{
+					Name: "jenkins - 2.289.2",
+					Sources: map[string]source.Config{
+						"default": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Get Version",
+								Kind: "jenkins",
+							},
+						},
+					},
+				},
+			},
+			ExpectedUpdateErr:   nil,
+			ExpectedValidateErr: nil,
+		},
+		// Testing pipes with source function - lowercase transformation
+		{
+			ID: "10.3",
+			Config: Config{
+				Spec: Spec{
+					Name: "jenkins - {{ source \"default\" | lower }}",
+					Sources: map[string]source.Config{
+						"default": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Get Version",
+								Kind: "jenkins",
+							},
+						},
+					},
+				},
+			},
+			Context: context{
+				Sources: map[string]mockSourceContext{
+					"default": {
+						Output: "V2.289.2",
+						Result: result.Source{
+							Result: result.SUCCESS,
+						},
+					},
+				},
+			},
+			ExpectedConfig: Config{
+				Spec: Spec{
+					Name: "jenkins - v2.289.2",
+					Sources: map[string]source.Config{
+						"default": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Get Version",
+								Kind: "jenkins",
+							},
+						},
+					},
+				},
+			},
+			ExpectedUpdateErr:   nil,
+			ExpectedValidateErr: nil,
+		},
+		// Testing pipes with source function in target sourceid (validation will fail but transformation works)
+		{
+			ID: "10.4",
+			Config: Config{
+				Spec: Spec{
+					Name: "jenkins - {{ source \"default\" }}",
+					Sources: map[string]source.Config{
+						"default": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Get Version",
+								Kind: "jenkins",
+							},
+						},
+					},
+					Targets: map[string]target.Config{
+						"updateDefault": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Update Version",
+								Kind: "shell",
+							},
+							SourceID: "{{ source \"default\" | replace \".\" \"_\" }}",
+						},
+					},
+				},
+			},
+			Context: context{
+				Sources: map[string]mockSourceContext{
+					"default": {
+						Output: "2.289.2",
+						Result: result.Source{
+							Result: result.SUCCESS,
+						},
+					},
+				},
+			},
+			ExpectedConfig: Config{
+				Spec: Spec{
+					Name: "jenkins - 2.289.2",
+					Sources: map[string]source.Config{
+						"default": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Get Version",
+								Kind: "jenkins",
+							},
+						},
+					},
+					Targets: map[string]target.Config{
+						"updateDefault": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Update Version",
+								Kind: "shell",
+							},
+							SourceID: "2_289_2",
+						},
+					},
+				},
+			},
+			ExpectedUpdateErr:   fmt.Errorf("targets validation error:\n%s", ErrBadConfig),
+			ExpectedValidateErr: fmt.Errorf("targets validation error:\n%s", ErrBadConfig),
+		},
 	}
 )
 
@@ -783,10 +1011,31 @@ func TestUpdate(t *testing.T) {
 			if data.ExpectedUpdateErr != nil {
 				require.Error(t, err)
 				assert.Equal(t, data.ExpectedUpdateErr.Error(), err.Error())
+				// Even if there's an expected error, validate transformations that occurred
+				// This is useful for testing transformations that work but fail validation
+				if len(data.ExpectedConfig.Spec.Targets) > 0 {
+					for targetID, expectedTarget := range data.ExpectedConfig.Spec.Targets {
+						if actualTarget, exists := data.Config.Spec.Targets[targetID]; exists {
+							assert.Equal(t, expectedTarget.SourceID, actualTarget.SourceID, "SourceID mismatch for target %s", targetID)
+						}
+					}
+				}
 				return
 			}
 
 			require.NoError(t, err)
+
+			// Validate the result if ExpectedConfig is provided
+			if data.ExpectedConfig.Spec.Name != "" {
+				assert.Equal(t, data.ExpectedConfig.Spec.Name, data.Config.Spec.Name)
+			}
+			if len(data.ExpectedConfig.Spec.Targets) > 0 {
+				for targetID, expectedTarget := range data.ExpectedConfig.Spec.Targets {
+					if actualTarget, exists := data.Config.Spec.Targets[targetID]; exists {
+						assert.Equal(t, expectedTarget.SourceID, actualTarget.SourceID, "SourceID mismatch for target %s", targetID)
+					}
+				}
+			}
 		})
 	}
 }
