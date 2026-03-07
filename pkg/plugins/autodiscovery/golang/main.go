@@ -1,6 +1,7 @@
 package golang
 
 import (
+	"fmt"
 	"path"
 	"strings"
 
@@ -73,6 +74,16 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Golang, error) {
 	err := mapstructure.Decode(spec, &s)
 	if err != nil {
 		return Golang{}, err
+	}
+
+	// Validate ignore rules
+	if err := s.Ignore.Validate(); err != nil {
+		return Golang{}, fmt.Errorf("invalid ignore spec: %w", err)
+	}
+
+	// Validate only rules
+	if err := s.Only.Validate(); err != nil {
+		return Golang{}, fmt.Errorf("invalid only spec: %w", err)
 	}
 
 	newFilter := s.VersionFilter
