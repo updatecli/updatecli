@@ -89,6 +89,7 @@ func (e *Engine) LoadConfigurations() error {
 					ManifestFile:      manifestFile,
 					SecretsFiles:      e.Options.Manifests[i].Secrets,
 					ValuesFiles:       e.Options.Manifests[i].Values,
+					ValuesInline:      e.Options.Manifests[i].ValuesInline,
 					DisableTemplating: e.Options.Config.DisableTemplating,
 				},
 				e.Options.PipelineIDs,

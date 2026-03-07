@@ -25,9 +25,10 @@ var (
 			}
 
 			e.Options.Manifests = append(e.Options.Manifests, manifest.Manifest{
-				Manifests: manifestFiles,
-				Values:    valuesFiles,
-				Secrets:   secretsFiles,
+				Manifests:    manifestFiles,
+				Values:       valuesFiles,
+				ValuesInline: valuesInline,
+				Secrets:      secretsFiles,
 			})
 
 			e.Options.Pipeline.Target.Clean = prepareClean
@@ -46,6 +47,7 @@ var (
 func init() {
 	prepareCmd.Flags().StringArrayVarP(&manifestFiles, "config", "c", []string{}, "Sets config file or directory. By default, Updatecli looks for a file named 'updatecli.yaml' or a directory named 'updatecli.d'")
 	prepareCmd.Flags().StringArrayVarP(&valuesFiles, "values", "v", []string{}, "Sets values file uses for templating")
+	prepareCmd.Flags().StringArrayVarP(&valuesInline, "values-inline", "i", []string{}, "Sets inline values uses for templating, accepted valid json/yaml string")
 	prepareCmd.Flags().StringArrayVar(&secretsFiles, "secrets", []string{}, "Sets Sops secrets file uses for templating")
 	prepareCmd.Flags().BoolVar(&prepareClean, "clean", false, "Remove updatecli working directory like '--clean=true")
 	prepareCmd.Flags().BoolVar(&disableTLS, "disable-tls", false, "Disable TLS verification like '--disable-tls=true'")

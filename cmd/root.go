@@ -25,6 +25,7 @@ var (
 	labels           []string
 	manifestFiles    []string
 	valuesFiles      []string
+	valuesInline     []string
 	secretsFiles     []string
 	policyReferences []string
 	e                engine.Engine

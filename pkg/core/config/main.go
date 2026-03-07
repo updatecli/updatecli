@@ -195,6 +195,8 @@ type Option struct {
 	PartialFiles []string
 	// ValuesFiles contains the list of updatecli values full file path
 	ValuesFiles []string
+	// ValuesInline contains the list of inline values for templating, accepted valid json/yaml string
+	ValuesInline []string
 	// SecretsFiles contains the list of updatecli sops secrets full file path
 	SecretsFiles []string
 	// DisableTemplating specifies if needs to be done
@@ -290,6 +292,7 @@ func New(option Option, pipelineIDFilters []string, pipelineLabels map[string]st
 		t := Template{
 			CfgFile:      option.ManifestFile,
 			ValuesFiles:  option.ValuesFiles,
+			ValuesInline: option.ValuesInline,
 			SecretsFiles: option.SecretsFiles,
 			fs:           fs,
 		}
