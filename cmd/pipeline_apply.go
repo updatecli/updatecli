@@ -32,7 +32,7 @@ var (
 			e.Options.Manifests = append(e.Options.Manifests, manifest.Manifest{
 				Manifests:    manifestFiles,
 				Values:       valuesFiles,
-				ValuesInline: valuesFiles,
+				ValuesInline: valuesInline,
 				Secrets:      secretsFiles,
 			})
 
