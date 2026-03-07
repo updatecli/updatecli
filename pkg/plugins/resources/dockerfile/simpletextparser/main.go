@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -13,10 +14,26 @@ import (
 )
 
 type SimpleTextDockerfileParser struct {
-	Keyword      string `yaml:"keyword,omitempty"`
-	Matcher      string `yaml:"matcher,omitempty"`
-	Stage        string `yaml:"stage,omitempty"`
-	KeywordLogic keywords.Logic
+	Keyword            string `yaml:"keyword,omitempty"`
+	Matcher            string `yaml:"matcher,omitempty"`
+	Stage              string `yaml:"stage,omitempty"`
+	IgnoreDefaultValue bool   `yaml:"ignoreDefaultValue,omitempty"`
+	KeywordLogic       keywords.Logic
+}
+
+// isEffectivelyMatching checks if a line matches the keyword and matcher, additionally
+// requiring a non-empty value when IgnoreDefaultValue is true.
+func (s SimpleTextDockerfileParser) isEffectivelyMatching(originalLine string) bool {
+	if !s.KeywordLogic.IsLineMatching(originalLine, s.Matcher) {
+		return false
+	}
+	if s.IgnoreDefaultValue {
+		value, err := s.KeywordLogic.GetValue(originalLine, s.Matcher)
+		if err != nil || value == "" {
+			return false
+		}
+	}
+	return true
 }
 
 func (s SimpleTextDockerfileParser) FindInstruction(dockerfileContent []byte, stage string) bool {
@@ -44,7 +61,7 @@ func (s SimpleTextDockerfileParser) hasMatch(dockerfileContent []byte, stage str
 		if stage != "" && currentStageName != stage {
 			continue
 		}
-		if s.KeywordLogic.IsLineMatching(originalLine, s.Matcher) {
+		if s.isEffectivelyMatching(originalLine) {
 			// Immediately returns if there is match: the result of a condition is the same with one or multiple matches
 			return true, originalLine
 		}
@@ -78,7 +95,7 @@ func (s SimpleTextDockerfileParser) ReplaceInstructions(dockerfileContent []byte
 			currentStageName = stageName
 		}
 
-		if ((stage != "" && stage == currentStageName) || stage == "") && s.KeywordLogic.IsLineMatching(originalLine, s.Matcher) {
+		if ((stage != "" && stage == currentStageName) || stage == "") && s.isEffectivelyMatching(originalLine) {
 			// if strings.HasPrefix(strings.ToLower(originalLine), strings.ToLower(d.spec.Instruction.Keyword)) {
 			newLine = s.KeywordLogic.ReplaceLine(sourceValue, originalLine, s.Matcher)
 
@@ -114,7 +131,7 @@ func (s SimpleTextDockerfileParser) GetInstructionTokens(dockerfileContent []byt
 	scanner := bufio.NewScanner(bytes.NewReader(dockerfileContent))
 	for scanner.Scan() {
 		line := scanner.Text()
-		if s.KeywordLogic.IsLineMatching(line, s.Matcher) {
+		if s.isEffectivelyMatching(line) {
 			token, err := s.KeywordLogic.GetTokens(line)
 			if err != nil {
 				continue
@@ -169,7 +186,7 @@ func (s SimpleTextDockerfileParser) GetInstruction(dockerfileContent []byte, sta
 		if stage != "" && stage != currentStageName {
 			continue
 		}
-		if s.KeywordLogic.IsLineMatching(originalLine, s.Matcher) {
+		if s.isEffectivelyMatching(originalLine) {
 			stageName := currentStageName
 			if stageName == "" {
 				// Use stage counter
@@ -229,6 +246,15 @@ func NewSimpleTextDockerfileParser(input map[string]string) (SimpleTextDockerfil
 	}
 	newParser.Matcher = matcher
 	delete(input, "matcher")
+
+	if ignoreDefaultValueStr, ok := input["ignoreDefaultValue"]; ok {
+		ignoreDefaultValue, err := strconv.ParseBool(ignoreDefaultValueStr)
+		if err != nil {
+			return SimpleTextDockerfileParser{}, fmt.Errorf("cannot parse instruction: ignoreDefaultValue %q is not a valid boolean: %v", ignoreDefaultValueStr, err)
+		}
+		newParser.IgnoreDefaultValue = ignoreDefaultValue
+		delete(input, "ignoreDefaultValue")
+	}
 
 	if len(input) > 0 {
 		logrus.Warnf("Unused directives found for instruction: %v.", input)
