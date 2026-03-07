@@ -1,6 +1,7 @@
 package dockercompose
 
 import (
+	"fmt"
 	"path"
 	"strings"
 
@@ -96,6 +97,16 @@ func New(spec interface{}, rootDir, scmID, actionID string) (DockerCompose, erro
 	err := mapstructure.Decode(spec, &s)
 	if err != nil {
 		return DockerCompose{}, err
+	}
+
+	// Validate ignore rules
+	if err := s.Ignore.Validate(); err != nil {
+		return DockerCompose{}, fmt.Errorf("invalid ignore spec: %w", err)
+	}
+
+	// Validate only rules
+	if err := s.Only.Validate(); err != nil {
+		return DockerCompose{}, fmt.Errorf("invalid only spec: %w", err)
 	}
 
 	dir := rootDir

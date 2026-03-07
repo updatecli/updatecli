@@ -1,6 +1,7 @@
 package npm
 
 import (
+	"fmt"
 	"path"
 	"strings"
 
@@ -92,6 +93,16 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Npm, error) {
 	err := mapstructure.Decode(spec, &s)
 	if err != nil {
 		return Npm{}, err
+	}
+
+	// Validate ignore rules
+	if err := s.Ignore.Validate(); err != nil {
+		return Npm{}, fmt.Errorf("invalid ignore spec: %w", err)
+	}
+
+	// Validate only rules
+	if err := s.Only.Validate(); err != nil {
+		return Npm{}, fmt.Errorf("invalid only spec: %w", err)
 	}
 
 	// By default we want to suggest the latest version available in the registry

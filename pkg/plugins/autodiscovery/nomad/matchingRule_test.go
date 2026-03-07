@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestIsMatchingRules(t *testing.T) {
@@ -139,4 +140,69 @@ func TestIsMatchingRules(t *testing.T) {
 		})
 	}
 
+}
+
+func TestMatchingRulesValidate(t *testing.T) {
+	tests := []struct {
+		name        string
+		rules       MatchingRules
+		expectError bool
+		errorMsg    string
+	}{
+		{
+			name:        "empty rules should pass",
+			rules:       MatchingRules{},
+			expectError: false,
+		},
+		{
+			name: "rule with path should pass",
+			rules: MatchingRules{
+				{Path: "*.hcl"},
+			},
+			expectError: false,
+		},
+		{
+			name: "rule with jobs should pass",
+			rules: MatchingRules{
+				{Jobs: []string{"my-job"}},
+			},
+			expectError: false,
+		},
+		{
+			name: "rule with images should pass",
+			rules: MatchingRules{
+				{Images: []string{"nginx"}},
+			},
+			expectError: false,
+		},
+		{
+			name: "empty rule should fail",
+			rules: MatchingRules{
+				{},
+			},
+			expectError: true,
+			errorMsg:    "rule 1 has no valid fields",
+		},
+		{
+			name: "second empty rule should fail",
+			rules: MatchingRules{
+				{Path: "*.hcl"},
+				{},
+			},
+			expectError: true,
+			errorMsg:    "rule 2 has no valid fields",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.rules.Validate()
+			if tt.expectError {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.errorMsg)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
 }
