@@ -21,17 +21,15 @@ type Compose struct {
 func New(filename string) (Compose, error) {
 	var c Compose
 
-	composeFileName := c.spec.Name
-	if c.spec.Name == "" {
-		composeFileName = filename
-		logrus.Warningf("No parameter \"name\" defined in the compose file %q, using %q as default name", c.filename, composeFileName)
-	}
-
-	logrus.Infof("\nLoading Updatecli compose file: %q", composeFileName)
+	logrus.Infof("\nLoading Updatecli compose file: %q", filename)
 
 	spec, err := LoadFile(filename)
 	if err != nil {
 		return c, err
+	}
+
+	if len(spec.Name) != 0 {
+		logrus.Infof("Compose file name: %q", spec.Name)
 	}
 
 	switch len(spec.Policies) {
@@ -48,8 +46,7 @@ func New(filename string) (Compose, error) {
 
 	c.spec = *spec
 	c.filename = filename
-
-	c.name = composeFileName
+	c.name = spec.Name
 
 	return c, nil
 }
@@ -139,11 +136,6 @@ func (c *Compose) GetPolicies(disableTLS bool) ([]manifest.Manifest, error) {
 			}
 
 			manifest.ValuesInline = append(manifest.ValuesInline, policyInlineValues)
-		}
-
-		// Try to parse as much valid manifest as possible
-		if len(errs) > 0 {
-			continue
 		}
 
 		manifests = append(manifests, manifest)
