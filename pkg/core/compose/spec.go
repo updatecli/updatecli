@@ -61,6 +61,10 @@ func (p Policy) IsZero() bool {
 		return false
 	}
 
+	if p.ValuesInline != nil {
+		return false
+	}
+
 	if p.Policy != "" {
 		return false
 	}
