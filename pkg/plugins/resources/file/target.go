@@ -210,9 +210,15 @@ func (f *File) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 			contentType,
 			inputContent)
 
+		diffOutput := text.Diff(filePath, filePath, originalContents[filePath], file.content)
+		// Don't output binary content
+		if isBinaryContent(file.content) || isBinaryContent(originalContents[filePath]) {
+			diffOutput = truncateBinaryContent(file.content)
+		}
+
 		logrus.Infof("%s\n\n```\n%s\n```\n\n",
 			description,
-			text.Diff(filePath, filePath, originalContents[filePath], file.content),
+			diffOutput,
 		)
 
 		descriptions = append(descriptions, description)

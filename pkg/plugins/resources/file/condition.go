@@ -149,10 +149,17 @@ func (f *File) condition(source string) (bool, error) {
 		logrus.Debug("Attribute `content` detected")
 
 		if f.spec.Content != file.content {
+			diffOutput := text.Diff(filePath, filePath, file.content, f.spec.Content)
+			// Don't output binary content
+			if isBinaryContent(file.content) || isBinaryContent(f.spec.Content) {
+				diffOutput = fmt.Sprintf("Binary content differs (%d bytes in file, %d bytes expected)",
+					len(file.content), len(f.spec.Content))
+			}
+
 			logrus.Infof("%s %s is different than the specified content: \n%s",
 				result.FAILURE,
 				logMessage,
-				text.Diff(filePath, filePath, file.content, f.spec.Content),
+				diffOutput,
 			)
 			return false, nil
 		}
