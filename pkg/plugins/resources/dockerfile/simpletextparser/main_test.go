@@ -163,23 +163,23 @@ func TestSimpleTextDockerfileParser_FindInstruction(t *testing.T) {
 			},
 		},
 		{
-			name:              "Find Instruction ARG HELM_VERSION with ignoreDefaultValue across all stages",
+			name:              "Find Instruction ARG HELM_VERSION with ignoreUnsetValue across all stages",
 			fixtureDockerfile: "ARG.Dockerfile",
 			expected:          true,
 			givenInstruction: map[string]string{
-				"keyword":            "ARG",
-				"matcher":            "HELM_VERSION",
-				"ignoreDefaultValue": "true",
+				"keyword":          "ARG",
+				"matcher":          "HELM_VERSION",
+				"ignoreUnsetValue": "true",
 			},
 		},
 		{
-			name:              "Not Find Instruction ARG HELM_VERSION with ignoreDefaultValue in reporter stage (bare ARG only)",
+			name:              "Not Find Instruction ARG HELM_VERSION with ignoreUnsetValue in reporter stage (bare ARG only)",
 			fixtureDockerfile: "ARG.Dockerfile",
 			expected:          false,
 			givenInstruction: map[string]string{
-				"keyword":            "ARG",
-				"matcher":            "HELM_VERSION",
-				"ignoreDefaultValue": "true",
+				"keyword":          "ARG",
+				"matcher":          "HELM_VERSION",
+				"ignoreUnsetValue": "true",
 			},
 			givenStage: "reporter",
 		},
@@ -301,13 +301,13 @@ func TestSimpleTextDockerfileParser_ReplaceInstruction(t *testing.T) {
 			expectedChanges: types.ChangedLines{},
 		},
 		{
-			name:              "Change HELM_VERSION ARG instruction with ignoreDefaultValue skips bare ARG lines",
+			name:              "Change HELM_VERSION ARG instruction with ignoreUnsetValue skips bare ARG lines",
 			fixtureDockerfile: "ARG.Dockerfile",
 			givenSource:       "4.5.6",
 			givenInstruction: map[string]string{
-				"keyword":            "ARG",
-				"matcher":            "HELM_VERSION",
-				"ignoreDefaultValue": "true",
+				"keyword":          "ARG",
+				"matcher":          "HELM_VERSION",
+				"ignoreUnsetValue": "true",
 			},
 			expectedChanges: types.ChangedLines{
 				3: types.LineDiff{
@@ -322,13 +322,13 @@ func TestSimpleTextDockerfileParser_ReplaceInstruction(t *testing.T) {
 			},
 		},
 		{
-			name:              "Instruction not matched with ignoreDefaultValue in reporter stage (bare ARG only)",
+			name:              "Instruction not matched with ignoreUnsetValue in reporter stage (bare ARG only)",
 			fixtureDockerfile: "ARG.Dockerfile",
 			givenSource:       "4.5.6",
 			givenInstruction: map[string]string{
-				"keyword":            "ARG",
-				"matcher":            "HELM_VERSION",
-				"ignoreDefaultValue": "true",
+				"keyword":          "ARG",
+				"matcher":          "HELM_VERSION",
+				"ignoreUnsetValue": "true",
 			},
 			stage:                "reporter",
 			expectedChanges:      types.ChangedLines{},

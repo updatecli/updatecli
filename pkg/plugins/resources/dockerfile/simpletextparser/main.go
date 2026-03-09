@@ -14,24 +14,24 @@ import (
 )
 
 type SimpleTextDockerfileParser struct {
-	Keyword            string `yaml:"keyword,omitempty"`
-	Matcher            string `yaml:"matcher,omitempty"`
-	Stage              string `yaml:"stage,omitempty"`
-	IgnoreDefaultValue *bool  `yaml:"ignoreDefaultValue,omitempty"`
-	KeywordLogic       keywords.Logic
+	Keyword          string `yaml:"keyword,omitempty"`
+	Matcher          string `yaml:"matcher,omitempty"`
+	Stage            string `yaml:"stage,omitempty"`
+	IgnoreUnsetValue *bool  `yaml:"ignoreUnsetValue,omitempty"`
+	KeywordLogic     keywords.Logic
 }
 
 // isEffectivelyMatching checks if a line matches the keyword and matcher, additionally
-// requiring a non-empty value when IgnoreDefaultValue is true.
+// requiring a non-empty value when IgnoreUnsetValue is true.
 func (s SimpleTextDockerfileParser) isEffectivelyMatching(originalLine string) bool {
 	if !s.KeywordLogic.IsLineMatching(originalLine, s.Matcher) {
 		return false
 	}
-	ignoreDefaultValue := false
-	if s.IgnoreDefaultValue != nil {
-		ignoreDefaultValue = *s.IgnoreDefaultValue
+	ignoreUnsetValue := false
+	if s.IgnoreUnsetValue != nil {
+		ignoreUnsetValue = *s.IgnoreUnsetValue
 	}
-	if ignoreDefaultValue {
+	if ignoreUnsetValue {
 		value, err := s.KeywordLogic.GetValue(originalLine, s.Matcher)
 		if err != nil || value == "" {
 			return false
@@ -251,13 +251,14 @@ func NewSimpleTextDockerfileParser(input map[string]string) (SimpleTextDockerfil
 	newParser.Matcher = matcher
 	delete(input, "matcher")
 
-	if ignoreDefaultValueStr, ok := input["ignoreDefaultValue"]; ok {
-		ignoreDefaultValue, err := strconv.ParseBool(ignoreDefaultValueStr)
+	fieldName := "ignoreUnsetValue"
+	if ignoreUnsetValueStr, ok := input[fieldName]; ok {
+		ignoreUnsetValue, err := strconv.ParseBool(ignoreUnsetValueStr)
 		if err != nil {
-			return SimpleTextDockerfileParser{}, fmt.Errorf("cannot parse instruction: ignoreDefaultValue %q is not a valid boolean: %v", ignoreDefaultValueStr, err)
+			return SimpleTextDockerfileParser{}, fmt.Errorf("cannot parse instruction: '%s' %q is not a valid boolean: %v", fieldName, ignoreUnsetValueStr, err)
 		}
-		newParser.IgnoreDefaultValue = &ignoreDefaultValue
-		delete(input, "ignoreDefaultValue")
+		newParser.IgnoreUnsetValue = &ignoreUnsetValue
+		delete(input, fieldName)
 	}
 
 	if len(input) > 0 {
