@@ -17,7 +17,7 @@ type SimpleTextDockerfileParser struct {
 	Keyword            string `yaml:"keyword,omitempty"`
 	Matcher            string `yaml:"matcher,omitempty"`
 	Stage              string `yaml:"stage,omitempty"`
-	IgnoreDefaultValue bool   `yaml:"ignoreDefaultValue,omitempty"`
+	IgnoreDefaultValue *bool  `yaml:"ignoreDefaultValue,omitempty"`
 	KeywordLogic       keywords.Logic
 }
 
@@ -27,7 +27,11 @@ func (s SimpleTextDockerfileParser) isEffectivelyMatching(originalLine string) b
 	if !s.KeywordLogic.IsLineMatching(originalLine, s.Matcher) {
 		return false
 	}
-	if s.IgnoreDefaultValue {
+	ignoreDefaultValue := false
+	if s.IgnoreDefaultValue != nil {
+		ignoreDefaultValue = *s.IgnoreDefaultValue
+	}
+	if ignoreDefaultValue {
 		value, err := s.KeywordLogic.GetValue(originalLine, s.Matcher)
 		if err != nil || value == "" {
 			return false
@@ -252,7 +256,7 @@ func NewSimpleTextDockerfileParser(input map[string]string) (SimpleTextDockerfil
 		if err != nil {
 			return SimpleTextDockerfileParser{}, fmt.Errorf("cannot parse instruction: ignoreDefaultValue %q is not a valid boolean: %v", ignoreDefaultValueStr, err)
 		}
-		newParser.IgnoreDefaultValue = ignoreDefaultValue
+		newParser.IgnoreDefaultValue = &ignoreDefaultValue
 		delete(input, "ignoreDefaultValue")
 	}
 
