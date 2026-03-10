@@ -162,6 +162,27 @@ func TestSimpleTextDockerfileParser_FindInstruction(t *testing.T) {
 				"matcher": "HELM_VERSION",
 			},
 		},
+		{
+			name:              "Find Instruction ARG HELM_VERSION with ignoreUnsetValue across all stages",
+			fixtureDockerfile: "ARG.Dockerfile",
+			expected:          true,
+			givenInstruction: map[string]string{
+				"keyword":          "ARG",
+				"matcher":          "HELM_VERSION",
+				"ignoreUnsetValue": "true",
+			},
+		},
+		{
+			name:              "Not Find Instruction ARG HELM_VERSION with ignoreUnsetValue in reporter stage (bare ARG only)",
+			fixtureDockerfile: "ARG.Dockerfile",
+			expected:          false,
+			givenInstruction: map[string]string{
+				"keyword":          "ARG",
+				"matcher":          "HELM_VERSION",
+				"ignoreUnsetValue": "true",
+			},
+			givenStage: "reporter",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -278,6 +299,40 @@ func TestSimpleTextDockerfileParser_ReplaceInstruction(t *testing.T) {
 				"matcher": "golang",
 			},
 			expectedChanges: types.ChangedLines{},
+		},
+		{
+			name:              "Change HELM_VERSION ARG instruction with ignoreUnsetValue skips bare ARG lines",
+			fixtureDockerfile: "ARG.Dockerfile",
+			givenSource:       "4.5.6",
+			givenInstruction: map[string]string{
+				"keyword":          "ARG",
+				"matcher":          "HELM_VERSION",
+				"ignoreUnsetValue": "true",
+			},
+			expectedChanges: types.ChangedLines{
+				3: types.LineDiff{
+					Original: "ARG HELM_VERSION=3.0.0",
+					New:      "ARG HELM_VERSION=4.5.6",
+				},
+				17: types.LineDiff{
+					Original: "arg HELM_VERSION=3.0.0",
+					New:      "arg HELM_VERSION=4.5.6",
+				},
+				// Line 27 (ARG HELM_VERSION with no value) must NOT be changed
+			},
+		},
+		{
+			name:              "Instruction not matched with ignoreUnsetValue in reporter stage (bare ARG only)",
+			fixtureDockerfile: "ARG.Dockerfile",
+			givenSource:       "4.5.6",
+			givenInstruction: map[string]string{
+				"keyword":          "ARG",
+				"matcher":          "HELM_VERSION",
+				"ignoreUnsetValue": "true",
+			},
+			stage:                "reporter",
+			expectedChanges:      types.ChangedLines{},
+			expectedErrorMessage: fmt.Sprintf("%s No line found matching the keyword \"ARG\" and the matcher \"HELM_VERSION\"", result.FAILURE),
 		},
 		{
 			name:              "Change org.opencontainers.image.version LABEL instruction",
