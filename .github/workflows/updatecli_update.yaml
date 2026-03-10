@@ -1,5 +1,5 @@
-on:
 name: Updatecli - Update
+on:
   workflow_dispatch:
   push:
     branches:
