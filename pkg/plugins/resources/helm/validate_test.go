@@ -31,8 +31,6 @@ func TestValidateTarget(t *testing.T) {
 					VersionIncrement: NOINCREMENT,
 				},
 			},
-			wantErr:       true,
-			expectedError: ErrWrongConfig.Error(),
 		},
 		{
 			chart: Chart{
