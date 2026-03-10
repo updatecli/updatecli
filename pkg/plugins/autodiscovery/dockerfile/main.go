@@ -1,6 +1,7 @@
 package dockerfile
 
 import (
+	"fmt"
 	"path"
 	"strings"
 
@@ -91,6 +92,16 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Dockerfile, error) 
 	err := mapstructure.Decode(spec, &s)
 	if err != nil {
 		return Dockerfile{}, err
+	}
+
+	// Validate ignore rules
+	if err := s.Ignore.Validate(); err != nil {
+		return Dockerfile{}, fmt.Errorf("invalid ignore spec: %w", err)
+	}
+
+	// Validate only rules
+	if err := s.Only.Validate(); err != nil {
+		return Dockerfile{}, fmt.Errorf("invalid only spec: %w", err)
 	}
 
 	dir := rootDir

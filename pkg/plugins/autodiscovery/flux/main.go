@@ -1,6 +1,7 @@
 package flux
 
 import (
+	"fmt"
 	"path"
 	"path/filepath"
 	"strings"
@@ -119,6 +120,16 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Flux, error) {
 	err := mapstructure.Decode(spec, &s)
 	if err != nil {
 		return Flux{}, err
+	}
+
+	// Validate ignore rules
+	if err := s.Ignore.Validate(); err != nil {
+		return Flux{}, fmt.Errorf("invalid ignore spec: %w", err)
+	}
+
+	// Validate only rules
+	if err := s.Only.Validate(); err != nil {
+		return Flux{}, fmt.Errorf("invalid only spec: %w", err)
 	}
 
 	dir := rootDir

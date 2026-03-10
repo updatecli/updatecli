@@ -1,6 +1,7 @@
 package kubernetes
 
 import (
+	"fmt"
 	"path"
 	"strings"
 
@@ -122,6 +123,16 @@ func New(spec interface{}, rootDir, scmID, actionID, flavor string) (Kubernetes,
 	err := mapstructure.Decode(spec, &s)
 	if err != nil {
 		return Kubernetes{}, err
+	}
+
+	// Validate ignore rules
+	if err := s.Ignore.Validate(); err != nil {
+		return Kubernetes{}, fmt.Errorf("invalid ignore spec: %w", err)
+	}
+
+	// Validate only rules
+	if err := s.Only.Validate(); err != nil {
+		return Kubernetes{}, fmt.Errorf("invalid only spec: %w", err)
 	}
 
 	dir := rootDir
