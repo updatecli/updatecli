@@ -66,6 +66,7 @@ func (g *GitLabSearch) ScmsGenerator(ctx context.Context) ([]gitlabscm.Spec, err
 					Branch:                 branchName,
 					CommitMessage:          g.spec.CommitMessage,
 					Directory:              g.spec.Directory,
+					Depth:                  g.spec.Depth,
 					Email:                  g.spec.Email,
 					Force:                  g.spec.Force,
 					GPG:                    g.spec.GPG,
