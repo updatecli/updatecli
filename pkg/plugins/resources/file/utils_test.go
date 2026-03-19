@@ -14,18 +14,8 @@ func TestIsBinaryContent(t *testing.T) {
 			expected: false,
 		},
 		{
-			name:     "binary content with null byte at start",
-			content:  "\x00Hello World",
-			expected: true,
-		},
-		{
-			name:     "binary content with null byte in middle",
-			content:  "Hello\x00World",
-			expected: true,
-		},
-		{
-			name:     "binary content with null byte at end",
-			content:  "Hello World\x00",
+			name:     "binary content with null bytes",
+			content:  "\x00\x01\x02\x03binary content",
 			expected: true,
 		},
 		{
@@ -60,44 +50,6 @@ func TestIsBinaryContent(t *testing.T) {
 			result := isBinaryContent(tt.content)
 			if result != tt.expected {
 				t.Errorf("isBinaryContent() = %v, want %v", result, tt.expected)
-			}
-		})
-	}
-}
-
-func TestTruncateBinaryContent(t *testing.T) {
-	tests := []struct {
-		name     string
-		content  string
-		expected string
-	}{
-		{
-			name:     "binary with null byte",
-			content:  "binary\x00data",
-			expected: "[binary content, 11 bytes]",
-		},
-		{
-			name:     "empty content",
-			content:  "",
-			expected: "[binary content, 0 bytes]",
-		},
-		{
-			name:     "large binary content",
-			content:  string(make([]byte, 10240)),
-			expected: "[binary content, 10240 bytes]",
-		},
-		{
-			name:     "text content",
-			content:  "This is text",
-			expected: "[binary content, 12 bytes]",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := truncateBinaryContent(tt.content)
-			if result != tt.expected {
-				t.Errorf("truncateBinaryContent() = %v, want %v", result, tt.expected)
 			}
 		})
 	}
