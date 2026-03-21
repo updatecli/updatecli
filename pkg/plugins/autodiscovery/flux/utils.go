@@ -51,7 +51,7 @@ func (f *Flux) searchFluxFiles(rootDir string, files []string) error {
 					logrus.Debugf("Failed loading document from %s as HelmRelease: %s", path, err)
 				}
 				if len(helmRelease) > 0 {
-					logrus.Errorf("helmRelease: %+v", helmRelease)
+					logrus.Debugf("Found %d HelmRelease object(s) in %s", len(helmRelease), path)
 					f.helmReleaseFiles = append(f.helmReleaseFiles, path)
 				}
 			}
