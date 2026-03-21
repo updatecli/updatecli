@@ -60,6 +60,48 @@ body:
     required: false
 - type: textarea
   attributes:
+    label: OpenTelemetry Trace
+    description: |
+      Attach a trace file to help diagnose timing and execution issues.
+      The trace can be loaded in [Grafana Tempo](https://grafana.com/docs/tempo/) or any OTLP-compatible backend.
+
+      1. Save this as `otel-collector-config.yaml`:
+      ```yaml
+      receivers:
+        otlp:
+          protocols:
+            grpc:
+              endpoint: 0.0.0.0:4317
+      exporters:
+        file:
+          path: /traces/output.json
+      service:
+        pipelines:
+          traces:
+            receivers: [otlp]
+            exporters: [file]
+      ```
+
+      2. Start the [OpenTelemetry Collector](https://opentelemetry.io/docs/collector/):
+      ```bash
+      mkdir -p traces
+      docker run --rm -p 4317:4317 \
+        -v $(pwd)/otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml \
+        -v $(pwd)/traces:/traces \
+        otel/opentelemetry-collector-contrib:latest
+      ```
+
+      3. Run updatecli with tracing enabled:
+      ```bash
+      OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317 updatecli diff --config <your-pipeline.yaml>
+      ```
+
+      4. Attach the resulting `traces/output.json` file below.
+    placeholder: Attach traces/output.json file
+  validations:
+    required: false
+- type: textarea
+  attributes:
     label: Anything else?
     description: |
       Links? References? Screenshots? Anything that will give us more context about the issue you are encountering!

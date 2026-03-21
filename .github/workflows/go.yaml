@@ -105,3 +105,4 @@ jobs:
           IS_TTY: true # https://github.com/ovh/venom#use-venom-in-ci
           # Access only to ec2 AMI api in read-only
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OTEL_TRACES_EXPORTER: console
