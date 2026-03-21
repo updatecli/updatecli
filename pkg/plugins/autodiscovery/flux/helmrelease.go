@@ -1,48 +1,69 @@
 package flux
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta2"
-
-	"sigs.k8s.io/yaml"
+	goyaml "go.yaml.in/yaml/v4"
 )
 
 // https://fluxcd.io/flux/components/helm/helmreleases/#writing-a-helmrelease-spec
 
-func loadHelmRelease(filename string) (*helmv2.HelmRelease, error) {
+func loadHelmRelease(filename string) (map[int]helmv2.HelmRelease, error) {
 
-	data, err := os.ReadFile(filename)
+	content, err := os.ReadFile(filename)
 	if err != nil {
-		return nil, fmt.Errorf("opening file %s:%s", filename, err)
+		return nil, fmt.Errorf("opening file %s: %s", filename, err)
 	}
 
-	helmRelease := helmv2.HelmRelease{}
-	err = yaml.Unmarshal(data, &helmRelease)
+	loader, err := goyaml.NewLoader(bytes.NewReader(content), goyaml.V4)
 	if err != nil {
-		return nil, fmt.Errorf("unmarshalling HelmRelease file %s: %s", filename, err)
+		return nil, fmt.Errorf("creating yaml loader: %w", err)
 	}
 
-	gvk := helmRelease.GroupVersionKind()
-	if gvk.GroupKind().String() == "HelmRelease.helm.toolkit.fluxcd.io" {
-		return &helmRelease, nil
+	docNum := 1
+	result := make(map[int]helmv2.HelmRelease)
+
+	for {
+		var raw any
+
+		err := loader.Load(&raw)
+		if err == io.EOF {
+			break
+		}
+
+		if err != nil {
+			return nil, fmt.Errorf("loading yaml document #%d from %q: %w", docNum, filename, err)
+		}
+
+		if raw == nil {
+			docNum++
+			continue
+		}
+
+		// First convert the YAML document to JSON, then unmarshal it into the HelmRelease struct
+		// This approach allows us to handle YAML documents that may contain fields not defined in the HelmRelease struct without causing unmarshalling errors
+		jsonContent, err := json.Marshal(raw)
+		if err != nil {
+			return nil, fmt.Errorf("marshaling yaml document #%d from %q: %w", docNum, filename, err)
+		}
+
+		data := helmv2.HelmRelease{}
+		if err := json.Unmarshal(jsonContent, &data); err != nil {
+			return nil, fmt.Errorf("decoding yaml document #%d from %q: %w", docNum, filename, err)
+		}
+
+		gvk := data.GroupVersionKind()
+		if gvk.GroupKind().String() == "HelmRelease.helm.toolkit.fluxcd.io" {
+			result[docNum-1] = data
+		}
+
+		docNum++
 	}
 
-	return nil, nil
-}
-
-func loadHelmReleaseFromBytes(data []byte) (*helmv2.HelmRelease, error) {
-	helmRelease := helmv2.HelmRelease{}
-	err := yaml.Unmarshal(data, &helmRelease)
-	if err != nil {
-		return nil, fmt.Errorf("unmarshalling HelmRelease: %s", err)
-	}
-
-	gvk := helmRelease.GroupVersionKind()
-	if gvk.GroupKind().String() == "HelmRelease.helm.toolkit.fluxcd.io" {
-		return &helmRelease, nil
-	}
-
-	return nil, nil
+	return result, nil
 }

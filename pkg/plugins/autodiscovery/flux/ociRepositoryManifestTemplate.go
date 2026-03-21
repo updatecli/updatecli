@@ -40,6 +40,7 @@ targets:
     spec:
       file: '{{ .File }}'
       key: '$.spec.ref.tag'
+      documentindex: {{ .TargetYAMLDocument }}
     sourceid: 'oci'
 `
 	// ociRepositoryManifestTemplateDigestAndLatest is the Go template used to generate Flux manifests for ocirepository resources with digest and latest
@@ -98,6 +99,7 @@ targets:
     spec:
       file: '{{ .File }}'
       key: '$.spec.ref.tag'
+      documentindex: {{ .TargetYAMLDocument }}
     sourceid: 'oci-digest'
 `
 	// ociRepositoryManifestTemplateDigest is the Go template used to generate Flux manifests for ocirepository resources with digest without updating the tag.
@@ -133,6 +135,7 @@ targets:
     spec:
       file: '{{ .File }}'
       key: '$.spec.ref.tag'
+      documentindex: {{ .TargetYAMLDocument }}
     sourceid: 'oci-digest'
 `
 )
