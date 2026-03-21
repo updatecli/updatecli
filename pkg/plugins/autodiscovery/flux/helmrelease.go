@@ -17,7 +17,7 @@ func loadHelmRelease(filename string) (map[int]helmv2.HelmRelease, error) {
 
 	content, err := os.ReadFile(filename)
 	if err != nil {
-		return nil, fmt.Errorf("opening file %s: %s", filename, err)
+		return nil, fmt.Errorf("opening file %s: %w", filename, err)
 	}
 
 	loader, err := goyaml.NewLoader(bytes.NewReader(content), goyaml.V4)
