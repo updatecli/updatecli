@@ -246,6 +246,26 @@ func TestFile_Source(t *testing.T) {
 			},
 			wantedErr: true,
 		},
+		{
+			name: "Passing case with binary file content",
+			spec: Spec{
+				File: "/home/ucli/foo.bin",
+			},
+			files: map[string]fileMetadata{
+				"/home/ucli/foo.bin": {
+					originalPath: "/home/ucli/foo.bin",
+					path:         "/home/ucli/foo.bin",
+				},
+			},
+			mockedContents: map[string]string{
+				// null bytes make DetectContentType return "application/octet-stream"
+				"/home/ucli/foo.bin": "\x00\x01\x02\x03binary content",
+			},
+			wantedContents: map[string]string{
+				"/home/ucli/foo.bin": "\x00\x01\x02\x03binary content",
+			},
+			wantedResult: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

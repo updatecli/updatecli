@@ -117,11 +117,17 @@ func (f *File) condition(source string) (bool, error) {
 
 			// Compare the content of the file with the source's value
 			if file.content != source {
+				var sourceDiff string
+				if isBinaryContent(file.content) || isBinaryContent(source) {
+					sourceDiff = fmt.Sprintf("binary content differs (%d bytes in file, %d bytes from source)", len(file.content), len(source))
+				} else {
+					sourceDiff = text.Diff(filePath, filePath, file.content, source)
+				}
 				logrus.Infof(
 					"%s %s is different than the input source value:\n%s",
 					result.FAILURE,
 					logMessage,
-					text.Diff(filePath, filePath, file.content, source),
+					sourceDiff,
 				)
 
 				return false, nil
@@ -149,10 +155,16 @@ func (f *File) condition(source string) (bool, error) {
 		logrus.Debug("Attribute `content` detected")
 
 		if f.spec.Content != file.content {
+			var contentDiff string
+			if isBinaryContent(file.content) || isBinaryContent(f.spec.Content) {
+				contentDiff = fmt.Sprintf("binary content differs (%d bytes in file, %d bytes expected)", len(file.content), len(f.spec.Content))
+			} else {
+				contentDiff = text.Diff(filePath, filePath, file.content, f.spec.Content)
+			}
 			logrus.Infof("%s %s is different than the specified content: \n%s",
 				result.FAILURE,
 				logMessage,
-				text.Diff(filePath, filePath, file.content, f.spec.Content),
+				contentDiff,
 			)
 			return false, nil
 		}

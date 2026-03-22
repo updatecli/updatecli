@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -68,12 +67,33 @@ func New(configUsername, configToken string, configApp *app.Spec, configURL stri
 
 	// If the tokenSource is still nil at this point
 	// it means that no valid token source could be found.
-	// We log a debug message and return an error.
+	// We create an unauthenticated client which can still be used for
+	// read-only operations on public repositories, but API operations
+	// requiring authentication will fail.
 	if tokenSource == nil {
-		logrus.Debugf(`GitHub token is not set, please refer to the documentation for more information:
+		logrus.Debugf(`GitHub token is not set, API operations requiring authentication will fail.
+	Please refer to the documentation for more information:
 	->  https://www.updatecli.io/docs/plugins/scm/github/
 `)
-		return nil, errors.New("github token is not set")
+		httpClient := httpclient.NewRetryClient().(*http.Client)
+
+		var newClient Client
+
+		if strings.HasSuffix(URL, "github.com") {
+			newClient = githubv4.NewClient(httpClient)
+		} else {
+			graphqlURL, err := url.JoinPath(URL, "/api/graphql")
+			if err != nil {
+				return nil, fmt.Errorf("parsing GitHub Enterprise GraphQL URL: %w", err)
+			}
+			newClient = githubv4.NewEnterpriseClient(graphqlURL, httpClient)
+		}
+
+		return &ClientConfig{
+			Username: username,
+			Client:   newClient,
+			URL:      URL,
+		}, nil
 	}
 
 	tokenSource = oauth2.ReuseTokenSource(nil, tokenSource)

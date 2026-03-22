@@ -95,7 +95,12 @@ func (f *File) Source(workingDir string, resultSource *result.Source) error {
 
 		resultSource.Result = result.SUCCESS
 		resultSource.Information = foundContent
-		resultSource.Description = fmt.Sprintf("content: found from file %q:\n%v", filePath, foundContent)
+
+		descContent := foundContent
+		if isBinaryContent(foundContent) {
+			descContent = "<binary content, not displayed>"
+		}
+		resultSource.Description = fmt.Sprintf("content: found from file %q:\n%v", filePath, descContent)
 
 	}
 	return nil
