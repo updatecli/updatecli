@@ -1,8 +1,6 @@
 package language
 
 import (
-	"net/http"
-
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
@@ -38,7 +36,7 @@ func New(spec interface{}) (*Language, error) {
 	return &Language{
 		Spec:          newSpec,
 		versionFilter: newFilter,
-		webClient:     &http.Client{},
+		webClient:     httpclient.NewRetryClient(),
 	}, nil
 }
 

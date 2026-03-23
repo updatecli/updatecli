@@ -1,8 +1,6 @@
 package registry
 
 import (
-	"net/http"
-
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
@@ -34,7 +32,7 @@ func New(spec interface{}) (*TerraformRegistry, error) {
 		newFilter.Pattern = "*"
 	}
 
-	webClient := &http.Client{}
+	webClient := httpclient.NewRetryClient()
 
 	registryAddress, err := newRegistryAddress(webClient, newSpec)
 	if err != nil {

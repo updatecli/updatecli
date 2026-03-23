@@ -2,13 +2,13 @@ package dockerimage
 
 import (
 	"io"
-	"net/http"
 	"net/url"
 	"strings"
 
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/sirupsen/logrus"
 
+	"github.com/updatecli/updatecli/pkg/core/httpclient"
 	"github.com/updatecli/updatecli/pkg/core/registry"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/changelog/markdown"
@@ -60,7 +60,7 @@ func (di *DockerImage) Changelog(from, to string) *result.Changelogs {
 		redirectToGitHubRawContent(changelogURL)
 	}
 
-	resp, err := http.Get(changelogURL.String())
+	resp, err := httpclient.NewRetryClient().Get(changelogURL.String())
 	if err != nil {
 		logrus.Debugf("retrieving changelog from url: %v", err)
 		return nil

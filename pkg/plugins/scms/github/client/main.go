@@ -3,7 +3,6 @@ package client
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -75,7 +74,7 @@ func New(configUsername, configToken string, configApp *app.Spec, configURL stri
 	Please refer to the documentation for more information:
 	->  https://www.updatecli.io/docs/plugins/scm/github/
 `)
-		httpClient := httpclient.NewRetryClient().(*http.Client)
+		httpClient := httpclient.NewRetryClient()
 
 		var newClient Client
 
@@ -101,7 +100,7 @@ func New(configUsername, configToken string, configApp *app.Spec, configURL stri
 	clientContext := context.WithValue(
 		context.Background(),
 		oauth2.HTTPClient,
-		httpclient.NewRetryClient().(*http.Client))
+		httpclient.NewRetryClient())
 
 	httpClient := oauth2.NewClient(clientContext, tokenSource)
 

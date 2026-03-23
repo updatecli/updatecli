@@ -14,6 +14,7 @@ import (
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/httpclient"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/yaml"
@@ -125,7 +126,8 @@ func (c *Chart) GetRepoIndexFromURL() (repo.IndexFile, error) {
 		req.Header.Add("Authorization", fmt.Sprintf("Basic %s", base64.StdEncoding.EncodeToString(userPass)))
 	}
 
-	res, err := http.DefaultClient.Do(req)
+	client := httpclient.NewRetryClient()
+	res, err := client.Do(req)
 	if err != nil {
 		return repo.IndexFile{}, err
 	}

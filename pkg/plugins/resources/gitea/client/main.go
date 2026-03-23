@@ -1,7 +1,6 @@
 package client
 
 import (
-	"net/http"
 	"time"
 
 	giteasdk "code.gitea.io/sdk/gitea"
@@ -25,9 +24,9 @@ func New(s Spec) (Client, error) {
 		return nil, err
 	}
 
-	client.Client = httpclient.NewRetryClient().(*http.Client)
+	client.Client = httpclient.NewRetryClient()
 
-	if len(s.Token) >= 0 {
+	if s.Token != "" {
 		client.Client.Transport = &oauth2.Transport{
 			Source: oauth2.StaticTokenSource(
 				&scm.Token{
@@ -45,9 +44,8 @@ func New(s Spec) (Client, error) {
 func NewSDKClient(s Spec) (SDKClient, error) {
 
 	// Set a global timeout on the underlying HTTP client used by the Gitea SDK
-	httpClient := &http.Client{
-		Timeout: 30 * time.Second,
-	}
+	httpClient := httpclient.NewRetryClient()
+	httpClient.Timeout = 30 * time.Second
 
 	client, err := giteasdk.NewClient(s.URL, giteasdk.SetToken(s.Token), giteasdk.SetHTTPClient(httpClient))
 

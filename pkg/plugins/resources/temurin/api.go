@@ -11,7 +11,6 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
-	httputils "github.com/updatecli/updatecli/pkg/plugins/utils/http"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
 )
 
@@ -38,8 +37,6 @@ func (t Temurin) apiPerformHttpReq(endpoint string, webClient httpclient.HTTPCli
 	if err != nil {
 		return []byte{}, "", fmt.Errorf("something went wrong while performing a request to %q:\n%s", redact.URL(url), err)
 	}
-
-	req.Header.Set("User-Agent", httputils.UserAgent)
 
 	logrus.Debugf("[temurin] Performing an http GET request to %q...", redact.URL(url))
 

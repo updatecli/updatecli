@@ -68,19 +68,15 @@ func New(spec interface{}) (*Temurin, error) {
 		return nil, fmt.Errorf("[temurin] resource with both 'specificversion' and 'featureversion' specified which are mutually exclusive")
 	}
 
-	httpClient := httpclient.NewRetryClient().(*http.Client)
+	noRedirectClient := httpclient.NewRetryClient()
+	noRedirectClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+		return http.ErrUseLastResponse
+	}
 
 	newResource := &Temurin{
-		spec: newSpec,
-		apiWebClient: &http.Client{
-			Transport: httpClient.Transport,
-		},
-		apiWebRedirectionClient: &http.Client{
-			CheckRedirect: func(req *http.Request, via []*http.Request) error {
-				return http.ErrUseLastResponse
-			},
-			Transport: httpClient.Transport,
-		},
+		spec:                    newSpec,
+		apiWebClient:            httpclient.NewRetryClient(),
+		apiWebRedirectionClient: noRedirectClient,
 	}
 
 	/** Validations **/
