@@ -474,15 +474,15 @@ func (g *Github) setDirectory() {
 	}
 }
 
-func (g *Github) queryRepository(sourceBranch string, workingBranch string, retry int) (*Repository, error) {
-	rateLimit, err := queryRateLimit(g.client, context.Background())
+func (g *Github) queryRepository(ctx context.Context, sourceBranch string, workingBranch string, retry int) (*Repository, error) {
+	rateLimit, err := queryRateLimit(g.client, ctx)
 	logrus.Debugln(rateLimit)
 	if err != nil {
 		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
 			if retry < client.MaxRetry {
 				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
 				rateLimit.Pause()
-				return g.queryRepository(sourceBranch, workingBranch, retry+1)
+				return g.queryRepository(ctx, sourceBranch, workingBranch, retry+1)
 			}
 			return nil, errors.New(ErrAPIRateLimitExceededFinalAttempt)
 		}
@@ -541,13 +541,13 @@ func (g *Github) queryRepository(sourceBranch string, workingBranch string, retr
 		"headRef":       githubv4.String(workingBranch),
 	}
 
-	err = g.client.Query(context.Background(), &query, variables)
+	err = g.client.Query(ctx, &query, variables)
 	if err != nil {
 		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
 			if retry < client.MaxRetry {
 				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
 				query.RateLimit.Pause()
-				return g.queryRepository(sourceBranch, workingBranch, retry+1)
+				return g.queryRepository(ctx, sourceBranch, workingBranch, retry+1)
 			}
 			return nil, errors.New(ErrAPIRateLimitExceededFinalAttempt)
 		}
@@ -583,15 +583,15 @@ func (g *Github) queryRepository(sourceBranch string, workingBranch string, retr
 
 // Returns Git object ID of the latest commit on the branch and the default branch
 // of the repository.
-func (g *Github) queryHeadOid(workingBranch string, retry int) (*RepositoryRef, error) {
-	rateLimit, err := queryRateLimit(g.client, context.Background())
+func (g *Github) queryHeadOid(ctx context.Context, workingBranch string, retry int) (*RepositoryRef, error) {
+	rateLimit, err := queryRateLimit(g.client, ctx)
 	logrus.Debugln(rateLimit)
 	if err != nil {
 		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
 			if retry < client.MaxRetry {
 				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
 				rateLimit.Pause()
-				return g.queryHeadOid(workingBranch, retry+1)
+				return g.queryHeadOid(ctx, workingBranch, retry+1)
 			}
 			return nil, errors.New(ErrAPIRateLimitExceededFinalAttempt)
 		}
@@ -629,13 +629,13 @@ func (g *Github) queryHeadOid(workingBranch string, retry int) (*RepositoryRef, 
 		"qualifiedName": githubv4.String(workingBranch),
 	}
 
-	err = g.client.Query(context.Background(), &query, variables)
+	err = g.client.Query(ctx, &query, variables)
 	if err != nil {
 		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
 			if retry < client.MaxRetry {
 				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
 				query.RateLimit.Pause()
-				return g.queryHeadOid(workingBranch, retry+1)
+				return g.queryHeadOid(ctx, workingBranch, retry+1)
 			}
 			return nil, errors.New(ErrAPIRateLimitExceededFinalAttempt)
 		}
@@ -664,17 +664,17 @@ type refQuery struct {
 
 // createBranch creates a new branch named branchName from the commit headOid
 // using the GitHub GraphQL API.
-func (g *Github) createBranch(branchName string, repositoryId string, headOid string, retry int) error {
+func (g *Github) createBranch(ctx context.Context, branchName string, repositoryId string, headOid string, retry int) error {
 	var query refQuery
 
-	rateLimit, err := queryRateLimit(g.client, context.Background())
+	rateLimit, err := queryRateLimit(g.client, ctx)
 	logrus.Debugln(rateLimit)
 	if err != nil {
 		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
 			if retry < client.MaxRetry {
 				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
 				rateLimit.Pause()
-				return g.createBranch(branchName, repositoryId, headOid, retry+1)
+				return g.createBranch(ctx, branchName, repositoryId, headOid, retry+1)
 			}
 			return errors.New(ErrAPIRateLimitExceededFinalAttempt)
 		}
@@ -687,7 +687,7 @@ func (g *Github) createBranch(branchName string, repositoryId string, headOid st
 		Oid:          githubv4.GitObjectID(headOid),
 	}
 
-	if err := g.client.Mutate(context.Background(), &query, input, nil); err != nil {
+	if err := g.client.Mutate(ctx, &query, input, nil); err != nil {
 		return err
 	}
 	return nil

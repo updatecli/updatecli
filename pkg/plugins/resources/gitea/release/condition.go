@@ -14,7 +14,7 @@ func (g *Gitea) Condition(ctx context.Context, source string, scm scm.ScmHandler
 		logrus.Warningf("Condition not supported for the plugin Gitea Release")
 	}
 
-	releases, err := g.SearchReleases()
+	releases, err := g.SearchReleases(ctx)
 	if err != nil {
 		return false, "", fmt.Errorf("looking for Gitea release: %w", err)
 	}

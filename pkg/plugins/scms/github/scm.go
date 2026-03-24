@@ -110,7 +110,7 @@ func (g *Github) Clone() (string, error) {
 }
 
 // Commit run `git commit`.
-func (g *Github) Commit(message string) error {
+func (g *Github) Commit(ctx context.Context, message string) error {
 	workingDir := g.GetDirectory()
 
 	// Generate the conventional commit message
@@ -129,7 +129,7 @@ func (g *Github) Commit(message string) error {
 			return err
 		}
 
-		commitHasPostApiQuery, err := g.CreateCommit(workingDir, commitMessage, 0)
+		commitHasPostApiQuery, err := g.CreateCommit(ctx, workingDir, commitMessage, 0)
 		if err != nil {
 			return err
 		}
@@ -250,7 +250,7 @@ type commitQuery struct {
 }
 
 // CreateCommit creates a commit on a branch using GitHub API
-func (g *Github) CreateCommit(workingDir string, commitMessage string, retry int) (createdCommitHash string, err error) {
+func (g *Github) CreateCommit(ctx context.Context, workingDir string, commitMessage string, retry int) (createdCommitHash string, err error) {
 	var m commitQuery
 
 	sourceBranch, workingBranch, _ := g.GetBranches()
@@ -275,21 +275,21 @@ func (g *Github) CreateCommit(workingDir string, commitMessage string, retry int
 		}
 	}
 
-	repoRef, err := g.GetLatestCommitHash(workingBranch)
+	repoRef, err := g.GetLatestCommitHash(ctx, workingBranch)
 	if err != nil {
 		return "", fmt.Errorf("retrieving latest commit hash for branch %q: %w", workingBranch, err)
 	}
 
 	headOid := repoRef.HeadOid
 	if headOid == "" {
-		sourceBranchRepoRef, err := g.GetLatestCommitHash(sourceBranch)
+		sourceBranchRepoRef, err := g.GetLatestCommitHash(ctx, sourceBranch)
 		if err != nil {
 			return "", fmt.Errorf("retrieving latest commit hash for source branch %q: %w", sourceBranch, err)
 		}
 
 		headOid = sourceBranchRepoRef.HeadOid
 		logrus.Debugf("Branch %s does not exist, creating it from commit %q", workingBranch, headOid)
-		if err := g.createBranch(workingBranch, repoRef.ID, headOid, 0); err != nil {
+		if err := g.createBranch(ctx, workingBranch, repoRef.ID, headOid, 0); err != nil {
 			return "", fmt.Errorf("creating branch %q from commit %q: %w", workingBranch, headOid, err)
 		}
 	}
@@ -309,14 +309,14 @@ func (g *Github) CreateCommit(workingDir string, commitMessage string, retry int
 		},
 	}
 
-	rateLimit, err := queryRateLimit(g.client, context.Background())
+	rateLimit, err := queryRateLimit(g.client, ctx)
 	logrus.Debugln(rateLimit)
 	if err != nil {
 		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
 			if retry < client.MaxRetry {
 				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
 				rateLimit.Pause()
-				return g.CreateCommit(workingDir, commitMessage, retry+1)
+				return g.CreateCommit(ctx, workingDir, commitMessage, retry+1)
 			}
 			return "", errors.New(ErrAPIRateLimitExceededFinalAttempt)
 		}
@@ -324,14 +324,14 @@ func (g *Github) CreateCommit(workingDir string, commitMessage string, retry int
 
 	}
 
-	if err := g.client.Mutate(context.Background(), &m, input, nil); err != nil {
+	if err := g.client.Mutate(ctx, &m, input, nil); err != nil {
 		// In some occasions, GitHub API may respond with
 		// "Expected branch to point to <commit hash> but was <commit hash>"
 		// even if we provide the correct commit hash.
 		// In that case, we retry a few times before giving up.
 		// This is probably due to some caching on GitHub side.
 		if retry < client.MaxRetry && strings.Contains(err.Error(), "Expected branch to point to") {
-			return g.CreateCommit(workingDir, commitMessage, retry+1)
+			return g.CreateCommit(ctx, workingDir, commitMessage, retry+1)
 		}
 		return "", fmt.Errorf("creating commit on branch %q: %w", workingBranch, err)
 	}
@@ -359,8 +359,8 @@ func processChangedFiles(workingDir string, files []string) ([]githubv4.FileAddi
 }
 
 // GetLatestCommitHash returns the latest commit hash of the specified branch
-func (g *Github) GetLatestCommitHash(workingBranch string) (*RepositoryRef, error) {
-	repoRef, err := g.queryHeadOid(workingBranch, 0)
+func (g *Github) GetLatestCommitHash(ctx context.Context, workingBranch string) (*RepositoryRef, error) {
+	repoRef, err := g.queryHeadOid(ctx, workingBranch, 0)
 	if err != nil {
 		return nil, err
 	}

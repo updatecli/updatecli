@@ -24,7 +24,7 @@ func (n Npm) Condition(ctx context.Context, source string, scm scm.ScmHandler) (
 		return false, "", errors.New("no version defined")
 	}
 
-	_, versions, err := n.getVersions()
+	_, versions, err := n.getVersions(ctx)
 	if err != nil {
 		return false, "", err
 	}

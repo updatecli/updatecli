@@ -16,7 +16,7 @@ func (cp CargoPackage) Source(ctx context.Context, workingDir string, resultSour
 		cp.registry.RootDir = workingDir
 	}
 
-	version, _, err := cp.getVersions()
+	version, _, err := cp.getVersions(ctx)
 	if err != nil {
 		return fmt.Errorf("get cargo packages versions: %w", err)
 	}

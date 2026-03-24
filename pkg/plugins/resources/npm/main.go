@@ -1,6 +1,7 @@
 package npm
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -189,8 +190,8 @@ func getNpmrcConfig(path string, defaultUrl string, defaultToken string) (RcConf
 }
 
 // GetVersions fetch all versions of the Npm package
-func (n *Npm) getVersions() (v string, versions []string, err error) {
-	n.data, err = n.getPackageData(n.spec.Name)
+func (n *Npm) getVersions(ctx context.Context) (v string, versions []string, err error) {
+	n.data, err = n.getPackageData(ctx, n.spec.Name)
 
 	if err != nil {
 		return "", nil, err
@@ -214,7 +215,7 @@ func (n *Npm) getVersions() (v string, versions []string, err error) {
 }
 
 // Get package data from Json API
-func (n *Npm) getPackageData(packageName string) (Data, error) {
+func (n *Npm) getPackageData(ctx context.Context, packageName string) (Data, error) {
 	var d Data
 	var registry Registry
 	// We need to find the registry URL to use for the package
@@ -234,7 +235,7 @@ func (n *Npm) getPackageData(packageName string) (Data, error) {
 
 	URL := fmt.Sprintf("%s%s", registry.Url, packageName)
 
-	req, err := http.NewRequest("GET", URL, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", URL, nil)
 	if err != nil {
 		logrus.Errorf("something went wrong while getting npm api data %q\n", err)
 	}

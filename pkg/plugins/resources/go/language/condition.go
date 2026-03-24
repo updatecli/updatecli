@@ -21,7 +21,7 @@ func (l *Language) Condition(ctx context.Context, source string, scm scm.ScmHand
 		return false, "", fmt.Errorf("no version defined")
 	}
 
-	versions, err := l.versions()
+	versions, err := l.versions(ctx)
 	if err != nil {
 		return false, "", fmt.Errorf("searching golang version: %w", err)
 	}

@@ -29,7 +29,7 @@ func (t *Temurin) Condition(ctx context.Context, source string, scm scm.ScmHandl
 			t.spec.OperatingSystem = strings.Split(platform, "/")[0]
 			t.spec.Architecture = strings.Split(platform, "/")[1]
 
-			found, message, err := t.checkRelease()
+			found, message, err := t.checkRelease(ctx)
 			if err != nil {
 				return false, "", err
 			}
@@ -52,11 +52,11 @@ func (t *Temurin) Condition(ctx context.Context, source string, scm scm.ScmHandl
 		return pass, message, nil
 	}
 
-	return t.checkRelease()
+	return t.checkRelease(ctx)
 }
 
-func (t *Temurin) checkRelease() (pass bool, message string, err error) {
-	foundReleases, err := t.apiGetReleaseNames()
+func (t *Temurin) checkRelease(ctx context.Context) (pass bool, message string, err error) {
+	foundReleases, err := t.apiGetReleaseNames(ctx)
 	if err != nil {
 		return false, "", err
 	}

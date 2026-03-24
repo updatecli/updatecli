@@ -51,8 +51,8 @@ func (e *Engine) Run(ctx context.Context) (err error) {
 	}
 
 	{
-		_, actionsSpan := tracer.Start(ctx, "updatecli.run_actions")
-		if err = e.runActions(); err != nil {
+		actionsCtx, actionsSpan := tracer.Start(ctx, "updatecli.run_actions")
+		if err = e.runActions(actionsCtx); err != nil {
 			errs = append(errs, fmt.Errorf("running actions failed: %w", err))
 			actionsSpan.RecordError(err)
 			actionsSpan.SetStatus(codes.Error, err.Error())

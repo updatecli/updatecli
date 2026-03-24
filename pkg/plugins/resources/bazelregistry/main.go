@@ -1,6 +1,7 @@
 package bazelregistry
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -105,13 +106,13 @@ func (b *Bazelregistry) ReportConfig() interface{} {
 }
 
 // fetchModuleMetadata fetches the metadata.json for a given module.
-func (b *Bazelregistry) fetchModuleMetadata(module string) (*Metadata, error) {
+func (b *Bazelregistry) fetchModuleMetadata(ctx context.Context, module string) (*Metadata, error) {
 	// Build URL by replacing {module} placeholder
 	url := strings.ReplaceAll(b.baseURL, "{module}", module)
 
 	logrus.Debugf("Fetching metadata for module %q from %q", module, redact.URL(url))
 
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("creating request: %w", err)
 	}

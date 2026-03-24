@@ -20,7 +20,7 @@ func (c *Chart) Source(ctx context.Context, workingDir string, resultSource *res
 	var err error
 
 	if strings.HasPrefix(c.spec.URL, "https://") || strings.HasPrefix(c.spec.URL, "http://") {
-		index, err = c.GetRepoIndexFromURL()
+		index, err = c.GetRepoIndexFromURL(ctx)
 		if err != nil {
 			return fmt.Errorf("getting repo index from url: %w", err)
 		}

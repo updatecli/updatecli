@@ -105,7 +105,7 @@ func (c *Chart) GetRepoIndexFromFile(rootDir string) (repo.IndexFile, error) {
 
 // GetRepoIndexFromUrl loads an index file and does minimal validity checking.
 // It fails if API Version isn't set (ErrNoAPIVersion) or if the "unmarshal" operation fails.
-func (c *Chart) GetRepoIndexFromURL() (repo.IndexFile, error) {
+func (c *Chart) GetRepoIndexFromURL(ctx context.Context) (repo.IndexFile, error) {
 	var err error
 
 	URL := c.spec.URL
@@ -117,7 +117,7 @@ func (c *Chart) GetRepoIndexFromURL() (repo.IndexFile, error) {
 		}
 	}
 
-	req, err := http.NewRequest("GET", URL, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", URL, nil)
 	if err != nil {
 		return repo.IndexFile{}, err
 	}

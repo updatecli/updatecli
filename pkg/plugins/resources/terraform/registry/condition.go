@@ -25,7 +25,7 @@ func (t *TerraformRegistry) Condition(ctx context.Context, source string, scm sc
 		return false, "", fmt.Errorf("%s version undefined", result.FAILURE)
 	}
 
-	versions, err := t.versions()
+	versions, err := t.versions(ctx)
 	if err != nil {
 		return false, "", fmt.Errorf("%s retrieving terraform registry version: %w", result.FAILURE, err)
 	}

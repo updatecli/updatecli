@@ -23,11 +23,11 @@ func (gr GitHubRelease) Condition(ctx context.Context, source string, scm scm.Sc
 	var versions []string
 	switch gr.spec.Key {
 	case KeyTagHash:
-		versions, err = gr.ghHandler.SearchReleasesByTagHash(gr.typeFilter)
+		versions, err = gr.ghHandler.SearchReleasesByTagHash(ctx, gr.typeFilter)
 	case KeyTitle:
-		versions, err = gr.ghHandler.SearchReleasesByTitle(gr.typeFilter)
+		versions, err = gr.ghHandler.SearchReleasesByTitle(ctx, gr.typeFilter)
 	default:
-		versions, err = gr.ghHandler.SearchReleasesByTagName(gr.typeFilter)
+		versions, err = gr.ghHandler.SearchReleasesByTagName(ctx, gr.typeFilter)
 	}
 
 	if err != nil {
@@ -39,7 +39,7 @@ func (gr GitHubRelease) Condition(ctx context.Context, source string, scm scm.Sc
 		case true:
 			logrus.Warningf("%s No GitHub Release found, we fallback to published git tags", result.ATTENTION)
 
-			versions, err = gr.ghHandler.SearchTags(0)
+			versions, err = gr.ghHandler.SearchTags(ctx, 0)
 			if err != nil {
 				return false, "", fmt.Errorf("looking for GitHub release tag: %w", err)
 			}

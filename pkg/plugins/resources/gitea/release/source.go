@@ -9,7 +9,7 @@ import (
 )
 
 func (g *Gitea) Source(ctx context.Context, workingDir string, resultSource *result.Source) error {
-	versions, err := g.SearchReleases()
+	versions, err := g.SearchReleases(ctx)
 
 	if err != nil {
 		return fmt.Errorf("search gitea release: %w", err)

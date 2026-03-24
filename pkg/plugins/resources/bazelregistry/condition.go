@@ -20,7 +20,7 @@ func (b *Bazelregistry) Condition(ctx context.Context, source string, scm scm.Sc
 	}
 
 	// Fetch metadata from registry
-	metadata, err := b.fetchModuleMetadata(b.spec.Module)
+	metadata, err := b.fetchModuleMetadata(ctx, b.spec.Module)
 	if err != nil {
 		return false, "", fmt.Errorf("fetching module metadata: %w", err)
 	}

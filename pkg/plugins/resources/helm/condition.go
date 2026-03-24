@@ -27,7 +27,7 @@ func (c *Chart) Condition(ctx context.Context, source string, scm scm.ScmHandler
 	var index repo.IndexFile
 
 	if strings.HasPrefix(c.spec.URL, "https://") || strings.HasPrefix(c.spec.URL, "http://") {
-		index, err = c.GetRepoIndexFromURL()
+		index, err = c.GetRepoIndexFromURL(ctx)
 		if err != nil {
 			return false, "", err
 		}

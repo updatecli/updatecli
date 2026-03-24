@@ -1,12 +1,14 @@
 package pullrequest
 
 import (
+	"context"
+
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/reports"
 )
 
 // CheckActionExist verifies if an existing GitTea pullrequest is already opened.
-func (g *Gitea) CheckActionExist(report *reports.Action) error {
+func (g *Gitea) CheckActionExist(ctx context.Context, report *reports.Action) error {
 
 	pullrequestTitle, pullrequestDescription, pullrequestLink, err := g.isPullRequestExist()
 	if err != nil {

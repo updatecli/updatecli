@@ -20,12 +20,36 @@ type mockGhHandler struct {
 	tagErr     error
 }
 
-func (m *mockGhHandler) SearchReleases(releaseType github.ReleaseType, retry int) (releases []github.ReleaseNode, err error) {
+func (m *mockGhHandler) SearchReleases(_ context.Context, releaseType github.ReleaseType, retry int) (releases []github.ReleaseNode, err error) {
 	return m.releases, m.releaseErr
 }
 
-func (m *mockGhHandler) SearchTags(retry int) (releases []string, err error) {
+func (m *mockGhHandler) SearchTags(_ context.Context, retry int) (releases []string, err error) {
 	return m.tags, m.tagErr
+}
+
+func (m *mockGhHandler) SearchReleasesByTagName(_ context.Context, releaseType github.ReleaseType) (releases []string, err error) {
+	var result []string
+	for _, r := range m.releases {
+		result = append(result, r.TagName)
+	}
+	return result, m.releaseErr
+}
+
+func (m *mockGhHandler) SearchReleasesByTagHash(_ context.Context, releaseType github.ReleaseType) (releases []string, err error) {
+	var result []string
+	for _, r := range m.releases {
+		result = append(result, r.TagCommit.Oid)
+	}
+	return result, m.releaseErr
+}
+
+func (m *mockGhHandler) SearchReleasesByTitle(_ context.Context, releaseType github.ReleaseType) (releases []string, err error) {
+	var result []string
+	for _, r := range m.releases {
+		result = append(result, r.Name)
+	}
+	return result, m.releaseErr
 }
 
 func TestGitHubRelease_Source(t *testing.T) {

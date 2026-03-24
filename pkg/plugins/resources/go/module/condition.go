@@ -17,7 +17,7 @@ func (g *GoModule) Condition(ctx context.Context, source string, scm scm.ScmHand
 		return false, "", fmt.Errorf("no version defined")
 	}
 
-	_, versions, err := g.versions()
+	_, versions, err := g.versions(ctx)
 	if err != nil {
 		return false, "", fmt.Errorf("searching version: %w", err)
 	}

@@ -10,7 +10,7 @@ import (
 
 func (t *Temurin) Source(ctx context.Context, workingDir string, resultSource *result.Source) error {
 	// Start by getting the version (required in any case)
-	releaseNames, err := t.apiGetReleaseNames()
+	releaseNames, err := t.apiGetReleaseNames(ctx)
 	if err != nil {
 		resultSource.Result = result.FAILURE
 		return err
@@ -33,7 +33,7 @@ func (t *Temurin) Source(ctx context.Context, workingDir string, resultSource *r
 		return nil
 
 	case "installer_url":
-		installerUrl, err := t.apiGetInstallerUrl(t.foundVersion)
+		installerUrl, err := t.apiGetInstallerUrl(ctx, t.foundVersion)
 		if err != nil {
 			resultSource.Result = result.FAILURE
 			return err
@@ -44,7 +44,7 @@ func (t *Temurin) Source(ctx context.Context, workingDir string, resultSource *r
 		return nil
 
 	case "checksum_url":
-		installerChecksumUrl, err := t.apiGetChecksumUrl(t.foundVersion)
+		installerChecksumUrl, err := t.apiGetChecksumUrl(ctx, t.foundVersion)
 		if err != nil {
 			resultSource.Result = result.FAILURE
 			return err
@@ -55,7 +55,7 @@ func (t *Temurin) Source(ctx context.Context, workingDir string, resultSource *r
 		return nil
 
 	case "signature_url":
-		signatureUrl, err := t.apiGetSignatureUrl(t.foundVersion)
+		signatureUrl, err := t.apiGetSignatureUrl(ctx, t.foundVersion)
 		if err != nil {
 			resultSource.Result = result.FAILURE
 			return err

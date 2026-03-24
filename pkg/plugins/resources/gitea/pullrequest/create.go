@@ -1,6 +1,8 @@
 package pullrequest
 
 import (
+	"context"
+
 	giteasdk "code.gitea.io/sdk/gitea"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/reports"
@@ -8,7 +10,7 @@ import (
 )
 
 // CreateAction opens a Pull Request on the Gitea server
-func (g *Gitea) CreateAction(report *reports.Action, resetDescription bool) error {
+func (g *Gitea) CreateAction(ctx context.Context, report *reports.Action, resetDescription bool) error {
 
 	title := report.Title
 

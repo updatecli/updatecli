@@ -1,12 +1,14 @@
 package pullrequest
 
 import (
+	"context"
+
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/reports"
 )
 
 // CheckActionExist verifies if an existing Stash pullrequest is already opened.
-func (s *Stash) CheckActionExist(report *reports.Action) error {
+func (s *Stash) CheckActionExist(ctx context.Context, report *reports.Action) error {
 
 	pullrequestTitle, pullrequestDescription, pullrequestLink, err := s.isPullRequestExist()
 	if err != nil {

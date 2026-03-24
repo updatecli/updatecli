@@ -208,7 +208,7 @@ func (t *Target) Run(ctx context.Context, source string, o *Options) (err error)
 			if commitMessage == "" {
 				commitMessage = t.Result.Description
 			}
-			if err = s.Commit(commitMessage); err != nil {
+			if err = s.Commit(ctx, commitMessage); err != nil {
 				failTargetRun()
 				return err
 			}

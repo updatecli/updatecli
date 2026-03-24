@@ -13,7 +13,7 @@ func (b *Bazelregistry) Source(ctx context.Context, workingDir string, resultSou
 	resultSource.Result = result.FAILURE
 
 	// Fetch metadata from registry
-	metadata, err := b.fetchModuleMetadata(b.spec.Module)
+	metadata, err := b.fetchModuleMetadata(ctx, b.spec.Module)
 	if err != nil {
 		return fmt.Errorf("fetching module metadata: %w", err)
 	}

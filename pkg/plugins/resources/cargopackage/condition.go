@@ -35,7 +35,7 @@ func (cp *CargoPackage) Condition(ctx context.Context, source string, scm scm.Sc
 		return false, "", errors.New("no version defined")
 	}
 
-	_, versions, err := cp.getVersions()
+	_, versions, err := cp.getVersions(ctx)
 	if err != nil {
 		return false, "", fmt.Errorf("getting cargo package version: %w", err)
 	}
