@@ -1,13 +1,14 @@
 package registry
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 // Source returns the latest version
-func (t *TerraformRegistry) Source(workingDir string, resultSource *result.Source) error {
+func (t *TerraformRegistry) Source(ctx context.Context, workingDir string, resultSource *result.Source) error {
 	_, err := t.versions()
 	if err != nil {
 		return fmt.Errorf("%s retrieving terraform registry version: %w", result.FAILURE, err)

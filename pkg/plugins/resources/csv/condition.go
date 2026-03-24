@@ -1,13 +1,14 @@
 package csv
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 )
 
-func (c *CSV) Condition(source string, scm scm.ScmHandler) (pass bool, message string, err error) {
+func (c *CSV) Condition(ctx context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 
 	rootDir := ""
 	if scm != nil {

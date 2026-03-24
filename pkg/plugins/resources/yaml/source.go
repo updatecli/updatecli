@@ -1,6 +1,7 @@
 package yaml
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -17,7 +18,7 @@ import (
 )
 
 // Source return the latest version
-func (y *Yaml) Source(workingDir string, resultSource *result.Source) error {
+func (y *Yaml) Source(ctx context.Context, workingDir string, resultSource *result.Source) error {
 	// By default workingDir is set to local directory
 	var filePath string
 

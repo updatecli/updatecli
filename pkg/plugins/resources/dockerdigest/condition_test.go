@@ -1,6 +1,7 @@
 package dockerdigest
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -95,7 +96,7 @@ func TestCondition(t *testing.T) {
 			DockerDigest, err := New(TestCases[i].spec)
 			require.NoError(t, err)
 
-			got, _, gotErr := DockerDigest.Condition(TestCases[i].sourceOutput, nil)
+			got, _, gotErr := DockerDigest.Condition(context.Background(), TestCases[i].sourceOutput, nil)
 
 			require.NoError(t, gotErr)
 			assert.Equal(t, TestCases[i].expectedResult.Pass, got)

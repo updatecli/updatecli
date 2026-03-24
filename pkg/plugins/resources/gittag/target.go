@@ -1,6 +1,7 @@
 package gittag
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -11,7 +12,7 @@ import (
 )
 
 // Target creates a tag if needed from a local git repository, without pushing the tag
-func (gt *GitTag) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
+func (gt *GitTag) Target(ctx context.Context, source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
 	var err error
 
 	if gt.spec.Path != "" && scm != nil {

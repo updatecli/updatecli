@@ -1,13 +1,14 @@
 package language
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 // Source returns the latest go module version
-func (l *Language) Source(workingDir string, resultSource *result.Source) error {
+func (l *Language) Source(ctx context.Context, workingDir string, resultSource *result.Source) error {
 	_, err := l.versions()
 	if err != nil {
 		return fmt.Errorf("retrieving golang version: %w", err)

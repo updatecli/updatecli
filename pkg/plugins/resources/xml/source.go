@@ -1,6 +1,7 @@
 package xml
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -10,7 +11,7 @@ import (
 )
 
 // Source returns a value from a xml file
-func (x *XML) Source(workingDir string, resultSource *result.Source) error {
+func (x *XML) Source(ctx context.Context, workingDir string, resultSource *result.Source) error {
 
 	// By the default workingdir is set to the current working directory
 	// it would be better to have it empty by default but it must be changed in the

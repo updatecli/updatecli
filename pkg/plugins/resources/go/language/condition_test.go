@@ -1,6 +1,7 @@
 package language
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -35,7 +36,7 @@ func TestCondition(t *testing.T) {
 			got, err := New(tt.spec)
 			require.NoError(t, err)
 
-			gotResult, _, err := got.Condition("", nil)
+			gotResult, _, err := got.Condition(context.Background(), "", nil)
 			if tt.expectedError {
 				if assert.Error(t, err) {
 					assert.Equal(t, tt.expectedErrorMsg.Error(), err.Error())

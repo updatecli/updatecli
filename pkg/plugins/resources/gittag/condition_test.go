@@ -1,6 +1,7 @@
 package gittag
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -319,7 +320,7 @@ func TestGitTag_Condition(t *testing.T) {
 				directory:        tt.directory,
 			}
 
-			gotPass, gotMessage, gotErr := gt.Condition(tt.source, nil)
+			gotPass, gotMessage, gotErr := gt.Condition(context.Background(), tt.source, nil)
 
 			if tt.wantErr {
 				assert.Error(t, gotErr)

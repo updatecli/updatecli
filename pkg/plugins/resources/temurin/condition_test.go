@@ -2,6 +2,7 @@ package temurin
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -163,7 +164,7 @@ func TestCondition(t *testing.T) {
 			sut.apiWebClient = mockedHttpClient
 			sut.apiWebRedirectionClient = mockedHttpClient
 
-			gotResult, _, gotErr := sut.Condition(tt.source, tt.scm)
+			gotResult, _, gotErr := sut.Condition(context.Background(), tt.source, tt.scm)
 
 			if tt.wantErr != "" {
 				require.Error(t, gotErr)

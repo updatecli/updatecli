@@ -1,13 +1,14 @@
 package toolversions
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-func (t *ToolVersions) Source(workingDir string, resultSource *result.Source) error {
+func (t *ToolVersions) Source(ctx context.Context, workingDir string, resultSource *result.Source) error {
 
 	if len(t.contents) > 1 {
 		return errors.New("source only supports one file")

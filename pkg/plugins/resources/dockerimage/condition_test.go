@@ -1,6 +1,7 @@
 package dockerimage
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -84,7 +85,7 @@ func TestCondition(t *testing.T) {
 			got, err := New(tt.spec)
 			require.NoError(t, err)
 
-			gotPass, _, gotErr := got.Condition(tt.source, nil)
+			gotPass, _, gotErr := got.Condition(context.Background(), tt.source, nil)
 
 			if tt.expectedError {
 				assert.Error(t, gotErr)

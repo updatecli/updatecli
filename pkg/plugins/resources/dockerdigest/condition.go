@@ -1,6 +1,7 @@
 package dockerdigest
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -11,7 +12,7 @@ import (
 )
 
 // Condition checks if a Docker image tag digest exists in a registry
-func (ds *DockerDigest) Condition(source string, scm scm.ScmHandler) (pass bool, message string, err error) {
+func (ds *DockerDigest) Condition(ctx context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 	if scm != nil {
 		logrus.Warningln("scm is not supported, ignoring")
 	}

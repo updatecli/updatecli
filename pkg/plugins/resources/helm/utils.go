@@ -2,6 +2,7 @@ package helm
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"fmt"
 	"io"
@@ -165,7 +166,7 @@ func (c *Chart) GetRepoIndexFromURL() (repo.IndexFile, error) {
 }
 
 // MetadataUpdate updates a metadata if necessary and it bump the ChartVersion
-func (c *Chart) MetadataUpdate(source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
+func (c *Chart) MetadataUpdate(ctx context.Context, source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
 	var err error
 
 	/*
@@ -217,7 +218,7 @@ func (c *Chart) MetadataUpdate(source string, scm scm.ScmHandler, dryRun bool, r
 	}
 
 	if len(currentChartMetadata.AppVersion) > 0 && c.spec.AppVersion {
-		if err := c.metadataYamlPathUpdate("$.appVersion", source, scm, dryRun, resultTarget); err != nil {
+		if err := c.metadataYamlPathUpdate(ctx, "$.appVersion", source, scm, dryRun, resultTarget); err != nil {
 			return err
 		}
 	}
@@ -326,7 +327,7 @@ forLoop:
 		logrus.Debugf("Updating chart version from %q to %q", currentChartMetadata.Version, computedVersion)
 	}
 
-	if err := c.metadataYamlPathUpdate("$.version", computedVersion, scm, dryRun, resultTarget); err != nil {
+	if err := c.metadataYamlPathUpdate(ctx, "$.version", computedVersion, scm, dryRun, resultTarget); err != nil {
 		return err
 	}
 
@@ -334,7 +335,7 @@ forLoop:
 }
 
 // metadataYamlPathUpdate updates the Chart.yaml
-func (c *Chart) metadataYamlPathUpdate(key string, value string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
+func (c *Chart) metadataYamlPathUpdate(ctx context.Context, key string, value string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
 	yamlSpec := yaml.Spec{
 		File: filepath.Join(c.spec.Name, "Chart.yaml"),
 		Key:  key,
@@ -346,7 +347,7 @@ func (c *Chart) metadataYamlPathUpdate(key string, value string, scm scm.ScmHand
 	}
 
 	metadataResultTarget := result.Target{}
-	if err := yamlResource.Target(value, scm, dryRun, &metadataResultTarget); err != nil {
+	if err := yamlResource.Target(ctx, value, scm, dryRun, &metadataResultTarget); err != nil {
 		return err
 	}
 

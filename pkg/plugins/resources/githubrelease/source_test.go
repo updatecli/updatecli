@@ -1,6 +1,7 @@
 package githubrelease
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -137,7 +138,7 @@ func TestGitHubRelease_Source(t *testing.T) {
 
 			gotResult := result.Source{}
 
-			err = gr.Source(tt.workingDir, &gotResult)
+			err = gr.Source(context.Background(), tt.workingDir, &gotResult)
 			if tt.wantErr {
 				assert.Error(t, err)
 				return

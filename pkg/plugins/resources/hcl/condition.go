@@ -1,13 +1,14 @@
 package hcl
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-func (h *Hcl) Condition(source string, scm scm.ScmHandler) (pass bool, message string, err error) {
+func (h *Hcl) Condition(ctx context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 	if len(h.files) > 1 {
 		return false, "", fmt.Errorf("%s HCL condition only supports one file", result.FAILURE)
 	}

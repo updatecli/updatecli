@@ -1,6 +1,7 @@
 package maven
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/sirupsen/logrus"
@@ -9,7 +10,7 @@ import (
 )
 
 // Source return the latest version
-func (m *Maven) Source(workingDir string, resultSource *result.Source) error {
+func (m *Maven) Source(ctx context.Context, workingDir string, resultSource *result.Source) error {
 
 	for _, metadataHandler := range m.metadataHandlers {
 		// metadataURL contains the URL without username/password

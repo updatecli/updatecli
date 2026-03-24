@@ -1,6 +1,7 @@
 package registry
 
 import (
+	"context"
 	"io"
 	"net/http"
 	"strings"
@@ -106,7 +107,7 @@ func TestCondition(t *testing.T) {
 				},
 			}
 
-			gotResult, _, gotErr := got.Condition(tt.source, nil)
+			gotResult, _, gotErr := got.Condition(context.Background(), tt.source, nil)
 			if tt.expectedError {
 				if assert.Error(t, gotErr) {
 					assert.Equal(t, tt.expectedErrorMsg.Error(), gotErr.Error())

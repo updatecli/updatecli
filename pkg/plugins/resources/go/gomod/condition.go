@@ -1,6 +1,7 @@
 package gomod
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
@@ -8,7 +9,7 @@ import (
 )
 
 // Condition checks if a specific stable Golang version is published
-func (g *GoMod) Condition(source string, scm scm.ScmHandler) (pass bool, message string, err error) {
+func (g *GoMod) Condition(ctx context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 	versionToCheck := g.spec.Version
 	if versionToCheck == "" {
 		versionToCheck = source

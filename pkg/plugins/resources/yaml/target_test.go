@@ -1,6 +1,7 @@
 package yaml
 
 import (
+	"context"
 	"os"
 	"testing"
 
@@ -691,7 +692,7 @@ existing:
 			assert.NoError(t, err)
 
 			gotResult := result.Target{}
-			gotErr := y.Target(tt.inputSourceValue, nil, tt.dryRun, &gotResult)
+			gotErr := y.Target(context.Background(), tt.inputSourceValue, nil, tt.dryRun, &gotResult)
 			if tt.wantedError {
 				assert.Error(t, gotErr)
 				return
@@ -878,7 +879,7 @@ github:
 			assert.NoError(t, err)
 
 			gotResult := result.Target{}
-			gotErr := y.Target(tt.inputSourceValue, tt.scm, tt.dryRun, &gotResult)
+			gotErr := y.Target(context.Background(), tt.inputSourceValue, tt.scm, tt.dryRun, &gotResult)
 			if tt.wantedError {
 				assert.Error(t, gotErr)
 				return

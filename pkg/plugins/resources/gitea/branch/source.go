@@ -1,6 +1,7 @@
 package branch
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -9,7 +10,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
-func (g *Gitea) Source(workingDir string, resultSource *result.Source) error {
+func (g *Gitea) Source(ctx context.Context, workingDir string, resultSource *result.Source) error {
 	versions, err := g.SearchBranches()
 
 	if err != nil {

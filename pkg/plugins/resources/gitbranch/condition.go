@@ -1,6 +1,7 @@
 package gitbranch
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/sirupsen/logrus"
@@ -8,7 +9,7 @@ import (
 )
 
 // Condition checks that a git branch exists
-func (gb *GitBranch) Condition(source string, scm scm.ScmHandler) (pass bool, message string, err error) {
+func (gb *GitBranch) Condition(ctx context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 
 	if gb.spec.Path != "" && scm != nil {
 		logrus.Warningf("Path setting value %q is overriding the scm configuration (value %q)",

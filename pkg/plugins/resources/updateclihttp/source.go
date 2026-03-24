@@ -1,6 +1,7 @@
 package updateclihttp
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -10,7 +11,7 @@ import (
 )
 
 // Source returns content from the response of the specified HTTP request (defaults to the body).
-func (h *Http) Source(workingDir string, resultSource *result.Source) error {
+func (h *Http) Source(ctx context.Context, workingDir string, resultSource *result.Source) error {
 	resultSource.Result = result.FAILURE
 
 	httpRes, err := h.performHttpRequest()

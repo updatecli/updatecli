@@ -1,6 +1,7 @@
 package dockerimage
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 
@@ -10,7 +11,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-func (di *DockerImage) Source(workingDir string, resultSource *result.Source) error {
+func (di *DockerImage) Source(ctx context.Context, workingDir string, resultSource *result.Source) error {
 	repo, err := name.NewRepository(di.spec.Image)
 	if err != nil {
 		return fmt.Errorf("invalid repository %s: %w", di.spec.Image, err)

@@ -1,6 +1,7 @@
 package bazelmod
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 
@@ -8,7 +9,7 @@ import (
 )
 
 // Source reads the version of the specified module from MODULE.bazel
-func (b *Bazelmod) Source(workingDir string, resultSource *result.Source) error {
+func (b *Bazelmod) Source(ctx context.Context, workingDir string, resultSource *result.Source) error {
 	filePath := b.spec.File
 	if !filepath.IsAbs(filePath) {
 		filePath = filepath.Join(workingDir, filePath)

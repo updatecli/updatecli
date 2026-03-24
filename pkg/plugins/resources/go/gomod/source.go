@@ -1,6 +1,7 @@
 package gomod
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -11,7 +12,7 @@ import (
 )
 
 // Source returns the latest go module version
-func (g *GoMod) Source(workingDir string, resultSource *result.Source) error {
+func (g *GoMod) Source(ctx context.Context, workingDir string, resultSource *result.Source) error {
 	var err error
 
 	// By the default workingdir is set to the current working directory

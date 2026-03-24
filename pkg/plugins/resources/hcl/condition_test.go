@@ -1,6 +1,7 @@
 package hcl
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -91,7 +92,7 @@ func TestCondition(t *testing.T) {
 
 			require.NoError(t, err)
 
-			gotResult, _, gotErr := h.Condition(tt.source, nil)
+			gotResult, _, gotErr := h.Condition(context.Background(), tt.source, nil)
 
 			if tt.wantErr {
 				assert.Equal(t, tt.expectedErrorMsg.Error(), gotErr.Error())

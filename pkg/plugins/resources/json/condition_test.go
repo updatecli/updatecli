@@ -1,6 +1,7 @@
 package json
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -105,7 +106,7 @@ func TestCondition(t *testing.T) {
 
 			require.NoError(t, err)
 
-			got, _, gotErr := j.Condition("", nil)
+			got, _, gotErr := j.Condition(context.Background(), "", nil)
 
 			if tt.wantErr {
 				assert.Equal(t, tt.expectedErrorMsg.Error(), gotErr.Error())

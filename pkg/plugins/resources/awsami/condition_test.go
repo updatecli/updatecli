@@ -1,6 +1,7 @@
 package awsami
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -21,7 +22,7 @@ func TestCondition(t *testing.T) {
 		d.ami.apiClient = mockDescribeImagesOutput{
 			Resp: d.mockedResponse,
 		}
-		got, _, gotErr := d.ami.Condition("", nil)
+		got, _, gotErr := d.ami.Condition(context.Background(), "", nil)
 
 		switch d.expectedError == nil {
 		case true:
@@ -58,7 +59,7 @@ func TestCondition(t *testing.T) {
 		},
 	}
 
-	got, _, gotErr := ami.Condition(imageID, nil)
+	got, _, gotErr := ami.Condition(context.Background(), imageID, nil)
 
 	require.NoError(t, gotErr)
 	assert.Equal(t, true, got)

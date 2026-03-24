@@ -489,7 +489,7 @@ func (p *Pipeline) runFlowCallbackWithCtx(ctx context.Context, d *dag.DAG, id st
 		switch leaf.Category {
 		case sourceCategory:
 			sourceId := strings.ReplaceAll(id, "source#", "")
-			r, e := p.RunSource(sourceId)
+			r, e := p.RunSource(ctx, sourceId)
 			if e != nil {
 				displayError(e)
 				err = e
@@ -513,7 +513,7 @@ func (p *Pipeline) runFlowCallbackWithCtx(ctx context.Context, d *dag.DAG, id st
 
 		case conditionCategory:
 			conditionId := strings.ReplaceAll(id, "condition#", "")
-			r, e := p.RunCondition(conditionId)
+			r, e := p.RunCondition(ctx, conditionId)
 			if e != nil {
 				displayError(e)
 				err = e
@@ -543,7 +543,7 @@ func (p *Pipeline) runFlowCallbackWithCtx(ctx context.Context, d *dag.DAG, id st
 
 		case targetCategory:
 			targetId := strings.ReplaceAll(id, "target#", "")
-			r, changed, e := p.RunTarget(targetId, depsSourceIDs)
+			r, changed, e := p.RunTarget(ctx, targetId, depsSourceIDs)
 			if e != nil {
 				displayError(e)
 				err = e

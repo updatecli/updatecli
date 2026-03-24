@@ -1,13 +1,14 @@
 package npm
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 // Source returns the latest npm package version
-func (n Npm) Source(workingDir string, resultSource *result.Source) error {
+func (n Npm) Source(ctx context.Context, workingDir string, resultSource *result.Source) error {
 	version, _, err := n.getVersions()
 	if err != nil {
 		return err

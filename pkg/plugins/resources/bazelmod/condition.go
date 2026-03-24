@@ -1,6 +1,7 @@
 package bazelmod
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 
@@ -10,7 +11,7 @@ import (
 )
 
 // Condition checks if the version in MODULE.bazel matches the expected version
-func (b *Bazelmod) Condition(source string, scm scm.ScmHandler) (pass bool, message string, err error) {
+func (b *Bazelmod) Condition(ctx context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 	// Use source as the expected version if provided
 	expectedVersion := source
 	if expectedVersion == "" {

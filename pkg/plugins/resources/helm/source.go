@@ -1,6 +1,7 @@
 package helm
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -9,7 +10,7 @@ import (
 )
 
 // Source return the latest version
-func (c *Chart) Source(workingDir string, resultSource *result.Source) error {
+func (c *Chart) Source(ctx context.Context, workingDir string, resultSource *result.Source) error {
 
 	if strings.HasPrefix(c.spec.URL, "oci://") {
 		return c.OCISource(workingDir, resultSource)

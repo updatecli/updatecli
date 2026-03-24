@@ -1,6 +1,7 @@
 package gitbranch
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/sirupsen/logrus"
@@ -9,7 +10,7 @@ import (
 )
 
 // Target creates and pushes a git tag based on the SCM configuration
-func (gb *GitBranch) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) (err error) {
+func (gb *GitBranch) Target(ctx context.Context, source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) (err error) {
 
 	if gb.spec.Path != "" && scm != nil {
 		logrus.Warningf("Path setting value %q is overriding the scm configuration (value %q)",

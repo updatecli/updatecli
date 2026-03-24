@@ -1,6 +1,7 @@
 package githubrelease
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/sirupsen/logrus"
@@ -8,7 +9,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-func (gr GitHubRelease) Condition(source string, scm scm.ScmHandler) (pass bool, message string, err error) {
+func (gr GitHubRelease) Condition(ctx context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 
 	if scm != nil {
 		logrus.Warningf("condition not supported for plugin GitHub Release used with scm")

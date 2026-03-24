@@ -1,6 +1,7 @@
 package release
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/sirupsen/logrus"
@@ -8,7 +9,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-func (g *Stash) Condition(source string, scm scm.ScmHandler, resultCondition *result.Condition) error {
+func (g *Stash) Condition(ctx context.Context, source string, scm scm.ScmHandler, resultCondition *result.Condition) error {
 
 	if scm != nil {
 		logrus.Warningf("scm not supported, ignoring")

@@ -1,13 +1,14 @@
 package toolversions
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 )
 
-func (t *ToolVersions) Condition(source string, scm scm.ScmHandler) (pass bool, message string, err error) {
+func (t *ToolVersions) Condition(ctx context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 	conditionResult := true
 
 	resultMessage := ""

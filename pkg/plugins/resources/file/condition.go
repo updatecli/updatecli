@@ -1,6 +1,7 @@
 package file
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"strings"
@@ -14,7 +15,7 @@ import (
 
 // Condition test if a file content matches the content provided via configuration.
 // If the configuration doesn't specify a value then it fall back to the source output
-func (f *File) Condition(source string, scm scm.ScmHandler) (pass bool, message string, err error) {
+func (f *File) Condition(ctx context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 	workDir := ""
 	if scm != nil {
 		workDir = scm.GetDirectory()

@@ -1,6 +1,7 @@
 package bazelmod
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -150,7 +151,7 @@ func TestCondition(t *testing.T) {
 			b, err := New(tt.spec)
 			require.NoError(t, err)
 
-			pass, message, err := b.Condition(tt.source, nil)
+			pass, message, err := b.Condition(context.Background(), tt.source, nil)
 
 			if tt.wantErr {
 				assert.Error(t, err)

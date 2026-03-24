@@ -1,6 +1,7 @@
 package lock
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 
@@ -8,7 +9,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-func (t *TerraformLock) Condition(source string, scm scm.ScmHandler) (pass bool, message string, err error) {
+func (t *TerraformLock) Condition(ctx context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 	if len(t.files) > 1 {
 		return false, "", fmt.Errorf("%s terraform/lock condition only supports one file", result.FAILURE)
 	}

@@ -1,6 +1,7 @@
 package jenkins
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -72,7 +73,7 @@ func TestJenkins_Source(t *testing.T) {
 				mavenMetaHandler: tt.mockedMetadataHandler,
 			}
 			gotResult := result.Source{}
-			gotErr := sut.Source(tt.workingDir, &gotResult)
+			gotErr := sut.Source(context.Background(), tt.workingDir, &gotResult)
 			if tt.wantErr {
 				require.Error(t, gotErr)
 				return

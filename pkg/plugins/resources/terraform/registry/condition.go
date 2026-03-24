@@ -1,6 +1,7 @@
 package registry
 
 import (
+	"context"
 	"fmt"
 	"slices"
 
@@ -10,7 +11,7 @@ import (
 )
 
 // Condition checks if a specific version is published
-func (t *TerraformRegistry) Condition(source string, scm scm.ScmHandler) (pass bool, message string, err error) {
+func (t *TerraformRegistry) Condition(ctx context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 	if scm != nil {
 		logrus.Debugln("scm is not supported")
 	}

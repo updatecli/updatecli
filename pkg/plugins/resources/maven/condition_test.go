@@ -1,6 +1,7 @@
 package maven
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -81,7 +82,7 @@ func TestCondition(t *testing.T) {
 				},
 			}
 
-			gotResult, _, gotErr := sut.Condition(tt.source, nil)
+			gotResult, _, gotErr := sut.Condition(context.Background(), tt.source, nil)
 			if tt.wantErr {
 				require.Error(t, gotErr)
 				return

@@ -1,6 +1,7 @@
 package jenkins
 
 import (
+	"context"
 	"fmt"
 	"sort"
 
@@ -9,7 +10,7 @@ import (
 )
 
 // Source returns the latest Jenkins version based on release type
-func (j *Jenkins) Source(workingDir string, resultSource *result.Source) error {
+func (j *Jenkins) Source(ctx context.Context, workingDir string, resultSource *result.Source) error {
 	latest, versions, err := j.getVersions()
 	if err != nil {
 		return fmt.Errorf("searching jenkins version: %w", err)
