@@ -1,6 +1,9 @@
 package json
 
 import (
+	"fmt"
+	"os"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -94,6 +97,62 @@ func TestTarget(t *testing.T) {
 			}
 
 			assert.Equal(t, tt.expectedResult, gotResult.Changed)
+		})
+	}
+}
+
+// TestTargetPreservesSpecialCharacters verifies that HTML-special characters such as
+// ">" are not escaped to their Unicode equivalents (e.g. \u003e) when the target
+// writes back to disk. This is a regression test for the HTML-escaping bug.
+func TestTargetPreservesSpecialCharacters(t *testing.T) {
+	// Initial JSON contains a browsers key with ">0.2%" that must survive a write
+	// cycle untouched, alongside a separate version key that the target will update.
+	initialJSON := `{
+  "browsers": ">0.2%",
+  "version": "1.0.0"
+}
+`
+
+	engines := []struct {
+		name   string
+		engine *string
+	}{
+		{name: "dasel/v1 (default)", engine: nil},
+		{name: "dasel/v2", engine: strPtr(ENGINEDASEL_V2)},
+	}
+
+	for _, e := range engines {
+		t.Run(fmt.Sprintf("engine=%s", e.name), func(t *testing.T) {
+			dir := t.TempDir()
+			filePath := dir + "/test.json"
+
+			err := os.WriteFile(filePath, []byte(initialJSON), 0600)
+			require.NoError(t, err)
+
+			spec := Spec{
+				File:   filePath,
+				Key:    ".version",
+				Engine: e.engine,
+			}
+
+			j, err := New(spec)
+			require.NoError(t, err)
+
+			gotResult := result.Target{}
+			// dryRun=false so the file is actually written back to disk.
+			err = j.Target("2.0.0", nil, false, &gotResult)
+			require.NoError(t, err)
+			assert.True(t, gotResult.Changed)
+
+			content, err := os.ReadFile(filePath)
+			require.NoError(t, err)
+
+			// The literal ">" must be preserved; \u003e is the escaped form that
+			// Go's encoding/json emits by default via its HTMLEscape behaviour.
+			assert.True(t, strings.Contains(string(content), ">0.2%"),
+				"expected >0.2%% to be preserved in file, got:\n%s", string(content))
+			assert.False(t, strings.Contains(string(content), `\u003e`),
+				"expected > NOT to be HTML-escaped to \\u003e, got:\n%s", string(content))
 		})
 	}
 }
