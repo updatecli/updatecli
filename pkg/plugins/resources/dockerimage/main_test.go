@@ -42,7 +42,7 @@ func TestNew(t *testing.T) {
 				Kind:    "latest",
 				Pattern: "latest",
 			},
-			wantRemoteOptionsSize: 1,
+			wantRemoteOptionsSize: 2,
 		},
 		{
 			name: "Normal case with default (implicit) architecture",
@@ -67,7 +67,7 @@ func TestNew(t *testing.T) {
 				Kind:    "latest",
 				Pattern: "latest",
 			},
-			wantRemoteOptionsSize: 1,
+			wantRemoteOptionsSize: 2,
 		},
 		{
 			name: "Normal case with multiple architectures",
@@ -93,7 +93,7 @@ func TestNew(t *testing.T) {
 				Kind:    "latest",
 				Pattern: "latest",
 			},
-			wantRemoteOptionsSize: 1,
+			wantRemoteOptionsSize: 2,
 		},
 		{
 			name: "Normal case with multiple architectures but only one in the list",
@@ -119,7 +119,7 @@ func TestNew(t *testing.T) {
 				Kind:    "latest",
 				Pattern: "latest",
 			},
-			wantRemoteOptionsSize: 1,
+			wantRemoteOptionsSize: 2,
 		},
 		{
 			name: "Invalid Spec provided (no password but username)",

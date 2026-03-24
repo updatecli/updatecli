@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/updatecli/updatecli/pkg/plugins/utils/cargo"
-	httputils "github.com/updatecli/updatecli/pkg/plugins/utils/http"
 
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/sirupsen/logrus"
@@ -87,7 +86,7 @@ func New(spec interface{}, isSCM bool) (*CargoPackage, error) {
 		return nil, err
 	}
 
-	webClient := httpclient.NewThrottledClient(1*time.Second, 1, http.DefaultTransport)
+	webClient := httpclient.NewThrottledRetryClient(1*time.Second, 1)
 	newResource := &CargoPackage{
 		spec:          newSpec,
 		versionFilter: newFilter,
@@ -161,8 +160,6 @@ func (cp *CargoPackage) getPackageDataFromApi(name string, indexUrl string) (Pac
 		logrus.Errorf("something went wrong while getting cargo api data %q\n", err)
 		return PackageData{}, err
 	}
-
-	req.Header.Set("User-Agent", httputils.UserAgent)
 
 	if cp.registry.Auth.Token != "" {
 		format := "Bearer %s"

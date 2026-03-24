@@ -107,7 +107,7 @@ func New(spec interface{}) (*Npm, error) {
 		spec:          newSpec,
 		versionFilter: newFilter,
 		rcConfig:      rcConfig,
-		webClient:     &http.Client{},
+		webClient:     httpclient.NewRetryClient(),
 	}, nil
 }
 

@@ -47,8 +47,7 @@ func New(spec interface{}) (*Http, error) {
 		}
 	}
 
-	httpClient := &http.Client{}
-	httpClient.Transport = httpclient.NewThrottledTransport(1*time.Second, 1, http.DefaultTransport)
+	httpClient := httpclient.NewThrottledRetryClient(1*time.Second, 1)
 
 	// Do not follow redirect as per https://pkg.go.dev/net/http when we want to get a header from original request
 	httpClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {

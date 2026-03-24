@@ -1,8 +1,6 @@
 package client
 
 import (
-	"net/http"
-
 	"github.com/drone/go-scm/scm"
 	"github.com/drone/go-scm/scm/driver/bitbucket"
 	"github.com/drone/go-scm/scm/transport"
@@ -55,7 +53,7 @@ type Spec struct {
 func New(s Spec) (*scm.Client, error) {
 	client := bitbucket.NewDefault()
 
-	client.Client = httpclient.NewRetryClient().(*http.Client)
+	client.Client = httpclient.NewRetryClient()
 
 	if (len(s.Username) > 0) && (len(s.Password) > 0) {
 		client.Client.Transport = &transport.BasicAuth{

@@ -1,8 +1,6 @@
 package gomodule
 
 import (
-	"net/http"
-
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
@@ -48,7 +46,7 @@ func New(spec interface{}) (*GoModule, error) {
 	return &GoModule{
 		Spec:          newSpec,
 		versionFilter: newFilter,
-		webClient:     &http.Client{},
+		webClient:     httpclient.NewRetryClient(),
 	}, nil
 }
 
