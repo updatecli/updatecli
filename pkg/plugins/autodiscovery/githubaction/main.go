@@ -214,7 +214,7 @@ func New(spec interface{}, rootDir, scmID, actionID string) (GitHubAction, error
 		newFilter.Kind = defaultVersionFilterKind
 		newFilter.Pattern = defaultVersionFilterPattern
 	}
-	digest := false
+	digest := true
 	if s.Digest != nil {
 		digest = *s.Digest
 	}
