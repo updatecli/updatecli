@@ -1,6 +1,7 @@
 package pipeline
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"sync"
@@ -16,6 +17,10 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
 	"github.com/updatecli/updatecli/pkg/core/reports"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/core/telemetry"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // Pipeline represent an updatecli run for a specific configuration
@@ -41,6 +46,8 @@ type Pipeline struct {
 	// Config contains the pipeline configuration defined by the user
 	Config *config.Config
 	mu     sync.Mutex
+	// CrawlerSpanCtx links auto-discovered pipelines to their originating crawler span
+	CrawlerSpanCtx trace.SpanContext
 }
 
 // Init initialize an updatecli context based on its configuration
@@ -229,12 +236,126 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 
 }
 
-func (p *Pipeline) runFlowCallback(d *dag.DAG, id string, depsResults []dag.FlowResult) (v interface{}, err error) {
-	p.mu.Lock()         // Acquire lock at the start
-	defer p.mu.Unlock() // Release lock when function exits
+// Run executes a single pipeline, wrapping the entire run in an OpenTelemetry span.
+// If CrawlerSpanCtx is valid, the pipeline span is linked to the originating crawler span.
+func (p *Pipeline) Run(ctx context.Context) error {
+	logrus.Infof("\n%s\n", strings.Repeat("#", len(p.Name)+4))
+	logrus.Infof("# %s #\n", strings.ToTitle(p.Name))
+	logrus.Infof("%s\n\n", strings.Repeat("#", len(p.Name)+4))
+
+	tracer := telemetry.Tracer("updatecli")
+
+	opts := []trace.SpanStartOption{
+		trace.WithAttributes(
+			attribute.String("updatecli.pipeline.name", p.Name),
+			attribute.String("updatecli.pipeline.id", p.ID),
+			attribute.Int("updatecli.pipeline.sources_count", len(p.Sources)),
+			attribute.Int("updatecli.pipeline.conditions_count", len(p.Conditions)),
+			attribute.Int("updatecli.pipeline.targets_count", len(p.Targets)),
+		),
+	}
+
+	if p.CrawlerSpanCtx.IsValid() {
+		opts = append(opts, trace.WithLinks(trace.Link{SpanContext: p.CrawlerSpanCtx}))
+	}
+
+	ctx, span := tracer.Start(ctx, "updatecli.pipeline", opts...)
+	defer span.End()
+
+	logrus.Infof("Pipeline ID\t: %s", p.ID)
+	if p.Options.Target.DryRun {
+		logrus.Infof("Dry Run\t\t: enabled\n")
+		span.SetAttributes(attribute.Bool("updatecli.pipeline.dry_run", true))
+	}
+
+	p.Report.Result = result.SUCCESS
+
+	resources, err := p.SortedResources()
+	if err != nil {
+		p.Report.Result = result.FAILURE
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "dag creation failed")
+		return fmt.Errorf("could not create dag from spec:\t%q", err.Error())
+	}
+
+	// Closure captures ctx so each DAG node callback can create a child span.
+	callback := func(d *dag.DAG, id string, depsResults []dag.FlowResult) (interface{}, error) {
+		return p.runFlowCallbackWithCtx(ctx, d, id, depsResults)
+	}
+
+	leaves, err := resources.DescendantsFlow(rootVertex, nil, callback)
+	if err != nil {
+		p.Report.Result = result.FAILURE
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "dag execution failed")
+		return fmt.Errorf("could not parse dag from spec:\t%q", err.Error())
+	}
+
+	hasError := false
+	for _, leaf := range leaves {
+		if leaf.ID == rootVertex {
+			continue
+		}
+		if leaf.Error != nil {
+			if !hasError {
+				title := fmt.Sprintf("Error(s) found in pipeline %q execution", p.Name)
+				logrus.Infof("\n%s\n%s\n", title, strings.Repeat("-", len(title)))
+			}
+			logrus.Infof("\n")
+			logrus.Errorf("something went wrong in %q :\n\t%s", leaf.ID, strings.ReplaceAll(leaf.Error.Error(), "\n", "\n\t"))
+			logrus.Infof("\n")
+			hasError = true
+		}
+	}
+	if hasError {
+		p.Report.Result = result.FAILURE
+		span.SetAttributes(attribute.String("updatecli.pipeline.result", result.FAILURE))
+		span.SetStatus(codes.Error, "pipeline had errors")
+		return ErrRunTargets
+	}
+
+	// Set pipeline report result based on target outcomes.
+	if len(p.Targets) > 0 {
+		successCounter := 0
+		skippedCounter := 0
+		attentionCounter := 0
+
+		for id := range p.Targets {
+			switch p.Targets[id].Result.Result {
+			case result.FAILURE:
+				p.Report.Result = result.FAILURE
+				span.SetAttributes(attribute.String("updatecli.pipeline.result", result.FAILURE))
+				return nil
+			case result.SUCCESS:
+				successCounter++
+			case result.SKIPPED:
+				skippedCounter++
+			case result.ATTENTION:
+				attentionCounter++
+			}
+		}
+
+		if len(p.Targets) == skippedCounter {
+			p.Report.Result = result.SKIPPED
+		} else if len(p.Targets) == successCounter+skippedCounter {
+			p.Report.Result = result.SUCCESS
+		} else if attentionCounter > 0 {
+			p.Report.Result = result.ATTENTION
+		}
+	}
+
+	span.SetAttributes(attribute.String("updatecli.pipeline.result", p.Report.Result))
+	return nil
+}
+
+func (p *Pipeline) runFlowCallbackWithCtx(ctx context.Context, d *dag.DAG, id string, depsResults []dag.FlowResult) (v interface{}, err error) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
 	if id == rootVertex {
 		return nil, nil
 	}
+
 	err = p.Update()
 	if err != nil {
 		return nil, fmt.Errorf("update pipeline: %w", err)
@@ -242,25 +363,34 @@ func (p *Pipeline) runFlowCallback(d *dag.DAG, id string, depsResults []dag.Flow
 
 	v, err = d.GetVertex(id)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get leaf from dag: %w", err) // Should never happens
+		return nil, fmt.Errorf("failed to get leaf from dag: %w", err)
 	}
 	leaf, ok := v.(Node)
 	if !ok {
-		return nil, fmt.Errorf("failed to reconstruct leaf from interface: %s", id) // Should never happens
+		return nil, fmt.Errorf("failed to reconstruct leaf from interface: %s", id)
 	}
+
+	spanName := "updatecli." + leaf.Category
+	tracer := telemetry.Tracer("updatecli")
+	_, span := tracer.Start(ctx, spanName,
+		trace.WithAttributes(
+			attribute.String("updatecli.resource.id", id),
+			attribute.String("updatecli.resource.category", leaf.Category),
+		),
+	)
+	defer span.End()
 
 	resourceTitle := strings.TrimPrefix(id, leaf.Category+"#")
 	logrus.Infof("\n%s: %s\n", leaf.Category, resourceTitle)
 	logrus.Infof("%s\n\n", strings.Repeat("-", len(resourceTitle)+len(leaf.Category)+2))
 
-	// Display headers
+	// Display repository header when the resource is bound to an SCM.
 	switch leaf.Category {
 	case sourceCategory:
 		sourceId := strings.ReplaceAll(id, "source#", "")
 		if scm, ok := p.SCMs[p.Sources[sourceId].Config.SCMID]; ok {
 			logrus.Infof("Repository\t: %s\n\n", scm.Handler.Summary())
 		}
-
 	case conditionCategory:
 		conditionId := strings.ReplaceAll(id, "condition#", "")
 		if scm, ok := p.SCMs[p.Conditions[conditionId].Config.SCMID]; ok {
@@ -279,66 +409,53 @@ func (p *Pipeline) runFlowCallback(d *dag.DAG, id string, depsResults []dag.Flow
 		if r.ID == rootVertex {
 			continue
 		}
-
 		p, _ := r.Result.(Node)
 		deps[r.ID] = &p
-
 		if p.Category == sourceCategory {
-			// source id order, is not guaranteed as the information is coming from a map
+			// source id order is not guaranteed as the information is coming from a map
 			depsSourceIDs = append(depsSourceIDs, strings.TrimPrefix(r.ID, "source#"))
 		}
 	}
 
 	updateSourceResult := func(id string) {
 		var err error
-
 		source := p.Sources[id]
-
 		source.Result.Name = source.Config.Name
 		source.Result.Config, err = resource.GetReportConfig(p.Config.Spec.Sources[id].ResourceConfig)
-
 		if err != nil {
 			logrus.Errorf("error while cleaning config: %v", err)
 		}
-
 		p.Report.Sources[id] = source.Result
 	}
 
 	updateConditionResult := func(id string) {
 		var err error
-
 		condition := p.Conditions[id]
-
 		condition.Result.SourceID = condition.Config.SourceID
 		if condition.Config.SourceID == "" && len(depsSourceIDs) > 0 {
 			condition.Result.SourceID = depsSourceIDs[0]
 		}
-
 		condition.Result.Name = p.Config.Spec.Conditions[id].Name
 		condition.Result.Config, err = resource.GetReportConfig(p.Config.Spec.Conditions[id].ResourceConfig)
 		if err != nil {
 			logrus.Errorf("error while cleaning config: %v", err)
 		}
-
 		p.Report.Conditions[id] = condition.Result
 	}
 
 	updateTargetResult := func(id string) {
 		var err error
 		target := p.Targets[id]
-
 		target.Result.SourceID = target.Config.SourceID
 		if target.Config.SourceID == "" && len(depsSourceIDs) > 0 {
 			target.Result.SourceID = depsSourceIDs[0]
 		}
-
 		target.Result.Name = p.Config.Spec.Targets[id].Name
 		target.Result.Config, err = resource.GetReportConfig(p.Config.Spec.Targets[id].ResourceConfig)
 		target.Result.DryRun = target.DryRun
 		if err != nil {
 			logrus.Errorf("error while cleaning config: %v", err)
 		}
-
 		p.Report.Targets[id] = target.Result
 	}
 
@@ -346,12 +463,12 @@ func (p *Pipeline) runFlowCallback(d *dag.DAG, id string, depsResults []dag.Flow
 	if shouldSkip {
 		logrus.Infof("%s Skipping %q because of dependsOn conditions", result.SKIPPED, id)
 		leaf.Result = result.SKIPPED
+		span.SetAttributes(attribute.String("updatecli.resource.result", result.SKIPPED))
 
 		switch leaf.Category {
 		case sourceCategory:
 			sourceId := strings.ReplaceAll(id, "source#", "")
 			updateSourceResult(sourceId)
-
 		case conditionCategory:
 			conditionId := strings.ReplaceAll(id, "condition#", "")
 			updateConditionResult(conditionId)
@@ -369,7 +486,6 @@ func (p *Pipeline) runFlowCallback(d *dag.DAG, id string, depsResults []dag.Flow
 	}
 
 	if leaf.Result != result.SKIPPED {
-		// Run the resource
 		switch leaf.Category {
 		case sourceCategory:
 			sourceId := strings.ReplaceAll(id, "source#", "")
@@ -377,124 +493,98 @@ func (p *Pipeline) runFlowCallback(d *dag.DAG, id string, depsResults []dag.Flow
 			if e != nil {
 				displayError(e)
 				err = e
+				span.RecordError(e)
+				span.SetStatus(codes.Error, e.Error())
 			}
-
 			updateSourceResult(sourceId)
-
 			leaf.Result = r
 			p.updateSource(sourceId, leaf.Result)
+
+			if src, ok := p.Sources[sourceId]; ok {
+				span.SetAttributes(
+					attribute.String("updatecli.resource.name", src.Config.Name),
+					attribute.String("updatecli.resource.kind", src.Config.Kind),
+					attribute.String("updatecli.resource.result", leaf.Result),
+				)
+				if src.Result != nil && src.Result.Description != "" {
+					span.SetAttributes(attribute.String("updatecli.resource.description", src.Result.Description))
+				}
+			}
+
 		case conditionCategory:
 			conditionId := strings.ReplaceAll(id, "condition#", "")
 			r, e := p.RunCondition(conditionId)
 			if e != nil {
 				displayError(e)
 				err = e
+				span.RecordError(e)
+				span.SetStatus(codes.Error, e.Error())
 			}
-
 			updateConditionResult(conditionId)
-
 			leaf.Result = r
 			p.updateCondition(conditionId, leaf.Result)
+
+			if cond, ok := p.Conditions[conditionId]; ok {
+				span.SetAttributes(
+					attribute.String("updatecli.resource.name", cond.Config.Name),
+					attribute.String("updatecli.resource.kind", cond.Config.Kind),
+					attribute.String("updatecli.resource.result", leaf.Result),
+				)
+				if cond.Result != nil {
+					span.SetAttributes(
+						attribute.Bool("updatecli.condition.pass", cond.Result.Pass),
+						attribute.String("updatecli.condition.source_id", cond.Result.SourceID),
+					)
+					if cond.Result.Description != "" {
+						span.SetAttributes(attribute.String("updatecli.resource.description", cond.Result.Description))
+					}
+				}
+			}
+
 		case targetCategory:
 			targetId := strings.ReplaceAll(id, "target#", "")
 			r, changed, e := p.RunTarget(targetId, depsSourceIDs)
 			if e != nil {
 				displayError(e)
 				err = e
+				span.RecordError(e)
+				span.SetStatus(codes.Error, e.Error())
 			}
-
 			updateTargetResult(targetId)
-
 			leaf.Result = r
 			leaf.Changed = changed
 			p.updateTarget(targetId, leaf.Result)
+
+			if tgt, ok := p.Targets[targetId]; ok {
+				span.SetAttributes(
+					attribute.String("updatecli.resource.name", tgt.Config.Name),
+					attribute.String("updatecli.resource.kind", tgt.Config.Kind),
+					attribute.String("updatecli.resource.result", leaf.Result),
+					attribute.Bool("updatecli.target.changed", changed),
+				)
+				if tgt.Result != nil {
+					span.SetAttributes(
+						attribute.Bool("updatecli.target.dry_run", tgt.Result.DryRun),
+						attribute.String("updatecli.target.source_id", tgt.Result.SourceID),
+					)
+					if tgt.Result.Description != "" {
+						span.SetAttributes(attribute.String("updatecli.resource.description", tgt.Result.Description))
+					}
+					if len(tgt.Result.Files) > 0 {
+						span.SetAttributes(attribute.StringSlice("updatecli.target.files", tgt.Result.Files))
+					}
+				}
+				if changed {
+					span.AddEvent("target.changed")
+				}
+			}
 		}
 	}
+
 	if leaf.Changed {
 		p.Report.Result = result.ATTENTION
 	}
 	return leaf, err
-}
-
-// Run execute an single pipeline
-func (p *Pipeline) Run() error {
-
-	logrus.Infof("\n%s\n", strings.Repeat("#", len(p.Name)+4))
-	logrus.Infof("# %s #\n", strings.ToTitle(p.Name))
-	logrus.Infof("%s\n\n", strings.Repeat("#", len(p.Name)+4))
-
-	logrus.Infof("Pipeline ID\t: %s", p.ID)
-	if p.Options.Target.DryRun {
-		logrus.Infof("Dry Run\t\t: enabled\n")
-	}
-
-	p.Report.Result = result.SUCCESS
-
-	resources, err := p.SortedResources()
-	if err != nil {
-		p.Report.Result = result.FAILURE
-		return fmt.Errorf("could not create dag from spec:\t%q", err.Error())
-	}
-	leaves, err := resources.DescendantsFlow(rootVertex, nil, p.runFlowCallback)
-	if err != nil {
-		p.Report.Result = result.FAILURE
-		return fmt.Errorf("could not parse dag from spec:\t%q", err.Error())
-	}
-
-	hasError := false
-	for _, leaf := range leaves {
-		if leaf.ID == rootVertex {
-			// ignore
-			continue
-		}
-		if leaf.Error != nil {
-			if !hasError {
-				title := fmt.Sprintf("Error(s) found in pipeline %q execution", p.Name)
-				logrus.Infof("\n%s\n%s\n", title, strings.Repeat("-", len(title)))
-			}
-			logrus.Infof("\n")
-			logrus.Errorf("something went wrong in %q :\n\t%s", leaf.ID, strings.ReplaceAll(leaf.Error.Error(), "\n", "\n\t"))
-			logrus.Infof("\n")
-			hasError = true
-		}
-	}
-	if hasError {
-		p.Report.Result = result.FAILURE
-		return ErrRunTargets
-	}
-
-	// set pipeline report result
-	if len(p.Targets) > 0 {
-		successCounter := 0
-		skippedCounter := 0
-		attentionCounter := 0
-
-		for id := range p.Targets {
-			switch p.Targets[id].Result.Result {
-			case result.FAILURE:
-				p.Report.Result = result.FAILURE
-				return nil
-			case result.SUCCESS:
-				successCounter++
-			case result.SKIPPED:
-				skippedCounter++
-			case result.ATTENTION:
-				attentionCounter++
-			}
-		}
-
-		if len(p.Targets) == skippedCounter {
-			p.Report.Result = result.SKIPPED
-			return nil
-		} else if len(p.Targets) == successCounter+skippedCounter {
-			p.Report.Result = result.SUCCESS
-		} else if attentionCounter > 0 {
-			p.Report.Result = result.ATTENTION
-		}
-	}
-
-	return nil
-
 }
 
 func (p *Pipeline) String() string {

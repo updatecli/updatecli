@@ -1,23 +1,39 @@
 package engine
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/telemetry"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 )
 
-// Run runs the full process
-func (e *Engine) Run() (err error) {
+// Run runs the full process under the provided context, emitting
+// OpenTelemetry spans for each major operation so failures are observable.
+func (e *Engine) Run(ctx context.Context) (err error) {
 	PrintTitle("Pipeline")
+
+	tracer := telemetry.Tracer("updatecli")
+	ctx, span := tracer.Start(ctx, "updatecli.run",
+		trace.WithAttributes(
+			attribute.Int("updatecli.pipeline_count", len(e.Pipelines)),
+			attribute.Bool("updatecli.dry_run", e.Options.Pipeline.Target.DryRun),
+		),
+	)
+	defer span.End()
 
 	errs := []error{}
 
 	for i := range e.Pipelines {
 		pipeline := e.Pipelines[i]
 
-		err := pipeline.Run()
+		err := pipeline.Run(ctx)
 		if err != nil {
 			errs = append(errs, fmt.Errorf("pipeline %q failed: %w", pipeline.Name, err))
+			span.RecordError(err)
 			logrus.Printf("Pipeline %q failed\n", pipeline.Name)
 			logrus.Printf("Skipping due to:\n\t%s\n", err)
 			continue
@@ -25,19 +41,33 @@ func (e *Engine) Run() (err error) {
 	}
 
 	if !e.Options.Pipeline.Target.DryRun && e.Options.Pipeline.Target.Push {
+		_, pushSpan := tracer.Start(ctx, "updatecli.push_commits")
 		if err = e.pushSCMCommits(); err != nil {
 			errs = append(errs, fmt.Errorf("pushing commits failed: %w", err))
+			pushSpan.RecordError(err)
+			pushSpan.SetStatus(codes.Error, err.Error())
 		}
+		pushSpan.End()
 	}
 
-	if err = e.runActions(); err != nil {
-		errs = append(errs, fmt.Errorf("running actions failed: %w", err))
+	{
+		_, actionsSpan := tracer.Start(ctx, "updatecli.run_actions")
+		if err = e.runActions(); err != nil {
+			errs = append(errs, fmt.Errorf("running actions failed: %w", err))
+			actionsSpan.RecordError(err)
+			actionsSpan.SetStatus(codes.Error, err.Error())
+		}
+		actionsSpan.End()
 	}
 
 	if !e.Options.Pipeline.Target.DryRun && e.Options.Pipeline.Target.Push && e.Options.Pipeline.Target.CleanGitBranches {
+		_, pruneSpan := tracer.Start(ctx, "updatecli.prune_scm_branches")
 		if err = e.pruneSCMBranches(); err != nil {
 			errs = append(errs, fmt.Errorf("cleaning git branches failed: %w", err))
+			pruneSpan.RecordError(err)
+			pruneSpan.SetStatus(codes.Error, err.Error())
 		}
+		pruneSpan.End()
 	}
 
 	for i := range e.Pipelines {
@@ -51,7 +81,6 @@ func (e *Engine) Run() (err error) {
 
 	if err = e.publishToUdash(); err != nil {
 		errs = append(errs, fmt.Errorf("publishing to Udash failed: %w", err))
-
 	}
 
 	if err = e.exportReportToYAML(false); err != nil {
@@ -66,7 +95,7 @@ func (e *Engine) Run() (err error) {
 		for _, e := range errs {
 			logrus.Error(e)
 		}
-
+		span.SetStatus(codes.Error, fmt.Sprintf("%d pipeline(s) failed", len(errs)))
 		return fmt.Errorf("%d pipeline(s) failed during execution", len(errs))
 	}
 
