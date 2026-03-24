@@ -19,6 +19,8 @@ type Temurin struct {
 	apiWebClient            httpclient.HTTPClient
 	apiWebRedirectionClient httpclient.HTTPClient
 	foundVersion            string
+	// apiURL overrides the default temurinApiUrl. Used in tests to point at a mock server.
+	apiURL string
 }
 
 /*
