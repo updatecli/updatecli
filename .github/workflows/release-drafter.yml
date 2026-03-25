@@ -5,10 +5,12 @@ on:
     # branches to consider in the event; optional, defaults to all
     branches:
       - main
+
 permissions: {}
+
 jobs:
   update_release_draft:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
       pull-requests: write
