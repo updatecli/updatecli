@@ -45,6 +45,10 @@ func (f *FileContent) Write() error {
 					Key:   storage.OptionPrettyPrint,
 					Value: true,
 				},
+				{
+					Key:   storage.OptionEscapeHTML,
+					Value: false,
+				},
 			},
 		)
 		if err != nil {
