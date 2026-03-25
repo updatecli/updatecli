@@ -25,6 +25,8 @@ type Spec struct {
 	//   key1: value1
 	//   key2: value2
 	ValuesInline *map[string]any `yaml:",omitempty"`
+	// Include contains a list of compose file to include
+	Include []string `yaml:",omitempty"`
 }
 
 type Policy struct {

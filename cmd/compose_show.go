@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/updatecli/updatecli/pkg/core/compose"
 	"github.com/updatecli/updatecli/pkg/core/config"
+	"github.com/updatecli/updatecli/pkg/core/engine/manifest"
 )
 
 var (
@@ -15,19 +16,25 @@ var (
 		Short: "show manifest(s) defined by the compose file that should be executed",
 		Run: func(cmd *cobra.Command, args []string) {
 
-			c, err := compose.New(composeCmdFile)
+			composeFiles, err := compose.New(composeCmdFile)
 			if err != nil {
 				logrus.Errorf("command failed: %s", err)
 				os.Exit(1)
 			}
 
-			policies, err := c.GetPolicies(disableTLS)
-			if err != nil {
-				logrus.Errorf("command failed: %s", err)
-				os.Exit(1)
+			manifests := []manifest.Manifest{}
+			for i := range composeFiles {
+				c := composeFiles[i]
+				policies, err := c.GetPolicies(disableTLS)
+				if err != nil {
+					logrus.Errorf("command failed: %s", err)
+					os.Exit(1)
+				}
+
+				manifests = append(manifests, policies...)
 			}
 
-			e.Options.Manifests = append(e.Options.Manifests, policies...)
+			e.Options.Manifests = append(e.Options.Manifests, manifests...)
 
 			e.Options.Pipeline.Target.Clean = composeCmdClean
 			e.Options.Config.DisableTemplating = composeCmdDisableTemplating
