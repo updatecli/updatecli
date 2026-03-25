@@ -148,7 +148,7 @@ func TestTargetPreservesSpecialCharacters(t *testing.T) {
 			require.NoError(t, err)
 
 			// The literal ">" must be preserved; \u003e is the escaped form that
-			// Go's encoding/json emits by default via its HTMLEscape behaviour.
+			// Go's encoding/json emits by default via its HTMLEscape behavior.
 			assert.True(t, strings.Contains(string(content), ">0.2%"),
 				"expected >0.2%% to be preserved in file, got:\n%s", string(content))
 			assert.False(t, strings.Contains(string(content), `\u003e`),
