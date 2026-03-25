@@ -15,7 +15,7 @@ var (
 		Short: "diff show changes defined by the compose file",
 		Run: func(cmd *cobra.Command, args []string) {
 
-			composeFiles, err := compose.New(composeCmdFile)
+			composeFiles, err := compose.New(composeCmdFile, map[string]bool{})
 			if err != nil {
 				logrus.Errorf("command failed: %s", err)
 				os.Exit(1)

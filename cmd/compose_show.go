@@ -16,7 +16,7 @@ var (
 		Short: "show manifest(s) defined by the compose file that should be executed",
 		Run: func(cmd *cobra.Command, args []string) {
 
-			composeFiles, err := compose.New(composeCmdFile)
+			composeFiles, err := compose.New(composeCmdFile, map[string]bool{})
 			if err != nil {
 				logrus.Errorf("command failed: %s", err)
 				os.Exit(1)
