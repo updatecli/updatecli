@@ -5,8 +5,9 @@ on:
     branches:
       - main
   schedule:
-    # Run daily at 03:00
     - cron: "0 1 * * *"
+
+permissions: {}
 
 jobs:
   updatecli:
@@ -27,7 +28,7 @@ jobs:
         id: go
 
       - name: "Run updatecli only on monitored pipelines"
-        run: updatecli compose apply --clean-git-branches=true --labels="monitoring:enabled" --experimental
+        run: updatecli compose apply --clean-git-branches=true --labels="monitor:active" --experimental
         env:
           UPDATECLI_GITHUB_APP_CLIENT_ID: ${{ secrets.UPDATECLIBOT_APP_ID }}
           UPDATECLI_GITHUB_APP_PRIVATE_KEY: ${{ secrets.UPDATECLIBOT_APP_PRIVKEY }}

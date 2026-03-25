@@ -1,29 +1,29 @@
 ---
-name-template: 'v$RESOLVED_VERSION 🌈'
-tag-template: 'v$RESOLVED_VERSION'
+name-template: "v$RESOLVED_VERSION 🌈"
+tag-template: "v$RESOLVED_VERSION"
 categories:
-  - title: '🚀 Features'
+  - title: "🚀 Features"
     labels:
-      - 'feature'
-      - 'enhancement'
-  - title: '🐛 Bug Fixes'
+      - "feature"
+      - "enhancement"
+  - title: "🐛 Bug Fixes"
     labels:
-      - 'fix'
-      - 'bugfix'
-      - 'bug'
-  - title: '🧰 Maintenance'
+      - "fix"
+      - "bugfix"
+      - "bug"
+  - title: "🧰 Maintenance"
     labels:
-      - 'chore'
-      - 'dependencies'
-      - 'cleanup'
-      - 'deprecated'
-      - 'depreciation'
-  - title: '📝 Documentation'
+      - "chore"
+      - "dependencies"
+      - "cleanup"
+      - "deprecated"
+      - "depreciation"
+  - title: "📝 Documentation"
     labels:
-      - 'documentation'
-      - 'doc'
-      - 'docs'
-change-template: '- $TITLE @$AUTHOR (#$NUMBER)'
+      - "documentation"
+      - "doc"
+      - "docs"
+change-template: "- $TITLE @$AUTHOR (#$NUMBER)"
 
 template: |
   ## Changes
@@ -34,30 +34,40 @@ template: |
 
   $CONTRIBUTORS
 
+  ## Sponsors
+
+  If Updatecli is useful to you, please consider sponsoring it. Your support helps maintain and improve this project.
+
+  -> [updatecli.io/support](https://www.updatecli.io/support/#sponsor-or-donate)
+
+  You can also star the repository
+
+  -> [updatecli/updatecli](https://github.com/updatecli/updatecli)
+
 version-resolver:
   major:
     labels:
-      - 'major'
-      - 'breaking'
+      - "major"
+      - "breaking"
   minor:
     labels:
-      - 'minor'
-      - 'feature'
-      - 'enhancement'
+      - "minor"
+      - "feature"
+      - "enhancement"
   patch:
     labels:
-      - 'patch'
-      - 'fix'
-      - 'bugfix'
-      - 'bug'
-      - 'chore'
-      - 'dependencies'
-      - 'documentation'
-      - 'doc'
-      - 'docs'
-      - 'cleanup'
-      - 'deprecated'
-      - 'depreciation'
+      - "patch"
+      - "fix"
+      - "bugfix"
+      - "bug"
+      - "chore"
+      - "dependencies"
+      - "documentation"
+      - "doc"
+      - "docs"
+      - "cleanup"
+      - "deprecated"
+      - "depreciation"
   default: patch
 exclude-labels:
-  - 'skip-changelog'
+  - "skip-changelog"
