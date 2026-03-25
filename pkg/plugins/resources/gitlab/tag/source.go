@@ -8,7 +8,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
-func (g *Gitlab) Source(ctx context.Context, workingDir string, resultSource *result.Source) error {
+func (g *Gitlab) Source(_ context.Context, workingDir string, resultSource *result.Source) error {
 	versions, err := g.SearchTags()
 
 	if err != nil {

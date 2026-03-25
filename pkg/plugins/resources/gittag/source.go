@@ -8,7 +8,7 @@ import (
 )
 
 // Source returns the latest git tag based on create time
-func (gt *GitTag) Source(ctx context.Context, workingDir string, resultSource *result.Source) error {
+func (gt *GitTag) Source(_ context.Context, workingDir string, resultSource *result.Source) error {
 	var err error
 
 	gt.directory = workingDir

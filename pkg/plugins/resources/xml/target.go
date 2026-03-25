@@ -12,7 +12,7 @@ import (
 )
 
 // Target updates a scm repository based on the modified yaml file.
-func (x *XML) Target(ctx context.Context, source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) (err error) {
+func (x *XML) Target(_ context.Context, source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) (err error) {
 
 	if strings.HasPrefix(x.spec.File, "https://") ||
 		strings.HasPrefix(x.spec.File, "http://") {

@@ -19,7 +19,7 @@ import (
 
 // Target creates or updates a file from a source control management system.
 // The default content is the value retrieved from source
-func (f *File) Target(ctx context.Context, source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
+func (f *File) Target(_ context.Context, source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
 
 	workDir := ""
 	if scm != nil {

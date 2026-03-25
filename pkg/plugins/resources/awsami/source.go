@@ -10,7 +10,7 @@ import (
 )
 
 // Source returns the latest AMI matching filter(s)
-func (a *AMI) Source(ctx context.Context, workingDir string, resultSource *result.Source) error {
+func (a *AMI) Source(_ context.Context, workingDir string, resultSource *result.Source) error {
 	logrus.Debugf("Looking for latest AMI ID matching:\n  ---\n  %s\n  ---\n\n",
 		strings.TrimRight(
 			strings.ReplaceAll(a.Spec.String(), "\n", "\n  "), "\n "))

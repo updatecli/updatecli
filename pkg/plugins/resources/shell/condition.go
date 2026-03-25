@@ -8,7 +8,7 @@ import (
 )
 
 // Condition tests if the provided command (concatenated with the source) is executed with success
-func (s *Shell) Condition(ctx context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
+func (s *Shell) Condition(_ context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 	var workingDir string
 	if scm != nil {
 		workingDir = scm.GetDirectory()

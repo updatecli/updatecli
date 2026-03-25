@@ -10,7 +10,7 @@ import (
 )
 
 // Target updates a scm repository based on the modified yaml file.
-func (c *CSV) Target(ctx context.Context, source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
+func (c *CSV) Target(_ context.Context, source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
 
 	rootDir := ""
 	if scm != nil {

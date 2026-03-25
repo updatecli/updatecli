@@ -11,7 +11,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-func (h *Hcl) Target(ctx context.Context, source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
+func (h *Hcl) Target(_ context.Context, source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
 	if scm != nil {
 		h.UpdateAbsoluteFilePath(scm.GetDirectory())
 	}

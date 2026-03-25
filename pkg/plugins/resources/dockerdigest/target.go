@@ -9,6 +9,6 @@ import (
 )
 
 // Target is not supported for the plugin Docker Digest
-func (ds *DockerDigest) Target(ctx context.Context, source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
+func (ds *DockerDigest) Target(_ context.Context, source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
 	return fmt.Errorf("Target not supported for the plugin Docker Digest")
 }

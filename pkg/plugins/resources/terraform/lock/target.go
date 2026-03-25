@@ -12,7 +12,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-func (t *TerraformLock) Target(ctx context.Context, source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
+func (t *TerraformLock) Target(_ context.Context, source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
 	if scm != nil {
 		t.UpdateAbsoluteFilePath(scm.GetDirectory())
 	}

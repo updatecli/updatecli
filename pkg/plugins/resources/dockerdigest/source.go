@@ -11,7 +11,7 @@ import (
 )
 
 // Source retrieves Docker image tag digest from a registry
-func (ds *DockerDigest) Source(ctx context.Context, workingDir string, resultSource *result.Source) error {
+func (ds *DockerDigest) Source(_ context.Context, workingDir string, resultSource *result.Source) error {
 	refTag := "latest"
 	refName := ds.spec.Image
 

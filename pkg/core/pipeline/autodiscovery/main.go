@@ -9,7 +9,6 @@ import (
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/updatecli/updatecli/pkg/core/cmdoptions"
@@ -70,16 +69,16 @@ type crawlerEntry struct {
 	crawler Crawler
 }
 
-// CrawlerResult holds the output of a single crawler run, including its OTel span context.
+// CrawlerResult holds the output of a single crawler run.
 type CrawlerResult struct {
 	Kind      string
 	Manifests [][]byte
-	SpanCtx   trace.SpanContext
 }
 
 type AutoDiscovery struct {
 	spec     Config
 	crawlers []crawlerEntry
+	tracer   trace.Tracer
 }
 
 // ensure alias not conflict with existing key
@@ -294,7 +293,8 @@ func New(spec Config, workDir string) (*AutoDiscovery, error) {
 	}
 
 	g := AutoDiscovery{
-		spec: s,
+		spec:   s,
+		tracer: telemetry.Tracer("updatecli"),
 	}
 
 	for kind := range g.spec.Crawlers {
@@ -342,11 +342,10 @@ func New(spec Config, workDir string) (*AutoDiscovery, error) {
 
 // Run executes each crawler under the provided context, emitting an OTel span per crawler.
 func (g *AutoDiscovery) Run(ctx context.Context) ([]CrawlerResult, error) {
-	tracer := telemetry.Tracer("updatecli")
 	var results []CrawlerResult
 
 	for _, entry := range g.crawlers {
-		_, span := tracer.Start(ctx, "updatecli.crawler",
+		_, span := g.tracer.Start(ctx, "updatecli.crawler",
 			trace.WithAttributes(
 				attribute.String("updatecli.crawler.kind", entry.kind),
 			),
@@ -354,8 +353,7 @@ func (g *AutoDiscovery) Run(ctx context.Context) ([]CrawlerResult, error) {
 
 		discoveredManifests, err := entry.crawler.DiscoverManifests()
 		if err != nil {
-			span.RecordError(err)
-			span.SetStatus(codes.Error, err.Error())
+			telemetry.RecordSpanError(span, err)
 			logrus.Errorln(err)
 		}
 
@@ -368,7 +366,6 @@ func (g *AutoDiscovery) Run(ctx context.Context) ([]CrawlerResult, error) {
 		results = append(results, CrawlerResult{
 			Kind:      entry.kind,
 			Manifests: discoveredManifests,
-			SpanCtx:   span.SpanContext(),
 		})
 
 		span.End()

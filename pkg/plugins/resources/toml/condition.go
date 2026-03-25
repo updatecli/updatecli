@@ -8,7 +8,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 )
 
-func (t *Toml) Condition(ctx context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
+func (t *Toml) Condition(_ context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 	conditionResult := true
 
 	resultMessage := ""

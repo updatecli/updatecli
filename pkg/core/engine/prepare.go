@@ -9,7 +9,6 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/telemetry"
 	"github.com/updatecli/updatecli/pkg/core/tmp"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -18,7 +17,7 @@ import (
 func (e *Engine) Prepare(ctx context.Context) (err error) {
 	PrintTitle("Prepare")
 
-	tracer := telemetry.Tracer("updatecli")
+	tracer := e.tracer
 	ctx, span := tracer.Start(ctx, "updatecli.prepare")
 	defer span.End()
 
@@ -26,8 +25,7 @@ func (e *Engine) Prepare(ctx context.Context) (err error) {
 
 	err = tmp.Create()
 	if err != nil {
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
+		telemetry.RecordSpanError(span, err)
 		return err
 	}
 
@@ -37,8 +35,7 @@ func (e *Engine) Prepare(ctx context.Context) (err error) {
 		if !errors.Is(err, ErrNoManifestDetected) && err != nil {
 			logrus.Errorln(err)
 			logrus.Infof("\n%d pipeline(s) successfully loaded\n", len(e.Pipelines))
-			loadSpan.RecordError(err)
-			loadSpan.SetStatus(codes.Error, err.Error())
+			telemetry.RecordSpanError(loadSpan, err)
 		}
 		if errors.Is(err, ErrNoManifestDetected) {
 			defaultCrawlersEnabled = true
@@ -48,16 +45,14 @@ func (e *Engine) Prepare(ctx context.Context) (err error) {
 	}
 
 	// SCM initialization must happen before autodiscovery so that git repository
-	// directories are available for crawlers to analyse.
+	// directories are available for crawlers to analyze.
 	{
 		_, scmSpan := tracer.Start(ctx, "updatecli.init_scm")
 		err = e.InitSCM()
 		if err != nil {
-			scmSpan.RecordError(err)
-			scmSpan.SetStatus(codes.Error, err.Error())
+			telemetry.RecordSpanError(scmSpan, err)
 			scmSpan.End()
-			span.RecordError(err)
-			span.SetStatus(codes.Error, err.Error())
+			telemetry.RecordSpanError(span, err)
 			return err
 		}
 		scmSpan.End()
@@ -71,11 +66,9 @@ func (e *Engine) Prepare(ctx context.Context) (err error) {
 		)
 		err = e.LoadAutoDiscovery(ctx, defaultCrawlersEnabled)
 		if err != nil {
-			adSpan.RecordError(err)
-			adSpan.SetStatus(codes.Error, err.Error())
+			telemetry.RecordSpanError(adSpan, err)
 			adSpan.End()
-			span.RecordError(err)
-			span.SetStatus(codes.Error, err.Error())
+			telemetry.RecordSpanError(span, err)
 			return err
 		}
 		adSpan.End()
@@ -83,8 +76,7 @@ func (e *Engine) Prepare(ctx context.Context) (err error) {
 
 	if len(e.Pipelines) == 0 {
 		err = fmt.Errorf("no valid pipeline found")
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
+		telemetry.RecordSpanError(span, err)
 		return err
 	}
 

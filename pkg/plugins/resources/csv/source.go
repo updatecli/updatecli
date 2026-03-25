@@ -13,7 +13,7 @@ var (
 	ErrSpecVersionFilterRequireMultiple = errors.New("in the context of a source, parameter \"versionfilter\" and \"query\" must be used together")
 )
 
-func (c *CSV) Source(ctx context.Context, workingDir string, resultSource *result.Source) error {
+func (c *CSV) Source(_ context.Context, workingDir string, resultSource *result.Source) error {
 
 	if len(c.contents) > 1 {
 		return errors.New("source only supports one file")

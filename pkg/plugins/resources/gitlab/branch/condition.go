@@ -7,7 +7,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 )
 
-func (g *Gitlab) Condition(ctx context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
+func (g *Gitlab) Condition(_ context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 	if scm != nil {
 		return false, "", fmt.Errorf("Condition not supported for the plugin GitLab branch")
 	}

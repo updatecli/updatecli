@@ -10,7 +10,7 @@ import (
 )
 
 // Target is not supported for the Golang resource
-func (g *GoMod) Target(ctx context.Context, source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) (err error) {
+func (g *GoMod) Target(_ context.Context, source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) (err error) {
 
 	version := source
 	if g.spec.Version != "" {

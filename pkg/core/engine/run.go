@@ -16,7 +16,7 @@ import (
 func (e *Engine) Run(ctx context.Context) (err error) {
 	PrintTitle("Pipeline")
 
-	tracer := telemetry.Tracer("updatecli")
+	tracer := e.tracer
 	ctx, span := tracer.Start(ctx, "updatecli.run",
 		trace.WithAttributes(
 			attribute.Int("updatecli.pipeline_count", len(e.Pipelines)),
@@ -33,7 +33,10 @@ func (e *Engine) Run(ctx context.Context) (err error) {
 		err := pipeline.Run(ctx)
 		if err != nil {
 			errs = append(errs, fmt.Errorf("pipeline %q failed: %w", pipeline.Name, err))
-			span.RecordError(err)
+			span.AddEvent("pipeline.failed", trace.WithAttributes(
+				attribute.String("pipeline.name", pipeline.Name),
+				attribute.String("error", telemetry.SanitizeError(err)),
+			))
 			logrus.Printf("Pipeline %q failed\n", pipeline.Name)
 			logrus.Printf("Skipping due to:\n\t%s\n", err)
 			continue
@@ -44,28 +47,23 @@ func (e *Engine) Run(ctx context.Context) (err error) {
 		_, pushSpan := tracer.Start(ctx, "updatecli.push_commits")
 		if err = e.pushSCMCommits(); err != nil {
 			errs = append(errs, fmt.Errorf("pushing commits failed: %w", err))
-			pushSpan.RecordError(err)
-			pushSpan.SetStatus(codes.Error, err.Error())
+			telemetry.RecordSpanError(pushSpan, err)
 		}
 		pushSpan.End()
 	}
 
-	{
-		actionsCtx, actionsSpan := tracer.Start(ctx, "updatecli.run_actions")
-		if err = e.runActions(actionsCtx); err != nil {
-			errs = append(errs, fmt.Errorf("running actions failed: %w", err))
-			actionsSpan.RecordError(err)
-			actionsSpan.SetStatus(codes.Error, err.Error())
-		}
-		actionsSpan.End()
+	actionsCtx, actionsSpan := tracer.Start(ctx, "updatecli.run_actions")
+	if err = e.runActions(actionsCtx); err != nil {
+		errs = append(errs, fmt.Errorf("running actions failed: %w", err))
+		telemetry.RecordSpanError(actionsSpan, err)
 	}
+	actionsSpan.End()
 
 	if !e.Options.Pipeline.Target.DryRun && e.Options.Pipeline.Target.Push && e.Options.Pipeline.Target.CleanGitBranches {
 		_, pruneSpan := tracer.Start(ctx, "updatecli.prune_scm_branches")
 		if err = e.pruneSCMBranches(); err != nil {
 			errs = append(errs, fmt.Errorf("cleaning git branches failed: %w", err))
-			pruneSpan.RecordError(err)
-			pruneSpan.SetStatus(codes.Error, err.Error())
+			telemetry.RecordSpanError(pruneSpan, err)
 		}
 		pruneSpan.End()
 	}

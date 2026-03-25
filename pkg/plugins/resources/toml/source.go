@@ -13,7 +13,7 @@ var (
 	ErrSpecVersionFilterRequireMultiple = errors.New("in the context of a source, parameter \"versionfilter\" and \"query\" must be used together")
 )
 
-func (t *Toml) Source(ctx context.Context, workingDir string, resultSource *result.Source) error {
+func (t *Toml) Source(_ context.Context, workingDir string, resultSource *result.Source) error {
 
 	if len(t.contents) > 1 {
 		return errors.New("source only supports one file")

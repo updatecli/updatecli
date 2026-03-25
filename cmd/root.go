@@ -121,6 +121,7 @@ func run(command string) error {
 	}()
 
 	tracer := telemetry.Tracer("updatecli")
+	e.SetTracer(tracer)
 	ctx, span := tracer.Start(ctx, "updatecli",
 		trace.WithAttributes(
 			attribute.String("updatecli.command", command),
@@ -133,30 +134,8 @@ func run(command string) error {
 		e.Options.PipelineIDs = append(e.Options.PipelineIDs, strings.Split(id, ",")...)
 	}
 
-	for _, label := range labels {
-		labelsArray := strings.Split(label, ",")
-
-		initLabels := func() {
-			if e.Options.Labels == nil {
-				e.Options.Labels = make(map[string]string)
-			}
-		}
-
-		for i := range labelsArray {
-			labelKeyValue := strings.SplitN(labelsArray[i], ":", 2)
-			if labelKeyValue[0] == "" {
-				logrus.Warnf("Ignoring label with empty key: %q", labelsArray[i])
-				continue
-			}
-			switch len(labelKeyValue) {
-			case 2:
-				initLabels()
-				e.Options.Labels[labelKeyValue[0]] = labelKeyValue[1]
-			case 1:
-				initLabels()
-				e.Options.Labels[labelKeyValue[0]] = ""
-			}
-		}
+	if parsed := parseLabels(labels); parsed != nil {
+		e.Options.Labels = parsed
 	}
 
 	switch command {
@@ -312,6 +291,32 @@ func run(command string) error {
 		logrus.Warnf("Wrong command")
 	}
 	return nil
+}
+
+// parseLabels converts a slice of "key:value" or "key" strings into a label map.
+// Returns nil when the input produces no valid labels.
+func parseLabels(labels []string) map[string]string {
+	var result map[string]string
+
+	for _, label := range labels {
+		for _, entry := range strings.Split(label, ",") {
+			kv := strings.SplitN(entry, ":", 2)
+			if kv[0] == "" {
+				logrus.Warnf("Ignoring label with empty key: %q", entry)
+				continue
+			}
+			if result == nil {
+				result = make(map[string]string)
+			}
+			if len(kv) == 2 {
+				result[kv[0]] = kv[1]
+			} else {
+				result[kv[0]] = ""
+			}
+		}
+	}
+
+	return result
 }
 
 func getPolicyFilesFromRegistry() error {

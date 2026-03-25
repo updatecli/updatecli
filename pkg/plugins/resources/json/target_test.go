@@ -1,10 +1,10 @@
 package json
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
-+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -141,7 +141,7 @@ func TestTargetPreservesSpecialCharacters(t *testing.T) {
 
 			gotResult := result.Target{}
 			// dryRun=false so the file is actually written back to disk.
-			err = j.Target("2.0.0", nil, false, &gotResult)
+			err = j.Target(context.Background(), "2.0.0", nil, false, &gotResult)
 			require.NoError(t, err)
 			assert.True(t, gotResult.Changed)
 

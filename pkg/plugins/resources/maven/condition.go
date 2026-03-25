@@ -11,7 +11,7 @@ import (
 )
 
 // Condition tests if a specific version exist on the maven repository
-func (m *Maven) Condition(ctx context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
+func (m *Maven) Condition(_ context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 
 	if scm != nil {
 		logrus.Warningf("SCM configuration is not supported for maven condition, aborting")

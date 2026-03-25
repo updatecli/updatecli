@@ -11,7 +11,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-func (t *TerraformProvider) Target(ctx context.Context, source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
+func (t *TerraformProvider) Target(_ context.Context, source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
 	if scm != nil {
 		t.UpdateAbsoluteFilePath(scm.GetDirectory())
 	}

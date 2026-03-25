@@ -7,7 +7,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-func (h *Hcl) Source(ctx context.Context, workingDir string, resultSource *result.Source) error {
+func (h *Hcl) Source(_ context.Context, workingDir string, resultSource *result.Source) error {
 	if len(h.files) > 1 {
 		return fmt.Errorf("%s HCL source only supports one file", result.FAILURE)
 	}

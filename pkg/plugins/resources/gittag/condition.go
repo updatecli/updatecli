@@ -9,7 +9,7 @@ import (
 )
 
 // Condition checks that a git tag exists
-func (gt *GitTag) Condition(ctx context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
+func (gt *GitTag) Condition(_ context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 
 	err = gt.Validate()
 	if err != nil {

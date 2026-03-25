@@ -9,7 +9,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 )
 
-func (j *Json) Condition(ctx context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
+func (j *Json) Condition(_ context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 	conditionResult := true
 	partialMessage := ""
 

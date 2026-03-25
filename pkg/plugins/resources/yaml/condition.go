@@ -16,7 +16,7 @@ import (
 )
 
 // Condition checks if a key exists in a yaml file
-func (y *Yaml) Condition(ctx context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
+func (y *Yaml) Condition(_ context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 
 	var errorMessages []error
 

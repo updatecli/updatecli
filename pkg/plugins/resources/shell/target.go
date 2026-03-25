@@ -9,7 +9,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-func (s *Shell) Target(ctx context.Context, source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
+func (s *Shell) Target(_ context.Context, source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
 	getDir := ""
 	if scm != nil {
 		getDir = scm.GetDirectory()

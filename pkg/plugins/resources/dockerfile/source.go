@@ -11,7 +11,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-func (df *Dockerfile) Source(ctx context.Context, workingDir string, resultSource *result.Source) error {
+func (df *Dockerfile) Source(_ context.Context, workingDir string, resultSource *result.Source) error {
 	// By the default workingdir is set to the current working directory
 	// it would be better to have it empty by default but it must be changed in the
 	// source core codebase.

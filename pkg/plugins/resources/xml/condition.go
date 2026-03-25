@@ -9,7 +9,7 @@ import (
 )
 
 // Condition checks that a specific xml path contains the correct value at the specified path
-func (x *XML) Condition(ctx context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
+func (x *XML) Condition(_ context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 
 	resourceFile := x.spec.File
 	if scm != nil {

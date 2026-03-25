@@ -14,7 +14,7 @@ import (
 )
 
 // Target updates a scm repository based on the modified yaml file.
-func (y *Yaml) Target(ctx context.Context, source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
+func (y *Yaml) Target(_ context.Context, source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
 	var err error
 
 	workDir := ""

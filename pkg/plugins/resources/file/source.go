@@ -13,7 +13,7 @@ import (
 )
 
 // Source return a file content
-func (f *File) Source(ctx context.Context, workingDir string, resultSource *result.Source) error {
+func (f *File) Source(_ context.Context, workingDir string, resultSource *result.Source) error {
 	var validationErrors []string
 	var foundContent string
 

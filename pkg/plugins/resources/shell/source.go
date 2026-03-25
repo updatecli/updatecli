@@ -9,7 +9,7 @@ import (
 
 // Source returns the stdout of the shell command if its exit code is 0
 // otherwise an error is returned with the content of stderr
-func (s *Shell) Source(ctx context.Context, workingDir string, resultSource *result.Source) error {
+func (s *Shell) Source(_ context.Context, workingDir string, resultSource *result.Source) error {
 
 	// Ensure environment variable(s) are up to date
 	// either it already has a value specified, or it retrieves

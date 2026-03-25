@@ -46,8 +46,9 @@ type Pipeline struct {
 	// Config contains the pipeline configuration defined by the user
 	Config *config.Config
 	mu     sync.Mutex
-	// CrawlerSpanCtx links auto-discovered pipelines to their originating crawler span
-	CrawlerSpanCtx trace.SpanContext
+	// CrawlerKind identifies the autodiscovery crawler that generated this pipeline (empty for user-defined pipelines).
+	CrawlerKind string
+	tracer      trace.Tracer
 }
 
 // Init initialize an updatecli context based on its configuration
@@ -223,6 +224,8 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 		p.Report.Targets[id].DryRun = r.DryRun
 	}
 
+	p.tracer = telemetry.Tracer("updatecli")
+
 	// Graph must be generated after all resources have been initialized !
 	graph, err := p.Graph(GraphFlavorMermaid)
 	switch err {
@@ -237,13 +240,12 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 }
 
 // Run executes a single pipeline, wrapping the entire run in an OpenTelemetry span.
-// If CrawlerSpanCtx is valid, the pipeline span is linked to the originating crawler span.
 func (p *Pipeline) Run(ctx context.Context) error {
 	logrus.Infof("\n%s\n", strings.Repeat("#", len(p.Name)+4))
 	logrus.Infof("# %s #\n", strings.ToTitle(p.Name))
 	logrus.Infof("%s\n\n", strings.Repeat("#", len(p.Name)+4))
 
-	tracer := telemetry.Tracer("updatecli")
+	tracer := p.tracer
 
 	opts := []trace.SpanStartOption{
 		trace.WithAttributes(
@@ -255,8 +257,8 @@ func (p *Pipeline) Run(ctx context.Context) error {
 		),
 	}
 
-	if p.CrawlerSpanCtx.IsValid() {
-		opts = append(opts, trace.WithLinks(trace.Link{SpanContext: p.CrawlerSpanCtx}))
+	if p.CrawlerKind != "" {
+		opts = append(opts, trace.WithAttributes(attribute.String("updatecli.pipeline.crawler_kind", p.CrawlerKind)))
 	}
 
 	ctx, span := tracer.Start(ctx, "updatecli.pipeline", opts...)
@@ -325,6 +327,7 @@ func (p *Pipeline) Run(ctx context.Context) error {
 			case result.FAILURE:
 				p.Report.Result = result.FAILURE
 				span.SetAttributes(attribute.String("updatecli.pipeline.result", result.FAILURE))
+				span.SetStatus(codes.Error, "target reported failure")
 				return nil
 			case result.SUCCESS:
 				successCounter++
@@ -335,6 +338,7 @@ func (p *Pipeline) Run(ctx context.Context) error {
 			}
 		}
 
+		// No early return on SKIPPED — fall through so span attributes are always recorded.
 		if len(p.Targets) == skippedCounter {
 			p.Report.Result = result.SKIPPED
 		} else if len(p.Targets) == successCounter+skippedCounter {
@@ -349,12 +353,20 @@ func (p *Pipeline) Run(ctx context.Context) error {
 }
 
 func (p *Pipeline) runFlowCallbackWithCtx(ctx context.Context, d *dag.DAG, id string, depsResults []dag.FlowResult) (v interface{}, err error) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-
 	if id == rootVertex {
 		return nil, nil
 	}
+
+	// Start span before lock so timing reflects actual work, not mutex wait.
+	_, span := p.tracer.Start(ctx, "updatecli.resource",
+		trace.WithAttributes(
+			attribute.String("updatecli.resource.id", id),
+		),
+	)
+	defer span.End()
+
+	p.mu.Lock()
+	defer p.mu.Unlock()
 
 	err = p.Update()
 	if err != nil {
@@ -363,45 +375,21 @@ func (p *Pipeline) runFlowCallbackWithCtx(ctx context.Context, d *dag.DAG, id st
 
 	v, err = d.GetVertex(id)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get leaf from dag: %w", err)
+		return nil, fmt.Errorf("failed to get leaf from dag: %w", err) // unreachable: DAG guarantees vertex exists
 	}
 	leaf, ok := v.(Node)
 	if !ok {
-		return nil, fmt.Errorf("failed to reconstruct leaf from interface: %s", id)
+		return nil, fmt.Errorf("failed to reconstruct leaf from interface: %s", id) // unreachable: all vertices are Node
 	}
 
-	spanName := "updatecli." + leaf.Category
-	tracer := telemetry.Tracer("updatecli")
-	_, span := tracer.Start(ctx, spanName,
-		trace.WithAttributes(
-			attribute.String("updatecli.resource.id", id),
-			attribute.String("updatecli.resource.category", leaf.Category),
-		),
-	)
-	defer span.End()
+	span.SetAttributes(attribute.String("updatecli.resource.category", leaf.Category))
 
 	resourceTitle := strings.TrimPrefix(id, leaf.Category+"#")
 	logrus.Infof("\n%s: %s\n", leaf.Category, resourceTitle)
 	logrus.Infof("%s\n\n", strings.Repeat("-", len(resourceTitle)+len(leaf.Category)+2))
 
 	// Display repository header when the resource is bound to an SCM.
-	switch leaf.Category {
-	case sourceCategory:
-		sourceId := strings.ReplaceAll(id, "source#", "")
-		if scm, ok := p.SCMs[p.Sources[sourceId].Config.SCMID]; ok {
-			logrus.Infof("Repository\t: %s\n\n", scm.Handler.Summary())
-		}
-	case conditionCategory:
-		conditionId := strings.ReplaceAll(id, "condition#", "")
-		if scm, ok := p.SCMs[p.Conditions[conditionId].Config.SCMID]; ok {
-			logrus.Infof("Repository\t: %s\n\n", scm.Handler.Summary())
-		}
-	case targetCategory:
-		targetId := strings.ReplaceAll(id, "target#", "")
-		if scm, ok := p.SCMs[p.Targets[targetId].Config.SCMID]; ok {
-			logrus.Infof("Repository\t: %s\n\n", scm.Handler.Summary())
-		}
-	}
+	p.logRepositoryHeader(id, leaf.Category)
 
 	depsSourceIDs := []string{}
 	deps := map[string]*Node{}
@@ -493,23 +481,12 @@ func (p *Pipeline) runFlowCallbackWithCtx(ctx context.Context, d *dag.DAG, id st
 			if e != nil {
 				displayError(e)
 				err = e
-				span.RecordError(e)
-				span.SetStatus(codes.Error, e.Error())
+				telemetry.RecordSpanError(span, e)
 			}
 			updateSourceResult(sourceId)
 			leaf.Result = r
 			p.updateSource(sourceId, leaf.Result)
-
-			if src, ok := p.Sources[sourceId]; ok {
-				span.SetAttributes(
-					attribute.String("updatecli.resource.name", src.Config.Name),
-					attribute.String("updatecli.resource.kind", src.Config.Kind),
-					attribute.String("updatecli.resource.result", leaf.Result),
-				)
-				if src.Result != nil && src.Result.Description != "" {
-					span.SetAttributes(attribute.String("updatecli.resource.description", src.Result.Description))
-				}
-			}
+			p.recordSourceSpan(span, sourceId, leaf.Result)
 
 		case conditionCategory:
 			conditionId := strings.ReplaceAll(id, "condition#", "")
@@ -517,29 +494,12 @@ func (p *Pipeline) runFlowCallbackWithCtx(ctx context.Context, d *dag.DAG, id st
 			if e != nil {
 				displayError(e)
 				err = e
-				span.RecordError(e)
-				span.SetStatus(codes.Error, e.Error())
+				telemetry.RecordSpanError(span, e)
 			}
 			updateConditionResult(conditionId)
 			leaf.Result = r
 			p.updateCondition(conditionId, leaf.Result)
-
-			if cond, ok := p.Conditions[conditionId]; ok {
-				span.SetAttributes(
-					attribute.String("updatecli.resource.name", cond.Config.Name),
-					attribute.String("updatecli.resource.kind", cond.Config.Kind),
-					attribute.String("updatecli.resource.result", leaf.Result),
-				)
-				if cond.Result != nil {
-					span.SetAttributes(
-						attribute.Bool("updatecli.condition.pass", cond.Result.Pass),
-						attribute.String("updatecli.condition.source_id", cond.Result.SourceID),
-					)
-					if cond.Result.Description != "" {
-						span.SetAttributes(attribute.String("updatecli.resource.description", cond.Result.Description))
-					}
-				}
-			}
+			p.recordConditionSpan(span, conditionId, leaf.Result)
 
 		case targetCategory:
 			targetId := strings.ReplaceAll(id, "target#", "")
@@ -547,37 +507,13 @@ func (p *Pipeline) runFlowCallbackWithCtx(ctx context.Context, d *dag.DAG, id st
 			if e != nil {
 				displayError(e)
 				err = e
-				span.RecordError(e)
-				span.SetStatus(codes.Error, e.Error())
+				telemetry.RecordSpanError(span, e)
 			}
 			updateTargetResult(targetId)
 			leaf.Result = r
 			leaf.Changed = changed
 			p.updateTarget(targetId, leaf.Result)
-
-			if tgt, ok := p.Targets[targetId]; ok {
-				span.SetAttributes(
-					attribute.String("updatecli.resource.name", tgt.Config.Name),
-					attribute.String("updatecli.resource.kind", tgt.Config.Kind),
-					attribute.String("updatecli.resource.result", leaf.Result),
-					attribute.Bool("updatecli.target.changed", changed),
-				)
-				if tgt.Result != nil {
-					span.SetAttributes(
-						attribute.Bool("updatecli.target.dry_run", tgt.Result.DryRun),
-						attribute.String("updatecli.target.source_id", tgt.Result.SourceID),
-					)
-					if tgt.Result.Description != "" {
-						span.SetAttributes(attribute.String("updatecli.resource.description", tgt.Result.Description))
-					}
-					if len(tgt.Result.Files) > 0 {
-						span.SetAttributes(attribute.StringSlice("updatecli.target.files", tgt.Result.Files))
-					}
-				}
-				if changed {
-					span.AddEvent("target.changed")
-				}
-			}
+			p.recordTargetSpan(span, targetId, leaf.Result, changed)
 		}
 	}
 
@@ -585,6 +521,95 @@ func (p *Pipeline) runFlowCallbackWithCtx(ctx context.Context, d *dag.DAG, id st
 		p.Report.Result = result.ATTENTION
 	}
 	return leaf, err
+}
+
+// logRepositoryHeader logs the SCM repository summary for the resource bound to id,
+// stripping the category prefix to resolve the resource configuration.
+func (p *Pipeline) logRepositoryHeader(id string, category string) {
+	switch category {
+	case sourceCategory:
+		sourceId := strings.ReplaceAll(id, "source#", "")
+		if scm, ok := p.SCMs[p.Sources[sourceId].Config.SCMID]; ok {
+			logrus.Infof("Repository\t: %s\n\n", scm.Handler.Summary())
+		}
+	case conditionCategory:
+		conditionId := strings.ReplaceAll(id, "condition#", "")
+		if scm, ok := p.SCMs[p.Conditions[conditionId].Config.SCMID]; ok {
+			logrus.Infof("Repository\t: %s\n\n", scm.Handler.Summary())
+		}
+	case targetCategory:
+		targetId := strings.ReplaceAll(id, "target#", "")
+		if scm, ok := p.SCMs[p.Targets[targetId].Config.SCMID]; ok {
+			logrus.Infof("Repository\t: %s\n\n", scm.Handler.Summary())
+		}
+	}
+}
+
+// recordSourceSpan sets OpenTelemetry span attributes for a completed source run.
+func (p *Pipeline) recordSourceSpan(span trace.Span, sourceId string, leafResult string) {
+	src, ok := p.Sources[sourceId]
+	if !ok {
+		return
+	}
+	span.SetAttributes(
+		attribute.String("updatecli.resource.name", src.Config.Name),
+		attribute.String("updatecli.resource.kind", src.Config.Kind),
+		attribute.String("updatecli.resource.result", leafResult),
+	)
+	if src.Result != nil && src.Result.Description != "" {
+		span.SetAttributes(attribute.String("updatecli.resource.description", src.Result.Description))
+	}
+}
+
+// recordConditionSpan sets OpenTelemetry span attributes for a completed condition run.
+func (p *Pipeline) recordConditionSpan(span trace.Span, conditionId string, leafResult string) {
+	cond, ok := p.Conditions[conditionId]
+	if !ok {
+		return
+	}
+	span.SetAttributes(
+		attribute.String("updatecli.resource.name", cond.Config.Name),
+		attribute.String("updatecli.resource.kind", cond.Config.Kind),
+		attribute.String("updatecli.resource.result", leafResult),
+	)
+	if cond.Result != nil {
+		span.SetAttributes(
+			attribute.Bool("updatecli.condition.pass", cond.Result.Pass),
+			attribute.String("updatecli.condition.source_id", cond.Result.SourceID),
+		)
+		if cond.Result.Description != "" {
+			span.SetAttributes(attribute.String("updatecli.resource.description", cond.Result.Description))
+		}
+	}
+}
+
+// recordTargetSpan sets OpenTelemetry span attributes for a completed target run.
+func (p *Pipeline) recordTargetSpan(span trace.Span, targetId string, leafResult string, changed bool) {
+	tgt, ok := p.Targets[targetId]
+	if !ok {
+		return
+	}
+	span.SetAttributes(
+		attribute.String("updatecli.resource.name", tgt.Config.Name),
+		attribute.String("updatecli.resource.kind", tgt.Config.Kind),
+		attribute.String("updatecli.resource.result", leafResult),
+		attribute.Bool("updatecli.target.changed", changed),
+	)
+	if tgt.Result != nil {
+		span.SetAttributes(
+			attribute.Bool("updatecli.target.dry_run", tgt.Result.DryRun),
+			attribute.String("updatecli.target.source_id", tgt.Result.SourceID),
+		)
+		if tgt.Result.Description != "" {
+			span.SetAttributes(attribute.String("updatecli.resource.description", tgt.Result.Description))
+		}
+		if len(tgt.Result.Files) > 0 {
+			span.SetAttributes(attribute.StringSlice("updatecli.target.files", tgt.Result.Files))
+		}
+	}
+	if changed {
+		span.AddEvent("target.changed")
+	}
 }
 
 func (p *Pipeline) String() string {

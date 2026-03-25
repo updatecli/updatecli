@@ -9,6 +9,6 @@ import (
 )
 
 // Target ensure that a specific release exist on Bitbucket Server, otherwise creates it
-func (g Stash) Target(ctx context.Context, source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
+func (g Stash) Target(_ context.Context, source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
 	return fmt.Errorf("target not supported for the plugin stash branch")
 }
