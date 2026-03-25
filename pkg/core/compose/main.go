@@ -1,6 +1,7 @@
 package compose
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/sirupsen/logrus"
@@ -18,23 +19,31 @@ type Compose struct {
 }
 
 // New creates a new Compose object
-func New(filename string) (Compose, error) {
-	var c Compose
+func New(filename string, visitedComposeFiles map[string]bool) ([]Compose, error) {
 
-	logrus.Infof("\nLoading Updatecli compose file: %q", filename)
+	composeFiles := []Compose{}
+
+	if _, ok := visitedComposeFiles[filename]; ok {
+		logrus.Debugf("Compose file %q already loaded, skipping to avoid circular reference", filename)
+		return nil, nil
+	}
+
+	visitedComposeFiles[filename] = true
+
+	logrus.Infof("Loading compose file: %q", filename)
 
 	spec, err := LoadFile(filename)
 	if err != nil {
-		return c, err
+		return nil, err
 	}
 
 	if len(spec.Name) != 0 {
-		logrus.Infof("Compose file name: %q", spec.Name)
+		logrus.Infof("\tName: %q", spec.Name)
 	}
 
 	switch len(spec.Policies) {
 	case 0:
-		logrus.Warningf("No policy defined in the compose file")
+		//
 	case 1:
 		logrus.Infof("One policy detected:\n\t* Policy: %s", spec.Policies[0].Name)
 	default:
@@ -44,17 +53,36 @@ func New(filename string) (Compose, error) {
 		}
 	}
 
-	c.spec = *spec
-	c.filename = filename
-	c.name = spec.Name
+	composeFile := Compose{
+		spec:     *spec,
+		filename: filename,
+		name:     spec.Name,
+	}
 
-	return c, nil
+	composeFiles = append(composeFiles, composeFile)
+	errs := []error{}
+	for i := range spec.Include {
+		composeFile := relativePathToFile(filename, []string{spec.Include[i]})[0]
+		includedCompose, err := New(composeFile, visitedComposeFiles)
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
+
+		composeFiles = append(composeFiles, includedCompose...)
+	}
+
+	if len(errs) > 0 {
+		return nil, fmt.Errorf("included compose files errors: %s", errors.Join(errs...))
+	}
+
+	return composeFiles, nil
 }
 
 // GetPolicies returns a list of policies defined in the compose file
 func (c *Compose) GetPolicies(disableTLS bool) ([]manifest.Manifest, error) {
 
-	var manifests []manifest.Manifest
+	manifests := []manifest.Manifest{}
 	var errs []error
 
 	if err := c.spec.Environments.SetEnv(); err != nil {
@@ -76,7 +104,7 @@ func (c *Compose) GetPolicies(disableTLS bool) ([]manifest.Manifest, error) {
 
 	// Fail fast if there is an error with the compose file before processing policies
 	if len(errs) > 0 {
-		return manifests, fmt.Errorf("compose file %q errors: %q", c.name, errs)
+		return nil, fmt.Errorf("compose file %q errors: %s", c.name, errors.Join(errs...))
 	}
 
 	for i := range c.spec.Policies {
@@ -142,7 +170,7 @@ func (c *Compose) GetPolicies(disableTLS bool) ([]manifest.Manifest, error) {
 	}
 
 	if len(errs) > 0 {
-		return manifests, fmt.Errorf("policies errors: %s", errs)
+		return nil, fmt.Errorf("policies errors: %s", errors.Join(errs...))
 	}
 
 	return manifests, nil

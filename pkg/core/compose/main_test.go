@@ -15,19 +15,71 @@ func TestGetPolicies(t *testing.T) {
 	testdata := []struct {
 		name              string
 		file              string
-		expectedManifests []manifest.Manifest
+		expectedManifests [][]manifest.Manifest
 		expectedEnv       map[string]string
 	}{
 		{
 			name: "Test getPolicies with environment variables",
-			file: "testdata/updatecli-compose.yaml",
-			expectedManifests: []manifest.Manifest{
+			file: "testdata/simple/updatecli-compose.yaml",
+			expectedManifests: [][]manifest.Manifest{
 				{
-					Manifests: []string{
-						filepath.Join(os.TempDir(), "updatecli", "store", "7aaff2727eef42f7d0add2d5ed3fd83f74a125420682bec7e4bc8835bb28e833", "updatecli.d", "default.tpl"),
+					{
+						Manifests: []string{
+							filepath.Join(os.TempDir(), "updatecli", "store", "7aaff2727eef42f7d0add2d5ed3fd83f74a125420682bec7e4bc8835bb28e833", "updatecli.d", "default.tpl"),
+						},
+						Values: []string{
+							filepath.Join(os.TempDir(), "updatecli", "store", "7aaff2727eef42f7d0add2d5ed3fd83f74a125420682bec7e4bc8835bb28e833", "values.yaml"),
+						},
 					},
-					Values: []string{
-						filepath.Join(os.TempDir(), "updatecli", "store", "7aaff2727eef42f7d0add2d5ed3fd83f74a125420682bec7e4bc8835bb28e833", "values.yaml"),
+				},
+			},
+			expectedEnv: map[string]string{
+				"UPDATECLI_TEST_GITHUB_TOKEN": "my super secret token",
+				"UPDATECLI_TEST_GITHUB_ACTOR": "me",
+			},
+		},
+		{
+			name: "Test getPolicies from included compose file with environment variables",
+			file: "testdata/multiple/updatecli-compose.yaml",
+			expectedManifests: [][]manifest.Manifest{
+				// The root compose file doesn't contain any policy
+				{},
+				{
+					{
+						Manifests: []string{
+							filepath.Join(os.TempDir(), "updatecli", "store", "7aaff2727eef42f7d0add2d5ed3fd83f74a125420682bec7e4bc8835bb28e833", "updatecli.d", "default.tpl"),
+						},
+						Values: []string{
+							filepath.Join(os.TempDir(), "updatecli", "store", "7aaff2727eef42f7d0add2d5ed3fd83f74a125420682bec7e4bc8835bb28e833", "values.yaml"),
+						},
+						ValuesInline: []string{
+							"scm:\n    enabled: false\n",
+						},
+					},
+				},
+			},
+			expectedEnv: map[string]string{
+				"UPDATECLI_TEST_GITHUB_TOKEN": "my super secret token",
+				"UPDATECLI_TEST_GITHUB_ACTOR": "me",
+			},
+		},
+		{
+			name: "Test getPolicies from included compose file with a circular reference",
+			file: "testdata/circular/updatecli-compose.yaml",
+			expectedManifests: [][]manifest.Manifest{
+				// The root compose file doesn't contain any policy
+				{},
+				{
+					{
+						Manifests: []string{
+							filepath.Join(os.TempDir(), "updatecli", "store", "7aaff2727eef42f7d0add2d5ed3fd83f74a125420682bec7e4bc8835bb28e833", "updatecli.d", "default.tpl"),
+						},
+						Values: []string{
+							filepath.Join(os.TempDir(), "updatecli", "store", "7aaff2727eef42f7d0add2d5ed3fd83f74a125420682bec7e4bc8835bb28e833", "values.yaml"),
+						},
+						ValuesInline: []string{
+							"scm:\n    enabled: false\n",
+						},
 					},
 				},
 			},
@@ -40,18 +92,24 @@ func TestGetPolicies(t *testing.T) {
 
 	for _, data := range testdata {
 		t.Run(data.name, func(t *testing.T) {
-			updateCompose, err := New(data.file)
+			updatecliComposes, err := New(data.file, map[string]bool{})
 			require.NoError(t, err)
 
-			gotManifests, err := updateCompose.GetPolicies(false)
-			require.NoError(t, err)
+			require.Equal(t, len(data.expectedManifests), len(updatecliComposes))
 
-			assert.Equal(t, data.expectedManifests, gotManifests)
+			for i := range updatecliComposes {
+				c := updatecliComposes[i]
+				gotManifests, err := c.GetPolicies(false)
+				require.NoError(t, err)
 
-			for key, expectedValue := range data.expectedEnv {
-				gotValue := os.Getenv(key)
-				assert.Equal(t, expectedValue, gotValue)
+				assert.Equal(t, data.expectedManifests[i], gotManifests)
+
+				for key, expectedValue := range data.expectedEnv {
+					gotValue := os.Getenv(key)
+					assert.Equal(t, expectedValue, gotValue)
+				}
 			}
+
 		})
 	}
 }
