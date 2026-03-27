@@ -1,6 +1,7 @@
 package lock
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -163,7 +164,7 @@ func TestTarget(t *testing.T) {
 			l.lockIndex = lock.NewMockIndex(providerVersions)
 
 			gotResult := result.Target{}
-			err = l.Target(tt.sourceInput, nil, true, &gotResult)
+			err = l.Target(context.Background(), tt.sourceInput, nil, true, &gotResult)
 			if tt.wantErr {
 				assert.Equal(t, tt.expectedErrorMsg.Error(), err.Error())
 			} else {

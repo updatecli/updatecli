@@ -1,6 +1,7 @@
 package stash
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -92,7 +93,7 @@ func (s *Stash) Clone() (string, error) {
 }
 
 // Commit run `git commit`.
-func (s *Stash) Commit(message string) error {
+func (s *Stash) Commit(ctx context.Context, message string) error {
 	// Generate the conventional commit message
 	commitMessage, err := s.Spec.CommitMessage.Generate(message)
 	if err != nil {

@@ -1,6 +1,7 @@
 package language
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/sirupsen/logrus"
@@ -8,7 +9,7 @@ import (
 )
 
 // Condition checks if a specific stable Golang version is published
-func (l *Language) Condition(source string, scm scm.ScmHandler) (pass bool, message string, err error) {
+func (l *Language) Condition(ctx context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 	if scm != nil {
 		logrus.Debugln("scm is not supported")
 	}
@@ -20,7 +21,7 @@ func (l *Language) Condition(source string, scm scm.ScmHandler) (pass bool, mess
 		return false, "", fmt.Errorf("no version defined")
 	}
 
-	versions, err := l.versions()
+	versions, err := l.versions(ctx)
 	if err != nil {
 		return false, "", fmt.Errorf("searching golang version: %w", err)
 	}

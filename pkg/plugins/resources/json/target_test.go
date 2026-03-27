@@ -1,6 +1,7 @@
 package json
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -88,7 +89,7 @@ func TestTarget(t *testing.T) {
 			require.NoError(t, err)
 
 			gotResult := result.Target{}
-			err = j.Target(tt.sourceInput, nil, true, &gotResult)
+			err = j.Target(context.Background(), tt.sourceInput, nil, true, &gotResult)
 
 			if tt.wantErr {
 				assert.Equal(t, tt.expectedErrorMsg.Error(), err.Error())
@@ -140,7 +141,7 @@ func TestTargetPreservesSpecialCharacters(t *testing.T) {
 
 			gotResult := result.Target{}
 			// dryRun=false so the file is actually written back to disk.
-			err = j.Target("2.0.0", nil, false, &gotResult)
+			err = j.Target(context.Background(), "2.0.0", nil, false, &gotResult)
 			require.NoError(t, err)
 			assert.True(t, gotResult.Changed)
 

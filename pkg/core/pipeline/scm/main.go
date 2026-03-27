@@ -1,6 +1,7 @@
 package scm
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -29,7 +30,7 @@ type ScmHandler interface {
 	Clone() (string, error)
 	Checkout() error
 	GetDirectory() (directory string)
-	Commit(message string) error
+	Commit(ctx context.Context, message string) error
 	Clean() error
 	Push() (bool, error)
 	PushTag(tag string) error

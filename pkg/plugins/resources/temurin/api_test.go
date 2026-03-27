@@ -1,6 +1,7 @@
 package temurin
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -74,7 +75,7 @@ func TestApiGetReleaseNames_FallbackOnFeature(t *testing.T) {
 	sut.apiWebClient = server.Client()
 	sut.apiWebRedirectionClient = server.Client()
 
-	releases, err := sut.apiGetReleaseNames()
+	releases, err := sut.apiGetReleaseNames(context.Background())
 
 	require.NoError(t, err)
 	assert.Equal(t, []string{"jdk-25.0.2+10"}, releases)
@@ -139,7 +140,7 @@ func TestApiGetReleaseNames_FallbackOnLTS(t *testing.T) {
 	sut.apiWebClient = server.Client()
 	sut.apiWebRedirectionClient = server.Client()
 
-	releases, err := sut.apiGetReleaseNames()
+	releases, err := sut.apiGetReleaseNames(context.Background())
 
 	require.NoError(t, err)
 	assert.Equal(t, []string{"jdk-21.0.6+7"}, releases)
@@ -192,7 +193,7 @@ func TestApiGetReleaseNames_AllCandidatesFail(t *testing.T) {
 	sut.apiWebClient = server.Client()
 	sut.apiWebRedirectionClient = server.Client()
 
-	releases, err := sut.apiGetReleaseNames()
+	releases, err := sut.apiGetReleaseNames(context.Background())
 
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "500")
@@ -253,7 +254,7 @@ func TestApiGetReleaseNames_ExplicitFeatureVersion(t *testing.T) {
 	sut.apiWebClient = server.Client()
 	sut.apiWebRedirectionClient = server.Client()
 
-	releases, err := sut.apiGetReleaseNames()
+	releases, err := sut.apiGetReleaseNames(context.Background())
 
 	require.NoError(t, err)
 	assert.Equal(t, []string{"jdk-21.0.6+7"}, releases)
@@ -320,7 +321,7 @@ func TestApiGetReleaseNames_EmptyReleasesTriggersNextCandidate(t *testing.T) {
 	sut.apiWebClient = server.Client()
 	sut.apiWebRedirectionClient = server.Client()
 
-	releases, err := sut.apiGetReleaseNames()
+	releases, err := sut.apiGetReleaseNames(context.Background())
 
 	require.NoError(t, err)
 	assert.Equal(t, []string{"jdk-25.0.2+10"}, releases)
@@ -387,7 +388,7 @@ func TestApiGetReleaseNames_DescendingAvailableReleases(t *testing.T) {
 	sut.apiWebClient = server.Client()
 	sut.apiWebRedirectionClient = server.Client()
 
-	releases, err := sut.apiGetReleaseNames()
+	releases, err := sut.apiGetReleaseNames(context.Background())
 
 	// The fallback must have tried 25 (next highest after 26), not 8.
 	require.NoError(t, err)

@@ -7,6 +7,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/pipeline"
 	"github.com/updatecli/updatecli/pkg/core/reports"
 	"github.com/updatecli/updatecli/pkg/core/tmp"
+	"go.opentelemetry.io/otel/trace"
 )
 
 var (
@@ -20,6 +21,13 @@ type Engine struct {
 	Pipelines      []*pipeline.Pipeline
 	Options        Options
 	Reports        reports.Reports
+	tracer         trace.Tracer
+}
+
+// SetTracer configures the tracer used for OTel instrumentation across all engine operations.
+// Call this once after telemetry is initialized, before invoking Prepare or Run.
+func (e *Engine) SetTracer(t trace.Tracer) {
+	e.tracer = t
 }
 
 // Clean remove every traces from an updatecli run.

@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -82,7 +83,7 @@ func TestCondition(t *testing.T) {
 
 			require.NoError(t, err)
 
-			gotResult, _, gotErr := l.Condition(tt.source, nil)
+			gotResult, _, gotErr := l.Condition(context.Background(), tt.source, nil)
 
 			if tt.wantErr {
 				assert.Equal(t, tt.expectedErrorMsg.Error(), gotErr.Error())

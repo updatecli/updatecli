@@ -1,6 +1,7 @@
 package npm
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -121,7 +122,7 @@ func TestSource(t *testing.T) {
 				got.webClient = GetMockClient(tt.mockedUrl, tt.mockedToken, tt.mockedBody, tt.mockedHTTPStatusCode)
 			}
 			gotResult := result.Source{}
-			err = got.Source("", &gotResult)
+			err = got.Source(context.Background(), "", &gotResult)
 			if tt.expectedError {
 				assert.Error(t, err)
 				return

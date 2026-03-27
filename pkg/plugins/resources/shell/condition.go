@@ -1,13 +1,14 @@
 package shell
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 )
 
 // Condition tests if the provided command (concatenated with the source) is executed with success
-func (s *Shell) Condition(source string, scm scm.ScmHandler) (pass bool, message string, err error) {
+func (s *Shell) Condition(_ context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 	var workingDir string
 	if scm != nil {
 		workingDir = scm.GetDirectory()

@@ -1,6 +1,7 @@
 package bazelmod
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 
@@ -9,7 +10,7 @@ import (
 )
 
 // Target updates the module version in MODULE.bazel file
-func (b *Bazelmod) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
+func (b *Bazelmod) Target(_ context.Context, source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
 	// Use source as the new version
 	newVersion := source
 	if newVersion == "" {

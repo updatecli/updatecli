@@ -1,6 +1,7 @@
 package githubrelease
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/sirupsen/logrus"
@@ -8,7 +9,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-func (gr GitHubRelease) Condition(source string, scm scm.ScmHandler) (pass bool, message string, err error) {
+func (gr GitHubRelease) Condition(ctx context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 
 	if scm != nil {
 		logrus.Warningf("condition not supported for plugin GitHub Release used with scm")
@@ -22,11 +23,11 @@ func (gr GitHubRelease) Condition(source string, scm scm.ScmHandler) (pass bool,
 	var versions []string
 	switch gr.spec.Key {
 	case KeyTagHash:
-		versions, err = gr.ghHandler.SearchReleasesByTagHash(gr.typeFilter)
+		versions, err = gr.ghHandler.SearchReleasesByTagHash(ctx, gr.typeFilter)
 	case KeyTitle:
-		versions, err = gr.ghHandler.SearchReleasesByTitle(gr.typeFilter)
+		versions, err = gr.ghHandler.SearchReleasesByTitle(ctx, gr.typeFilter)
 	default:
-		versions, err = gr.ghHandler.SearchReleasesByTagName(gr.typeFilter)
+		versions, err = gr.ghHandler.SearchReleasesByTagName(ctx, gr.typeFilter)
 	}
 
 	if err != nil {
@@ -38,7 +39,7 @@ func (gr GitHubRelease) Condition(source string, scm scm.ScmHandler) (pass bool,
 		case true:
 			logrus.Warningf("%s No GitHub Release found, we fallback to published git tags", result.ATTENTION)
 
-			versions, err = gr.ghHandler.SearchTags(0)
+			versions, err = gr.ghHandler.SearchTags(ctx, 0)
 			if err != nil {
 				return false, "", fmt.Errorf("looking for GitHub release tag: %w", err)
 			}

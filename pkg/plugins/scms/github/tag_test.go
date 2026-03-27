@@ -1,6 +1,7 @@
 package github
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -88,7 +89,7 @@ func TestGetTags(t *testing.T) {
 					mockedErr:   tt.mockedError,
 				},
 			}
-			got, err := sut.SearchTags(0)
+			got, err := sut.SearchTags(context.Background(), 0)
 
 			if tt.wantErr {
 				assert.Error(t, err)

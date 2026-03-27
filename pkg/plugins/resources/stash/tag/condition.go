@@ -1,13 +1,14 @@
 package tag
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 )
 
-func (g *Stash) Condition(source string, scm scm.ScmHandler) (pass bool, message string, err error) {
+func (g *Stash) Condition(_ context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 
 	if scm != nil {
 		logrus.Warningf("scm not supported, ignored")

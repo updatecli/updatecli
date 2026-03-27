@@ -1,6 +1,7 @@
 package language
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -22,14 +23,9 @@ type Info struct {
 }
 
 // versions fetch all stable Golang version
-func (l *Language) versions() (versions []string, err error) {
+func (l *Language) versions(ctx context.Context) (versions []string, err error) {
 
-	if err != nil {
-		logrus.Errorf("something went wrong while generating the go url to retrieve versions %q\n", err)
-		return []string{}, err
-	}
-
-	req, err := http.NewRequest("GET", "https://go.dev/dl/?mode=json&include=all", nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", "https://go.dev/dl/?mode=json&include=all", nil)
 	if err != nil {
 		logrus.Errorf("something went wrong while getting go version data %q\n", err)
 		return []string{}, err

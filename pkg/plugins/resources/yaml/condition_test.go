@@ -1,6 +1,7 @@
 package yaml
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -622,7 +623,7 @@ repos:
 
 			assert.NoError(t, err)
 
-			gotResult, _, gotErr := y.Condition(tt.inputSourceValue, nil)
+			gotResult, _, gotErr := y.Condition(context.Background(), tt.inputSourceValue, nil)
 			if tt.isErrorWanted {
 				assert.Error(t, gotErr)
 				return

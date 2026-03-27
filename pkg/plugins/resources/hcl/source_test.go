@@ -1,6 +1,7 @@
 package hcl
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -93,7 +94,7 @@ func TestSource(t *testing.T) {
 			require.NoError(t, err)
 
 			gotResult := result.Source{}
-			err = h.Source("", &gotResult)
+			err = h.Source(context.Background(), "", &gotResult)
 
 			if tt.wantErr {
 				assert.Equal(t, tt.expectedErrorMsg.Error(), err.Error())

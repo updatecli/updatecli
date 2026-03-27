@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -9,7 +10,7 @@ import (
 )
 
 // RunActions runs all actions defined in the configuration.
-func (e *Engine) runActions() error {
+func (e *Engine) runActions(ctx context.Context) error {
 
 	errs := []string{}
 
@@ -19,7 +20,7 @@ func (e *Engine) runActions() error {
 	for id := range e.Pipelines {
 		pipeline := e.Pipelines[id]
 		if len(pipeline.Actions) > 0 {
-			if err := pipeline.RunActions(); err != nil {
+			if err := pipeline.RunActions(ctx); err != nil {
 				errs = append(errs, err.Error())
 				pipeline.Report.Result = result.FAILURE
 				logrus.Errorf("action stage:\t%q", err.Error())
@@ -31,7 +32,7 @@ func (e *Engine) runActions() error {
 	for id := range e.Pipelines {
 		pipeline := e.Pipelines[id]
 		if len(pipeline.Actions) > 0 {
-			if err := pipeline.RunCleanActions(); err != nil {
+			if err := pipeline.RunCleanActions(ctx); err != nil {
 				errs = append(errs, "cleaning: "+err.Error())
 				pipeline.Report.Result = result.FAILURE
 				logrus.Errorf("cleaning action stage:\t%q", err.Error())

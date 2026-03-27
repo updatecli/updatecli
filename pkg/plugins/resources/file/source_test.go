@@ -1,6 +1,7 @@
 package file
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -281,7 +282,7 @@ func TestFile_Source(t *testing.T) {
 			// Looping on the only filePath in 'files'
 			for filePath := range f.files {
 				gotResult := result.Source{}
-				gotErr := f.Source(filePath, &gotResult)
+				gotErr := f.Source(context.Background(), filePath, &gotResult)
 				if tt.wantedErr {
 					assert.Error(t, gotErr)
 					return

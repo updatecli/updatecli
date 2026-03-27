@@ -2,6 +2,7 @@ package source
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"io"
 	"os"
@@ -41,7 +42,7 @@ var (
 )
 
 // Run execute actions defined by the source configuration
-func (s *Source) Run() (err error) {
+func (s *Source) Run(ctx context.Context) (err error) {
 
 	var consoleOutput bytes.Buffer
 	// By default logrus logs to stderr, so I guess we want to keep this behavior...
@@ -84,7 +85,7 @@ func (s *Source) Run() (err error) {
 		workingDir = SCM.GetDirectory()
 	}
 
-	err = source.Source(workingDir, s.Result)
+	err = source.Source(ctx, workingDir, s.Result)
 
 	s.Output = s.Result.Information
 	s.OriginalOutput = s.Result.Information

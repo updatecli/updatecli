@@ -12,7 +12,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-func (g Stash) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarget result.Target) error {
+func (g Stash) Target(ctx context.Context, source string, scm scm.ScmHandler, dryRun bool, resultTarget result.Target) error {
 	if len(g.spec.Tag) == 0 {
 		g.spec.Tag = source
 	}
@@ -28,7 +28,6 @@ func (g Stash) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 
 	// Ensure that a release doesn't exist yet
 
-	ctx := context.Background()
 	// Timeout api query after 30 second
 	ctx, cancelListQuery := context.WithTimeout(ctx, 30*time.Second)
 	defer cancelListQuery()

@@ -1,6 +1,7 @@
 package npm
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -13,7 +14,7 @@ import (
 // Changelog returns the link to the found npm package version's deprecated info
 func (n Npm) Changelog(from, to string) *result.Changelogs {
 
-	_, _, err := n.getVersions()
+	_, _, err := n.getVersions(context.Background())
 	if err != nil {
 		return nil
 	}

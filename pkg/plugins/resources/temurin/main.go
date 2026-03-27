@@ -1,6 +1,7 @@
 package temurin
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"slices"
@@ -80,7 +81,8 @@ func New(spec interface{}) (*Temurin, error) {
 	}
 
 	/** Validations **/
-	architectures, err := newResource.apiGetArchitectures()
+	// context.Background() is appropriate here: New() is a constructor with no caller context.
+	architectures, err := newResource.apiGetArchitectures(context.Background())
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +90,7 @@ func New(spec interface{}) (*Temurin, error) {
 		return nil, fmt.Errorf("[temurin] Specified architecture %q is not a valid Temurin architecture (check https://api.adoptium.net/q/swagger-ui/#/Types for valid list)", newResource.spec.Architecture)
 	}
 
-	operatingSystems, err := newResource.apiGetOperatingSystems()
+	operatingSystems, err := newResource.apiGetOperatingSystems(context.Background())
 	if err != nil {
 		return nil, err
 	}

@@ -1,6 +1,7 @@
 package cargopackage
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/sirupsen/logrus"
@@ -8,14 +9,14 @@ import (
 )
 
 // Source returns the latest npm package version
-func (cp CargoPackage) Source(workingDir string, resultSource *result.Source) error {
+func (cp CargoPackage) Source(ctx context.Context, workingDir string, resultSource *result.Source) error {
 	logrus.Debugf("Registry RootDir: %s, workingDir: %s", cp.registry.RootDir, workingDir)
 	if cp.isSCM {
 		// We are in a scm context, workingDir is holding the data
 		cp.registry.RootDir = workingDir
 	}
 
-	version, _, err := cp.getVersions()
+	version, _, err := cp.getVersions(ctx)
 	if err != nil {
 		return fmt.Errorf("get cargo packages versions: %w", err)
 	}

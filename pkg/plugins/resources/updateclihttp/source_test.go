@@ -2,6 +2,7 @@ package updateclihttp
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -165,7 +166,7 @@ func TestSource(t *testing.T) {
 			}
 
 			got := result.Source{}
-			gotErr := sut.Source(tt.workingDir, &got)
+			gotErr := sut.Source(context.Background(), tt.workingDir, &got)
 
 			if tt.wantErr != nil {
 				require.Error(t, gotErr)

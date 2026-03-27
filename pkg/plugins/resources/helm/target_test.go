@@ -1,6 +1,7 @@
 package helm
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -341,7 +342,7 @@ func TestTarget(t *testing.T) {
 			require.NoError(t, err)
 
 			gotResult := result.Target{}
-			err = j.Target(tt.sourceInput, nil, true, &gotResult)
+			err = j.Target(context.Background(), tt.sourceInput, nil, true, &gotResult)
 
 			if tt.wantErr {
 				assert.Error(t, err)

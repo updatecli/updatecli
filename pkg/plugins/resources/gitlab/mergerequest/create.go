@@ -16,9 +16,9 @@ import (
 const gitlabRequestTimeout = 60 * time.Second
 
 // CreateAction opens a Merge Request on the GitLab server
-func (g *Gitlab) CreateAction(report *reports.Action, resetDescription bool) error {
+func (g *Gitlab) CreateAction(ctx context.Context, report *reports.Action, resetDescription bool) error {
 
-	ctx, cancel := context.WithTimeout(context.Background(), gitlabRequestTimeout)
+	ctx, cancel := context.WithTimeout(ctx, gitlabRequestTimeout)
 	defer cancel()
 
 	labelOptions := gitlab.LabelOptions(g.spec.Labels)

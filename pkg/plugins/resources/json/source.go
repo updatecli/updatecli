@@ -1,6 +1,7 @@
 package json
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
@@ -13,7 +14,7 @@ var (
 	ErrSpecVersionFilterRequireMultiple = errors.New("in the context of a source, parameter \"versionfilter\" and \"query\" must be used together")
 )
 
-func (j *Json) Source(workingDir string, resultSource *result.Source) error {
+func (j *Json) Source(_ context.Context, workingDir string, resultSource *result.Source) error {
 
 	if len(j.contents) > 1 {
 		return errors.New("source only supports one file")

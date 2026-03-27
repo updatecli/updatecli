@@ -1,6 +1,7 @@
 package gitea
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -92,7 +93,7 @@ func (g *Gitea) Clone() (string, error) {
 }
 
 // Commit run `git commit`.
-func (g *Gitea) Commit(message string) error {
+func (g *Gitea) Commit(ctx context.Context, message string) error {
 	// Generate the conventional commit message
 	commitMessage, err := g.Spec.CommitMessage.Generate(message)
 	if err != nil {

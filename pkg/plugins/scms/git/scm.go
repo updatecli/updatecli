@@ -1,6 +1,7 @@
 package git
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -113,7 +114,7 @@ func (g *Git) Clone() (string, error) {
 }
 
 // Commit run `git commit`.
-func (g *Git) Commit(message string) error {
+func (g *Git) Commit(ctx context.Context, message string) error {
 	// Generate the conventional commit message
 	commitMessage, err := g.spec.CommitMessage.Generate(message)
 	if err != nil {

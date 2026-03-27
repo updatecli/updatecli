@@ -1,6 +1,7 @@
 package xml
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -61,7 +62,7 @@ func TestSource(t *testing.T) {
 			require.NoError(t, err)
 
 			gotResult := result.Source{}
-			err = x.Source("", &gotResult)
+			err = x.Source(context.Background(), "", &gotResult)
 
 			switch tt.wantErr {
 			case true:

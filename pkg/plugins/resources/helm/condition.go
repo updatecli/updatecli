@@ -1,6 +1,7 @@
 package helm
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -11,7 +12,7 @@ import (
 )
 
 // Condition checks if a specific chart version exist
-func (c *Chart) Condition(source string, scm scm.ScmHandler) (pass bool, message string, err error) {
+func (c *Chart) Condition(ctx context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 
 	if strings.HasPrefix(c.spec.URL, "oci://") {
 		return c.OCICondition(source, scm)
@@ -26,7 +27,7 @@ func (c *Chart) Condition(source string, scm scm.ScmHandler) (pass bool, message
 	var index repo.IndexFile
 
 	if strings.HasPrefix(c.spec.URL, "https://") || strings.HasPrefix(c.spec.URL, "http://") {
-		index, err = c.GetRepoIndexFromURL()
+		index, err = c.GetRepoIndexFromURL(ctx)
 		if err != nil {
 			return false, "", err
 		}

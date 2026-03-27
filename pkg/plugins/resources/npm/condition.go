@@ -1,6 +1,7 @@
 package npm
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -9,7 +10,7 @@ import (
 )
 
 // Condition checks that an Npm package version exist
-func (n Npm) Condition(source string, scm scm.ScmHandler) (pass bool, message string, err error) {
+func (n Npm) Condition(ctx context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 	if scm != nil {
 		logrus.Warningf("SCM configuration is not supported for npm condition, aborting")
 
@@ -23,7 +24,7 @@ func (n Npm) Condition(source string, scm scm.ScmHandler) (pass bool, message st
 		return false, "", errors.New("no version defined")
 	}
 
-	_, versions, err := n.getVersions()
+	_, versions, err := n.getVersions(ctx)
 	if err != nil {
 		return false, "", err
 	}

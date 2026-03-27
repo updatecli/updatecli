@@ -1,6 +1,7 @@
 package awsami
 
 import (
+	"context"
 	"errors"
 	"strings"
 	"testing"
@@ -27,7 +28,7 @@ func TestSource(t *testing.T) {
 
 		gotResult := result.Source{}
 
-		err := d.ami.Source("", &gotResult)
+		err := d.ami.Source(context.Background(), "", &gotResult)
 
 		if !errors.Is(err, d.expectedError) {
 			t.Errorf("[%d] Wrong error:\nExpected Error:\t%v\nGot:\t\t%v\n",

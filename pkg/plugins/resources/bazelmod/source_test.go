@@ -1,6 +1,7 @@
 package bazelmod
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -103,7 +104,7 @@ func TestSource(t *testing.T) {
 			require.NoError(t, err)
 
 			resultSource := &result.Source{}
-			err = b.Source(tt.workingDir, resultSource)
+			err = b.Source(context.Background(), tt.workingDir, resultSource)
 
 			if tt.wantErr {
 				assert.Error(t, err)

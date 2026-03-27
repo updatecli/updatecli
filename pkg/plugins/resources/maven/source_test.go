@@ -1,6 +1,7 @@
 package maven
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -170,7 +171,7 @@ func TestSource(t *testing.T) {
 			}
 
 			gotResult := result.Source{}
-			gotErr := sut.Source(tt.workingDir, &gotResult)
+			gotErr := sut.Source(context.Background(), tt.workingDir, &gotResult)
 			if tt.wantErr {
 				require.Error(t, gotErr)
 				return
