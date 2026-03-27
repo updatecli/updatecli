@@ -2,13 +2,47 @@ package httpclient
 
 import (
 	"net/http"
+	"sync"
 
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
+var (
+	cacheMu     sync.Mutex
+	activeCache *cachingTransport
+)
+
+// EnableHTTPCache activates in-memory caching of GET responses for all
+// HTTP clients created via this package after this call.
+// Call once before pipeline execution begins.
+func EnableHTTPCache() {
+	cacheMu.Lock()
+	defer cacheMu.Unlock()
+	activeCache = newCachingTransport(otelhttp.NewTransport(&http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+	}))
+}
+
+// DisableHTTPCache deactivates the HTTP cache and releases cached data.
+// Safe to call even if caching was never enabled.
+func DisableHTTPCache() {
+	cacheMu.Lock()
+	defer cacheMu.Unlock()
+	activeCache = nil
+}
+
 // DefaultTransport returns a RoundTripper with retry and proxy support.
-// Use when a third-party library needs a transport rather than a full http.Client.
+// When HTTP caching is enabled via EnableHTTPCache, GET responses are served
+// from cache: retryTransport -> cachingTransport -> otelhttp -> http.Transport.
 func DefaultTransport() http.RoundTripper {
+	cacheMu.Lock()
+	inner := activeCache
+	cacheMu.Unlock()
+
+	if inner != nil {
+		return &retryTransport{transport: inner}
+	}
+
 	return &retryTransport{
 		transport: otelhttp.NewTransport(&http.Transport{
 			Proxy: http.ProxyFromEnvironment,

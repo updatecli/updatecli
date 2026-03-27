@@ -287,7 +287,7 @@ func TestRunSource_CacheMiss(t *testing.T) {
 // the shell command ran exactly once across two pipeline runs.
 func TestRunSource_CacheHit(t *testing.T) {
 	counterFile := filepath.Join(t.TempDir(), "counter")
-	require.NoError(t, os.WriteFile(counterFile, []byte("0"), 0o644))
+	require.NoError(t, os.WriteFile(counterFile, []byte("0"), 0o600))
 
 	// Shell command: increment counter file and echo a value.
 	command := fmt.Sprintf(
@@ -315,7 +315,7 @@ func TestRunSource_CacheHit(t *testing.T) {
 	// First run: executes the shell command, populates the cache.
 	conf1 := config.Config{
 		Spec: config.Spec{
-			Name: "first pipeline",
+			Name:    "first pipeline",
 			Sources: map[string]source.Config{sourceID: sourceCfg},
 		},
 	}
@@ -328,7 +328,7 @@ func TestRunSource_CacheHit(t *testing.T) {
 	// Second run with the same cache: should hit, command must NOT run again.
 	conf2 := config.Config{
 		Spec: config.Spec{
-			Name: "second pipeline",
+			Name:    "second pipeline",
 			Sources: map[string]source.Config{sourceID: sourceCfg},
 		},
 	}
