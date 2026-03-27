@@ -33,7 +33,7 @@ policies:
     values:
       - updatecli/values.d/scm.yaml
   - name: Update githubactions
-    policy: ghcr.io/updatecli/policies/autodiscovery/githubaction:0.3.0@sha256:3b5425da2a2a2b89bb69463f1294704c33730358c66140efb93cab14b2868b06
+    policy: ghcr.io/updatecli/policies/autodiscovery/githubaction:0.4.0@sha256:3f8071a1f1b846e340a42fa03571c53dcf23e51495cc6a3351f7b14de2c05ff6
     values:
       - updatecli/values.d/scm.yaml
       - updatecli/values.d/githubaction.yaml
