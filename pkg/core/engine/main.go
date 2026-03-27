@@ -3,6 +3,7 @@ package engine
 import (
 	"errors"
 
+	"github.com/updatecli/updatecli/pkg/core/cache"
 	"github.com/updatecli/updatecli/pkg/core/config"
 	"github.com/updatecli/updatecli/pkg/core/pipeline"
 	"github.com/updatecli/updatecli/pkg/core/reports"
@@ -22,6 +23,7 @@ type Engine struct {
 	Options        Options
 	Reports        reports.Reports
 	tracer         trace.Tracer
+	sourceCache    *cache.SourceCache
 }
 
 // SetTracer configures the tracer used for OTel instrumentation across all engine operations.

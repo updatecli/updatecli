@@ -13,7 +13,7 @@ func (p *Pipeline) RunSource(ctx context.Context, id string) (r string, err erro
 	source.Config = p.Config.Spec.Sources[id]
 	source.Result.Name = source.Config.Name
 
-	err = source.Run(ctx)
+	err = source.Run(ctx, p.SourceCache)
 
 	p.Sources[id] = source
 
