@@ -24,7 +24,7 @@ policies:
       - updatecli/values.d/scm.yaml
       - updatecli/values.d/golang_minor.yaml
   - name: Patch Golang Module update
-    policy: ghcr.io/updatecli/policies/autodiscovery/golang:0.13.0@sha256:be6ce00837da6f68aad861e44034b5716f2f45c87df66fd7fab35fba9971e108
+    policy: ghcr.io/updatecli/policies/autodiscovery/golang:0.13.1@sha256:85a008b9760fc02b05f68f4047d53b7c05f7250d5a8e8e7da33e925c72c885e0
     values:
       - updatecli/values.d/scm.yaml
       - updatecli/values.d/golang_patch.yaml
