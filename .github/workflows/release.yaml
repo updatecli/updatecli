@@ -4,9 +4,7 @@ on:
   push:
     tags:
       - "v*"
-
 permissions: {}
-
 jobs:
   build:
     runs-on: ubuntu-24.04
@@ -27,7 +25,7 @@ jobs:
           sudo docker image prune --all --force
           sudo docker builder prune -a
       - run: df -h
-      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
       - name: Set up QEMU
@@ -84,31 +82,21 @@ jobs:
           MASTODON_ACCESS_TOKEN: ${{ secrets.MASTODON_ACCESS_TOKEN }}
           OPENCOLLECTIVE_TOKEN: ${{ secrets.OPENCOLLECTIVE_TOKEN }}
           BLUESKY_APP_PASSWORD: ${{ secrets.BLUESKY_APP_PASSWORD }}
-
         run: |
           make release
-
       - uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
         if: ${{ always() }}
         with:
           subject-checksums: ./dist/checksums.txt
-
       - name: Clean up
         run: |
           rm -f ${HOME}/.docker/config.json
-
   dispatch:
     needs: build
     strategy:
       matrix:
-        repositories:
-          [
-            "updatecli/website",
-            "updatecli/updatecli-action",
-            "updatecli/charts",
-          ]
+        repositories: ["updatecli/website", "updatecli/updatecli-action", "updatecli/charts"]
     runs-on: ubuntu-24.04
-
     steps:
       - name: Generate access token
         uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42 # v2.1.4
