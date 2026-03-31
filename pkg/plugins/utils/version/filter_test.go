@@ -319,6 +319,51 @@ func TestSearch(t *testing.T) {
 				OriginalVersion: "updatecli-2.0.0",
 			},
 		},
+		{
+			name: "Passing case with filter pep440 and no pattern",
+			filter: Filter{
+				Kind: PEP440VERSIONKIND,
+			},
+			versions: []string{"1.0", "2.0", "3.0"},
+			want: Version{
+				ParsedVersion:   "3.0",
+				OriginalVersion: "3.0",
+			},
+		},
+		{
+			name: "Passing case with filter pep440 and constraint",
+			filter: Filter{
+				Kind:    PEP440VERSIONKIND,
+				Pattern: ">=1.0,<3.0",
+			},
+			versions: []string{"1.0", "2.0", "3.0"},
+			want: Version{
+				ParsedVersion:   "2.0",
+				OriginalVersion: "2.0",
+			},
+		},
+		{
+			name: "Failing case with no pep440 version found",
+			filter: Filter{
+				Kind:    PEP440VERSIONKIND,
+				Pattern: ">=4.0",
+			},
+			versions: []string{"1.0", "2.0", "3.0"},
+			want:     Version{},
+			wantErr:  errors.New("no version found"),
+		},
+		{
+			name: "Passing case with pep440 pre-release versions",
+			filter: Filter{
+				Kind:    PEP440VERSIONKIND,
+				Pattern: ">=1.0",
+			},
+			versions: []string{"1.0a1", "1.0b1", "1.0rc1", "1.0"},
+			want: Version{
+				ParsedVersion:   "1.0",
+				OriginalVersion: "1.0",
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -468,6 +513,17 @@ func TestNewFilter(t *testing.T) {
 			want: Filter{
 				Kind:    REGEXVERSIONKIND,
 				Pattern: ".*",
+			},
+		},
+		{
+			name: "Case with empty pattern for pep440",
+			filter: Filter{
+				Kind:    PEP440VERSIONKIND,
+				Pattern: "",
+			},
+			want: Filter{
+				Kind:    PEP440VERSIONKIND,
+				Pattern: "*",
 			},
 		},
 	}
