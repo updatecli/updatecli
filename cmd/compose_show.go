@@ -28,7 +28,11 @@ var (
 			manifests := []manifest.Manifest{}
 			for i := range composeFiles {
 				c := composeFiles[i]
-				policies, err := c.GetPolicies(disableTLS, composeShowOnlyPolicyIDs, composeShowIgnoredPolicyIDs)
+				policies, err := c.GetPolicies(
+					disableTLS,
+					parseParametersList(composeShowOnlyPolicyIDs),
+					parseParametersList(composeShowIgnoredPolicyIDs),
+				)
 				if err != nil {
 					logrus.Errorf("command failed: %s", err)
 					os.Exit(1)
