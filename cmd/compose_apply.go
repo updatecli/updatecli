@@ -15,6 +15,8 @@ var (
 	composeApplyPush             bool
 	composeApplyCleanGitBranches bool
 	composeApplyExistingOnly     bool
+	composeApplyOnlyPolicyIDs    []string
+	composeApplyIgnoredPolicyIDs []string
 
 	composeApplyCmd = &cobra.Command{
 		Use:   "apply",
@@ -30,7 +32,7 @@ var (
 			manifests := []manifest.Manifest{}
 			for i := range composeFiles {
 				c := composeFiles[i]
-				policies, err := c.GetPolicies(disableTLS)
+				policies, err := c.GetPolicies(disableTLS, composeApplyOnlyPolicyIDs, composeApplyIgnoredPolicyIDs)
 				if err != nil {
 					logrus.Errorf("command failed: %s", err)
 					os.Exit(1)
@@ -68,6 +70,8 @@ func init() {
 	composeApplyCmd.Flags().BoolVar(&composeApplyCleanGitBranches, "clean-git-branches", false, "Remove git branches created by updatecli like '--clean-git-branches=true'")
 	composeApplyCmd.Flags().StringArrayVar(&pipelineIds, "pipeline-ids", []string{}, "Filter pipelines to apply by their pipeline IDs, accepted as a comma separated list")
 	composeApplyCmd.Flags().StringArrayVar(&labels, "labels", []string{}, "Filter pipelines to apply by their labels, accepted as a comma separated list (key:value)")
+	composeApplyCmd.Flags().StringArrayVar(&composeApplyOnlyPolicyIDs, "only-policy-ids", []string{}, "Filter policies to apply by their policy IDs, accepted as a comma separated list")
+	composeApplyCmd.Flags().StringArrayVar(&composeApplyIgnoredPolicyIDs, "ignored-policy-ids", []string{}, "Filter policies to ignore by their policy IDs, accepted as a comma separated list")
 
 	composeCmd.AddCommand(composeApplyCmd)
 }

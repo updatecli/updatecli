@@ -3,6 +3,7 @@ package compose
 import (
 	"errors"
 	"fmt"
+	"slices"
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/engine/manifest"
@@ -80,7 +81,7 @@ func New(filename string, visitedComposeFiles map[string]bool) ([]Compose, error
 }
 
 // GetPolicies returns a list of policies defined in the compose file
-func (c *Compose) GetPolicies(disableTLS bool) ([]manifest.Manifest, error) {
+func (c *Compose) GetPolicies(disableTLS bool, onlyPolicyIDs, ignoredPolicyIDs []string) ([]manifest.Manifest, error) {
 
 	manifests := []manifest.Manifest{}
 	var errs []error
@@ -102,12 +103,36 @@ func (c *Compose) GetPolicies(disableTLS bool) ([]manifest.Manifest, error) {
 		}
 	}
 
+	var globalValues []string
+	if len(c.spec.Values) > 0 {
+		globalValues = relativePathToFile(c.filename, c.spec.Values)
+	}
+
+	var secretFiles []string
+	if len(c.spec.Secrets) > 0 {
+		secretFiles = relativePathToFile(c.filename, c.spec.Secrets)
+	}
+
 	// Fail fast if there is an error with the compose file before processing policies
 	if len(errs) > 0 {
 		return nil, fmt.Errorf("compose file %q errors: %s", c.name, errors.Join(errs...))
 	}
 
 	for i := range c.spec.Policies {
+		if len(ignoredPolicyIDs) > 0 && c.spec.Policies[i].ID != "" {
+			if slices.Contains(ignoredPolicyIDs, c.spec.Policies[i].ID) {
+				logrus.Infof("Policy %q is ignored, skipping", c.spec.Policies[i].Name)
+				continue
+			}
+		}
+
+		if len(onlyPolicyIDs) > 0 && c.spec.Policies[i].ID != "" {
+			if !slices.Contains(onlyPolicyIDs, c.spec.Policies[i].ID) {
+				logrus.Infof("Policy %q is not in the list of policies to execute, skipping", c.spec.Policies[i].Name)
+				continue
+			}
+		}
+
 		if c.spec.Policies[i].IsZero() {
 			continue
 		}
@@ -126,8 +151,17 @@ func (c *Compose) GetPolicies(disableTLS bool) ([]manifest.Manifest, error) {
 		}
 
 		policyManifest = append(policyManifest, c.spec.Policies[i].Config...)
+
+		if len(globalValues) > 0 {
+			policyValues = append(policyValues, globalValues...)
+		}
 		policyValues = append(policyValues, c.spec.Policies[i].Values...)
+
+		if len(secretFiles) > 0 {
+			policySecrets = append(policySecrets, secretFiles...)
+		}
 		policySecrets = append(policySecrets, c.spec.Policies[i].Secrets...)
+
 		showDetectedFiles := func(files []string, fileType string) {
 			switch len(files) {
 			case 0:

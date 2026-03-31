@@ -17,7 +17,53 @@ func TestGetPolicies(t *testing.T) {
 		file              string
 		expectedManifests [][]manifest.Manifest
 		expectedEnv       map[string]string
+		ignorePolicyIDs   []string
+		onlyPolicyIDs     []string
 	}{
+		{
+			name: "Test getPolicies with only rules",
+			file: "testdata/policies/updatecli-compose.yaml",
+			onlyPolicyIDs: []string{
+				"scm_enabled",
+			},
+			expectedManifests: [][]manifest.Manifest{
+				{
+					{
+						Manifests: []string{
+							filepath.Join(os.TempDir(), "updatecli", "store", "7aaff2727eef42f7d0add2d5ed3fd83f74a125420682bec7e4bc8835bb28e833", "updatecli.d", "default.tpl"),
+						},
+						Values: []string{
+							filepath.Join(os.TempDir(), "updatecli", "store", "7aaff2727eef42f7d0add2d5ed3fd83f74a125420682bec7e4bc8835bb28e833", "values.yaml"),
+						},
+						ValuesInline: []string{
+							"scm:\n    enabled: true\n",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "Test getPolicies with ignore rules",
+			file: "testdata/policies/updatecli-compose.yaml",
+			ignorePolicyIDs: []string{
+				"scm_enabled",
+			},
+			expectedManifests: [][]manifest.Manifest{
+				{
+					{
+						Manifests: []string{
+							filepath.Join(os.TempDir(), "updatecli", "store", "7aaff2727eef42f7d0add2d5ed3fd83f74a125420682bec7e4bc8835bb28e833", "updatecli.d", "default.tpl"),
+						},
+						Values: []string{
+							filepath.Join(os.TempDir(), "updatecli", "store", "7aaff2727eef42f7d0add2d5ed3fd83f74a125420682bec7e4bc8835bb28e833", "values.yaml"),
+						},
+						ValuesInline: []string{
+							"scm:\n    enabled: false\n",
+						},
+					},
+				},
+			},
+		},
 		{
 			name: "Test getPolicies with environment variables",
 			file: "testdata/simple/updatecli-compose.yaml",
@@ -99,7 +145,7 @@ func TestGetPolicies(t *testing.T) {
 
 			for i := range updatecliComposes {
 				c := updatecliComposes[i]
-				gotManifests, err := c.GetPolicies(false)
+				gotManifests, err := c.GetPolicies(false, data.onlyPolicyIDs, data.ignorePolicyIDs)
 				require.NoError(t, err)
 
 				assert.Equal(t, data.expectedManifests[i], gotManifests)

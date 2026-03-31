@@ -25,8 +25,14 @@ type Spec struct {
 	//   key1: value1
 	//   key2: value2
 	ValuesInline *map[string]any `yaml:",omitempty"`
+	// Values contains a list of Updatecli config file path
+	// This is the default values file that will be applied to all policies if not overridden by the policy values file.
+	Values []string `yaml:",omitempty"`
 	// Include contains a list of compose files to include
 	Include []string `yaml:",omitempty"`
+	// Secrets contains a list of Updatecli secret file path
+	// This is the default secret file that will be applied to all policies if not overridden by the policy secret file.
+	Secrets []string `yaml:",omitempty"`
 }
 
 type Policy struct {
@@ -47,6 +53,8 @@ type Policy struct {
 	ValuesInline *map[string]any `yaml:",omitempty"`
 	// Secrets contains a list of Updatecli secret file path
 	Secrets []string `yaml:",omitempty"`
+	// ID contains the policy ID, it can be used to filter policies to execute
+	ID string `yaml:",omitempty"`
 }
 
 func (p Policy) IsZero() bool {
