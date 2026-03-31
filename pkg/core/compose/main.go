@@ -121,14 +121,20 @@ func (c *Compose) GetPolicies(disableTLS bool, onlyPolicyIDs, ignoredPolicyIDs [
 	for i := range c.spec.Policies {
 		if len(ignoredPolicyIDs) > 0 && c.spec.Policies[i].ID != "" {
 			if slices.Contains(ignoredPolicyIDs, c.spec.Policies[i].ID) {
-				logrus.Infof("Policy %q is ignored, skipping", c.spec.Policies[i].Name)
+				logrus.Debugf("Policy %q is ignored, skipping", c.spec.Policies[i].Name)
 				continue
 			}
 		}
 
-		if len(onlyPolicyIDs) > 0 && c.spec.Policies[i].ID != "" {
+		if len(onlyPolicyIDs) > 0 {
+
+			if c.spec.Policies[i].ID == "" {
+				logrus.Debugf("Policy %q does not have an ID, skipping because only policies with IDs can be executed when the list of policies to execute is not empty", c.spec.Policies[i].Name)
+				continue
+			}
+
 			if !slices.Contains(onlyPolicyIDs, c.spec.Policies[i].ID) {
-				logrus.Infof("Policy %q is not in the list of policies to execute, skipping", c.spec.Policies[i].Name)
+				logrus.Debugf("Policy %q is not in the list of policies to execute, skipping", c.spec.Policies[i].Name)
 				continue
 			}
 		}

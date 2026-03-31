@@ -61,6 +61,17 @@ func TestGetPolicies(t *testing.T) {
 							"scm:\n    enabled: false\n",
 						},
 					},
+					{
+						Manifests: []string{
+							filepath.Join(os.TempDir(), "updatecli", "store", "7aaff2727eef42f7d0add2d5ed3fd83f74a125420682bec7e4bc8835bb28e833", "updatecli.d", "default.tpl"),
+						},
+						Values: []string{
+							filepath.Join(os.TempDir(), "updatecli", "store", "7aaff2727eef42f7d0add2d5ed3fd83f74a125420682bec7e4bc8835bb28e833", "values.yaml"),
+						},
+						ValuesInline: []string{
+							"scm:\n    enabled: 0\n",
+						},
+					},
 				},
 			},
 		},
