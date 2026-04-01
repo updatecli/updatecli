@@ -14,6 +14,8 @@ var (
 	ErrNoValidSemVerFound error = errors.New("no valid semantic version found")
 	// ErrNoValidDateFound return a error when the versions list is empty
 	ErrNoValidDateFound error = errors.New("no valid date found")
+	// ErrNoValidPep440VersionFound return a error when no valid PEP 440 version could be found
+	ErrNoValidPep440VersionFound error = errors.New("no valid PEP 440 version found")
 )
 
 // ErrNoVersionFoundForPattern returns when a given pattern does not find any version
