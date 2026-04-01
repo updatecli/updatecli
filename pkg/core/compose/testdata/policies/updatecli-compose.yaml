@@ -1,0 +1,18 @@
+policies: 
+  - policy: ghcr.io/updatecli-test/policies/autodiscovery:0.0.1-alpha
+    id: scm_enabled
+    valuesinline:
+      scm:
+        enabled: true
+
+  - policy: ghcr.io/updatecli-test/policies/autodiscovery:0.0.1-alpha
+    id: scm_disabled
+    valuesinline:
+      scm:
+        enabled: false
+
+  - policy: ghcr.io/updatecli-test/policies/autodiscovery:0.0.1-alpha
+    valuesinline:
+      scm:
+        enabled: 0
+
