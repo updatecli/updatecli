@@ -9,7 +9,7 @@ require (
 	github.com/Masterminds/semver/v3 v3.4.0
 	github.com/Masterminds/sprig/v3 v3.3.0
 	github.com/containerd/containerd v1.7.30 // indirect
-	github.com/fatih/color v1.18.0
+	github.com/fatih/color v1.19.0
 	github.com/getsops/sops/v3 v3.12.1
 	github.com/go-git/go-git/v5 v5.17.0
 	github.com/heimdalr/dag v1.5.0
@@ -334,7 +334,7 @@ require (
 	golang.org/x/mod v0.33.0
 	golang.org/x/net v0.51.0
 	golang.org/x/sync v0.19.0 // indirect
-	golang.org/x/sys v0.41.0 // indirect
+	golang.org/x/sys v0.42.0 // indirect
 	golang.org/x/term v0.40.0 // indirect
 	golang.org/x/tools v0.41.0 // indirect
 	google.golang.org/api v0.266.0 // indirect
