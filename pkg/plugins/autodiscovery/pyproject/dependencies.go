@@ -180,6 +180,15 @@ func (p Pyproject) buildTemplateParams(
 	sourceVersionFilterPattern := p.versionFilter.Pattern
 	sourceVersionFilterRegex := p.versionFilter.Regex
 
+	if !p.spec.VersionFilter.IsZero() && dep.Version != "" {
+		var err error
+		sourceVersionFilterPattern, err = p.versionFilter.GreaterThanPattern(dep.Version)
+		if err != nil {
+			logrus.Debugf("building version filter pattern for %q: %s", dep.Name, err)
+			sourceVersionFilterPattern = p.versionFilter.Pattern
+		}
+	}
+
 	if p.spec.VersionFilter.IsZero() {
 		if dep.Constraint != "" {
 			sourceVersionFilterKind = version.PEP440VERSIONKIND

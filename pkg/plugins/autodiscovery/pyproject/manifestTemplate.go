@@ -32,7 +32,7 @@ targets:
 {{- end }}
     kind: 'shell'
     spec:
-      command: 'uv add {{ .UvAddGroupFlag }}"{{ .DependencyName }}>={{ "{{" }} source "{{ .SourceID }}" {{ "}}" }}"'
+      command: 'uv add --frozen {{ .UvAddGroupFlag }}"{{ .DependencyName }}>={{ "{{" }} source "{{ .SourceID }}" {{ "}}" }}"'
       changedif:
         kind: file/checksum
         spec:

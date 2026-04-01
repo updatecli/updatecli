@@ -1,6 +1,7 @@
 package pypi
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -12,7 +13,7 @@ import (
 
 // Changelog returns release notes for the package between the from and to versions.
 func (p *Pypi) Changelog(from, to string) *result.Changelogs {
-	_, _, err := p.getVersions()
+	_, _, err := p.getVersions(context.Background())
 	if err != nil {
 		return nil
 	}

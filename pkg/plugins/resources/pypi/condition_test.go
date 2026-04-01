@@ -1,10 +1,12 @@
 package pypi
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
 func TestCondition(t *testing.T) {
@@ -103,6 +105,24 @@ func TestCondition(t *testing.T) {
 			// 2.30.0 is yanked in existingPackageData
 			expectedPass: false,
 		},
+		{
+			name: "Pre-release PEP 440 version matches via original mapping",
+			spec: Spec{
+				Name:    "testpkg",
+				Version: "1.0b2",
+				URL:     "https://pypi.example.com",
+				Token:   "validtoken",
+				VersionFilter: version.Filter{
+					Kind: "semver",
+				},
+			},
+			mockedBody:           preReleasePackageData,
+			mockedURL:            "https://pypi.example.com/",
+			mockedToken:          "validtoken",
+			mockedHTTPStatusCode: 200,
+			// versions are normalized to semver but condition should match the original PEP 440 form
+			expectedPass: true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -112,7 +132,7 @@ func TestCondition(t *testing.T) {
 
 			p.webClient = GetMockClient(tt.mockedURL, tt.mockedToken, tt.mockedBody, tt.mockedHTTPStatusCode)
 
-			pass, _, gotErr := p.Condition(tt.sourceInput, nil)
+			pass, _, gotErr := p.Condition(context.Background(), tt.sourceInput, nil)
 
 			if tt.expectedError {
 				assert.Error(t, gotErr)

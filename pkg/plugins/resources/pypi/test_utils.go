@@ -57,6 +57,34 @@ const preReleasePackageData = `{
   }
 }`
 
+const yankedLatestPackageData = `{
+  "info": {
+    "name": "requests",
+    "version": "2.31.0",
+    "project_urls": {
+      "Source": "https://github.com/psf/requests"
+    }
+  },
+  "releases": {
+    "2.28.0": [{"yanked": false}],
+    "2.29.0": [{"yanked": false}],
+    "2.30.0": [{"yanked": false}],
+    "2.31.0": [{"yanked": true}]
+  }
+}`
+
+const postReleasePackageData = `{
+  "info": {
+    "name": "testpkg",
+    "version": "1.0.post1",
+    "project_urls": {}
+  },
+  "releases": {
+    "1.0.post1": [{"yanked": false}],
+    "0.9.0": [{"yanked": false}]
+  }
+}`
+
 const nonExistingPackageData = `{"message": "Not Found"}`
 
 // GetMockClient returns a MockClient that validates the URL prefix and Bearer token,

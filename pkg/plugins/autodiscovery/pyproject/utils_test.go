@@ -55,6 +55,21 @@ func TestParsePEP508(t *testing.T) {
 			expectErr: true,
 		},
 		{
+			name:      "URL dep without spaces around @",
+			input:     "package@https://example.com/pkg.tar.gz",
+			expectErr: true,
+		},
+		{
+			name:      "URL dep with space only before @",
+			input:     "package @https://example.com/pkg.tar.gz",
+			expectErr: true,
+		},
+		{
+			name:      "URL dep with space only after @",
+			input:     "package@ https://example.com/pkg.tar.gz",
+			expectErr: true,
+		},
+		{
 			name:     "Hyphenated name",
 			input:    "my-package>=1.0",
 			expected: pythonDependency{Name: "my-package", Constraint: ">=1.0", Version: "1.0"},

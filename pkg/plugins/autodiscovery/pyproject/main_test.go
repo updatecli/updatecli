@@ -38,7 +38,7 @@ targets:
     name: 'deps(pypi): bump "flask" to {{ source "flask" }}'
     kind: 'shell'
     spec:
-      command: 'uv add "flask>={{ source "flask" }}"'
+      command: 'uv add --frozen "flask>={{ source "flask" }}"'
       changedif:
         kind: file/checksum
         spec:
@@ -65,7 +65,7 @@ targets:
     name: 'deps(pypi): bump "requests" to {{ source "requests" }}'
     kind: 'shell'
     spec:
-      command: 'uv add "requests>={{ source "requests" }}"'
+      command: 'uv add --frozen "requests>={{ source "requests" }}"'
       changedif:
         kind: file/checksum
         spec:
@@ -123,7 +123,7 @@ targets:
     name: 'deps(pypi): bump "requests" to {{ source "requests" }}'
     kind: 'shell'
     spec:
-      command: 'uv add "requests>={{ source "requests" }}"'
+      command: 'uv add --frozen "requests>={{ source "requests" }}"'
       changedif:
         kind: file/checksum
         spec:
@@ -150,7 +150,7 @@ targets:
     name: 'deps(pypi): bump "pytest" to {{ source "pytest" }}'
     kind: 'shell'
     spec:
-      command: 'uv add --optional dev "pytest>={{ source "pytest" }}"'
+      command: 'uv add --frozen --optional dev "pytest>={{ source "pytest" }}"'
       changedif:
         kind: file/checksum
         spec:
@@ -177,7 +177,7 @@ targets:
     name: 'deps(pypi): bump "ruff" to {{ source "ruff" }}'
     kind: 'shell'
     spec:
-      command: 'uv add --optional dev "ruff>={{ source "ruff" }}"'
+      command: 'uv add --frozen --optional dev "ruff>={{ source "ruff" }}"'
       changedif:
         kind: file/checksum
         spec:
@@ -218,7 +218,7 @@ targets:
     scmid: 'git'
     kind: 'shell'
     spec:
-      command: 'uv add "flask>={{ source "flask" }}"'
+      command: 'uv add --frozen "flask>={{ source "flask" }}"'
       changedif:
         kind: file/checksum
         spec:
@@ -250,7 +250,7 @@ targets:
     scmid: 'git'
     kind: 'shell'
     spec:
-      command: 'uv add "requests>={{ source "requests" }}"'
+      command: 'uv add --frozen "requests>={{ source "requests" }}"'
       changedif:
         kind: file/checksum
         spec:
@@ -289,7 +289,7 @@ targets:
     name: 'deps(pypi): bump "requests" to {{ source "requests" }}'
     kind: 'shell'
     spec:
-      command: 'uv add "requests>={{ source "requests" }}"'
+      command: 'uv add --frozen "requests>={{ source "requests" }}"'
       changedif:
         kind: file/checksum
         spec:
@@ -328,7 +328,7 @@ targets:
     name: 'deps(pypi): bump "requests" to {{ source "requests" }}'
     kind: 'shell'
     spec:
-      command: 'uv add "requests>={{ source "requests" }}"'
+      command: 'uv add --frozen "requests>={{ source "requests" }}"'
       changedif:
         kind: file/checksum
         spec:
@@ -362,7 +362,7 @@ targets:
     name: 'deps(pypi): bump "pywin32" to {{ source "pywin32" }}'
     kind: 'shell'
     spec:
-      command: 'uv add "pywin32>={{ source "pywin32" }}"'
+      command: 'uv add --frozen "pywin32>={{ source "pywin32" }}"'
       changedif:
         kind: file/checksum
         spec:
@@ -389,7 +389,7 @@ targets:
     name: 'deps(pypi): bump "requests" to {{ source "requests" }}'
     kind: 'shell'
     spec:
-      command: 'uv add "requests>={{ source "requests" }}"'
+      command: 'uv add --frozen "requests>={{ source "requests" }}"'
       changedif:
         kind: file/checksum
         spec:
@@ -423,7 +423,7 @@ targets:
     name: 'deps(pypi): bump "numpy" to {{ source "numpy" }}'
     kind: 'shell'
     spec:
-      command: 'uv add "numpy>={{ source "numpy" }}"'
+      command: 'uv add --frozen "numpy>={{ source "numpy" }}"'
       changedif:
         kind: file/checksum
         spec:
@@ -459,7 +459,7 @@ targets:
     name: 'deps(pypi): bump "flask" to {{ source "flask" }}'
     kind: 'shell'
     spec:
-      command: 'uv add "flask>={{ source "flask" }}"'
+      command: 'uv add --frozen "flask>={{ source "flask" }}"'
       changedif:
         kind: file/checksum
         spec:
@@ -487,7 +487,7 @@ targets:
     name: 'deps(pypi): bump "requests" to {{ source "requests" }}'
     kind: 'shell'
     spec:
-      command: 'uv add "requests>={{ source "requests" }}"'
+      command: 'uv add --frozen "requests>={{ source "requests" }}"'
       changedif:
         kind: file/checksum
         spec:
@@ -516,13 +516,13 @@ sources:
       name: 'flask'
       versionfilter:
         kind: 'semver'
-        pattern: 'minor'
+        pattern: '3.x'
 targets:
   flask:
     name: 'deps(pypi): bump "flask" to {{ source "flask" }}'
     kind: 'shell'
     spec:
-      command: 'uv add "flask>={{ source "flask" }}"'
+      command: 'uv add --frozen "flask>={{ source "flask" }}"'
       changedif:
         kind: file/checksum
         spec:
@@ -543,13 +543,13 @@ sources:
       name: 'requests'
       versionfilter:
         kind: 'semver'
-        pattern: 'minor'
+        pattern: '2.x'
 targets:
   requests:
     name: 'deps(pypi): bump "requests" to {{ source "requests" }}'
     kind: 'shell'
     spec:
-      command: 'uv add "requests>={{ source "requests" }}"'
+      command: 'uv add --frozen "requests>={{ source "requests" }}"'
       changedif:
         kind: file/checksum
         spec:

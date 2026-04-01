@@ -35,6 +35,10 @@ var versionNumberRegex = regexp.MustCompile(`\d+(\.\d+)*((?:a|b|rc)\d+)?`)
 // Group 5: version constraint (remainder after name/extras)
 var depNameRegex = regexp.MustCompile(`^([A-Za-z0-9]([A-Za-z0-9._-]*[A-Za-z0-9])?)(\[([^\]]+)\])?\s*(.*)$`)
 
+// directRefRegex detects PEP 508 direct references (name @ <url>).
+// Whitespace around @ is optional per the spec, so we match any amount of it.
+var directRefRegex = regexp.MustCompile(`^[A-Za-z0-9]([A-Za-z0-9._-]*[A-Za-z0-9])?\s*@\s*\S`)
+
 // findPyprojectFiles walks rootDir recursively and returns absolute paths to every
 // pyproject.toml found, skipping common non-source directories.
 func findPyprojectFiles(rootDir string) ([]string, error) {
@@ -131,8 +135,10 @@ func parsePEP508(dep string) (pythonDependency, error) {
 	}
 	dep = strings.TrimSpace(dep)
 
-	// Skip URL dependencies (PEP 440 direct references: name @ https://...)
-	if strings.Contains(dep, " @ ") {
+	// Skip URL dependencies (PEP 508 direct references: name @ <url>).
+	// Whitespace around @ is optional per the spec, so we use a regex rather than
+	// a simple strings.Contains check.
+	if directRefRegex.MatchString(dep) {
 		return pythonDependency{}, fmt.Errorf("URL dependency not supported: %q", dep)
 	}
 

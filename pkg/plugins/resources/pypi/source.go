@@ -1,14 +1,15 @@
 package pypi
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 // Source returns the latest matching PyPI package version.
-func (p *Pypi) Source(workingDir string, resultSource *result.Source) error {
-	ver, _, err := p.getVersions()
+func (p *Pypi) Source(ctx context.Context, workingDir string, resultSource *result.Source) error {
+	ver, _, err := p.getVersions(ctx)
 	if err != nil {
 		return err
 	}

@@ -1,6 +1,7 @@
 package pypi
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -104,12 +105,12 @@ func (s *Spec) Validate() error {
 }
 
 // getPackageData fetches and parses the PyPI JSON API response for the package.
-func (p *Pypi) getPackageData() (pypiData, error) {
-	url := fmt.Sprintf("%spypi/%s/json", p.spec.URL, url.PathEscape(p.spec.Name))
+func (p *Pypi) getPackageData(ctx context.Context) (pypiData, error) {
+	requestURL := fmt.Sprintf("%spypi/%s/json", p.spec.URL, url.PathEscape(p.spec.Name))
 
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", requestURL, nil)
 	if err != nil {
-		return pypiData{}, fmt.Errorf("building request for %q: %w", url, err)
+		return pypiData{}, fmt.Errorf("building request for %q: %w", requestURL, err)
 	}
 
 	if p.spec.Token != "" {
@@ -144,9 +145,9 @@ func (p *Pypi) getPackageData() (pypiData, error) {
 // When the filter kind is pep440, raw PEP 440 versions are returned as-is.
 // Otherwise, versions are normalized to semver-compatible form and the mapping back
 // to the original PEP 440 string is preserved in normalizedToOriginal.
-func (p *Pypi) availableVersions() ([]string, error) {
+func (p *Pypi) availableVersions(ctx context.Context) ([]string, error) {
 	var err error
-	p.data, err = p.getPackageData()
+	p.data, err = p.getPackageData(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -186,7 +187,7 @@ var pep440PreRelease = regexp.MustCompile(`^(\d+(?:\.\d+)*)(?:\.(post|dev)(\d+)|
 //	0.51b0     → 0.51.0-beta.0
 //	1.0a1      → 1.0.0-alpha.1
 //	2.0rc1     → 2.0.0-rc.1
-//	1.0.post1  → 1.0.0+post.1   (mapped to build metadata, sorted after release)
+//	1.0.post1  → 1.0.0   (post suffix stripped — SemVer has no equivalent, treated as the base release)
 //	1.0.dev3   → (skipped, returns "" — dev releases are excluded)
 //	2.31.0     → 2.31.0          (already valid semver, returned as-is)
 func normalizePEP440(v string) string {
@@ -205,9 +206,9 @@ func normalizePEP440(v string) string {
 	if m[2] == "dev" {
 		return ""
 	}
-	// .post releases: map to build metadata so they sort after the release
+	// .post releases have no SemVer equivalent; treat them as the base release.
 	if m[2] == "post" {
-		return base + "+post." + m[3]
+		return base
 	}
 
 	// Pre-release: a → alpha, b → beta, rc → rc
@@ -248,14 +249,20 @@ func (p *Pypi) originalVersion(normalized string) string {
 }
 
 // getVersions returns the version matching the filter and all available versions.
-func (p *Pypi) getVersions() (string, []string, error) {
-	versions, err := p.availableVersions()
+func (p *Pypi) getVersions(ctx context.Context) (string, []string, error) {
+	versions, err := p.availableVersions(ctx)
 	if err != nil {
 		return "", nil, err
 	}
 
 	if p.versionFilter.Kind == version.LATESTVERSIONKIND {
-		return p.data.Info.Version, versions, nil
+		latest := p.data.Info.Version
+		for _, v := range versions {
+			if v == latest {
+				return latest, versions, nil
+			}
+		}
+		return "", versions, fmt.Errorf("latest version %q of package %q is yanked", latest, p.spec.Name)
 	}
 
 	p.foundVersion, err = p.versionFilter.Search(versions)

@@ -1,6 +1,7 @@
 package pypi
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -128,6 +129,37 @@ func TestSource(t *testing.T) {
 			mockedHTTPStatusCode: 200,
 			expectedResult:       "1.0b2",
 		},
+		{
+			name: "Latest version is yanked returns error",
+			spec: Spec{
+				Name:  "requests",
+				URL:   "https://pypi.example.com",
+				Token: "validtoken",
+			},
+			mockedBody:           yankedLatestPackageData,
+			mockedURL:            "https://pypi.example.com/",
+			mockedToken:          "validtoken",
+			mockedHTTPStatusCode: 200,
+			expectedError:        true,
+		},
+		{
+			name: "Post release normalized to base with semver filter",
+			spec: Spec{
+				Name:  "testpkg",
+				URL:   "https://pypi.example.com",
+				Token: "validtoken",
+				VersionFilter: version.Filter{
+					Kind:    "semver",
+					Pattern: ">=1.0.0",
+				},
+			},
+			mockedBody:           postReleasePackageData,
+			mockedURL:            "https://pypi.example.com/",
+			mockedToken:          "validtoken",
+			mockedHTTPStatusCode: 200,
+			// 1.0.post1 normalizes to 1.0.0, which is >= 1.0.0; original PEP 440 form returned
+			expectedResult: "1.0.post1",
+		},
 	}
 
 	for _, tt := range tests {
@@ -138,7 +170,7 @@ func TestSource(t *testing.T) {
 			p.webClient = GetMockClient(tt.mockedURL, tt.mockedToken, tt.mockedBody, tt.mockedHTTPStatusCode)
 
 			gotResult := result.Source{}
-			err = p.Source("", &gotResult)
+			err = p.Source(context.Background(), "", &gotResult)
 
 			if tt.expectedError {
 				assert.Error(t, err)

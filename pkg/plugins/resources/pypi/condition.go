@@ -1,6 +1,7 @@
 package pypi
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -9,7 +10,7 @@ import (
 )
 
 // Condition checks that a PyPI package version exists.
-func (p *Pypi) Condition(source string, scmHandler scm.ScmHandler) (pass bool, message string, err error) {
+func (p *Pypi) Condition(ctx context.Context, source string, scmHandler scm.ScmHandler) (pass bool, message string, err error) {
 	if scmHandler != nil {
 		logrus.Warningf("SCM configuration is not supported for pypi condition, ignoring")
 	}
@@ -22,13 +23,13 @@ func (p *Pypi) Condition(source string, scmHandler scm.ScmHandler) (pass bool, m
 		return false, "", errors.New("no version defined")
 	}
 
-	_, versions, err := p.getVersions()
+	_, versions, err := p.getVersions(ctx)
 	if err != nil {
 		return false, "", err
 	}
 
 	for _, v := range versions {
-		if v == versionToCheck {
+		if v == versionToCheck || p.originalVersion(v) == versionToCheck {
 			return true, fmt.Sprintf("version %q exists for PyPI package %q", versionToCheck, p.spec.Name), nil
 		}
 	}
