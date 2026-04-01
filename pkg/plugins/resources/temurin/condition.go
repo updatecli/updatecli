@@ -1,6 +1,7 @@
 package temurin
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -13,7 +14,7 @@ import (
 Condition tests if the response of the specified HTTP request meets assertion.
 If no assertion is specified, it only checks for successful HTTP response code (HTTP/1xx, HTTP/2xx or HTTP/3xx).
 */
-func (t *Temurin) Condition(source string, scm scm.ScmHandler) (pass bool, message string, err error) {
+func (t *Temurin) Condition(ctx context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 	if len(source) > 0 {
 		logrus.Infof("[temurin] using specific version (`spec.SpecificVersion`) from source value %q. Set `disablesourceinput` to true to avoid this behavior.", source)
 		if t.spec.SpecificVersion != "" {
@@ -28,7 +29,7 @@ func (t *Temurin) Condition(source string, scm scm.ScmHandler) (pass bool, messa
 			t.spec.OperatingSystem = strings.Split(platform, "/")[0]
 			t.spec.Architecture = strings.Split(platform, "/")[1]
 
-			found, message, err := t.checkRelease()
+			found, message, err := t.checkRelease(ctx)
 			if err != nil {
 				return false, "", err
 			}
@@ -51,11 +52,11 @@ func (t *Temurin) Condition(source string, scm scm.ScmHandler) (pass bool, messa
 		return pass, message, nil
 	}
 
-	return t.checkRelease()
+	return t.checkRelease(ctx)
 }
 
-func (t *Temurin) checkRelease() (pass bool, message string, err error) {
-	foundReleases, err := t.apiGetReleaseNames()
+func (t *Temurin) checkRelease(ctx context.Context) (pass bool, message string, err error) {
+	foundReleases, err := t.apiGetReleaseNames(ctx)
 	if err != nil {
 		return false, "", err
 	}

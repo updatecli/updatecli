@@ -1,6 +1,7 @@
 package yaml
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -331,7 +332,7 @@ repos:
 			for filePath := range y.files {
 				gotResult := result.Source{}
 
-				gotErr := y.Source("", &gotResult)
+				gotErr := y.Source(context.Background(), "", &gotResult)
 				if tt.isErrorWanted {
 					assert.Error(t, gotErr)
 					return

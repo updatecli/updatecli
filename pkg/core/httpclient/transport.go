@@ -1,14 +1,18 @@
 package httpclient
 
-import "net/http"
+import (
+	"net/http"
+
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+)
 
 // DefaultTransport returns a RoundTripper with retry and proxy support.
 // Use when a third-party library needs a transport rather than a full http.Client.
 func DefaultTransport() http.RoundTripper {
 	return &retryTransport{
-		transport: &http.Transport{
+		transport: otelhttp.NewTransport(&http.Transport{
 			Proxy: http.ProxyFromEnvironment,
-		},
+		}),
 	}
 }
 

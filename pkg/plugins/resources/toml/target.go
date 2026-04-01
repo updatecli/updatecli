@@ -1,6 +1,7 @@
 package toml
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -9,7 +10,7 @@ import (
 )
 
 // Target updates a scm repository based on the modified yaml file.
-func (t *Toml) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
+func (t *Toml) Target(_ context.Context, source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
 
 	rootDir := ""
 	if scm != nil {

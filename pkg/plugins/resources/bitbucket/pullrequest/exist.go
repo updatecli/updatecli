@@ -1,12 +1,14 @@
 package pullrequest
 
 import (
+	"context"
+
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/reports"
 )
 
 // CheckActionExist verifies if an existing BitBucket pullrequest is already opened
-func (b *Bitbucket) CheckActionExist(report *reports.Action) error {
+func (b *Bitbucket) CheckActionExist(ctx context.Context, report *reports.Action) error {
 	pullRequestExists, pullRequestDetails, err := b.isPullRequestExist()
 	if err != nil {
 		return err

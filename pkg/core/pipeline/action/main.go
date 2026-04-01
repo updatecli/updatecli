@@ -1,6 +1,7 @@
 package action
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
@@ -35,9 +36,9 @@ var ErrWrongConfig = errors.New("wrong action configuration")
 
 // ActionHandler interface defines required functions to be an action
 type ActionHandler interface {
-	CreateAction(report *reports.Action, resetDescription bool) error
-	CleanAction(report *reports.Action) error
-	CheckActionExist(report *reports.Action) error
+	CreateAction(ctx context.Context, report *reports.Action, resetDescription bool) error
+	CleanAction(ctx context.Context, report *reports.Action) error
+	CheckActionExist(ctx context.Context, report *reports.Action) error
 }
 
 // Config define action provided via an updatecli configuration

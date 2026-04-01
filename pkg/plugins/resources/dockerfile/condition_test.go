@@ -1,6 +1,7 @@
 package dockerfile
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -117,7 +118,7 @@ func TestDockerfile_Condition(t *testing.T) {
 				files:            tt.files,
 			}
 
-			got, _, gotErr := d.Condition(tt.inputSourceValue, tt.scm)
+			got, _, gotErr := d.Condition(context.Background(), tt.inputSourceValue, tt.scm)
 			if tt.wantErr != nil {
 				assert.Equal(t, tt.wantErr, gotErr)
 				return

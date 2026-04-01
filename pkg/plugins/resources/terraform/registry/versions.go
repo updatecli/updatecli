@@ -1,6 +1,7 @@
 package registry
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -55,8 +56,8 @@ type versionListing interface {
 	scm() (scm string, err error)
 }
 
-func (t *TerraformRegistry) versions() (versions []string, err error) {
-	req, err := http.NewRequest("GET", t.registryAddress.API(), nil)
+func (t *TerraformRegistry) versions(ctx context.Context) (versions []string, err error) {
+	req, err := http.NewRequestWithContext(ctx, "GET", t.registryAddress.API(), nil)
 	if err != nil {
 		return nil, err
 	}

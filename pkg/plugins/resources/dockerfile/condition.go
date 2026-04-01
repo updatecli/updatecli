@@ -1,6 +1,7 @@
 package dockerfile
 
 import (
+	"context"
 	"fmt"
 	"path"
 	"path/filepath"
@@ -11,7 +12,7 @@ import (
 )
 
 // Condition test if the Dockerfile contains the correct key/value
-func (d *Dockerfile) Condition(source string, scm scm.ScmHandler) (pass bool, message string, err error) {
+func (d *Dockerfile) Condition(_ context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 	globalPass := true
 	descriptionList := []string{}
 

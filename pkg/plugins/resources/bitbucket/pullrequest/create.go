@@ -16,7 +16,7 @@ import (
 )
 
 // CreateAction opens a Pull Request on the Bitbucket server
-func (b *Bitbucket) CreateAction(report *reports.Action, resetDescription bool) error {
+func (b *Bitbucket) CreateAction(ctx context.Context, report *reports.Action, resetDescription bool) error {
 	title := report.Title
 	if len(b.spec.Title) > 0 {
 		title = b.spec.Title

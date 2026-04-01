@@ -1,6 +1,7 @@
 package shell
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -67,7 +68,7 @@ func TestShell_Condition(t *testing.T) {
 			gotErr := s.InitChangedIf()
 			require.NoError(t, gotErr)
 
-			gotResult, _, gotErr := s.Condition(tt.source, nil)
+			gotResult, _, gotErr := s.Condition(context.Background(), tt.source, nil)
 
 			if tt.wantErr {
 				assert.Error(t, gotErr)

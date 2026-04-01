@@ -23,7 +23,7 @@ type userInfo struct {
 }
 
 // getUserInfo return a user information from GitHub API
-func getUserInfo(c client.Client, login string, retry int) (*userInfo, error) {
+func getUserInfo(ctx context.Context, c client.Client, login string, retry int) (*userInfo, error) {
 
 	variables := map[string]interface{}{
 		"login": githubv4.String(login),
@@ -31,13 +31,13 @@ func getUserInfo(c client.Client, login string, retry int) (*userInfo, error) {
 
 	var query userQuery
 
-	err := c.Query(context.Background(), &query, variables)
+	err := c.Query(ctx, &query, variables)
 
 	if err != nil {
 		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
 			// If the query failed because we reached the rate limit,
 			// then we need to re-requery the rate limit to get the latest information
-			rateLimit, err := queryRateLimit(c, context.Background())
+			rateLimit, err := queryRateLimit(c, ctx)
 			if err != nil {
 				logrus.Errorf("Error querying GitHub API rate limit: %s", err)
 			}
@@ -46,7 +46,7 @@ func getUserInfo(c client.Client, login string, retry int) (*userInfo, error) {
 			if retry < client.MaxRetry {
 				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
 				rateLimit.Pause()
-				return getUserInfo(c, login, retry+1)
+				return getUserInfo(ctx, c, login, retry+1)
 			}
 			return nil, errors.New(ErrAPIRateLimitExceededFinalAttempt)
 		}

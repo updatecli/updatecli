@@ -1,6 +1,7 @@
 package file
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -289,7 +290,7 @@ func TestFile_Condition(t *testing.T) {
 				files:            tt.files,
 			}
 
-			gotResult, _, gotErr := f.Condition(tt.inputSourceValue, nil)
+			gotResult, _, gotErr := f.Condition(context.Background(), tt.inputSourceValue, nil)
 			if tt.wantedErr {
 				assert.Error(t, gotErr)
 				return

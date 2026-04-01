@@ -1,13 +1,14 @@
 package gomodule
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 )
 
 // Condition checks if a go module with a specific version is published
-func (g *GoModule) Condition(source string, scm scm.ScmHandler) (pass bool, message string, err error) {
+func (g *GoModule) Condition(ctx context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 	versionToCheck := g.Spec.Version
 	if versionToCheck == "" {
 		versionToCheck = source
@@ -16,7 +17,7 @@ func (g *GoModule) Condition(source string, scm scm.ScmHandler) (pass bool, mess
 		return false, "", fmt.Errorf("no version defined")
 	}
 
-	_, versions, err := g.versions()
+	_, versions, err := g.versions(ctx)
 	if err != nil {
 		return false, "", fmt.Errorf("searching version: %w", err)
 	}

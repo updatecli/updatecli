@@ -1,6 +1,7 @@
 package pipeline
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -219,7 +220,7 @@ func TestRunSources(t *testing.T) {
 			err := p.Init(&data.conf, Options{})
 			require.NoError(t, err)
 
-			err = p.Run()
+			err = p.Run(context.Background())
 			if !data.expectedError {
 				require.NoError(t, err)
 			}

@@ -1,6 +1,7 @@
 package csv
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -93,7 +94,7 @@ func TestCondition(t *testing.T) {
 
 			require.NoError(t, err)
 
-			got, _, gotErr := c.Condition("", nil)
+			got, _, gotErr := c.Condition(context.Background(), "", nil)
 
 			if tt.wantErr {
 				require.Error(t, gotErr)

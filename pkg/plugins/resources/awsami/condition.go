@@ -1,6 +1,7 @@
 package awsami
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
@@ -10,7 +11,7 @@ import (
 )
 
 // Condition tests if an image matching the specific filters exists.
-func (a *AMI) Condition(source string, scm scm.ScmHandler) (pass bool, message string, err error) {
+func (a *AMI) Condition(_ context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 	if scm != nil {
 		logrus.Warningf("condition with SCM is not supported, please remove the scm block")
 		return false, "", errors.New("condition with SCM is not supported")

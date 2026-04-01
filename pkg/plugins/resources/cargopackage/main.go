@@ -2,6 +2,7 @@ package cargopackage
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -108,8 +109,8 @@ func (cp *CargoPackage) Changelog(from, to string) *result.Changelogs {
 }
 
 // GetVersions fetch all versions of the Cargo package
-func (cp *CargoPackage) getVersions() (v string, versions []string, err error) {
-	cp.packageData, err = cp.getPackageData()
+func (cp *CargoPackage) getVersions(ctx context.Context) (v string, versions []string, err error) {
+	cp.packageData, err = cp.getPackageData(ctx)
 
 	if err != nil {
 		return "", nil, err
@@ -152,10 +153,10 @@ func getPackageFileDir(packageName string) (string, error) {
 	}
 }
 
-func (cp *CargoPackage) getPackageDataFromApi(name string, indexUrl string) (PackageData, error) {
+func (cp *CargoPackage) getPackageDataFromApi(ctx context.Context, name string, indexUrl string) (PackageData, error) {
 	packageUrl := fmt.Sprintf("%s/%s", indexUrl, name)
 
-	req, err := http.NewRequest("GET", packageUrl, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", packageUrl, nil)
 	if err != nil {
 		logrus.Errorf("something went wrong while getting cargo api data %q\n", err)
 		return PackageData{}, err
@@ -223,11 +224,11 @@ func (cp *CargoPackage) getPackageDataFromFS(name string, indexDir string) (Pack
 }
 
 // Get package data from Json API
-func (cp *CargoPackage) getPackageData() (PackageData, error) {
+func (cp *CargoPackage) getPackageData(ctx context.Context) (PackageData, error) {
 	if cp.registry.RootDir != "" {
 		return cp.getPackageDataFromFS(cp.spec.Package, cp.registry.RootDir)
 	}
-	return cp.getPackageDataFromApi(cp.spec.Package, cp.registry.URL)
+	return cp.getPackageDataFromApi(ctx, cp.spec.Package, cp.registry.URL)
 }
 
 // ReportConfig returns a new configuration with only the necessary configuration fields

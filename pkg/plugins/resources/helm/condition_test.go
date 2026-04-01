@@ -1,6 +1,7 @@
 package helm
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -65,7 +66,7 @@ func TestCondition(t *testing.T) {
 			got, err := New(tt.chart)
 			require.NoError(t, err)
 
-			gotResult, _, gotErr := got.Condition("", nil)
+			gotResult, _, gotErr := got.Condition(context.Background(), "", nil)
 
 			switch tt.expectedError {
 			case true:

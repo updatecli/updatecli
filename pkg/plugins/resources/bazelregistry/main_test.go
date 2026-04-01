@@ -1,6 +1,7 @@
 package bazelregistry
 
 import (
+	"context"
 	"io"
 	"net/http"
 	"strings"
@@ -229,7 +230,7 @@ func TestFetchModuleMetadata(t *testing.T) {
 				},
 			}
 
-			metadata, err := b.fetchModuleMetadata(tt.module)
+			metadata, err := b.fetchModuleMetadata(context.Background(), tt.module)
 
 			if tt.wantErr {
 				require.Error(t, err)

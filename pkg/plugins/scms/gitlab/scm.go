@@ -1,6 +1,7 @@
 package gitlab
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -96,7 +97,7 @@ func (g *Gitlab) Clone() (string, error) {
 }
 
 // Commit run `git commit`.
-func (g *Gitlab) Commit(message string) error {
+func (g *Gitlab) Commit(ctx context.Context, message string) error {
 	// Generate the conventional commit message
 	commitMessage, err := g.Spec.CommitMessage.Generate(message)
 	if err != nil {

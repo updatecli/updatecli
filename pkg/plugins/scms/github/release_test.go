@@ -1,6 +1,7 @@
 package github
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -492,11 +493,11 @@ func TestSearchReleases(t *testing.T) {
 
 			switch tt.searchKey {
 			case "hash":
-				got, err = sut.SearchReleasesByTagHash(tt.releaseType)
+				got, err = sut.SearchReleasesByTagHash(context.Background(), tt.releaseType)
 			case "title":
-				got, err = sut.SearchReleasesByTitle(tt.releaseType)
+				got, err = sut.SearchReleasesByTitle(context.Background(), tt.releaseType)
 			default:
-				got, err = sut.SearchReleasesByTagName(tt.releaseType)
+				got, err = sut.SearchReleasesByTagName(context.Background(), tt.releaseType)
 			}
 
 			if tt.wantErr {

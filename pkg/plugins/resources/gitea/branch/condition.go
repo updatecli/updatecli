@@ -1,13 +1,14 @@
 package branch
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 )
 
-func (g *Gitea) Condition(source string, scm scm.ScmHandler) (pass bool, message string, err error) {
+func (g *Gitea) Condition(_ context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 	if scm != nil {
 		logrus.Warningf("Condition not supported for the plugin GitHub Release")
 	}

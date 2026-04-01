@@ -1,6 +1,7 @@
 package registry
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -24,7 +25,7 @@ type wellKnownResponse struct {
 	ProviderPath string `json:"providers.v1"`
 }
 
-func newRegistryAddress(webClient httpclient.HTTPClient, spec Spec) (registryAddress, error) {
+func newRegistryAddress(ctx context.Context, webClient httpclient.HTTPClient, spec Spec) (registryAddress, error) {
 	if spec.RawString == "" {
 		for i, s := range []string{spec.Hostname, spec.Namespace, spec.Name, spec.TargetSystem} {
 			if len(s) > 0 {
@@ -58,7 +59,7 @@ func newRegistryAddress(webClient httpclient.HTTPClient, spec Spec) (registryAdd
 		registryAddress.module = module
 	}
 
-	err := registryAddress.discoverURL(webClient)
+	err := registryAddress.discoverURL(ctx, webClient)
 	if err != nil {
 		return registryAddress, err
 	}
@@ -121,8 +122,8 @@ func (r registryAddress) API() string {
 	return fmt.Sprintf("https://%s%s", r.Hostname(), r.Path())
 }
 
-func (r *registryAddress) discoverURL(webClient httpclient.HTTPClient) error {
-	req, err := http.NewRequest("GET", fmt.Sprintf("https://%s/.well-known/terraform.json", r.Hostname()), nil)
+func (r *registryAddress) discoverURL(ctx context.Context, webClient httpclient.HTTPClient) error {
+	req, err := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf("https://%s/.well-known/terraform.json", r.Hostname()), nil)
 	if err != nil {
 		return err
 	}

@@ -2,6 +2,7 @@ package target
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -95,7 +96,7 @@ func (t *Target) Check() (bool, error) {
 }
 
 // Run applies a specific target configuration
-func (t *Target) Run(source string, o *Options) (err error) {
+func (t *Target) Run(ctx context.Context, source string, o *Options) (err error) {
 	var consoleOutput bytes.Buffer
 	// By default logrus logs to stderr, so I guess we want to keep this behavior...
 	logrus.SetOutput(io.MultiWriter(os.Stdout, &consoleOutput))
@@ -129,7 +130,7 @@ func (t *Target) Run(source string, o *Options) (err error) {
 
 	// If no scm configuration provided then stop early
 	if t.Scm == nil {
-		err = target.Target(source, nil, o.DryRun, t.Result)
+		err = target.Target(ctx, source, nil, o.DryRun, t.Result)
 		if err != nil {
 			failTargetRun()
 			return err
@@ -154,7 +155,7 @@ func (t *Target) Run(source string, o *Options) (err error) {
 		return err
 	}
 
-	err = target.Target(source, s, o.DryRun, t.Result)
+	err = target.Target(ctx, source, s, o.DryRun, t.Result)
 	if err != nil {
 		failTargetRun()
 		return err
@@ -207,7 +208,7 @@ func (t *Target) Run(source string, o *Options) (err error) {
 			if commitMessage == "" {
 				commitMessage = t.Result.Description
 			}
-			if err = s.Commit(commitMessage); err != nil {
+			if err = s.Commit(ctx, commitMessage); err != nil {
 				failTargetRun()
 				return err
 			}

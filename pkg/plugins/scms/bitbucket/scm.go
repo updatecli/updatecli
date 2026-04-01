@@ -1,6 +1,7 @@
 package bitbucket
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -109,7 +110,7 @@ func (b *Bitbucket) Clone() (string, error) {
 }
 
 // Commit run `git commit`.
-func (b *Bitbucket) Commit(message string) error {
+func (b *Bitbucket) Commit(ctx context.Context, message string) error {
 	// Generate the conventional commit message
 	commitMessage, err := b.Spec.CommitMessage.Generate(message)
 	if err != nil {

@@ -1,13 +1,14 @@
 package provider
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-func (t *TerraformProvider) Condition(source string, scm scm.ScmHandler) (pass bool, message string, err error) {
+func (t *TerraformProvider) Condition(_ context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 	if len(t.files) > 1 {
 		return false, "", fmt.Errorf("%s terraform/lock condition only supports one file", result.FAILURE)
 	}

@@ -1,6 +1,7 @@
 package gomodule
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -14,7 +15,7 @@ import (
 )
 
 // GetVersions fetch all versions of a Golang module
-func (g *GoModule) versions() (v string, versions []string, err error) {
+func (g *GoModule) versions(ctx context.Context) (v string, versions []string, err error) {
 
 	var GOPROXY string
 	if g.Spec.Proxy != "" {
@@ -39,7 +40,7 @@ func (g *GoModule) versions() (v string, versions []string, err error) {
 			return "", []string{}, err
 		}
 
-		req, err := http.NewRequest("GET", URL, nil)
+		req, err := http.NewRequestWithContext(ctx, "GET", URL, nil)
 		if err != nil {
 			logrus.Errorf("something went wrong while getting go module api data %q\n", err)
 			return "", []string{}, err

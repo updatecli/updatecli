@@ -1,6 +1,7 @@
 package csv
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -81,7 +82,7 @@ func TestSource(t *testing.T) {
 			require.NoError(t, err)
 
 			gotResult := result.Source{}
-			err = c.Source("", &gotResult)
+			err = c.Source(context.Background(), "", &gotResult)
 
 			if tt.wantErr {
 				assert.Equal(t, tt.expectedErrorMsg.Error(), err.Error())

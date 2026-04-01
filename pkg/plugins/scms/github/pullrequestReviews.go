@@ -12,16 +12,16 @@ import (
 )
 
 // addPullrequestReviewers adds reviewers to a pull request
-func (p *PullRequest) addPullrequestReviewers(prID string, retry int) error {
+func (p *PullRequest) addPullrequestReviewers(ctx context.Context, prID string, retry int) error {
 
-	rateLimit, err := queryRateLimit(p.gh.client, context.Background())
+	rateLimit, err := queryRateLimit(p.gh.client, ctx)
 	if err != nil {
 		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
 			logrus.Debugln(rateLimit)
 			if retry < client.MaxRetry {
 				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
 				rateLimit.Pause()
-				return p.addPullrequestReviewers(prID, retry+1)
+				return p.addPullrequestReviewers(ctx, prID, retry+1)
 			}
 			return errors.New(ErrAPIRateLimitExceededFinalAttempt)
 		}
@@ -54,7 +54,7 @@ func (p *PullRequest) addPullrequestReviewers(prID string, retry int) error {
 
 		switch len(a) {
 		case 2:
-			teamID, err := getTeamID(p.gh.client, a[0], a[1], 0)
+			teamID, err := getTeamID(ctx, p.gh.client, a[0], a[1], 0)
 			logrus.Debugf("Team ID: %q found for %q", teamID, reviewer)
 			if err != nil {
 				logrus.Warningf("Failed to get team id for %s/%s: %v", a[0], a[1], err)
@@ -62,7 +62,7 @@ func (p *PullRequest) addPullrequestReviewers(prID string, retry int) error {
 				teamIDs = append(teamIDs, githubv4.NewID(teamID))
 			}
 		case 1:
-			user, err := getUserInfo(p.gh.client, a[0], 0)
+			user, err := getUserInfo(ctx, p.gh.client, a[0], 0)
 			logrus.Debugf("User ID: %q found for %q", user.ID, reviewer)
 			if err != nil {
 				logrus.Warningf("Failed to get user id for %s/%s: %v", a[0], a[1], err)
@@ -88,7 +88,7 @@ func (p *PullRequest) addPullrequestReviewers(prID string, retry int) error {
 		return fmt.Errorf("no valid reviewers found among %v", p.spec.Reviewers)
 	}
 
-	err = p.gh.client.Mutate(context.Background(), &mutation, input, nil)
+	err = p.gh.client.Mutate(ctx, &mutation, input, nil)
 	if err != nil {
 		return fmt.Errorf("adding pullrequest reviewers: %w", err)
 	}
