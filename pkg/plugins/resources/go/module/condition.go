@@ -3,7 +3,10 @@ package gomodule
 import (
 	"context"
 	"fmt"
+	"os"
+	"strings"
 
+	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 )
 
@@ -17,13 +20,25 @@ func (g *GoModule) Condition(ctx context.Context, source string, scm scm.ScmHand
 		return false, "", fmt.Errorf("no version defined")
 	}
 
-	_, versions, err := g.versions(ctx)
-	if err != nil {
-		return false, "", fmt.Errorf("searching version: %w", err)
+	var GOPROXY string
+	if g.Spec.Proxy != "" {
+		GOPROXY = g.Spec.Proxy
+	} else if os.Getenv("GOPROXY") != "" {
+		GOPROXY = os.Getenv("GOPROXY")
+	} else {
+		GOPROXY = goModuleDefaultProxy
 	}
 
-	for _, v := range versions {
-		if v == versionToCheck {
+	for _, proxy := range strings.Split(GOPROXY, ",") {
+		if !isSupportedGoProxy(proxy) {
+			continue
+		}
+		version, err := getVersionInfoFromProxy(ctx, g.webClient, proxy, g.Spec.Module, versionToCheck)
+		if err != nil {
+			logrus.Debugf("skipping proxy %q due to %q\n", proxy, err)
+		}
+
+		if version != "" {
 			return true, fmt.Sprintf("version %q available", versionToCheck), nil
 		}
 	}

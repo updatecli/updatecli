@@ -2,6 +2,7 @@ package gomodule
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -12,6 +13,8 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/httpclient"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
 // GetVersions fetch all versions of a Golang module
@@ -31,47 +34,32 @@ func (g *GoModule) versions(ctx context.Context) (v string, versions []string, e
 			continue
 		}
 
-		URL, err := url.JoinPath(
-			sanitizeGoProxy(proxy),
-			sanitizeGoModuleNameForProxy(g.Spec.Module),
-			"@v", "list")
+		proxyVersions, err := getVersionsFromProxy(ctx, g.webClient, proxy, g.Spec.Module)
 		if err != nil {
-			logrus.Errorf("something went wrong while getting go module api data %q\n", err)
-			return "", []string{}, err
-		}
-
-		req, err := http.NewRequestWithContext(ctx, "GET", URL, nil)
-		if err != nil {
-			logrus.Errorf("something went wrong while getting go module api data %q\n", err)
-			return "", []string{}, err
-		}
-
-		res, err := g.webClient.Do(req)
-		if err != nil {
-			logrus.Errorf("something went wrong while getting go module api data %q\n", err)
-			return "", []string{}, err
-		}
-
-		defer res.Body.Close()
-		if res.StatusCode >= 400 {
-			body, err := httputil.DumpResponse(res, false)
-			logrus.Errorf("something went wrong while getting golang module data %q\n", err)
 			logrus.Debugf("skipping proxy %q due to %q\n", proxy, err)
-			logrus.Debugf("\n%v\n", string(body))
 			continue
 		}
+		if proxyVersions == nil && isLatestVersionFilter(g.versionFilter) {
+			pseudoVersion, err := getLatestVersionFromProxy(ctx, g.webClient, proxy, g.Spec.Module)
+			if err != nil {
+				logrus.Debugf("skipping proxy %q due to %q\n", proxy, err)
+				continue
+			}
 
-		data, err := io.ReadAll(res.Body)
-		if err != nil {
-			logrus.Errorf("something went wrong while getting npm api data%q\n", err)
-			return "", []string{}, err
+			if pseudoVersion != "" {
+				versions = append(versions, pseudoVersion)
+			}
+
+			logrus.Debugf("no version published for module %q on proxy %q, fallback to pseudo version %q\n", g.Spec.Module, proxy, pseudoVersion)
+
+			return pseudoVersion, versions, nil
 		}
 
 		/*
 			The response should be a list of version separated by \n
 			as explained on https://go.dev/ref/mod#goproxy-protocol
 		*/
-		versions = append(versions, strings.Split(string(data), "\n")...)
+		versions = append(versions, proxyVersions...)
 
 		sort.Strings(versions)
 		g.Version, err = g.versionFilter.Search(versions)
@@ -84,4 +72,190 @@ func (g *GoModule) versions(ctx context.Context) (v string, versions []string, e
 	}
 
 	return "", nil, fmt.Errorf("GO module %q not found on proxy %q", g.Spec.Module, GOPROXY)
+}
+
+// getVersionInfoFromProxy returns all versions of a Golang module from a proxy
+func getVersionsFromProxy(ctx context.Context, client httpclient.HTTPClient, proxy, module string) ([]string, error) {
+	URL, err := url.JoinPath(
+		sanitizeGoProxy(proxy),
+		sanitizeGoModuleNameForProxy(module),
+		"@v", "list")
+	if err != nil {
+		logrus.Errorf("something went wrong while getting go module api data %q\n", err)
+		return nil, err
+	}
+
+	// #nosec G107
+	req, err := http.NewRequestWithContext(ctx, "GET", URL, nil)
+	if err != nil {
+		logrus.Errorf("something went wrong while getting go module api data %q\n", err)
+		return nil, err
+	}
+
+	res, err := client.Do(req)
+	if err != nil {
+		logrus.Errorf("something went wrong while getting go module api data %q\n", err)
+		return nil, err
+	}
+
+	defer res.Body.Close()
+	if res.StatusCode >= 400 {
+		body, err := httputil.DumpResponse(res, false)
+		logrus.Errorf("something went wrong while getting golang module data %q\n", err)
+		logrus.Debugf("skipping proxy %q due to %q\n", proxy, err)
+		logrus.Debugf("\n%v\n", string(body))
+
+		return nil, fmt.Errorf("GO module %q not found on proxy %q", module, proxy)
+	}
+
+	data, err := io.ReadAll(res.Body)
+	if err != nil {
+		logrus.Errorf("something went wrong while getting golang module api data%q\n", err)
+		return nil, err
+	}
+
+	/*
+		The response should be a list of version separated by \n
+		as explained on https://go.dev/ref/mod#goproxy-protocol
+	*/
+
+	dataStr := strings.TrimSpace(string(data))
+	versions := strings.Split(dataStr, "\n")
+
+	if len(versions) == 1 && versions[0] == "" {
+		return nil, nil
+	}
+
+	return versions, nil
+}
+
+// getLatestVersionFromProxy returns the latest version of a Golang module from a proxy
+func getLatestVersionFromProxy(ctx context.Context, client httpclient.HTTPClient, proxy, module string) (string, error) {
+	URL, err := url.JoinPath(
+		sanitizeGoProxy(proxy),
+		sanitizeGoModuleNameForProxy(module),
+		"@latest")
+
+	if err != nil {
+		logrus.Errorf("something went wrong while getting go module api data %q\n", err)
+		return "", err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "GET", URL, nil)
+	if err != nil {
+		logrus.Errorf("something went wrong while getting go module api data %q\n", err)
+		return "", err
+	}
+
+	res, err := client.Do(req)
+	if err != nil {
+		logrus.Errorf("something went wrong while getting go module api data %q\n", err)
+		return "", err
+	}
+
+	defer res.Body.Close()
+	if res.StatusCode >= 400 {
+		body, err := httputil.DumpResponse(res, false)
+		logrus.Errorf("something went wrong while getting golang module data %q\n", err)
+		logrus.Debugf("skipping proxy %q due to %q\n", proxy, err)
+		logrus.Debugf("\n%v\n", string(body))
+
+		return "", fmt.Errorf("GO module %q not found on proxy %q", module, proxy)
+	}
+
+	data, err := io.ReadAll(res.Body)
+	if err != nil {
+		logrus.Errorf("something went wrong while getting npm api data%q\n", err)
+		return "", err
+	}
+
+	type JSONData struct {
+		Version string `json:"Version"`
+		Time    string `json:"Time"`
+	}
+
+	jsonData := JSONData{}
+	err = json.Unmarshal(data, &jsonData)
+	if err != nil {
+		return "", fmt.Errorf("something went wrong while parsing go module api data %q", err)
+	}
+
+	return jsonData.Version, nil
+}
+
+// getVersionInfoFromProxy returns the version information of a Golang module from a proxy
+func getVersionInfoFromProxy(ctx context.Context, client httpclient.HTTPClient, proxy, module, version string) (string, error) {
+	URL, err := url.JoinPath(
+		sanitizeGoProxy(proxy),
+		sanitizeGoModuleNameForProxy(module),
+		"@v",
+		version+".info")
+
+	if err != nil {
+		logrus.Errorf("something went wrong while getting go module api data %q\n", err)
+		return "", err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "GET", URL, nil)
+	if err != nil {
+		logrus.Errorf("something went wrong while getting go module api data %q\n", err)
+		return "", err
+	}
+
+	res, err := client.Do(req)
+	if err != nil {
+		logrus.Errorf("something went wrong while getting go module api data %q\n", err)
+		return "", err
+	}
+
+	defer res.Body.Close()
+	if res.StatusCode >= 400 {
+		body, err := httputil.DumpResponse(res, false)
+		logrus.Errorf("something went wrong while getting golang module data %q\n", err)
+		logrus.Debugf("skipping proxy %q due to %q\n", proxy, err)
+		logrus.Debugf("\n%v\n", string(body))
+
+		return "", fmt.Errorf("GO module %q not found on proxy %q", module, proxy)
+	}
+
+	data, err := io.ReadAll(res.Body)
+	if err != nil {
+		logrus.Errorf("something went wrong while getting npm api data%q\n", err)
+		return "", err
+	}
+
+	type Info struct {
+		Version string `json:"Version"`
+		Time    string `json:"Time"`
+	}
+
+	jsonData := Info{}
+	err = json.Unmarshal(data, &jsonData)
+	if err != nil {
+		return "", fmt.Errorf("something went wrong while parsing go module api data %q", err)
+	}
+
+	return jsonData.Version, nil
+}
+
+// isLatestVersionFilter returns true if the version filter is a latest version filter
+func isLatestVersionFilter(versionfilter version.Filter) bool {
+
+	if versionfilter.Kind == "latest" {
+		return true
+	}
+
+	if versionfilter.Kind == "semver" && versionfilter.Pattern == "*" {
+		return true
+	}
+
+	if versionfilter.Kind == "semver" && versionfilter.Pattern == "" {
+		return true
+	}
+
+	if versionfilter.Kind == "semver" && versionfilter.Pattern == ">=0.0.0-0" {
+		return true
+	}
+
+	return false
 }
