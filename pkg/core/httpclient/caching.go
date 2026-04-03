@@ -12,6 +12,7 @@ import (
 // cachedResponse stores the essential parts of an HTTP response for replay.
 type cachedResponse struct {
 	StatusCode int
+	Status     string
 	Header     http.Header
 	Body       []byte
 }
@@ -45,10 +46,12 @@ func (c *cachingTransport) RoundTrip(req *http.Request) (*http.Response, error) 
 	if ok {
 		logrus.Debugf("http cache hit: %s", key)
 		return &http.Response{
-			StatusCode: entry.StatusCode,
-			Header:     entry.Header.Clone(),
-			Body:       io.NopCloser(bytes.NewReader(entry.Body)),
-			Request:    req,
+			StatusCode:    entry.StatusCode,
+			Status:        entry.Status,
+			Header:        entry.Header.Clone(),
+			Body:          io.NopCloser(bytes.NewReader(entry.Body)),
+			ContentLength: int64(len(entry.Body)),
+			Request:       req,
 		}, nil
 	}
 
@@ -71,6 +74,7 @@ func (c *cachingTransport) RoundTrip(req *http.Request) (*http.Response, error) 
 		c.mu.Lock()
 		c.entries[key] = cachedResponse{
 			StatusCode: resp.StatusCode,
+			Status:     resp.Status,
 			Header:     resp.Header.Clone(),
 			Body:       body,
 		}

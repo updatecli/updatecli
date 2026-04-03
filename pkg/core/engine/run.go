@@ -29,9 +29,7 @@ func (e *Engine) Run(ctx context.Context) (err error) {
 
 	errs := []error{}
 
-	if e.sourceCache == nil {
-		e.sourceCache = cache.NewSourceCache()
-	}
+	e.sourceCache = cache.NewSourceCache()
 
 	httpclient.EnableHTTPCache()
 	defer httpclient.DisableHTTPCache()

@@ -23,8 +23,10 @@ func EnableHTTPCache() {
 	}))
 }
 
-// DisableHTTPCache deactivates the HTTP cache and releases cached data.
-// Safe to call even if caching was never enabled.
+// DisableHTTPCache deactivates the HTTP cache so that new clients no longer
+// use it. Already-created clients may still hold a reference to the previous
+// cache until they are garbage collected. Safe to call even if caching was
+// never enabled.
 func DisableHTTPCache() {
 	cacheMu.Lock()
 	defer cacheMu.Unlock()
