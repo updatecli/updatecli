@@ -1,0 +1,3 @@
+[project]
+name = "no-lock-project"
+dependencies = ["requests>=2.28"]
