@@ -11,6 +11,7 @@ import (
 	jschema "github.com/invopop/jsonschema"
 	"github.com/sirupsen/logrus"
 
+	"github.com/updatecli/updatecli/pkg/core/cache"
 	"github.com/updatecli/updatecli/pkg/core/jsonschema"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
@@ -42,7 +43,7 @@ var (
 )
 
 // Run execute actions defined by the source configuration
-func (s *Source) Run(ctx context.Context) (err error) {
+func (s *Source) Run(ctx context.Context, sourceCache *cache.SourceCache) (err error) {
 
 	var consoleOutput bytes.Buffer
 	// By default logrus logs to stderr, so I guess we want to keep this behavior...
@@ -56,44 +57,58 @@ func (s *Source) Run(ctx context.Context) (err error) {
 	defer logrus.SetOutput(os.Stdout)
 	defer s.Result.SetConsoleOutput(&consoleOutput)
 
-	source, err := resource.New(s.Config.ResourceConfig)
-	if err != nil {
-		s.Result.Result = result.FAILURE
-		return err
+	cacheKey := cache.Key(s.Config.ResourceConfig)
+	cacheHit := false
+
+	if sourceCache != nil {
+		if entry, ok := sourceCache.Get(cacheKey); ok {
+			logrus.Infof("source cache hit for %q", s.Config.Name)
+			s.Result.Information = entry.Information
+			s.Result.Description = entry.Description
+			s.Result.Result = entry.Result
+			cacheHit = true
+		}
 	}
 
-	workingDir := ""
-
-	switch s.Scm == nil {
-	case true:
-		pwd, err := os.Getwd()
+	if !cacheHit {
+		source, err := resource.New(s.Config.ResourceConfig)
 		if err != nil {
 			s.Result.Result = result.FAILURE
 			return err
 		}
 
-		workingDir = pwd
-	case false:
-		SCM := *s.Scm
+		workingDir := ""
 
-		err = SCM.Checkout()
+		switch s.Scm == nil {
+		case true:
+			pwd, err := os.Getwd()
+			if err != nil {
+				s.Result.Result = result.FAILURE
+				return err
+			}
+
+			workingDir = pwd
+		case false:
+			SCM := *s.Scm
+
+			err = SCM.Checkout()
+			if err != nil {
+				s.Result.Result = result.FAILURE
+				return err
+			}
+
+			workingDir = SCM.GetDirectory()
+		}
+
+		err = source.Source(ctx, workingDir, s.Result)
 		if err != nil {
 			s.Result.Result = result.FAILURE
 			return err
 		}
-
-		workingDir = SCM.GetDirectory()
 	}
-
-	err = source.Source(ctx, workingDir, s.Result)
 
 	s.Output = s.Result.Information
 	s.OriginalOutput = s.Result.Information
-
-	if err != nil {
-		s.Result.Result = result.FAILURE
-		return err
-	}
 
 	logrus.Infof("%s %s", s.Result.Result, s.Result.Description)
 
@@ -103,6 +118,14 @@ func (s *Source) Run(ctx context.Context) (err error) {
 			s.Result.Result = result.FAILURE
 			return err
 		}
+	}
+
+	if !cacheHit && sourceCache != nil && s.Result.Result == result.SUCCESS {
+		sourceCache.Set(cacheKey, cache.SourceEntry{
+			Information: s.Result.Information,
+			Description: s.Result.Description,
+			Result:      s.Result.Result,
+		})
 	}
 
 	if len(s.Output) == 0 && s.Result.Result == result.SUCCESS {

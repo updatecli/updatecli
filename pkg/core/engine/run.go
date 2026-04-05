@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/cache"
+	"github.com/updatecli/updatecli/pkg/core/httpclient"
 	"github.com/updatecli/updatecli/pkg/core/telemetry"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -27,8 +29,14 @@ func (e *Engine) Run(ctx context.Context) (err error) {
 
 	errs := []error{}
 
+	e.sourceCache = cache.NewSourceCache()
+
+	httpclient.EnableHTTPCache()
+	defer httpclient.DisableHTTPCache()
+
 	for i := range e.Pipelines {
 		pipeline := e.Pipelines[i]
+		pipeline.SourceCache = e.sourceCache
 
 		err := pipeline.Run(ctx)
 		if err != nil {

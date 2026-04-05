@@ -8,6 +8,7 @@ import (
 
 	"github.com/heimdalr/dag"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/cache"
 	"github.com/updatecli/updatecli/pkg/core/config"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/action"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
@@ -48,6 +49,9 @@ type Pipeline struct {
 	mu     sync.Mutex
 	// CrawlerKind identifies the autodiscovery crawler that generated this pipeline (empty for user-defined pipelines).
 	CrawlerKind string
+	// SourceCache is a shared in-memory cache for source execution results,
+	// injected by the engine before the pipeline runs.
+	SourceCache *cache.SourceCache
 	tracer      trace.Tracer
 }
 
