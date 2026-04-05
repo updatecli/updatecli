@@ -16,6 +16,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/shurcooL/githubv4"
 	"github.com/sirupsen/logrus"
@@ -23,6 +24,13 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/reports"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github/client"
 	utils "github.com/updatecli/updatecli/pkg/plugins/utils/action"
+)
+
+const (
+	MergeStrategyAuto       string = "auto"
+	MergeStrategyClient     string = "client"
+	MergeStrategyManual     string = "manual"
+	DefaultMergeClientAfter string = "24h"
 )
 
 var (
@@ -41,6 +49,7 @@ type PullRequestApi struct {
 	ChangedFiles int
 	BaseRefName  string
 	Body         string
+	CreatedAt    string
 	HeadRefName  string
 	ID           string
 	State        string
@@ -49,16 +58,31 @@ type PullRequestApi struct {
 	Number       int32
 }
 
+// MergeSpec specifies merge behavior for a pull request
+type MergeSpec struct {
+	// strategy specifies the merge strategy: "client", "auto", or "manual" (default)
+	// client: merge immediately via GitHub API (no server-side automerge needed)
+	// auto: enable server-side auto-merge (requires branch protection rules)
+	// manual: do not merge automatically (default)
+	Strategy string `yaml:",omitempty"`
+	// after specifies a minimum duration to wait before merging (e.g., "24h", "30m")
+	// The pull request will not be merged until it has been open for at least this duration.
+	After string `yaml:",omitempty"`
+}
+
 // ActionSpec specifies the configuration of an action of type "GitHub Pull Request"
 type ActionSpec struct {
 	// automerge allows to enable/disable the automerge feature on new pullrequest
+	// deprecated since the field "merge.strategy" should now be used to specify the merge strategy and enable automerge with "auto" value.
 	//
 	// compatible:
 	//   * action
 	//
 	// default:
 	//   false
-	AutoMerge bool `yaml:",omitempty"`
+	//
+	// deprecated: use merge.strategy: auto instead
+	AutoMerge *bool `yaml:",omitempty"`
 	// title allows to override the pull request title
 	//
 	// compatible:
@@ -157,6 +181,19 @@ type ActionSpec struct {
 	// remark:
 	//   * Please note that contrary to reviewers, assignees only accept GitHub usernames
 	Assignees []string `yaml:",omitempty"`
+	// merge configures automatic merge behavior for the pull request.
+	//
+	// compatible:
+	//   * action
+	//
+	// default:
+	//   strategy: manual (no automatic merge)
+	//
+	// example:
+	//   merge:
+	//     strategy: client      # merge immediately via API (no server-side automerge needed)
+	//     after: 24h            # never merge before waiting 24h
+	Merge MergeSpec `yaml:",omitempty"`
 }
 
 // PullRequest contains multiple fields mapped to GitHub V4 api
@@ -187,6 +224,27 @@ func (s *ActionSpec) Validate() error {
 	if _, err := isMergeMethodValid(s.MergeMethod); err != nil {
 		return err
 	}
+
+	// Handle deprecated AutoMerge field
+	if s.AutoMerge != nil {
+		logrus.Warningln("'automerge' is deprecated, please use 'merge.strategy: auto' instead")
+		switch *s.AutoMerge {
+		case true:
+			s.Merge.Strategy = MergeStrategyAuto
+		case false:
+			s.Merge.Strategy = MergeStrategyManual
+		}
+		s.AutoMerge = nil
+	}
+
+	// Validate merge strategy
+	switch strings.ToLower(s.Merge.Strategy) {
+	case "", MergeStrategyAuto, MergeStrategyClient, MergeStrategyManual:
+		// valid
+	default:
+		return fmt.Errorf("invalid merge strategy %q, accepting one of '%s', '%s', '%s', or ''", s.Merge.Strategy, MergeStrategyClient, MergeStrategyAuto, MergeStrategyManual)
+	}
+
 	return nil
 }
 
@@ -196,6 +254,15 @@ type mutationEnablePullRequestAutoMerge struct {
 	EnablePullRequestAutoMerge struct {
 		PullRequest PullRequestApi
 	} `graphql:"enablePullRequestAutoMerge(input: $input)"`
+}
+
+// Graphql mutation used with GitHub api to merge a pull request from the client side
+type mutationMergePullRequest struct {
+	MergePullRequest struct {
+		PullRequest struct {
+			Url string
+		}
+	} `graphql:"mergePullRequest(input: $input)"`
 }
 
 func NewAction(spec ActionSpec, gh *Github) (PullRequest, error) {
@@ -226,6 +293,14 @@ func (p *PullRequest) CleanAction(ctx context.Context, report *reports.Action) e
 	if p.remotePullRequest.ID == "" {
 		logrus.Debugln("nothing to clean")
 		return nil
+	}
+
+	switch strings.ToLower(p.spec.Merge.Strategy) {
+	case MergeStrategyClient:
+		err = p.mergeAfterDuration()
+		if err != nil {
+			return err
+		}
 	}
 
 	if p.remotePullRequest.ChangedFiles == 0 {
@@ -320,16 +395,23 @@ func (p *PullRequest) CreateAction(ctx context.Context, report *reports.Action, 
 		return err
 	}
 
-	if p.spec.AutoMerge {
+	switch strings.ToLower(p.spec.Merge.Strategy) {
+	case MergeStrategyAuto:
 		if err := p.EnablePullRequestAutoMerge(ctx, 0); err != nil {
 			switch err.Error() {
 			case ErrAutomergeNotAllowOnRepository.Error():
-				logrus.Errorln("Automerge can't be enabled. Make sure to all it on the repository.")
+				logrus.Errorln("Automerge can't be enabled. Make sure to allow it on the repository.")
 			case ErrPullRequestIsInCleanStatus.Error():
 				logrus.Errorln("Automerge can't be enabled. Make sure to have branch protection rules enabled on the repository.")
 			default:
 				logrus.Debugf("Error enabling automerge: %s", err.Error())
 			}
+			return err
+		}
+	case MergeStrategyClient:
+
+		err = p.mergeAfterDuration()
+		if err != nil {
 			return err
 		}
 	}
@@ -516,6 +598,7 @@ func (p *PullRequest) updatePullRequest(ctx context.Context, retry int) error {
 	}
 
 	if len(p.spec.Labels) != 0 {
+		// deprecated since the field "merge.strategy" should now be used to specify the merge strategy and enable automerge with "auto" value.
 		input.LabelIDs = &labelsID
 	}
 
@@ -587,6 +670,65 @@ func (p *PullRequest) EnablePullRequestAutoMerge(ctx context.Context, retry int)
 		}
 		return fmt.Errorf("enabling pull request automerge: %w", err)
 	}
+
+	return nil
+}
+
+// MergePullRequest merges a pull request from the client side by calling the GitHub GraphQL API directly.
+// Unlike EnablePullRequestAutoMerge (which relies on server-side auto-merge being enabled on the repo),
+// this method performs the merge immediately without requiring any repository-level settings.
+// The merge will fail if the pull request is not in a mergeable state (e.g. has unresolved conflicts or pending required checks).
+func (p *PullRequest) MergePullRequest(retry int) error {
+
+	rateLimit, err := queryRateLimit(p.gh.client, context.Background())
+	if err != nil {
+		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
+			if rateLimit != nil {
+				logrus.Debugln(rateLimit)
+			}
+			if retry < client.MaxRetry {
+				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
+				if rateLimit != nil {
+					rateLimit.Pause()
+				}
+				return p.MergePullRequest(retry + 1)
+			}
+			return errors.New(ErrAPIRateLimitExceededFinalAttempt)
+		}
+		return fmt.Errorf("querying GitHub API rate limit: %w", err)
+	}
+	logrus.Debugln(rateLimit)
+
+	input := githubv4.MergePullRequestInput{
+		PullRequestID: githubv4.String(p.remotePullRequest.ID),
+	}
+
+	// The GitHub Api expects the merge method to be capital letter and does not allow empty value,
+	// hence we only set MergeMethod when it is explicitly configured.
+	if len(p.spec.MergeMethod) > 0 {
+		mergeMethod := githubv4.PullRequestMergeMethod(strings.ToUpper(p.spec.MergeMethod))
+		input.MergeMethod = &mergeMethod
+	}
+
+	if p.spec.UseTitleForAutoMerge {
+		if strings.EqualFold(p.spec.MergeMethod, "squash") {
+			input.CommitHeadline = githubv4.NewString(githubv4.String(fmt.Sprintf("%s (#%d)", p.Title, p.remotePullRequest.Number)))
+		} else if strings.EqualFold(p.spec.MergeMethod, "rebase") {
+			input.CommitHeadline = githubv4.NewString(githubv4.String(p.Title))
+		}
+	}
+
+	var mutation mutationMergePullRequest
+	err = p.gh.client.Mutate(context.Background(), &mutation, input, nil)
+
+	if err != nil {
+		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) && retry < client.MaxRetry {
+			return p.MergePullRequest(retry + 1)
+		}
+		return fmt.Errorf("merging pull request: %w", err)
+	}
+
+	logrus.Infof("\nPull Request successfully merged:\n\n\t%s\n\n", mutation.MergePullRequest.PullRequest.Url)
 
 	return nil
 }
@@ -942,4 +1084,35 @@ func (p *PullRequest) GetPullRequestLabelsInformation(ctx context.Context, retry
 		variables["before"] = githubv4.NewString(githubv4.String(query.Repository.PullRequest.Labels.PageInfo.StartCursor))
 	}
 	return pullRequestLabels, nil
+}
+
+// mergeAfterDuration checks if the pull request is old enough to be merged based on the provided duration string (e.g. "24h").
+func (p *PullRequest) mergeAfterDuration() error {
+
+	mergeClientAfter := p.spec.Merge.After
+	if mergeClientAfter == "" {
+		logrus.Debugf("No merge.after duration specified, using default value of %s", DefaultMergeClientAfter)
+		mergeClientAfter = DefaultMergeClientAfter
+	}
+
+	if mergeClientAfter != "" {
+		afterDuration, err := time.ParseDuration(mergeClientAfter)
+		if err != nil {
+			return fmt.Errorf("invalid merge.after duration %q: %w", mergeClientAfter, err)
+		}
+		if p.remotePullRequest.CreatedAt != "" {
+			createdAt, parseErr := time.Parse(time.RFC3339, p.remotePullRequest.CreatedAt)
+			if parseErr == nil && time.Since(createdAt) < afterDuration {
+				logrus.Infof("Pull request is only %s old — waiting for merge.after duration of %s",
+					time.Since(createdAt).Round(time.Minute), afterDuration)
+				return nil
+			}
+		}
+	}
+	if err := p.MergePullRequest(0); err != nil {
+		logrus.Debugf("Error merging pull request from client side: %s", err.Error())
+		return err
+	}
+
+	return nil
 }

@@ -23,6 +23,7 @@ func TestSummary(t *testing.T) {
 		{
 			name: "Test Summary with URL",
 			github: &Github{
+				// #nosec G101
 				Spec: Spec{
 					Owner:      "updatecli",
 					Repository: "updatecli",
