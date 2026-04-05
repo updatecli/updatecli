@@ -31,6 +31,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/npm"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/plugin"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/precommit"
+	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/pyproject"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/terraform"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/terragrunt"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/updatecli"
@@ -233,6 +234,13 @@ var crawlerMap = map[string]struct {
 			return precommit.New(spec, rootDir, scmID, actionID)
 		},
 		spec: precommit.Spec{},
+	},
+	"pyproject": {
+		newFunc: func(spec any, rootDir string, scmID string, actionID, pluginName string) (Crawler, error) {
+			return pyproject.New(spec, rootDir, scmID, actionID)
+		},
+		spec:  pyproject.Spec{},
+		alias: []string{"python/uv"},
 	},
 	"prow": {
 		newFunc: func(spec any, rootDir string, scmID string, actionID, pluginName string) (Crawler, error) {

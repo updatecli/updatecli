@@ -1,0 +1,15 @@
+name: "Pyproject autodiscovery using git scm"
+scms:
+  default:
+    kind: git
+    spec:
+      url: https://github.com/astral-sh/uv-fastapi-example.git
+      branch: "main"
+
+autodiscovery:
+  scmid: default
+  crawlers:
+    pyproject:
+      only:
+        - packages:
+            "fastapi": ""

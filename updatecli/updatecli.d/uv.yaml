@@ -1,0 +1,49 @@
+name: "chore(uv): upgrade uv version"
+#{{- if .scm.enabled }}
+actions:
+  default:
+    kind: "github/pullrequest"
+    title: "chore(ci): upgrade uv version"
+    spec:
+      automerge: true
+      labels:
+        - chore
+        - dependencies
+    scmid: default
+
+scms:
+  default:
+    kind: github
+    spec:
+      branch: "{{ .scm.branch }}"
+      email: "{{ .scm.email }}"
+      owner: "{{ .scm.owner }}"
+      repository: "{{ .scm.repository }}"
+      user: "{{ .scm.user }}"
+#{{- end }}
+
+sources:
+  uv:
+    name: get latest uv version
+    kind: githubrelease
+    spec:
+      owner: astral-sh
+      repository: uv
+      versionfilter:
+        kind: semver
+    transformers:
+      - trimprefix: v
+
+targets:
+  uv_gha_updatecli:
+    name: 'deps: update uv version to {{ source "uv" }}'
+    kind: yaml
+    #{{- if .scm.enabled }}
+    scmid: default
+    #{{- end }}
+    sourceid: uv
+    spec:
+      file: ".github/workflows/*.yaml"
+      searchpattern: true
+      key: '$.jobs.*.steps[?(@.uses =~ /^astral-sh\/setup-uv/)].with.version'
+      engine: "yamlpath"
