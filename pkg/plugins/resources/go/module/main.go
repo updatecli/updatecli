@@ -39,7 +39,7 @@ func New(spec interface{}) (*GoModule, error) {
 	if newSpec.VersionFilter.IsZero() {
 		logrus.Debugln("no versioning filtering specified, fallback to semantic versioning")
 		// By default, golang versioning uses semantic versioning
-		newFilter.Kind = "semver"
+		newFilter.Kind = version.SEMVERVERSIONKIND
 		newFilter.Pattern = "*"
 	}
 

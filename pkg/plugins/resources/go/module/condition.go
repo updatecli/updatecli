@@ -30,6 +30,7 @@ func (g *GoModule) Condition(ctx context.Context, source string, scm scm.ScmHand
 	}
 
 	for _, proxy := range strings.Split(GOPROXY, ",") {
+		proxy = strings.TrimSpace(proxy)
 		if !isSupportedGoProxy(proxy) {
 			continue
 		}

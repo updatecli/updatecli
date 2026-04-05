@@ -30,6 +30,7 @@ func (g *GoModule) versions(ctx context.Context) (v string, versions []string, e
 	}
 
 	for _, proxy := range strings.Split(GOPROXY, ",") {
+		proxy = strings.TrimSpace(proxy)
 		if !isSupportedGoProxy(proxy) {
 			continue
 		}
@@ -74,7 +75,7 @@ func (g *GoModule) versions(ctx context.Context) (v string, versions []string, e
 	return "", nil, fmt.Errorf("GO module %q not found on proxy %q", g.Spec.Module, GOPROXY)
 }
 
-// getVersionInfoFromProxy returns all versions of a Golang module from a proxy
+// getVersionsFromProxy returns all versions of a Golang module from a proxy
 func getVersionsFromProxy(ctx context.Context, client httpclient.HTTPClient, proxy, module string) ([]string, error) {
 	URL, err := url.JoinPath(
 		sanitizeGoProxy(proxy),
@@ -85,7 +86,7 @@ func getVersionsFromProxy(ctx context.Context, client httpclient.HTTPClient, pro
 		return nil, err
 	}
 
-	// #nosec G107
+	// #nosec G704
 	req, err := http.NewRequestWithContext(ctx, "GET", URL, nil)
 	if err != nil {
 		logrus.Errorf("something went wrong while getting go module api data %q\n", err)
@@ -100,10 +101,14 @@ func getVersionsFromProxy(ctx context.Context, client httpclient.HTTPClient, pro
 
 	defer res.Body.Close()
 	if res.StatusCode >= 400 {
+		logrus.Errorf("something went wrong while getting golang module data: proxy %q returned HTTP %d (%s)\n", proxy, res.StatusCode, res.Status)
+		logrus.Debugf("skipping proxy %q due to HTTP %d (%s)\n", proxy, res.StatusCode, res.Status)
 		body, err := httputil.DumpResponse(res, false)
-		logrus.Errorf("something went wrong while getting golang module data %q\n", err)
-		logrus.Debugf("skipping proxy %q due to %q\n", proxy, err)
-		logrus.Debugf("\n%v\n", string(body))
+		if err != nil {
+			logrus.Debugf("failed to dump proxy response for %q: %q\n", proxy, err)
+		} else {
+			logrus.Debugf("\n%v\n", string(body))
+		}
 
 		return nil, fmt.Errorf("GO module %q not found on proxy %q", module, proxy)
 	}
@@ -141,6 +146,7 @@ func getLatestVersionFromProxy(ctx context.Context, client httpclient.HTTPClient
 		return "", err
 	}
 
+	// #nosec G704
 	req, err := http.NewRequestWithContext(ctx, "GET", URL, nil)
 	if err != nil {
 		logrus.Errorf("something went wrong while getting go module api data %q\n", err)
@@ -196,6 +202,7 @@ func getVersionInfoFromProxy(ctx context.Context, client httpclient.HTTPClient, 
 		return "", err
 	}
 
+	// #nosec G704
 	req, err := http.NewRequestWithContext(ctx, "GET", URL, nil)
 	if err != nil {
 		logrus.Errorf("something went wrong while getting go module api data %q\n", err)
@@ -220,7 +227,7 @@ func getVersionInfoFromProxy(ctx context.Context, client httpclient.HTTPClient, 
 
 	data, err := io.ReadAll(res.Body)
 	if err != nil {
-		logrus.Errorf("something went wrong while getting npm api data%q\n", err)
+		logrus.Errorf("something went wrong while getting go module proxy response data%q\n", err)
 		return "", err
 	}
 
@@ -238,22 +245,22 @@ func getVersionInfoFromProxy(ctx context.Context, client httpclient.HTTPClient, 
 	return jsonData.Version, nil
 }
 
-// isLatestVersionFilter returns true if the version filter is a latest version filter
+// isLatestVersionFilter returns true if the version filter is looking for the latest version.
 func isLatestVersionFilter(versionfilter version.Filter) bool {
 
-	if versionfilter.Kind == "latest" {
+	if versionfilter.Kind == version.LATESTVERSIONKIND {
 		return true
 	}
 
-	if versionfilter.Kind == "semver" && versionfilter.Pattern == "*" {
+	if versionfilter.Kind == version.SEMVERVERSIONKIND && versionfilter.Pattern == "*" {
 		return true
 	}
 
-	if versionfilter.Kind == "semver" && versionfilter.Pattern == "" {
+	if versionfilter.Kind == version.SEMVERVERSIONKIND && versionfilter.Pattern == "" {
 		return true
 	}
 
-	if versionfilter.Kind == "semver" && versionfilter.Pattern == ">=0.0.0-0" {
+	if versionfilter.Kind == version.SEMVERVERSIONKIND && versionfilter.Pattern == ">=0.0.0-0" {
 		return true
 	}
 
