@@ -26,6 +26,13 @@ import (
 	utils "github.com/updatecli/updatecli/pkg/plugins/utils/action"
 )
 
+const (
+	MergeStrategyAuto       string = "auto"
+	MergeStrategyClient     string = "client"
+	MergeStrategyManual     string = "manual"
+	DefaultMergeClientAfter string = "24h"
+)
+
 var (
 	// ErrAutomergeNotAllowOnRepository is returned when automerge is not allowed on the repository
 	ErrAutomergeNotAllowOnRepository = errors.New("automerge is not allowed on repository")
@@ -66,6 +73,7 @@ type MergeSpec struct {
 // ActionSpec specifies the configuration of an action of type "GitHub Pull Request"
 type ActionSpec struct {
 	// automerge allows to enable/disable the automerge feature on new pullrequest
+	// deprecated since the field "merge.strategy" should now be used to specify the merge strategy and enable automerge with "auto" value.
 	//
 	// compatible:
 	//   * action
@@ -220,17 +228,21 @@ func (s *ActionSpec) Validate() error {
 	// Handle deprecated AutoMerge field
 	if s.AutoMerge != nil {
 		logrus.Warningln("'automerge' is deprecated, please use 'merge.strategy: auto' instead")
-		if s.Merge.Strategy == "" {
-			s.Merge.Strategy = "auto"
+		switch *s.AutoMerge {
+		case true:
+			s.Merge.Strategy = MergeStrategyAuto
+		case false:
+			s.Merge.Strategy = MergeStrategyManual
 		}
+		s.AutoMerge = nil
 	}
 
 	// Validate merge strategy
 	switch strings.ToLower(s.Merge.Strategy) {
-	case "", "manual", "auto", "client":
+	case "", MergeStrategyAuto, MergeStrategyClient, MergeStrategyManual:
 		// valid
 	default:
-		return fmt.Errorf("invalid merge strategy %q, accepting one of 'client', 'auto', 'manual', or ''", s.Merge.Strategy)
+		return fmt.Errorf("invalid merge strategy %q, accepting one of '%s', '%s', '%s', or ''", s.Merge.Strategy, MergeStrategyClient, MergeStrategyAuto, MergeStrategyManual)
 	}
 
 	return nil
@@ -281,6 +293,14 @@ func (p *PullRequest) CleanAction(ctx context.Context, report *reports.Action) e
 	if p.remotePullRequest.ID == "" {
 		logrus.Debugln("nothing to clean")
 		return nil
+	}
+
+	switch strings.ToLower(p.spec.Merge.Strategy) {
+	case MergeStrategyClient:
+		err = p.mergeAfterDuration()
+		if err != nil {
+			return err
+		}
 	}
 
 	if p.remotePullRequest.ChangedFiles == 0 {
@@ -376,8 +396,8 @@ func (p *PullRequest) CreateAction(ctx context.Context, report *reports.Action, 
 	}
 
 	switch strings.ToLower(p.spec.Merge.Strategy) {
-	case "auto":
-		if err := p.EnablePullRequestAutoMerge(0); err != nil {
+	case MergeStrategyAuto:
+		if err := p.EnablePullRequestAutoMerge(ctx, 0); err != nil {
 			switch err.Error() {
 			case ErrAutomergeNotAllowOnRepository.Error():
 				logrus.Errorln("Automerge can't be enabled. Make sure to allow it on the repository.")
@@ -388,23 +408,10 @@ func (p *PullRequest) CreateAction(ctx context.Context, report *reports.Action, 
 			}
 			return err
 		}
-	case "client":
-		if p.spec.Merge.After != "" {
-			afterDuration, err := time.ParseDuration(p.spec.Merge.After)
-			if err != nil {
-				return fmt.Errorf("invalid merge.after duration %q: %w", p.spec.Merge.After, err)
-			}
-			if p.remotePullRequest.CreatedAt != "" {
-				createdAt, parseErr := time.Parse(time.RFC3339, p.remotePullRequest.CreatedAt)
-				if parseErr == nil && time.Since(createdAt) < afterDuration {
-					logrus.Infof("Pull request is only %s old — waiting for merge.after duration of %s",
-						time.Since(createdAt).Round(time.Minute), afterDuration)
-					return nil
-				}
-			}
-		}
-		if err := p.MergePullRequest(0); err != nil {
-			logrus.Debugf("Error merging pull request from client side: %s", err.Error())
+	case MergeStrategyClient:
+
+		err = p.mergeAfterDuration()
+		if err != nil {
 			return err
 		}
 	}
@@ -591,6 +598,7 @@ func (p *PullRequest) updatePullRequest(ctx context.Context, retry int) error {
 	}
 
 	if len(p.spec.Labels) != 0 {
+		// deprecated since the field "merge.strategy" should now be used to specify the merge strategy and enable automerge with "auto" value.
 		input.LabelIDs = &labelsID
 	}
 
@@ -1076,4 +1084,35 @@ func (p *PullRequest) GetPullRequestLabelsInformation(ctx context.Context, retry
 		variables["before"] = githubv4.NewString(githubv4.String(query.Repository.PullRequest.Labels.PageInfo.StartCursor))
 	}
 	return pullRequestLabels, nil
+}
+
+// mergeAfterDuration checks if the pull request is old enough to be merged based on the provided duration string (e.g. "24h").
+func (p *PullRequest) mergeAfterDuration() error {
+
+	mergeClientAfter := p.spec.Merge.After
+	if mergeClientAfter == "" {
+		logrus.Debugf("No merge.after duration specified, using default value of %s", DefaultMergeClientAfter)
+		mergeClientAfter = DefaultMergeClientAfter
+	}
+
+	if mergeClientAfter != "" {
+		afterDuration, err := time.ParseDuration(mergeClientAfter)
+		if err != nil {
+			return fmt.Errorf("invalid merge.after duration %q: %w", mergeClientAfter, err)
+		}
+		if p.remotePullRequest.CreatedAt != "" {
+			createdAt, parseErr := time.Parse(time.RFC3339, p.remotePullRequest.CreatedAt)
+			if parseErr == nil && time.Since(createdAt) < afterDuration {
+				logrus.Infof("Pull request is only %s old — waiting for merge.after duration of %s",
+					time.Since(createdAt).Round(time.Minute), afterDuration)
+				return nil
+			}
+		}
+	}
+	if err := p.MergePullRequest(0); err != nil {
+		logrus.Debugf("Error merging pull request from client side: %s", err.Error())
+		return err
+	}
+
+	return nil
 }
