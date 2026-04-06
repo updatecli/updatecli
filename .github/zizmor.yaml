@@ -1,4 +1,4 @@
 
 rules:
-    disable: true
-    secrets-outside-env: null
+    secrets-outside-env:
+        disable: true
