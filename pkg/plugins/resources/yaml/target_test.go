@@ -652,6 +652,77 @@ services:
 			wantedResult: true,
 		},
 		{
+			name: "Folded scalar with identical value should not be rewritten (issue #8295)",
+			spec: Spec{
+				File:  "test.yaml",
+				Key:   "$.jobs.build.steps[0].run",
+				Value: "echo ${{ github.sha }}\necho done",
+			},
+			files: map[string]file{
+				"test.yaml": {
+					filePath:         "test.yaml",
+					originalFilePath: "test.yaml",
+				},
+			},
+			inputSourceValue: "echo ${{ github.sha }}\necho done",
+			mockedContents: map[string]string{
+				"test.yaml": `jobs:
+  build:
+    steps:
+      - run: >-
+          echo ${{ github.sha }}
+
+          echo done
+`,
+			},
+			wantedContents: map[string]string{
+				"test.yaml": `jobs:
+  build:
+    steps:
+      - run: >-
+          echo ${{ github.sha }}
+
+          echo done
+`,
+			},
+			wantedResult: false,
+		},
+		{
+			name: "Folded scalar with changed value should be rewritten (issue #8295)",
+			spec: Spec{
+				File:  "test.yaml",
+				Key:   "$.jobs.build.steps[0].run",
+				Value: "echo updated\necho done",
+			},
+			files: map[string]file{
+				"test.yaml": {
+					filePath:         "test.yaml",
+					originalFilePath: "test.yaml",
+				},
+			},
+			inputSourceValue: "echo updated\necho done",
+			mockedContents: map[string]string{
+				"test.yaml": `jobs:
+  build:
+    steps:
+      - run: >-
+          echo ${{ github.sha }}
+
+          echo done
+`,
+			},
+			wantedContents: map[string]string{
+				"test.yaml": `jobs:
+  build:
+    steps:
+      - run: |-
+               echo updated
+               echo done
+`,
+			},
+			wantedResult: true,
+		},
+		{
 			name: "Error case with multiple keys, one key not found",
 			spec: Spec{
 				File: "test.yaml",
