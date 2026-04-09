@@ -58,6 +58,7 @@ func init() {
 	manifestPushCmd.Flags().StringArrayVarP(&valuesFiles, "values", "v", []string{}, "Sets values file uses for templating")
 	manifestPushCmd.Flags().StringArrayVarP(&manifestPushPolicyReference, "tag", "t", []string{}, `Name and optionally a tag (format: "name:tag")`)
 	manifestPushCmd.Flags().StringArrayVar(&secretsFiles, "secrets", []string{}, "Sets secrets file uses for templating")
+	manifestPushCmd.Flags().StringArrayVar(&assetsFiles, "assets", []string{}, "Sets assets file to be pushed to the registry")
 	manifestPushCmd.Flags().BoolVar(&disableTLS, "disable-tls", false, "Disable TLS verification like '--disable-tls=true'")
 	manifestPushCmd.Flags().BoolVar(&manifestPushOverwrite, "overwrite", false, "Overwrite existing manifest(s) in the registry like '--overwrite=true'")
 
