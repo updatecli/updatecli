@@ -33,6 +33,7 @@ var (
 	valuesFiles      []string
 	valuesInline     []string
 	secretsFiles     []string
+	assetsFiles      []string
 	policyReferences []string
 	e                engine.Engine
 	verbose          bool
@@ -223,6 +224,7 @@ func run(command string) error {
 			manifestFiles,
 			valuesFiles,
 			secretsFiles,
+			assetsFiles,
 			manifestPushPolicyReference,
 			disableTLS,
 			manifestPushPolicyFile,
