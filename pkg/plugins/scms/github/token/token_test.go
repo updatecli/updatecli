@@ -23,6 +23,13 @@ func TestGetAccessToken(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestGetAccessToken_NilTokenSource(t *testing.T) {
+	assert.NotPanics(t, func() {
+		_, err := GetAccessToken(nil)
+		assert.Error(t, err)
+	})
+}
+
 func TestGetTokenSourceFromEnv_PAT(t *testing.T) {
 	os.Setenv("UPDATECLI_GITHUB_TOKEN", "pat_token")
 	defer os.Unsetenv("UPDATECLI_GITHUB_TOKEN")
