@@ -307,8 +307,8 @@ github.com/fluxcd/pkg/apis/kustomize v1.15.1 h1:t9QZh+3ZS8EKmlxrnnbcKZcGTrg8FDvM
 github.com/fluxcd/pkg/apis/kustomize v1.15.1/go.mod h1:IZOy4CCtR/hxMGb7erK1RfbGnczVv4/dRBoVD37AywI=
 github.com/fluxcd/pkg/apis/meta v1.25.1 h1:WG1GIC/SOz0GjxT0uVuO6AMicQ3yFsk6bDozCnq+fto=
 github.com/fluxcd/pkg/apis/meta v1.25.1/go.mod h1:c7o6mJGLCMvNrfdinGZehkrdZuFT9vZdZNrn66DtVD0=
-github.com/fluxcd/source-controller/api v1.8.1 h1:49HiJF5mNEdZTwueQMRahTVts35B+xhN5CsuOAL9gQ0=
-github.com/fluxcd/source-controller/api v1.8.1/go.mod h1:HgZ6NSH1cyOE2jRoNwln1xEwr9ETvrLeiy1o4O04vQM=
+github.com/fluxcd/source-controller/api v1.8.2 h1:i0/6BeNCn+zRfX+gKh4PsFF2NBzBhwXt0wPImVlZObg=
+github.com/fluxcd/source-controller/api v1.8.2/go.mod h1:HgZ6NSH1cyOE2jRoNwln1xEwr9ETvrLeiy1o4O04vQM=
 github.com/foxcpp/go-mockdns v1.2.0 h1:omK3OrHRD1IWJz1FuFBCFquhXslXoF17OvBS6JPzZF0=
 github.com/foxcpp/go-mockdns v1.2.0/go.mod h1:IhLeSFGed3mJIAXPH2aiRQB+kqz7oqu8ld2qVbOu7Wk=
 github.com/frankban/quicktest v1.14.6 h1:7Xjx+VpznH+oBnejlPUj8oUpdxnVs4f8XU8WnHkI4W8=
