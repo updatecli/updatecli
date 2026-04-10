@@ -283,7 +283,7 @@ signs:
 announce:
   bluesky:
     enabled: true
-    username: "updatecli.updatecli.io"
+    username: "bsky@updatecli.io"
     message_template: "#updatecli {{ .Tag }} is out! Check it out: https://github.com/updatecli/updatecli/releases/tag/{{ .Tag }}"
 
   mastodon:
