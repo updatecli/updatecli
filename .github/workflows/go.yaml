@@ -49,12 +49,12 @@ jobs:
           install-mode: "binary"
       - uses: "pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061" # v4.2.2
         with:
-          version: "10.32.1"
+          version: "10.33.0"
           run_install: false
       - name: Install Node.js
         uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
-          node-version: "25.8.0"
+          node-version: "25.9.0"
       - name: Install uv
         uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
         with:
