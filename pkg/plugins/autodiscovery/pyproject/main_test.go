@@ -38,12 +38,11 @@ targets:
     name: 'deps(pypi): bump "flask" to {{ source "flask" }}'
     kind: 'shell'
     spec:
-      command: 'uv add --frozen "flask>={{ source "flask" }}"'
+      command: 'uv lock --upgrade-package flask=={{ source "flask" }}'
       changedif:
         kind: file/checksum
         spec:
           files:
-            - "pyproject.toml"
             - "uv.lock"
       environments:
         - name: PATH
@@ -65,12 +64,11 @@ targets:
     name: 'deps(pypi): bump "requests" to {{ source "requests" }}'
     kind: 'shell'
     spec:
-      command: 'uv add --frozen "requests>={{ source "requests" }}"'
+      command: 'uv lock --upgrade-package requests=={{ source "requests" }}'
       changedif:
         kind: file/checksum
         spec:
           files:
-            - "pyproject.toml"
             - "uv.lock"
       environments:
         - name: PATH
@@ -123,12 +121,11 @@ targets:
     name: 'deps(pypi): bump "requests" to {{ source "requests" }}'
     kind: 'shell'
     spec:
-      command: 'uv add --frozen "requests>={{ source "requests" }}"'
+      command: 'uv lock --upgrade-package requests=={{ source "requests" }}'
       changedif:
         kind: file/checksum
         spec:
           files:
-            - "pyproject.toml"
             - "uv.lock"
       environments:
         - name: PATH
@@ -150,12 +147,11 @@ targets:
     name: 'deps(pypi): bump "pytest" to {{ source "pytest" }}'
     kind: 'shell'
     spec:
-      command: 'uv add --frozen --optional dev "pytest>={{ source "pytest" }}"'
+      command: 'uv lock --upgrade-package pytest=={{ source "pytest" }}'
       changedif:
         kind: file/checksum
         spec:
           files:
-            - "pyproject.toml"
             - "uv.lock"
       environments:
         - name: PATH
@@ -177,12 +173,11 @@ targets:
     name: 'deps(pypi): bump "ruff" to {{ source "ruff" }}'
     kind: 'shell'
     spec:
-      command: 'uv add --frozen --optional dev "ruff>={{ source "ruff" }}"'
+      command: 'uv lock --upgrade-package ruff=={{ source "ruff" }}'
       changedif:
         kind: file/checksum
         spec:
           files:
-            - "pyproject.toml"
             - "uv.lock"
       environments:
         - name: PATH
@@ -218,12 +213,11 @@ targets:
     scmid: 'git'
     kind: 'shell'
     spec:
-      command: 'uv add --frozen "flask>={{ source "flask" }}"'
+      command: 'uv lock --upgrade-package flask=={{ source "flask" }}'
       changedif:
         kind: file/checksum
         spec:
           files:
-            - "pyproject.toml"
             - "uv.lock"
       environments:
         - name: PATH
@@ -250,12 +244,11 @@ targets:
     scmid: 'git'
     kind: 'shell'
     spec:
-      command: 'uv add --frozen "requests>={{ source "requests" }}"'
+      command: 'uv lock --upgrade-package requests=={{ source "requests" }}'
       changedif:
         kind: file/checksum
         spec:
           files:
-            - "pyproject.toml"
             - "uv.lock"
       environments:
         - name: PATH
@@ -289,12 +282,11 @@ targets:
     name: 'deps(pypi): bump "requests" to {{ source "requests" }}'
     kind: 'shell'
     spec:
-      command: 'uv add --frozen "requests>={{ source "requests" }}"'
+      command: 'uv lock --upgrade-package requests=={{ source "requests" }}'
       changedif:
         kind: file/checksum
         spec:
           files:
-            - "pyproject.toml"
             - "uv.lock"
       environments:
         - name: PATH
@@ -328,12 +320,11 @@ targets:
     name: 'deps(pypi): bump "requests" to {{ source "requests" }}'
     kind: 'shell'
     spec:
-      command: 'uv add --frozen "requests>={{ source "requests" }}"'
+      command: 'uv lock --upgrade-package requests=={{ source "requests" }}'
       changedif:
         kind: file/checksum
         spec:
           files:
-            - "pyproject.toml"
             - "uv.lock"
       environments:
         - name: PATH
@@ -362,12 +353,11 @@ targets:
     name: 'deps(pypi): bump "pywin32" to {{ source "pywin32" }}'
     kind: 'shell'
     spec:
-      command: 'uv add --frozen "pywin32>={{ source "pywin32" }}"'
+      command: 'uv lock --upgrade-package pywin32=={{ source "pywin32" }}'
       changedif:
         kind: file/checksum
         spec:
           files:
-            - "pyproject.toml"
             - "uv.lock"
       environments:
         - name: PATH
@@ -389,12 +379,11 @@ targets:
     name: 'deps(pypi): bump "requests" to {{ source "requests" }}'
     kind: 'shell'
     spec:
-      command: 'uv add --frozen "requests>={{ source "requests" }}"'
+      command: 'uv lock --upgrade-package requests=={{ source "requests" }}'
       changedif:
         kind: file/checksum
         spec:
           files:
-            - "pyproject.toml"
             - "uv.lock"
       environments:
         - name: PATH
@@ -423,12 +412,11 @@ targets:
     name: 'deps(pypi): bump "numpy" to {{ source "numpy" }}'
     kind: 'shell'
     spec:
-      command: 'uv add --frozen "numpy>={{ source "numpy" }}"'
+      command: 'uv lock --upgrade-package numpy=={{ source "numpy" }}'
       changedif:
         kind: file/checksum
         spec:
           files:
-            - "pyproject.toml"
             - "uv.lock"
       environments:
         - name: PATH
@@ -459,12 +447,11 @@ targets:
     name: 'deps(pypi): bump "flask" to {{ source "flask" }}'
     kind: 'shell'
     spec:
-      command: 'uv add --frozen "flask>={{ source "flask" }}"'
+      command: 'uv lock --upgrade-package flask=={{ source "flask" }}'
       changedif:
         kind: file/checksum
         spec:
           files:
-            - "pyproject.toml"
             - "uv.lock"
       environments:
         - name: PATH
@@ -487,12 +474,11 @@ targets:
     name: 'deps(pypi): bump "requests" to {{ source "requests" }}'
     kind: 'shell'
     spec:
-      command: 'uv add --frozen "requests>={{ source "requests" }}"'
+      command: 'uv lock --upgrade-package requests=={{ source "requests" }}'
       changedif:
         kind: file/checksum
         spec:
           files:
-            - "pyproject.toml"
             - "uv.lock"
       environments:
         - name: PATH
@@ -522,12 +508,11 @@ targets:
     name: 'deps(pypi): bump "flask" to {{ source "flask" }}'
     kind: 'shell'
     spec:
-      command: 'uv add --frozen "flask>={{ source "flask" }}"'
+      command: 'uv lock --upgrade-package flask=={{ source "flask" }}'
       changedif:
         kind: file/checksum
         spec:
           files:
-            - "pyproject.toml"
             - "uv.lock"
       environments:
         - name: PATH
@@ -549,12 +534,11 @@ targets:
     name: 'deps(pypi): bump "requests" to {{ source "requests" }}'
     kind: 'shell'
     spec:
-      command: 'uv add --frozen "requests>={{ source "requests" }}"'
+      command: 'uv lock --upgrade-package requests=={{ source "requests" }}'
       changedif:
         kind: file/checksum
         spec:
           files:
-            - "pyproject.toml"
             - "uv.lock"
       environments:
         - name: PATH
