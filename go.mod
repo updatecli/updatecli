@@ -32,7 +32,7 @@ require (
 
 require (
 	code.gitea.io/sdk/gitea v0.23.2
-	cuelang.org/go v0.15.4
+	cuelang.org/go v0.16.1
 	github.com/BurntSushi/toml v1.6.0
 	github.com/JohannesKaufmann/html-to-markdown v1.6.0
 	github.com/ProtonMail/go-crypto v1.3.0
