@@ -19,26 +19,40 @@ import (
 	"oras.land/oras-go/v2/registry/remote/auth"
 )
 
+// PushData is the data structure for the Push function.
+type PushData struct {
+	PolicyMetadataFile   string
+	ManifestsFiles       []string
+	ValuesFiles          []string
+	SecretsFiles         []string
+	AssetsFiles          []string
+	PolicyReferenceNames []string
+	DisableTLS           bool
+	FileStore            string
+	Overwrite            bool
+}
+
 // Push pushes updatecli manifest(s) as an OCI image to an OCI registry.
-func Push(policyMetadataFile string, manifests []string, values []string, secrets []string, policyReferenceNames []string, disableTLS bool, fileStore string, overwrite bool) error {
+// func Push(policyMetadataFile string, manifests []string, values []string, secrets []string, assets []string, policyReferenceNames []string, disableTLS bool, fileStore string, overwrite bool) error {
+func Push(p PushData) error {
 	var err error
 
-	policySpec, err := LoadPolicyFile(policyMetadataFile)
+	policySpec, err := LoadPolicyFile(p.PolicyMetadataFile)
 	if err != nil {
 		return fmt.Errorf("load policy file: %w", err)
 	}
 
-	logrus.Infof("Pushing Updatecli policy:\n\t=> %s\n\n", strings.Join(policyReferenceNames, "\n\t=> "))
+	logrus.Infof("Pushing Updatecli policy:\n\t=> %s\n\n", strings.Join(p.PolicyReferenceNames, "\n\t=> "))
 
-	if fileStore == "" {
-		fileStore, err = os.Getwd()
+	if p.FileStore == "" {
+		p.FileStore, err = os.Getwd()
 		if err != nil {
 			logrus.Errorln(err)
 		}
 	}
 
 	// Create a file store
-	fs, err := file.New(fileStore)
+	fs, err := file.New(p.FileStore)
 	if err != nil {
 		return fmt.Errorf("create file store: %w", err)
 	}
@@ -47,7 +61,7 @@ func Push(policyMetadataFile string, manifests []string, values []string, secret
 	ctx := context.Background()
 
 	// Add files to the file store
-	fileDescriptors := make([]v1.Descriptor, 0, len(manifests))
+	fileDescriptors := make([]v1.Descriptor, 0, len(p.ManifestsFiles))
 
 	addfiles := func(files []string, mediaType string) error {
 		for i := range files {
@@ -61,16 +75,20 @@ func Push(policyMetadataFile string, manifests []string, values []string, secret
 		return nil
 	}
 
-	if err = addfiles(manifests, updatecliManifestMediaType); err != nil {
+	if err = addfiles(p.ManifestsFiles, updatecliManifestMediaType); err != nil {
 		return fmt.Errorf("add manifests: %w", err)
 	}
 
-	if err = addfiles(values, updatecliValueMediaType); err != nil {
+	if err = addfiles(p.ValuesFiles, updatecliValueMediaType); err != nil {
 		return fmt.Errorf("add values: %w", err)
 	}
 
-	if err = addfiles(secrets, updatecliSecretMediaType); err != nil {
+	if err = addfiles(p.SecretsFiles, updatecliSecretMediaType); err != nil {
 		return fmt.Errorf("add secrets: %w", err)
+	}
+
+	if err = addfiles(p.AssetsFiles, updatecliAssetMediaType); err != nil {
+		return fmt.Errorf("add assets: %w", err)
 	}
 
 	// 2. Pack the files and tag the packed manifest
@@ -101,9 +119,9 @@ func Push(policyMetadataFile string, manifests []string, values []string, secret
 		return fmt.Errorf("pack manifest: %w", err)
 	}
 
-	for i := range policyReferenceNames {
+	for i := range p.PolicyReferenceNames {
 
-		refName, err := name.ParseReference(policyReferenceNames[i])
+		refName, err := name.ParseReference(p.PolicyReferenceNames[i])
 		if err != nil {
 			logrus.Errorf("parse reference: %s", err)
 			continue
@@ -122,7 +140,7 @@ func Push(policyMetadataFile string, manifests []string, values []string, secret
 		}
 		ctx = auth.AppendRepositoryScope(ctx, repo.Reference, auth.ActionPush, auth.ActionPull)
 
-		if disableTLS {
+		if p.DisableTLS {
 			repo.PlainHTTP = true
 		}
 
@@ -132,16 +150,16 @@ func Push(policyMetadataFile string, manifests []string, values []string, secret
 		}
 
 		_, _, err = repo.FetchReference(ctx, tag)
-		if err == nil && !overwrite {
-			logrus.Infof("tag %q already published for policy %s", tag, policyReferenceNames[i])
+		if err == nil && !p.Overwrite {
+			logrus.Infof("tag %q already published for policy %s", tag, p.PolicyReferenceNames[i])
 			return nil
 		} else if err == nil {
-			logrus.Infof("overwriting, already published, tag %q for policy %s", tag, policyReferenceNames[i])
+			logrus.Infof("overwriting, already published, tag %q for policy %s", tag, p.PolicyReferenceNames[i])
 
 		} else if errors.Is(err, errdef.ErrNotFound) {
 			logrus.Infof("publishing policy %s", tag)
 		} else {
-			return fmt.Errorf("check if %s is already published: %s", policyReferenceNames[i], err)
+			return fmt.Errorf("check if %s is already published: %s", p.PolicyReferenceNames[i], err)
 		}
 
 		// 3. Copy from the file store to the remote repository
