@@ -11,7 +11,7 @@ require (
 	github.com/containerd/containerd v1.7.30 // indirect
 	github.com/fatih/color v1.18.0
 	github.com/getsops/sops/v3 v3.12.1
-	github.com/go-git/go-git/v5 v5.17.0
+	github.com/go-git/go-git/v5 v5.17.2
 	github.com/heimdalr/dag v1.5.0
 	github.com/hexops/gotextdiff v1.0.3
 	github.com/lithammer/dedent v1.1.0
@@ -26,17 +26,17 @@ require (
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/oauth2 v0.35.0
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	helm.sh/helm/v3 v3.20.1
+	helm.sh/helm/v3 v3.20.2
 	sigs.k8s.io/yaml v1.6.0
 )
 
 require (
-	code.gitea.io/sdk/gitea v0.23.2
+	code.gitea.io/sdk/gitea v0.24.1
 	cuelang.org/go v0.15.4
 	github.com/BurntSushi/toml v1.6.0
 	github.com/JohannesKaufmann/html-to-markdown v1.6.0
 	github.com/ProtonMail/go-crypto v1.3.0
-	github.com/aws/aws-sdk-go-v2 v1.41.3
+	github.com/aws/aws-sdk-go-v2 v1.41.5
 	github.com/aws/aws-sdk-go-v2/config v1.32.11
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.11
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.289.1
@@ -45,7 +45,7 @@ require (
 	github.com/drone/go-scm v1.42.0
 	github.com/extism/go-sdk v1.7.1
 	github.com/fluxcd/helm-controller/api v1.5.2
-	github.com/fluxcd/source-controller/api v1.8.1
+	github.com/fluxcd/source-controller/api v1.8.2
 	github.com/go-viper/mapstructure/v2 v2.5.0
 	github.com/goccy/go-yaml v1.19.2
 	github.com/google/go-containerregistry v0.20.5
@@ -80,7 +80,7 @@ require (
 	go.yaml.in/yaml/v3 v3.0.4
 	go.yaml.in/yaml/v4 v4.0.0-rc.4
 	golang.org/x/exp v0.0.0-20250911091902-df9299821621
-	golang.org/x/text v0.34.0
+	golang.org/x/text v0.35.0
 	golang.org/x/time v0.14.0
 	gopkg.in/ini.v1 v1.67.1
 	oras.land/oras-go/v2 v2.6.0
@@ -99,7 +99,7 @@ require (
 	cloud.google.com/go/storage v1.60.0 // indirect
 	filippo.io/edwards25519 v1.1.1 // indirect
 	filippo.io/hpke v0.4.0 // indirect
-	github.com/42wim/httpsig v1.2.3 // indirect
+	github.com/42wim/httpsig v1.2.4 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.21.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.13.1 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.11.2 // indirect
@@ -283,7 +283,7 @@ require (
 	github.com/hashicorp/go-secure-stdlib/parseutil v0.2.0 // indirect
 	github.com/hashicorp/go-secure-stdlib/strutil v0.1.2 // indirect
 	github.com/hashicorp/go-sockaddr v1.0.7 // indirect
-	github.com/hashicorp/go-version v1.7.0 // indirect
+	github.com/hashicorp/go-version v1.8.0 // indirect
 	github.com/hashicorp/hcl v1.0.1-vault-7 // indirect
 	github.com/hashicorp/vault/api v1.22.0 // indirect
 	github.com/huandu/xstrings v1.5.0 // indirect
@@ -330,13 +330,13 @@ require (
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
 	github.com/xlab/treeprint v1.2.0 // indirect
 	gitlab.com/gitlab-org/api/client-go v1.45.0
-	golang.org/x/crypto v0.48.0 // indirect
+	golang.org/x/crypto v0.49.0 // indirect
 	golang.org/x/mod v0.33.0
 	golang.org/x/net v0.51.0
-	golang.org/x/sync v0.19.0 // indirect
-	golang.org/x/sys v0.41.0 // indirect
-	golang.org/x/term v0.40.0 // indirect
-	golang.org/x/tools v0.41.0 // indirect
+	golang.org/x/sync v0.20.0 // indirect
+	golang.org/x/sys v0.42.0 // indirect
+	golang.org/x/term v0.41.0 // indirect
+	golang.org/x/tools v0.42.0 // indirect
 	google.golang.org/api v0.266.0 // indirect
 	google.golang.org/grpc v1.79.3 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect

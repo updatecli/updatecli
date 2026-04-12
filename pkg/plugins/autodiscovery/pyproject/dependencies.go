@@ -139,7 +139,7 @@ func (p Pyproject) processDependencies(
 			continue
 		}
 
-		params := p.buildTemplateParams(dep, group, relativeFile, lockSupport, projectName, workdir)
+		params := p.buildTemplateParams(dep, group, lockSupport, projectName, workdir)
 
 		var buf bytes.Buffer
 		if err := tmpl.Execute(&buf, params); err != nil {
@@ -157,7 +157,6 @@ func (p Pyproject) processDependencies(
 func (p Pyproject) buildTemplateParams(
 	dep pythonDependency,
 	group string,
-	relativeFile string,
 	lockSupport lockFileSupport,
 	projectName string,
 	workdir string,
@@ -199,13 +198,6 @@ func (p Pyproject) buildTemplateParams(
 		}
 	}
 
-	// uv add flag for optional dependency groups.
-	// Trailing space is intentional — the template concatenates this directly before the quoted package spec.
-	var uvAddGroupFlag string
-	if group != "" {
-		uvAddGroupFlag = "--optional " + group + " "
-	}
-
 	relLockFile := filepath.Join(workdir, "uv.lock")
 
 	return manifestTemplateParams{
@@ -222,8 +214,6 @@ func (p Pyproject) buildTemplateParams(
 		TargetName:                 fmt.Sprintf("deps(pypi): bump %q to {{ source %q }}", dep.Name, dep.Name),
 		ScmID:                      p.scmID,
 		UvEnabled:                  lockSupport.uv,
-		UvAddGroupFlag:             uvAddGroupFlag,
-		PyprojectFile:              relativeFile,
 		LockFile:                   relLockFile,
 		Workdir:                    workdir,
 	}
