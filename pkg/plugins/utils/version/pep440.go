@@ -55,6 +55,15 @@ func (p *Pep440) Search(versions []string) error {
 	p.Sort()
 
 	if p.Constraint == "" || p.Constraint == "*" {
+		// Prefer stable versions over pre-releases.
+		for _, v := range p.versions {
+			if !v.IsPreRelease() {
+				p.FoundVersion.ParsedVersion = v.String()
+				p.FoundVersion.OriginalVersion = v.Original()
+				return nil
+			}
+		}
+		// Fall back to highest pre-release if no stable version exists.
 		p.FoundVersion.ParsedVersion = p.versions[0].String()
 		p.FoundVersion.OriginalVersion = p.versions[0].Original()
 		return nil
