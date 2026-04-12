@@ -32,12 +32,11 @@ targets:
 {{- end }}
     kind: 'shell'
     spec:
-      command: 'uv add --frozen {{ .UvAddGroupFlag }}"{{ .DependencyName }}>={{ "{{" }} source "{{ .SourceID }}" {{ "}}" }}"'
+      command: 'uv lock --upgrade-package {{ .DependencyName }}=={{ "{{" }} source "{{ .SourceID }}" {{ "}}" }}'
       changedif:
         kind: file/checksum
         spec:
           files:
-            - "{{ .PyprojectFile }}"
             - "{{ .LockFile }}"
       environments:
         - name: PATH
@@ -61,8 +60,6 @@ type manifestTemplateParams struct {
 	TargetName                 string
 	ScmID                      string
 	UvEnabled                  bool
-	UvAddGroupFlag             string // e.g. "--optional dev " or ""
-	PyprojectFile              string
 	LockFile                   string
 	Workdir                    string
 }

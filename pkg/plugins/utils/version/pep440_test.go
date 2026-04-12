@@ -103,6 +103,45 @@ var (
 			ExpectedParsedVersion:   "2.0.post1",
 			ExpectedOriginalVersion: "2.0.post1",
 		},
+		{
+			// Wildcard skips dev pre-release in favor of the highest stable version.
+			Versions:                []string{"0.28.1", "1.0.dev3"},
+			SortedVersions:          []string{"1.0.dev3", "0.28.1"},
+			ExpectedInitErr:         nil,
+			ExpectedSearchErr:       nil,
+			ExpectedParsedVersion:   "0.28.1",
+			ExpectedOriginalVersion: "0.28.1",
+		},
+		{
+			// Wildcard skips alpha pre-release in favor of the highest stable version.
+			Versions:                []string{"2.57.0", "3.0.0a7"},
+			SortedVersions:          []string{"3.0.0a7", "2.57.0"},
+			ExpectedInitErr:         nil,
+			ExpectedSearchErr:       nil,
+			ExpectedParsedVersion:   "2.57.0",
+			ExpectedOriginalVersion: "2.57.0",
+		},
+		{
+			// Wildcard falls back to the highest pre-release when no stable version exists.
+			Versions:                []string{"1.0a1", "1.0b2"},
+			SortedVersions:          []string{"1.0b2", "1.0a1"},
+			ExpectedInitErr:         nil,
+			ExpectedSearchErr:       nil,
+			ExpectedParsedVersion:   "1.0b2",
+			ExpectedOriginalVersion: "1.0b2",
+		},
+		{
+			// Empty constraint behaves identically to wildcard: skips pre-releases.
+			Pep440: Pep440{
+				Constraint: "",
+			},
+			Versions:                []string{"2.57.0", "3.0.0a7"},
+			SortedVersions:          []string{"3.0.0a7", "2.57.0"},
+			ExpectedInitErr:         nil,
+			ExpectedSearchErr:       nil,
+			ExpectedParsedVersion:   "2.57.0",
+			ExpectedOriginalVersion: "2.57.0",
+		},
 	}
 )
 
