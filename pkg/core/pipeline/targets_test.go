@@ -324,6 +324,70 @@ func TestRunTarget(t *testing.T) {
 		{
 			conf: config.Config{
 				Spec: config.Spec{
+					Name: "Test a target with AND condition dependencies where all conditions are skipped",
+					Conditions: map[string]condition.Config{
+						"failing-1": {
+							ResourceConfig: resource.ResourceConfig{
+								Kind: "shell",
+								Name: "failing-1",
+								Spec: shell.Spec{
+									Command: "false",
+									ChangedIf: shell.SpecChangedIf{
+										Kind: "exitcode",
+										Spec: exitcode.Spec{
+											Warning: 1, Success: 0, Failure: 2,
+										},
+									},
+								},
+							},
+							DisableSourceInput: true,
+						},
+						"failing-2": {
+							ResourceConfig: resource.ResourceConfig{
+								Kind: "shell",
+								Name: "failing-2",
+								Spec: shell.Spec{
+									Command: "false",
+									ChangedIf: shell.SpecChangedIf{
+										Kind: "exitcode",
+										Spec: exitcode.Spec{
+											Warning: 1, Success: 0, Failure: 2,
+										},
+									},
+								},
+							},
+							DisableSourceInput: true,
+						},
+					},
+					Targets: map[string]target.Config{
+						"conditional-target": {
+							ResourceConfig: resource.ResourceConfig{
+								Kind:      "shell",
+								Name:      "conditional-target",
+								DependsOn: []string{"condition#failing-1", "condition#failing-2"},
+								Spec: shell.Spec{
+									Command: "false",
+									ChangedIf: shell.SpecChangedIf{
+										Kind: "exitcode",
+										Spec: exitcode.Spec{
+											Warning: 1, Success: 0, Failure: 2,
+										},
+									},
+								},
+							},
+							DisableSourceInput: true,
+						},
+					},
+				},
+			},
+			expectedTargetsResult: map[string]string{
+				"conditional-target": "-",
+			},
+			expectedPipelineResult: "-",
+		},
+		{
+			conf: config.Config{
+				Spec: config.Spec{
 					Name: "Test a case where all skipped targets results in a skipped pipeline",
 					Conditions: map[string]condition.Config{
 						"failing": {
