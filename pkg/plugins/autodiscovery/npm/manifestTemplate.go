@@ -59,11 +59,9 @@ targets:
             - "package-lock.json"
             - "package.json"
       environments:
-       - name: PATH
-{{- if .SourceNpmrcPath }}
-       - name: NPM_CONFIG_USERCONFIG
-         value: '{{ .SourceNpmrcPath }}'
-{{- end }}
+        - name: PATH{{ if .SourceNpmrcPath }}
+        - name: NPM_CONFIG_USERCONFIG
+          value: '{{ .SourceNpmrcPath }}'{{ end }}
       workdir: '{{ .TargetWorkdir }}'
 {{ end }}
 {{- if .TargetYarnCleanupEnabled }}
@@ -88,11 +86,9 @@ targets:
             - "yarn.lock"
             - "package.json"
       environments:
-       - name: PATH
-{{- if .SourceNpmrcPath }}
-       - name: NPM_CONFIG_USERCONFIG
-         value: '{{ .SourceNpmrcPath }}'
-{{- end }}
+        - name: PATH{{ if .SourceNpmrcPath }}
+        - name: NPM_CONFIG_USERCONFIG
+          value: '{{ .SourceNpmrcPath }}'{{ end }}
       workdir: '{{ .TargetWorkdir }}'
 {{ end }}
 {{- if .TargetPnpmCleanupEnabled }}
@@ -117,11 +113,9 @@ targets:
             - "pnpm-lock.yaml"
             - "package.json"
       environments:
-       - name: PATH
-{{- if .SourceNpmrcPath }}
-       - name: NPM_CONFIG_USERCONFIG
-         value: '{{ .SourceNpmrcPath }}'
-{{- end }}
+        - name: PATH{{ if .SourceNpmrcPath }}
+        - name: NPM_CONFIG_USERCONFIG
+          value: '{{ .SourceNpmrcPath }}'{{ end }}
       workdir: '{{ .TargetWorkdir }}'
 {{ end }}
 `
