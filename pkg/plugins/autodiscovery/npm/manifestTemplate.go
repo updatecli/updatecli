@@ -60,6 +60,10 @@ targets:
             - "package.json"
       environments:
        - name: PATH
+{{- if .SourceNpmrcPath }}
+       - name: NPM_CONFIG_USERCONFIG
+         value: '{{ .SourceNpmrcPath }}'
+{{- end }}
       workdir: '{{ .TargetWorkdir }}'
 {{ end }}
 {{- if .TargetYarnCleanupEnabled }}
@@ -85,6 +89,10 @@ targets:
             - "package.json"
       environments:
        - name: PATH
+{{- if .SourceNpmrcPath }}
+       - name: NPM_CONFIG_USERCONFIG
+         value: '{{ .SourceNpmrcPath }}'
+{{- end }}
       workdir: '{{ .TargetWorkdir }}'
 {{ end }}
 {{- if .TargetPnpmCleanupEnabled }}
@@ -110,6 +118,10 @@ targets:
             - "package.json"
       environments:
        - name: PATH
+{{- if .SourceNpmrcPath }}
+       - name: NPM_CONFIG_USERCONFIG
+         value: '{{ .SourceNpmrcPath }}'
+{{- end }}
       workdir: '{{ .TargetWorkdir }}'
 {{ end }}
 `

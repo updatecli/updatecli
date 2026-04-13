@@ -289,4 +289,6 @@ func TestDiscoverManifests_WithResourceConfig(t *testing.T) {
 	assert.Contains(t, manifestStr, "npmrcpath: '/custom/.npmrc'")
 	assert.Contains(t, manifestStr, "url: 'https://npm.example.com'")
 	assert.Contains(t, manifestStr, "registrytoken: 'test-token-123'")
+	assert.Contains(t, manifestStr, "- name: NPM_CONFIG_USERCONFIG")
+	assert.Contains(t, manifestStr, "value: '/custom/.npmrc'")
 }
