@@ -324,7 +324,7 @@ func TestRunTarget(t *testing.T) {
 		{
 			conf: config.Config{
 				Spec: config.Spec{
-					Name: "Test a target with AND condition dependencies where all conditions are skipped",
+					Name: "Test a target with AND condition dependencies where all conditions are non-success",
 					Conditions: map[string]condition.Config{
 						"failing-1": {
 							ResourceConfig: resource.ResourceConfig{

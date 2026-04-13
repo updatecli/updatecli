@@ -46,8 +46,8 @@ func (p *Pipeline) shouldSkipResource(leaf *Node, depsResults map[string]*Node) 
 					return true
 				}
 			} else {
-				// Condition dependencies must explicitly succeed. A skipped condition
-				// must not unlock downstream resources.
+					// Condition dependencies must explicitly succeed. Any non-success
+					// condition result must not unlock downstream resources.
 				if dependencyResult.Category == conditionCategory && dependencyResult.Result != result.SUCCESS {
 					return true
 				}
