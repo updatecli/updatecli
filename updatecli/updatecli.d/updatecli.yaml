@@ -1,6 +1,6 @@
 name: "docs: bump updatecli version"
-
 pipelineid: "updatecli"
+
 labels:
   monitor: active
   release: updatecli

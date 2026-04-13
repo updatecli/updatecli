@@ -1,4 +1,10 @@
 name: "chore(uv): upgrade uv version"
+
+pipelineid: python_uv
+
+labels:
+  ecosystem: python
+
 #{{- if .scm.enabled }}
 actions:
   default:
@@ -20,6 +26,7 @@ scms:
       owner: "{{ .scm.owner }}"
       repository: "{{ .scm.repository }}"
       user: "{{ .scm.user }}"
+      commitusingapi: true
 #{{- end }}
 
 sources:
