@@ -6,16 +6,23 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"text/template"
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/yaml"
 )
 
-var commentVersionRegex = regexp.MustCompile(`v?\d+\.\d+\.\d+[-+0-9A-Za-z.]*`)
+var commentVersionRegex = regexp.MustCompile(`^v?\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$`)
 
 func extractVersionFromComment(comment string) string {
-	return commentVersionRegex.FindString(comment)
+	for _, token := range strings.Fields(comment) {
+		candidate := strings.Trim(token, ",;:()[]{}")
+		if commentVersionRegex.MatchString(candidate) {
+			return candidate
+		}
+	}
+	return ""
 }
 
 func (p Precommit) discoverDependencyManifests() ([][]byte, error) {
