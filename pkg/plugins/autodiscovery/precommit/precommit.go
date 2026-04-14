@@ -22,24 +22,24 @@ type precommitData struct {
 // loadPrecommitData read a file and return its content
 func loadPrecommitData(filename string) (*precommitData, error) {
 	rawFileContent, _ := os.ReadFile(filename)
-	var data precommitData
 
-	err := goyaml.Unmarshal(rawFileContent, &data)
+	var rootNode goyaml.Node
+	err := goyaml.Unmarshal(rawFileContent, &rootNode)
 	if err != nil {
 		return nil, err
 	}
 
-	var rootNode goyaml.Node
-	err = goyaml.Unmarshal(rawFileContent, &rootNode)
-	if err != nil {
-		return &data, nil
-	}
-
 	if len(rootNode.Content) == 0 {
+		var data precommitData
 		return &data, nil
 	}
 
 	document := rootNode.Content[0]
+	var data precommitData
+	if err := document.Decode(&data); err != nil {
+		return nil, err
+	}
+
 	for i := 0; i+1 < len(document.Content); i += 2 {
 		keyNode := document.Content[i]
 		valueNode := document.Content[i+1]
