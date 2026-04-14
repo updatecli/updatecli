@@ -1,5 +1,5 @@
 name: "ci: bump Venom version"
-pipelineid: "venom"
+pipelineid: "venom_version"
 actions:
   default:
     title: 'ci: bump Venom version to {{ source "latestVersion" }}'
@@ -19,6 +19,7 @@ scms:
       owner: "{{ .scm.owner }}"
       repository: "{{ .scm.repository }}"
       user: "{{ .scm.user }}"
+      commitusingapi: true
     disabled: false
 sources:
   latestVersion:
