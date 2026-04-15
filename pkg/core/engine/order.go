@@ -136,17 +136,6 @@ func describeManifestNode(node manifestNode) string {
 	return fmt.Sprintf("manifest %q (id %q)", node.name, manifestID)
 }
 
-func describePipeline(p *pipeline.Pipeline, index int) string {
-	if p == nil || p.Config == nil {
-		return fmt.Sprintf("pipeline at index %d", index)
-	}
-
-	return describeManifestNode(manifestNode{
-		id:   p.Config.ManifestID(),
-		name: p.Name,
-	})
-}
-
 func uniqueManifestDependencies(dependencies []string) []string {
 	result := []string{}
 	seen := map[string]struct{}{}
