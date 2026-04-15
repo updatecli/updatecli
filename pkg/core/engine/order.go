@@ -14,7 +14,6 @@ type manifestNode struct {
 	groupID   string
 	name      string
 	dependsOn []string
-	index     int
 }
 
 // OrderPipelines resolves manifest-level dependencies and reorders pipelines accordingly.
@@ -41,7 +40,6 @@ func (e *Engine) OrderPipelines() error {
 			groupID:   p.Config.DependencyID(),
 			name:      p.Name,
 			dependsOn: uniqueManifestDependencies(p.Config.Spec.DependsOn),
-			index:     i,
 		}
 
 		if nodes[i].groupID != "" {
