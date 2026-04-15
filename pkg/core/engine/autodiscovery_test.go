@@ -22,6 +22,7 @@ func TestAutodiscoveryManifestFingerprintIgnoresSecrets(t *testing.T) {
 				ResourceConfig: resource.ResourceConfig{
 					Name: "version",
 					Kind: "http",
+					// #nosec G101 -- This URL is not real and is only used for testing the fingerprinting logic.
 					Spec: updateclihttp.Spec{
 						Url:                  "https://user:first-secret@example.com/releases/latest",
 						ReturnResponseHeader: "etag",
@@ -50,6 +51,7 @@ func TestAutodiscoveryManifestFingerprintIgnoresSecrets(t *testing.T) {
 					Name: "version",
 					Kind: "http",
 					Spec: updateclihttp.Spec{
+						// #nosec G101 -- This URL is not real and is only used for testing the fingerprinting logic.
 						Url:                  "https://user:second-secret@example.com/releases/latest",
 						ReturnResponseHeader: "etag",
 					},
