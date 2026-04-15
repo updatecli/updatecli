@@ -3,6 +3,7 @@ package engine
 import (
 	"context"
 	"crypto/sha256"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -14,7 +15,11 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/pipeline"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/action"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/autodiscovery"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/source"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/version"
 	"go.yaml.in/yaml/v3"
@@ -236,11 +241,16 @@ func (e *Engine) LoadAutoDiscovery(ctx context.Context, defaultEnabled bool) err
 				newConfig := config.Config{
 					Spec: manifest,
 				}
-				newConfig.SetManifestID(fmt.Sprintf("%s/autodiscovery/%s/%d/%x",
+				manifestFingerprint, err := autodiscoveryManifestFingerprint(newConfig.Spec, p.Config.Spec.PipelineID)
+				if err != nil {
+					return fmt.Errorf("computing autodiscovery manifest fingerprint for %q: %w", manifest.Name, err)
+				}
+
+				newConfig.SetManifestID(fmt.Sprintf("%s/autodiscovery/%s/%d/%s",
 					p.Config.ManifestID(),
 					crawlerResult.Kind,
 					generatedManifestIndex,
-					sha256.Sum256(crawlerResult.Manifests[i]),
+					manifestFingerprint,
 				))
 				generatedManifestIndex++
 
@@ -294,4 +304,84 @@ func (e *Engine) LoadAutoDiscovery(ctx context.Context, defaultEnabled bool) err
 	}
 
 	return nil
+}
+
+func autodiscoveryManifestFingerprint(manifest config.Spec, pipelineID string) (string, error) {
+	sanitized := manifest
+
+	if len(manifest.Sources) > 0 {
+		sanitized.Sources = make(map[string]source.Config, len(manifest.Sources))
+		for id, cfg := range manifest.Sources {
+			reportConfig, err := resource.GetReportConfig(cfg.ResourceConfig)
+			if err != nil {
+				return "", fmt.Errorf("sanitizing source %q: %w", id, err)
+			}
+
+			sanitizedResourceConfig, ok := reportConfig.(resource.ResourceConfig)
+			if !ok {
+				return "", fmt.Errorf("unexpected report config type %T", reportConfig)
+			}
+
+			cfg.ResourceConfig = sanitizedResourceConfig
+			sanitized.Sources[id] = cfg
+		}
+	}
+
+	if len(manifest.Conditions) > 0 {
+		sanitized.Conditions = make(map[string]condition.Config, len(manifest.Conditions))
+		for id, cfg := range manifest.Conditions {
+			reportConfig, err := resource.GetReportConfig(cfg.ResourceConfig)
+			if err != nil {
+				return "", fmt.Errorf("sanitizing condition %q: %w", id, err)
+			}
+
+			sanitizedResourceConfig, ok := reportConfig.(resource.ResourceConfig)
+			if !ok {
+				return "", fmt.Errorf("unexpected report config type %T", reportConfig)
+			}
+
+			cfg.ResourceConfig = sanitizedResourceConfig
+			sanitized.Conditions[id] = cfg
+		}
+	}
+
+	if len(manifest.Targets) > 0 {
+		sanitized.Targets = make(map[string]target.Config, len(manifest.Targets))
+		for id, cfg := range manifest.Targets {
+			reportConfig, err := resource.GetReportConfig(cfg.ResourceConfig)
+			if err != nil {
+				return "", fmt.Errorf("sanitizing target %q: %w", id, err)
+			}
+
+			sanitizedResourceConfig, ok := reportConfig.(resource.ResourceConfig)
+			if !ok {
+				return "", fmt.Errorf("unexpected report config type %T", reportConfig)
+			}
+
+			cfg.ResourceConfig = sanitizedResourceConfig
+			sanitized.Targets[id] = cfg
+		}
+	}
+
+	if len(manifest.SCMs) > 0 {
+		sanitized.SCMs = make(map[string]scm.Config, len(manifest.SCMs))
+		for id, cfg := range manifest.SCMs {
+			if cfg.Disabled || cfg.Spec == nil {
+				cfg.Spec = nil
+			} else if generatedSCM, err := scm.New(&cfg, pipelineID); err == nil && generatedSCM.Handler != nil {
+				cfg.Spec = generatedSCM.Handler.Summary()
+			} else {
+				cfg.Spec = cfg.Kind
+			}
+
+			sanitized.SCMs[id] = cfg
+		}
+	}
+
+	data, err := json.Marshal(sanitized)
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("%x", sha256.Sum256(data)), nil
 }
