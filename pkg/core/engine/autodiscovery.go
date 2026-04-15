@@ -30,20 +30,20 @@ func (e *Engine) LoadAutoDiscovery(ctx context.Context, defaultEnabled bool) err
 	if defaultEnabled {
 		logrus.Debugf("Default Autodiscovery crawlers enabled")
 		var defaultPipeline pipeline.Pipeline
-
-		err := defaultPipeline.Init(
-			&config.Config{
-				Spec: config.Spec{
-					Name:          "Local AutoDiscovery",
-					AutoDiscovery: autodiscovery.GetDefaultCrawlerSpecs(),
-				},
+		defaultConfig := &config.Config{
+			Spec: config.Spec{
+				Name:          "Local AutoDiscovery",
+				AutoDiscovery: autodiscovery.GetDefaultCrawlerSpecs(),
 			},
-			pipeline.Options{},
-		)
+		}
+		defaultConfig.SetManifestID("autodiscovery/default")
+
+		err := defaultPipeline.Init(defaultConfig, pipeline.Options{})
 		if err != nil {
 			logrus.Errorln(err)
 		} else {
 			e.Pipelines = append(e.Pipelines, &defaultPipeline)
+			e.configurations = append(e.configurations, defaultConfig)
 		}
 	}
 
@@ -123,6 +123,7 @@ func (e *Engine) LoadAutoDiscovery(ctx context.Context, defaultEnabled bool) err
 			logrus.Infof("nothing detected")
 		}
 
+		generatedManifestIndex := 0
 		for _, crawlerResult := range crawlerResults {
 			for i := range crawlerResult.Manifests {
 				manifest := config.Spec{}
@@ -177,6 +178,12 @@ func (e *Engine) LoadAutoDiscovery(ctx context.Context, defaultEnabled bool) err
 					manifest.PipelineID = fmt.Sprintf("%x", hash.Sum(nil))
 				}
 
+				if manifest.ID == "" {
+					manifest.ID = p.Config.Spec.ID
+				}
+
+				manifest.DependsOn = mergeManifestDependencies(manifest.DependsOn, p.Config.Spec.DependsOn)
+
 				// Only add the scm if it is not already defined
 				if len(manifest.SCMs) == 0 {
 					manifest.SCMs = make(map[string]scm.Config)
@@ -229,6 +236,13 @@ func (e *Engine) LoadAutoDiscovery(ctx context.Context, defaultEnabled bool) err
 				newConfig := config.Config{
 					Spec: manifest,
 				}
+				newConfig.SetManifestID(fmt.Sprintf("%s/autodiscovery/%s/%d/%x",
+					p.Config.ManifestID(),
+					crawlerResult.Kind,
+					generatedManifestIndex,
+					sha256.Sum256(crawlerResult.Manifests[i]),
+				))
+				generatedManifestIndex++
 
 				newPipeline := pipeline.Pipeline{}
 				err = newPipeline.Init(&newConfig, e.Options.Pipeline)
