@@ -16,10 +16,10 @@ import (
 
 // Changelog returns the changelog for this resource, or an empty string if not supported
 func (di *DockerImage) Changelog(from, to string) *result.Changelogs {
-
 	ref, err := di.createRef(di.foundVersion.GetVersion())
 	if err != nil {
 		logrus.Debugf("invalid reference %s: %v", di.spec.Image, err)
+		return nil
 	}
 
 	manifestData, err := registry.FetchManifest(
@@ -70,7 +70,7 @@ func (di *DockerImage) Changelog(from, to string) *result.Changelogs {
 
 	buf := new(strings.Builder)
 	// Copy data from the response to standard output
-	_, err = io.Copy(buf, resp.Body) //use package "io" and "os"
+	_, err = io.Copy(buf, resp.Body) // use package "io" and "os"
 	if err != nil {
 		logrus.Debugf("%v", err)
 		return nil
@@ -98,12 +98,10 @@ func (di *DockerImage) Changelog(from, to string) *result.Changelogs {
 			Body:  body,
 		},
 	}
-
 }
 
 // getChangeLogAnnotation returns the changelog annotation from a v1.Descriptor
 func getChangelogAnnotation(desc v1.Descriptor) string {
-
 	if changelog, ok := desc.Annotations["org.opencontainers.image.changelog"]; ok {
 		return changelog
 	}
