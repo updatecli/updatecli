@@ -44,6 +44,8 @@ const (
 type Config struct {
 	// filename contains the updatecli manifest filename
 	filename string
+	// manifestID contains the effective manifest identifier used by the engine.
+	manifestID string
 	// Spec describe an updatecli manifest
 	Spec Spec
 	// gitHandler holds a git client implementation to manipulate git SCMs
@@ -63,6 +65,32 @@ type Spec struct {
 	// 	* "name" is often used a default values for other configuration such as pullrequest title.
 	// 	* "name" shouldn't contain any dynamic information such as source output.
 	Name string `yaml:",omitempty" jsonschema:"required"`
+	// "id" defines a manifest dependency identifier that can be referenced by other manifests.
+	//
+	// example:
+	// 	* "id: nodejs"
+	// 	* "id: docker/alpine"
+	//
+	// remark:
+	// 	* "id" only affects manifest execution ordering.
+	// 	* "id" is used by the root manifest "dependson" keyword.
+	// 	* multiple manifests may intentionally share the same "id".
+	// 	* unlike "pipelineid", "id" does not affect branch naming or workflow grouping.
+	ID string `yaml:",omitempty"`
+	// "dependson" defines which manifest IDs must run before the current manifest.
+	//
+	// example:
+	// ---
+	// dependson:
+	//   - base-images
+	//   - shared-policies
+	// ---
+	//
+	// remark:
+	// 	* entries reference root manifest "id" values.
+	// 	* if multiple manifests share the same "id" then all of them must run first.
+	// 	* "dependson" only affects manifest execution ordering.
+	DependsOn []string `yaml:",omitempty"`
 	// "pipelineid" allows to identify a full pipeline run.
 	//
 	// example:
@@ -208,6 +236,26 @@ func (config *Config) Reset() {
 	*config = Config{
 		gitHandler: &gitgeneric.GoGit{},
 	}
+}
+
+// ManifestID returns the internal manifest identifier used by the engine.
+func (config *Config) ManifestID() string {
+	return config.manifestID
+}
+
+// DependencyID returns the manifest identifier exposed to dependson resolution.
+func (config *Config) DependencyID() string {
+	return config.Spec.ID
+}
+
+// SetManifestID configures the effective manifest identifier.
+//
+// The provided seed is hashed so each manifest has a deterministic internal
+// identifier even when user-facing dependency IDs are shared across manifests.
+func (config *Config) SetManifestID(seed string) {
+	hash := sha256.New()
+	hash.Write([]byte(seed))
+	config.manifestID = fmt.Sprintf("%x", hash.Sum(nil))
 }
 
 // New reads an updatecli configuration file
@@ -357,6 +405,7 @@ func New(option Option, pipelineIDFilters []string, pipelineLabels map[string]st
 
 		config.filename = option.ManifestFile
 		config.Spec = specs[id]
+		config.SetManifestID(fmt.Sprintf("%s#%d", option.ManifestFile, id))
 		// config.PipelineID is required for config.Validate()
 		if len(config.Spec.PipelineID) == 0 {
 			logrus.Debugln("pipelineid undefined, we'll try to generate one")
