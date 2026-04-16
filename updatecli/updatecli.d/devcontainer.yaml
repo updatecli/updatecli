@@ -33,15 +33,15 @@ sources:
     transformers:
       - findsubmatch:
           pattern: '(\d+\.\d+)'
+      - addprefix: "dev-"
 
 conditions:
   docker:
-    name: 'Ensure mcr.microsoft.com/devcontainers/go:1-{{ source "golang" }}-bookworm is publish'
+    name: 'Ensure mcr.microsoft.com/devcontainers/go:1-{{ source "golang" }} is publish'
     kind: dockerimage
     disablesourceinput: true
     spec:
       image: mcr.microsoft.com/devcontainers/go
-      tag: '1-{{ source "golang" }}-bookworm'
 
 targets:
   # Apparently devcontainer json file is not a valid json file
@@ -53,4 +53,4 @@ targets:
     spec:
       file: ".devcontainer/devcontainer.json"
       matchpattern: '"image": "mcr\.microsoft\.com/devcontainers/go:.*"'
-      replacepattern: '"image": "mcr.microsoft.com/devcontainers/go:1-{{ source "golang" }}-bookworm"'
+      replacepattern: '"image": "mcr.microsoft.com/devcontainers/go:{{ source "golang" }}"'
