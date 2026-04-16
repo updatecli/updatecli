@@ -25,6 +25,9 @@ scms:
       repository: "{{ .scm.repository }}"
       user: "{{ .scm.user }}"
       commitusingapi: true
+      commitmessage:
+        type: chore
+        scope: deps
 
 sources:
   golang:
@@ -37,7 +40,7 @@ sources:
 
 conditions:
   docker:
-    name: 'Ensure mcr.microsoft.com/devcontainers/go:1-{{ source "golang" }} is publish'
+    name: 'Check if mcr.microsoft.com/devcontainers/go:{{ source "golang" }} exist'
     kind: dockerimage
     disablesourceinput: true
     spec:
@@ -47,7 +50,7 @@ targets:
   # Apparently devcontainer json file is not a valid json file
   # so we can't use the json plugin
   devcontainer:
-    name: 'deps: update devcontainer to golang {{ source "golang" }}'
+    name: 'update devcontainer to golang {{ source "golang" }}'
     kind: file
     scmid: default
     spec:
