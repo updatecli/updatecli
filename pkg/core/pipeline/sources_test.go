@@ -106,6 +106,7 @@ func TestRunSources(t *testing.T) {
 					},
 					Conditions: map[string]condition.Config{
 						"skip": {
+							DisableSourceInput: true,
 							ResourceConfig: resource.ResourceConfig{
 								Kind: "shell",
 								Name: "skip",
