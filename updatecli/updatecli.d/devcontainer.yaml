@@ -25,6 +25,9 @@ scms:
       repository: "{{ .scm.repository }}"
       user: "{{ .scm.user }}"
       commitusingapi: true
+      commitmessage:
+        type: chore
+        scope: deps
 
 sources:
   golang:
@@ -33,24 +36,24 @@ sources:
     transformers:
       - findsubmatch:
           pattern: '(\d+\.\d+)'
+      - addprefix: "dev-"
 
 conditions:
   docker:
-    name: 'Ensure mcr.microsoft.com/devcontainers/go:1-{{ source "golang" }}-bookworm is publish'
+    name: 'Check if mcr.microsoft.com/devcontainers/go:{{ source "golang" }} exist'
     kind: dockerimage
     disablesourceinput: true
     spec:
       image: mcr.microsoft.com/devcontainers/go
-      tag: '1-{{ source "golang" }}-bookworm'
 
 targets:
   # Apparently devcontainer json file is not a valid json file
   # so we can't use the json plugin
   devcontainer:
-    name: 'deps: update devcontainer to golang {{ source "golang" }}'
+    name: 'update devcontainer to golang {{ source "golang" }}'
     kind: file
     scmid: default
     spec:
       file: ".devcontainer/devcontainer.json"
       matchpattern: '"image": "mcr\.microsoft\.com/devcontainers/go:.*"'
-      replacepattern: '"image": "mcr.microsoft.com/devcontainers/go:1-{{ source "golang" }}-bookworm"'
+      replacepattern: '"image": "mcr.microsoft.com/devcontainers/go:{{ source "golang" }}"'
