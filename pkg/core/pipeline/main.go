@@ -230,17 +230,25 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 
 	p.tracer = telemetry.Tracer("updatecli")
 
-	// Graph must be generated after all resources have been initialized !
-	graph, err := p.Graph(GraphFlavorMermaid)
-	switch err {
-	case nil:
-		p.Report.Graph = graph
-	default:
-		logrus.Errorf("generating pipeline graph:\n%s", err)
+	err := p.UpdateGraphReport()
+	if err != nil {
+		return err
 	}
 
 	return nil
 
+}
+
+func (p *Pipeline) UpdateGraphReport() error {
+	// Graph must be generated after all resources have been initialized !
+	graph, err := p.Graph(GraphFlavorMermaid)
+	if err != nil {
+		return fmt.Errorf("generating pipeline graph:\n%s", err)
+	}
+
+	p.Report.Graph = graph
+
+	return nil
 }
 
 // Run executes a single pipeline, wrapping the entire run in an OpenTelemetry span.
@@ -728,6 +736,10 @@ func (p *Pipeline) Update() error {
 		}
 
 		p.Targets[id] = target
+	}
+
+	if err = p.UpdateGraphReport(); err != nil {
+		return err
 	}
 
 	return nil
