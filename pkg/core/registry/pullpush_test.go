@@ -63,7 +63,7 @@ func TestPushPullPolicy(t *testing.T) {
 	}{
 		{
 			name:                      "Validate that we can push and pull a policy using the latest tag, even thought the tag is ignored",
-			toPushPolicyName:          []string{fmt.Sprintf("localhost:%d/myrepo:latest", port.Int())},
+			toPushPolicyName:          []string{fmt.Sprintf("localhost:%d/myrepo:latest", port.Num())},
 			disableTLS:                true,
 			toPushPolicyFile:          "testdata/Policy.yaml",
 			toPushManifestFiles:       []string{"testdata/venom.yaml"},
@@ -75,7 +75,7 @@ func TestPushPullPolicy(t *testing.T) {
 		},
 		{
 			name:                      "Validate that we can push and pull a policy without tag",
-			toPushPolicyName:          []string{fmt.Sprintf("localhost:%d/myrepo", port.Int())},
+			toPushPolicyName:          []string{fmt.Sprintf("localhost:%d/myrepo", port.Num())},
 			disableTLS:                true,
 			toPushPolicyFile:          "testdata/Policy.yaml",
 			toPushManifestFiles:       []string{"testdata/venom.yaml"},
@@ -87,7 +87,7 @@ func TestPushPullPolicy(t *testing.T) {
 		},
 		{
 			name:                      "Validate that we can push and pull a policy without tag from a different file store",
-			toPushPolicyName:          []string{fmt.Sprintf("localhost:%d/myrepo", port.Int())},
+			toPushPolicyName:          []string{fmt.Sprintf("localhost:%d/myrepo", port.Num())},
 			disableTLS:                true,
 			toPushPolicyFile:          "testdata/Policy.yaml",
 			toPushManifestFiles:       []string{"testdata/venom.yaml"},

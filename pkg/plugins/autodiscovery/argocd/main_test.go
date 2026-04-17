@@ -18,6 +18,18 @@ func TestDiscoverManifests(t *testing.T) {
 		spec              Spec
 	}{
 		{
+			name:    "Expected no pipelines due to ignore rules",
+			rootDir: "testdata/multi-release",
+			spec: Spec{
+				Only: MatchingRules{
+					{
+						Path: "donotexist",
+					},
+				},
+			},
+			expectedPipelines: []string{},
+		},
+		{
 			name:    "ArgoCD manifests discovered with multiple documents",
 			rootDir: "testdata/multi-release",
 			expectedPipelines: []string{
