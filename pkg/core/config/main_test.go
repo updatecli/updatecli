@@ -3,6 +3,8 @@ package config
 import (
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -1018,4 +1020,52 @@ func TestNew(t *testing.T) {
 			require.Equal(t, data.expectedResult[i].Spec.Name, got[i].Spec.Name)
 		}
 	}
+}
+
+func TestNewManifestIDAndDependsOn(t *testing.T) {
+	t.Parallel()
+
+	tempDir := t.TempDir()
+	manifestPath := filepath.Join(tempDir, "updatecli.yaml")
+
+	err := os.WriteFile(manifestPath, []byte(`
+name: Ordered manifest
+id: ordered-manifest
+dependson:
+  - base-manifest
+  - shared-policy
+labels:
+  team: core
+`), 0600)
+	require.NoError(t, err)
+
+	got, err := New(Option{ManifestFile: manifestPath}, nil, nil)
+	require.NoError(t, err)
+	require.Len(t, got, 1)
+
+	require.Equal(t, "ordered-manifest", got[0].Spec.ID)
+	require.Equal(t, []string{"base-manifest", "shared-policy"}, got[0].Spec.DependsOn)
+	require.Equal(t, "ordered-manifest", got[0].DependencyID())
+	require.NotEmpty(t, got[0].ManifestID())
+}
+
+func TestNewGeneratesLegacyManifestID(t *testing.T) {
+	t.Parallel()
+
+	tempDir := t.TempDir()
+	manifestPath := filepath.Join(tempDir, "updatecli.yaml")
+
+	err := os.WriteFile(manifestPath, []byte(`
+name: Legacy manifest
+labels:
+  team: core
+`), 0600)
+	require.NoError(t, err)
+
+	got, err := New(Option{ManifestFile: manifestPath}, nil, nil)
+	require.NoError(t, err)
+	require.Len(t, got, 1)
+
+	require.Empty(t, got[0].Spec.ID)
+	require.NotEmpty(t, got[0].ManifestID())
 }

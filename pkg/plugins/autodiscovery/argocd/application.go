@@ -109,7 +109,9 @@ func (f ArgoCD) discoverArgoCDManifests() ([][]byte, error) {
 					continue
 				}
 
-				manifests = append(manifests, manifest)
+				if manifest != nil {
+					manifests = append(manifests, manifest)
+				}
 			}
 
 			if !data.Spec.Template.Spec.Source.IsZero() {
@@ -124,7 +126,9 @@ func (f ArgoCD) discoverArgoCDManifests() ([][]byte, error) {
 					continue
 				}
 
-				manifests = append(manifests, manifest)
+				if manifest != nil {
+					manifests = append(manifests, manifest)
+				}
 			}
 
 			for i, source := range data.Spec.Sources {
@@ -143,7 +147,9 @@ func (f ArgoCD) discoverArgoCDManifests() ([][]byte, error) {
 					continue
 				}
 
-				manifests = append(manifests, manifest)
+				if manifest != nil {
+					manifests = append(manifests, manifest)
+				}
 			}
 		}
 	}

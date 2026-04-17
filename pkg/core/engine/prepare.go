@@ -74,6 +74,18 @@ func (e *Engine) Prepare(ctx context.Context) (err error) {
 		adSpan.End()
 	}
 
+	{
+		_, orderSpan := tracer.Start(ctx, "updatecli.order_pipelines")
+		err = e.OrderPipelines()
+		if err != nil {
+			telemetry.RecordSpanError(orderSpan, err)
+			orderSpan.End()
+			telemetry.RecordSpanError(span, err)
+			return err
+		}
+		orderSpan.End()
+	}
+
 	if len(e.Pipelines) == 0 {
 		err = fmt.Errorf("no valid pipeline found")
 		telemetry.RecordSpanError(span, err)
