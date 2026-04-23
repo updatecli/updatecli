@@ -37,12 +37,12 @@ require (
 	github.com/JohannesKaufmann/html-to-markdown v1.6.0
 	github.com/ProtonMail/go-crypto v1.3.0
 	github.com/aws/aws-sdk-go-v2 v1.41.6
-	github.com/aws/aws-sdk-go-v2/config v1.32.15
+	github.com/aws/aws-sdk-go-v2/config v1.32.16
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.15
-	github.com/aws/aws-sdk-go-v2/service/ec2 v1.297.0
+	github.com/aws/aws-sdk-go-v2/service/ec2 v1.297.1
 	github.com/aws/smithy-go v1.25.0
 	github.com/beevik/etree v1.6.0
-	github.com/drone/go-scm v1.42.1
+	github.com/drone/go-scm v1.42.2
 	github.com/extism/go-sdk v1.7.1
 	github.com/fluxcd/helm-controller/api v1.5.3
 	github.com/fluxcd/source-controller/api v1.8.2
@@ -69,7 +69,7 @@ require (
 	github.com/tomwright/dasel/v2 v2.8.1
 	github.com/vmware-labs/yaml-jsonpath v0.3.2
 	github.com/yuin/goldmark v1.8.2
-	github.com/zclconf/go-cty v1.18.0
+	github.com/zclconf/go-cty v1.18.1
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.68.0
 	go.opentelemetry.io/otel v1.43.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.43.0
