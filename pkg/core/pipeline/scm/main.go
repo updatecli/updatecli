@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/go-viper/mapstructure/v2"
+	"github.com/updatecli/updatecli/pkg/plugins/scms/azuredevops"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/bitbucket"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/gitea"
@@ -65,6 +66,14 @@ func (s *Scm) GenerateSCM() error {
 	}
 
 	switch s.Config.Kind {
+	case "azuredevops":
+		g, err := azuredevops.New(s.Config.Spec, s.PipelineID)
+		if err != nil {
+			return err
+		}
+
+		s.Handler = g
+
 	case "bitbucket":
 		g, err := bitbucket.New(s.Config.Spec, s.PipelineID)
 		if err != nil {

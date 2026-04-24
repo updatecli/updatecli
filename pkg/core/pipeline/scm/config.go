@@ -9,6 +9,7 @@ import (
 	jschema "github.com/invopop/jsonschema"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/jsonschema"
+	"github.com/updatecli/updatecli/pkg/plugins/scms/azuredevops"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/bitbucket"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/gitea"
@@ -156,6 +157,7 @@ func (Config) JSONSchema() *jschema.Schema {
 	type configAlias Config
 
 	anyOfSpec := map[string]interface{}{
+		"azuredevops":  &azuredevops.Spec{},
 		"bitbucket":    &bitbucket.Spec{},
 		"git":          &git.Spec{},
 		"gitea":        &gitea.Spec{},
