@@ -69,6 +69,13 @@ func init() {
 
 	logrus.SetOutput(os.Stdout)
 
+	rootCmd.PersistentPostRun = func(cmd *cobra.Command, args []string) {
+		err := engine.CheckLatestPublishedVersion()
+		if err != nil {
+			logrus.Debugf("Unable to check for the latest version of updatecli: %v", err)
+		}
+	}
+
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "debug", "", false, "Debug Output")
 	rootCmd.PersistentFlags().BoolVarP(&experimental, "experimental", "", false, "Enable Experimental mode")
 	rootCmd.PersistentFlags().BoolVar(&uniqueTmpDir, "unique-tmp-dir", false, "Use a unique temporary directory to allow running multiple Updatecli instances in parallel")
