@@ -1,0 +1,44 @@
+name: Test Bitbucket scm
+pipelineid: azuredevops/scm
+
+scms:
+  azuredevops:
+    kind: azuredevops
+    spec:
+      project: "updatecli"
+      repository: "updatecli-test"
+      branch: main
+
+sources:
+  readme:
+    name: Retrieve readme file content
+    kind: file
+    scmid: azuredevops
+    spec:
+      file: README.md
+
+conditions:
+  readme:
+    name: Retrieve readme file content
+    kind: file
+    sourceid: readme
+    scmid: azuredevops
+    spec:
+      file: README.md
+
+targets:
+  readme:
+    name: Update README title
+    kind: file
+    disablesourceinput: true
+    scmid: azuredevops
+    spec:
+      file: README.md
+      content: "# Title"
+      line: 1
+
+actions:
+  default:
+    title: Change readme title
+    kind: azuredevops/pullrequest
+    scmid: azuredevops
