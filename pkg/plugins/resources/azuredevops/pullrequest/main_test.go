@@ -26,9 +26,10 @@ func TestNew(t *testing.T) {
 				SourceBranch: "workingBranch",
 				TargetBranch: "main",
 				Spec: azdoclient.Spec{
-					URL:        "dev.azure.com/updatecli",
-					Project:    "updatecli",
-					Repository: "updatecli",
+					URL:          "https://dev.azure.com",
+					Organization: "updatecli",
+					Project:      "updatecli",
+					Repository:   "updatecli",
 				},
 			},
 			expectedProject:      "updatecli",
@@ -43,9 +44,10 @@ func TestNew(t *testing.T) {
 				Spec: azdoscm.Spec{
 					Branch: "main",
 					Spec: azdoclient.Spec{
-						URL:        "https://dev.azure.com/updatecli",
-						Project:    "updatecli-project",
-						Repository: "updatecli-repository",
+						URL:          "https://dev.azure.com",
+						Organization: "updatecli",
+						Project:      "updatecli-project",
+						Repository:   "updatecli-repository",
 					},
 				},
 			},
@@ -58,8 +60,9 @@ func TestNew(t *testing.T) {
 			name: "Test default URL when not specified",
 			spec: Spec{
 				Spec: azdoclient.Spec{
-					Project:    "updatecli",
-					Repository: "updatecli",
+					Organization: "updatecli",
+					Project:      "updatecli",
+					Repository:   "updatecli",
 				},
 			},
 			expectedProject:    "updatecli",
