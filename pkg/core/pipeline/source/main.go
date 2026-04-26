@@ -57,7 +57,16 @@ func (s *Source) Run(ctx context.Context, sourceCache *cache.SourceCache) (err e
 	defer logrus.SetOutput(os.Stdout)
 	defer s.Result.SetConsoleOutput(&consoleOutput)
 
-	cacheKey := cache.Key(s.Config.ResourceConfig)
+	var scmIdentity *cache.SCMIdentity
+	if s.Scm != nil {
+		sourceBranch, _, _ := (*s.Scm).GetBranches()
+		scmIdentity = &cache.SCMIdentity{
+			URL:    (*s.Scm).GetURL(),
+			Branch: sourceBranch,
+		}
+	}
+
+	cacheKey := cache.Key(s.Config.ResourceConfig, scmIdentity)
 	cacheHit := false
 
 	if sourceCache != nil {

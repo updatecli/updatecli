@@ -5,11 +5,25 @@ import (
 	"fmt"
 	"path"
 	"path/filepath"
+	"regexp"
+	"strings"
 	"text/template"
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/yaml"
 )
+
+var commentVersionRegex = regexp.MustCompile(`^v?\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$`)
+
+func extractVersionFromComment(comment string) string {
+	for _, token := range strings.Fields(comment) {
+		candidate := strings.Trim(token, ",;:()[]{}")
+		if commentVersionRegex.MatchString(candidate) {
+			return candidate
+		}
+	}
+	return ""
+}
 
 func (p Precommit) discoverDependencyManifests() ([][]byte, error) {
 
@@ -69,8 +83,18 @@ func (p Precommit) discoverDependencyManifests() ([][]byte, error) {
 			versionPattern, err := p.versionFilter.GreaterThanPattern(repo.Rev)
 			versionRegex := p.versionFilter.Regex
 			if err != nil {
-				logrus.Debugf("skipping file %q due to: %s", relativeFoundFile, err)
-				continue
+				commentVersion := extractVersionFromComment(repo.RevComment)
+				if commentVersion == "" {
+					logrus.Debugf("skipping file %q due to: %s", relativeFoundFile, err)
+					continue
+				}
+
+				logrus.Debugf("using version %q detected from rev comment in %q", commentVersion, relativeFoundFile)
+				versionPattern, err = p.versionFilter.GreaterThanPattern(commentVersion)
+				if err != nil {
+					logrus.Debugf("skipping file %q due to: %s", relativeFoundFile, err)
+					continue
+				}
 			}
 
 			tmpl, err := template.New("manifest").Parse(manifestTemplate)

@@ -164,7 +164,7 @@ func TestKey_EmptyKind(t *testing.T) {
 	}
 
 	// Act
-	key := Key(rc)
+	key := Key(rc, nil)
 
 	// Assert
 	assert.Equal(t, "", key)
@@ -193,8 +193,8 @@ func TestKey_SameConfigProducesSameKey(t *testing.T) {
 	}
 
 	// Act
-	key1 := Key(rc)
-	key2 := Key(rc)
+	key1 := Key(rc, nil)
+	key2 := Key(rc, nil)
 
 	// Assert
 	require.NotEmpty(t, key1)
@@ -208,8 +208,8 @@ func TestKey_SameSpecDifferentNamesShareKey(t *testing.T) {
 	rc1 := resource.ResourceConfig{Kind: "shell", Name: "name-a", Spec: spec}
 	rc2 := resource.ResourceConfig{Kind: "shell", Name: "name-b", Spec: spec}
 
-	key1 := Key(rc1)
-	key2 := Key(rc2)
+	key1 := Key(rc1, nil)
+	key2 := Key(rc2, nil)
 
 	require.NotEmpty(t, key1)
 	assert.Equal(t, key1, key2)
@@ -223,11 +223,58 @@ func TestKey_DifferentSpecsProduceDifferentKeys(t *testing.T) {
 	rc2 := resource.ResourceConfig{Kind: "shell", Name: "source-b", Spec: shellSpec("echo b")}
 
 	// Act
-	key1 := Key(rc1)
-	key2 := Key(rc2)
+	key1 := Key(rc1, nil)
+	key2 := Key(rc2, nil)
 
 	// Assert
 	require.NotEmpty(t, key1)
 	require.NotEmpty(t, key2)
 	assert.NotEqual(t, key1, key2)
+}
+
+// TestKey_SameSpecDifferentSCMsProduceDifferentKeys is the regression for
+// issue #8522: two pipelines reusing the same SCMID label against different
+// repos must not collide in the source cache.
+func TestKey_SameSpecDifferentSCMsProduceDifferentKeys(t *testing.T) {
+	rc := resource.ResourceConfig{Kind: "shell", Name: "source", Spec: shellSpec("cat LICENSE")}
+
+	scmA := &SCMIdentity{URL: "https://github.com/example/repo-a.git", Branch: "main"}
+	scmB := &SCMIdentity{URL: "https://github.com/example/repo-b.git", Branch: "main"}
+
+	keyA := Key(rc, scmA)
+	keyB := Key(rc, scmB)
+
+	require.NotEmpty(t, keyA)
+	require.NotEmpty(t, keyB)
+	assert.NotEqual(t, keyA, keyB)
+}
+
+// TestKey_NilSCMMatchesNilSCMSameSpec guarantees the nil-SCM path still
+// dedupes identical Kind+Spec configs (unchanged pre-fix behavior).
+func TestKey_NilSCMMatchesNilSCMSameSpec(t *testing.T) {
+	spec := shellSpec("echo hello")
+	rc1 := resource.ResourceConfig{Kind: "shell", Name: "name-a", Spec: spec}
+	rc2 := resource.ResourceConfig{Kind: "shell", Name: "name-b", Spec: spec}
+
+	key1 := Key(rc1, nil)
+	key2 := Key(rc2, nil)
+
+	require.NotEmpty(t, key1)
+	assert.Equal(t, key1, key2)
+}
+
+// TestKey_NilVsNonNilSCMProduceDifferentKeys is the third case of the #8522
+// regression: identical Kind+Spec with a nil SCM vs a non-nil SCM must not
+// collide, since cacheKeyInput.SCM uses json:"scm,omitempty".
+func TestKey_NilVsNonNilSCMProduceDifferentKeys(t *testing.T) {
+	rc := resource.ResourceConfig{Kind: "shell", Name: "source", Spec: shellSpec("cat LICENSE")}
+
+	scm := &SCMIdentity{URL: "https://github.com/example/repo-a.git", Branch: "main"}
+
+	keyNil := Key(rc, nil)
+	keySCM := Key(rc, scm)
+
+	require.NotEmpty(t, keyNil)
+	require.NotEmpty(t, keySCM)
+	assert.NotEqual(t, keyNil, keySCM)
 }
