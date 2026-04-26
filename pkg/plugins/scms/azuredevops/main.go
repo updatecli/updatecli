@@ -82,6 +82,10 @@ func New(spec interface{}, pipelineID string) (*AzureDevOps, error) {
 		return &AzureDevOps{}, err
 	}
 
+	if clientSpec.Organization == "" {
+		clientSpec.Organization = s.Organization
+	}
+
 	if clientSpec.URL == "" {
 		clientSpec.URL = s.URL
 	}

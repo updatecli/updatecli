@@ -6,6 +6,7 @@ import (
 	"time"
 
 	azdosdk "github.com/microsoft/azure-devops-go-api/azuredevops/v7"
+	azdocore "github.com/microsoft/azure-devops-go-api/azuredevops/v7/core"
 	azdogit "github.com/microsoft/azure-devops-go-api/azuredevops/v7/git"
 )
 
@@ -44,6 +45,10 @@ func New(s Spec) (Client, error) {
 
 func (c Client) NewGitClient(ctx context.Context) (azdogit.Client, error) {
 	return azdogit.NewClient(ctx, c.connection)
+}
+
+func (c Client) NewCoreClient(ctx context.Context) (azdocore.Client, error) {
+	return azdocore.NewClient(ctx, c.connection)
 }
 
 func (c Client) GetRepository(ctx context.Context, project, repository string) (*azdogit.GitRepository, error) {
