@@ -56,6 +56,10 @@ func New(spec interface{}, scm *azdoscm.AzureDevOps) (AzureDevOps, error) {
 		clientSpec.Username = s.Username
 	}
 
+	if clientSpec.Organization == "" {
+		clientSpec.Organization = s.Organization
+	}
+
 	if clientSpec.Token == "" {
 		clientSpec.Token = s.Token
 	}
@@ -79,6 +83,10 @@ func New(spec interface{}, scm *azdoscm.AzureDevOps) (AzureDevOps, error) {
 
 		if clientSpec.Repository == "" && scm.Spec.Repository != "" {
 			clientSpec.Repository = scm.Spec.Repository
+		}
+
+		if clientSpec.Organization == "" && scm.Spec.Organization != "" {
+			clientSpec.Organization = scm.Spec.Organization
 		}
 	}
 

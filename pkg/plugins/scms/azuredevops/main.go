@@ -198,7 +198,7 @@ func (s *Spec) Validate() error {
 }
 
 func (a *AzureDevOps) repositoryURL() string {
-	return azdoclient.GitURL(a.Spec.URL, a.Spec.Project, a.Spec.Repository)
+	return azdoclient.GitURL(a.Spec.URL, a.Spec.Organization, a.Spec.Project, a.Spec.Repository)
 }
 
 // GetBranches returns the source, working and target branches.

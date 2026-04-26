@@ -2,6 +2,7 @@ package pullrequest
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/reports"
@@ -11,7 +12,7 @@ import (
 func (a *AzureDevOps) CheckActionExist(ctx context.Context, report *reports.Action) error {
 	pr, err := a.findExistingPullRequest(ctx)
 	if err != nil {
-		return err
+		return fmt.Errorf("find existing pullrequest: %w", err)
 	}
 
 	if pr != nil {

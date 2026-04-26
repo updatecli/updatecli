@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"net/url"
 	"time"
 
 	azdosdk "github.com/microsoft/azure-devops-go-api/azuredevops/v7"
@@ -23,8 +24,16 @@ func New(s Spec) (Client, error) {
 		return Client{}, err
 	}
 
+	URL, err := url.JoinPath(
+		s.URL,
+		url.PathEscape(s.Organization),
+	)
+	if err != nil {
+		return Client{}, err
+	}
+
 	timeout := 30 * time.Second
-	connection := azdosdk.NewPatConnection(s.URL, s.Token)
+	connection := azdosdk.NewPatConnection(URL, s.Token)
 	connection.Timeout = &timeout
 
 	return Client{

@@ -55,14 +55,15 @@ func TestNew(t *testing.T) {
 			expectedTargetBranch: "main",
 		},
 		{
-			name: "Test required parameter URL not specified",
+			name: "Test default URL when not specified",
 			spec: Spec{
 				Spec: azdoclient.Spec{
 					Project:    "updatecli",
 					Repository: "updatecli",
 				},
 			},
-			wantErr: true,
+			expectedProject:    "updatecli",
+			expectedRepository: "updatecli",
 		},
 	}
 

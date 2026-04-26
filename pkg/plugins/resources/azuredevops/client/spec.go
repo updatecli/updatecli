@@ -13,6 +13,8 @@ import (
 // Spec defines a specification for an Azure DevOps resource
 // parsed from an updatecli manifest file.
 type Spec struct {
+	// Organization defines the Azure DevOps organization URL to interact with.
+	Organization string `yaml:",omitempty"`
 	// "url" defines the Azure DevOps organization URL to interact with.
 	URL string `yaml:",omitempty"`
 	// "project" defines the Azure DevOps project containing the repository.
@@ -37,6 +39,10 @@ func (s Spec) Validate() error {
 		missingParameters = append(missingParameters, "repository")
 	}
 
+	if s.Organization == "" {
+		missingParameters = append(missingParameters, "organization")
+	}
+
 	if len(missingParameters) > 0 {
 		logrus.Errorf("missing parameter(s) [%s]", strings.Join(missingParameters, ","))
 		return fmt.Errorf("wrong azure devops configuration")
@@ -52,6 +58,7 @@ func (s *Spec) Sanitize() error {
 	}
 
 	s.URL = EnsureValidURL(s.URL)
+
 	return nil
 }
 
@@ -69,7 +76,7 @@ func EnsureValidURL(rawURL string) string {
 }
 
 // GitURL returns the repository git URL used by the SCM implementation.
-func GitURL(baseURL, project, repository string) string {
+func GitURL(baseURL, organization, project, repository string) string {
 	u, err := url.Parse(EnsureValidURL(baseURL))
 	if err != nil {
 		return strings.TrimRight(EnsureValidURL(baseURL), "/") + "/" + project + "/_git/" + repository
@@ -77,6 +84,7 @@ func GitURL(baseURL, project, repository string) string {
 
 	u.Path = path.Join(
 		u.Path,
+		url.PathEscape(organization),
 		url.PathEscape(project),
 		"_git",
 		url.PathEscape(repository),
@@ -86,10 +94,11 @@ func GitURL(baseURL, project, repository string) string {
 }
 
 // PullRequestURL returns the Azure DevOps web URL for a pull request.
-func PullRequestURL(baseURL, project, repository string, pullRequestID int) string {
+func PullRequestURL(baseURL, organization, project, repository string, pullRequestID int) string {
 	u, err := url.Parse(EnsureValidURL(baseURL))
 	if err != nil {
 		return strings.TrimRight(EnsureValidURL(baseURL), "/") +
+			"/" + organization +
 			"/" + project +
 			"/_git/" + repository +
 			"/pullrequest/" + strconv.Itoa(pullRequestID)
@@ -97,6 +106,7 @@ func PullRequestURL(baseURL, project, repository string, pullRequestID int) stri
 
 	u.Path = path.Join(
 		u.Path,
+		url.PathEscape(organization),
 		url.PathEscape(project),
 		"_git",
 		url.PathEscape(repository),

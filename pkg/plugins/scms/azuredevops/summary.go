@@ -10,7 +10,7 @@ import (
 
 // Summary returns a brief description of the Azure DevOps SCM configuration.
 func (a *AzureDevOps) Summary() string {
-	URL, err := url.Parse(azdoclient.GitURL(a.Spec.URL, a.Spec.Project, a.Spec.Repository))
+	URL, err := url.Parse(azdoclient.GitURL(a.Spec.URL, a.Spec.Organization, a.Spec.Project, a.Spec.Repository))
 	if err != nil || URL == nil {
 		return ""
 	}

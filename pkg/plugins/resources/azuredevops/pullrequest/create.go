@@ -29,7 +29,7 @@ func (a *AzureDevOps) CreateAction(ctx context.Context, report *reports.Action, 
 
 	existingPR, err := a.findExistingPullRequest(ctx)
 	if err != nil {
-		return err
+		return fmt.Errorf("find existing pullrequest: %w", err)
 	}
 
 	if existingPR != nil {
