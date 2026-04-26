@@ -41,21 +41,32 @@ func NewSourceCache() *SourceCache {
 	}
 }
 
-// cacheKeyInput contains only the fields that determine what a source plugin
-// returns. Name, Transformers, DependsOn, and SCMID are excluded so that
-// sources with identical plugin config share the same cache entry regardless
-// of how they are named or wired in different pipelines.
-type cacheKeyInput struct {
-	Kind string `json:"kind"`
-	Spec any    `json:"spec"`
+// SCMIdentity is the resolved repo URL and source branch a source reads from.
+// Credentials are excluded: they live in separate Config fields and do not
+// change the fetched content.
+type SCMIdentity struct {
+	URL    string `json:"url"`
+	Branch string `json:"branch"`
 }
 
-// Key computes a cache key from a ResourceConfig by hashing only the Kind and
-// sanitized Spec (via ReportConfig). This instantiates the resource plugin
-// internally; on a cache miss the caller will instantiate it again for
-// execution. Returns empty string when hashing fails; callers treat that as a
-// cache miss.
-func Key(rc resource.ResourceConfig) string {
+// cacheKeyInput contains only the fields that determine what a source plugin
+// returns. Name, Transformers, DependsOn, and the SCMID label are excluded so
+// that sources with identical plugin config share the same cache entry
+// regardless of how they are named or wired in different pipelines. The
+// resolved SCM URL+branch are included because the same SCMID label in two
+// pipelines can point at different repositories (issue #8522).
+type cacheKeyInput struct {
+	Kind string       `json:"kind"`
+	Spec any          `json:"spec"`
+	SCM  *SCMIdentity `json:"scm,omitempty"`
+}
+
+// Key computes a cache key from a ResourceConfig and, when bound to an SCM,
+// the resolved SCM identity. Pass scm=nil for sources that run without an SCM;
+// the omitempty tag on cacheKeyInput.SCM keeps the hash identical to the
+// pre-SCM form in that case. Returns empty string when hashing fails; callers
+// treat that as a cache miss.
+func Key(rc resource.ResourceConfig, scm *SCMIdentity) string {
 	r, err := resource.New(rc)
 	if err != nil {
 		logrus.Debugf("source cache: failed to instantiate resource for key: %v", err)
@@ -65,6 +76,7 @@ func Key(rc resource.ResourceConfig) string {
 	data, err := json.Marshal(cacheKeyInput{
 		Kind: rc.Kind,
 		Spec: r.ReportConfig(),
+		SCM:  scm,
 	})
 	if err != nil {
 		logrus.Debugf("source cache: failed to marshal config for key: %v", err)

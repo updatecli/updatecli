@@ -35,7 +35,6 @@ func Show() {
 // IsGreaterThan test if an updatecli manifest required version is greater or equal to the current updatecli binary version
 // Please not that empty version are set to 0.0.0
 func IsGreaterThan(binaryVersion, manifestVersion string) (bool, error) {
-
 	if len(manifestVersion) == 0 {
 		manifestVersion = "0.0.0"
 	}
@@ -50,7 +49,6 @@ func IsGreaterThan(binaryVersion, manifestVersion string) (bool, error) {
 	}
 
 	mv, err := sv.NewVersion(manifestVersion)
-
 	if err != nil {
 		return false, fmt.Errorf("can't parse Updatecli manifest version %q - %q", manifestVersion, err)
 	}

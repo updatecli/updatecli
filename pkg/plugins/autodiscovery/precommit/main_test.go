@@ -175,6 +175,32 @@ targets:
       engine: 'yamlpath'
 `},
 		},
+		{
+			name:    "Scenario 5 -- Digest with semver in rev comment",
+			rootDir: "testdata/digestcomment",
+			expectedPipelines: []string{`name: 'Bump "https://github.com/golangci/golangci-lint" repo version'
+
+sources:
+  'gittag':
+    name: 'Get "https://github.com/golangci/golangci-lint" repo version'
+    kind: 'gittag'
+    spec:
+      versionfilter:
+        kind: 'semver'
+        pattern: '>=2.8.0'
+      url: 'https://github.com/golangci/golangci-lint'
+
+targets:
+  '.pre-commit-config.yaml':
+    name: 'deps(precommit): bump "https://github.com/golangci/golangci-lint" repo version to {{ source "gittag" }}'
+    kind: yaml
+    sourceid: 'gittag'
+    spec:
+      file: '.pre-commit-config.yaml'
+      key: "$.repos[?(@.repo == 'https://github.com/golangci/golangci-lint')].rev"
+      engine: 'yamlpath'
+`},
+		},
 	}
 
 	for _, tt := range testdata {
