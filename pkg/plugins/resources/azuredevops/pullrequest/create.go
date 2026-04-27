@@ -18,7 +18,7 @@ func (a *AzureDevOps) CreateAction(ctx context.Context, report *reports.Action, 
 		title = a.spec.Title
 	}
 
-	body, err := a.pullRequestBody("", report)
+	body, err := a.pullRequestBody("", report, resetDescription)
 	if err != nil {
 		return fmt.Errorf("generate Azure DevOps pull request body: %w", err)
 	}
@@ -31,7 +31,7 @@ func (a *AzureDevOps) CreateAction(ctx context.Context, report *reports.Action, 
 	if existingPR != nil {
 		logrus.Debugln("Azure DevOps pull request already exists, updating it")
 
-		body, err = a.pullRequestBody(stringValue(existingPR.Description), report)
+		body, err = a.pullRequestBody(stringValue(existingPR.Description), report, resetDescription)
 		if err != nil {
 			return fmt.Errorf("generate Azure DevOps pull request body: %w", err)
 		}
@@ -133,10 +133,17 @@ func (a *AzureDevOps) CreateAction(ctx context.Context, report *reports.Action, 
 	return nil
 }
 
-func (a *AzureDevOps) pullRequestBody(existingDescription string, report *reports.Action) (string, error) {
+func (a *AzureDevOps) pullRequestBody(existingDescription string, report *reports.Action, resetBody bool) (string, error) {
 	if a.spec.Body != "" {
 		return a.spec.Body, nil
 	}
+
+	if resetBody {
+		logrus.Debugf("Resetting pull request description with new report")
+		return utils.GeneratePullRequestBodyMarkdown("", report.ToActionsMarkdownString())
+	}
+
+	logrus.Debugf("Merging pull request description with new report")
 
 	actionsMarkdown := report.ToActionsMarkdownString()
 	if existingDescription != "" {

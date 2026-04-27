@@ -17,7 +17,7 @@ func TestPullRequestBody(t *testing.T) {
 			},
 		}
 
-		body, err := pr.pullRequestBody("existing body", &reports.Action{})
+		body, err := pr.pullRequestBody("existing body", &reports.Action{}, false)
 
 		require.NoError(t, err)
 		assert.Equal(t, "custom body", body)
@@ -30,7 +30,7 @@ func TestPullRequestBody(t *testing.T) {
 		}
 		pr := AzureDevOps{}
 
-		got, err := pr.pullRequestBody("", report)
+		got, err := pr.pullRequestBody("", report, false)
 		require.NoError(t, err)
 
 		expected, err := utils.GeneratePullRequestBodyMarkdown("", report.ToActionsMarkdownString())
@@ -46,7 +46,7 @@ func TestPullRequestBody(t *testing.T) {
 		}
 		pr := AzureDevOps{}
 
-		got, err := pr.pullRequestBody("existing body", report)
+		got, err := pr.pullRequestBody("existing body", report, true)
 		require.NoError(t, err)
 
 		mergedDescription, err := reports.MergeFromMarkdown("existing body", report.ToActionsMarkdownString())
