@@ -31,14 +31,6 @@ type Spec struct {
 func (s Spec) Validate() error {
 	missingParameters := []string{}
 
-	if s.Project == "" {
-		missingParameters = append(missingParameters, "project")
-	}
-
-	if s.Repository == "" {
-		missingParameters = append(missingParameters, "repository")
-	}
-
 	if s.Organization == "" {
 		missingParameters = append(missingParameters, "organization")
 	}
