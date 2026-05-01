@@ -39,7 +39,7 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.41.7
 	github.com/aws/aws-sdk-go-v2/config v1.32.16
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.16
-	github.com/aws/aws-sdk-go-v2/service/ec2 v1.299.0
+	github.com/aws/aws-sdk-go-v2/service/ec2 v1.299.1
 	github.com/aws/smithy-go v1.25.1
 	github.com/beevik/etree v1.6.0
 	github.com/drone/go-scm v1.42.2
