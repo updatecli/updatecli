@@ -75,6 +75,17 @@ func Test_Validate(t *testing.T) {
 				ScmID: "default",
 			},
 		},
+		{
+			name: "Passing case with 'Kind: azuredevops' set to 'azuredevops/pullrequest'",
+			config: Config{
+				Kind:  "azuredevops",
+				ScmID: "default",
+			},
+			wantConfig: Config{
+				Kind:  "azuredevops/pullrequest",
+				ScmID: "default",
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
