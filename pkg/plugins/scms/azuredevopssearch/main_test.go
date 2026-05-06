@@ -23,6 +23,19 @@ func TestNew(t *testing.T) {
 		assert.Equal(t, "charts-.*", search.repositoryPattern)
 		assert.Equal(t, "https://dev.azure.com", search.spec.URL)
 	})
+	t.Run("uses minimal values", func(t *testing.T) {
+		search, err := New(map[string]interface{}{
+			"organization": " updatecli ",
+		})
+
+		require.NoError(t, err)
+		assert.Equal(t, DefaultRepositoryLimit, search.limit)
+		assert.Equal(t, "^main$", search.branch)
+		assert.Equal(t, "updatecli", search.spec.Organization)
+		assert.Equal(t, ".*", search.projectPattern)
+		assert.Equal(t, ".*", search.repositoryPattern)
+		assert.Equal(t, "https://dev.azure.com", search.spec.URL)
+	})
 
 	t.Run("fails when organization is missing", func(t *testing.T) {
 		_, err := New(map[string]interface{}{

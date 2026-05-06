@@ -38,9 +38,16 @@ func (a *AzureDevOpsSearch) ScmsGenerator(ctx context.Context) ([]azdoscm.Spec, 
 		return nil, fmt.Errorf("failed to list Azure DevOps projects for organization %q: %w", a.spec.Organization, err)
 	}
 
+	logrus.Debugf("Found %d Azure DevOps projects in organization %q", len(projects), a.spec.Organization)
+
 	for _, project := range projects {
 		projectName := stringValue(project.Name)
-		if projectName == "" || !projectRegex.MatchString(projectName) {
+		if projectName == "" {
+			continue
+		}
+
+		if !projectRegex.MatchString(projectName) {
+			logrus.Debugf("Skipping Azure DevOps project %q that does not match regex %q", projectName, a.projectPattern)
 			continue
 		}
 
@@ -50,6 +57,8 @@ func (a *AzureDevOpsSearch) ScmsGenerator(ctx context.Context) ([]azdoscm.Spec, 
 		if err != nil {
 			return nil, fmt.Errorf("failed to list Azure DevOps repositories for project %q: %w", projectName, err)
 		}
+
+		logrus.Debugf("Found %d Azure DevOps repositories in project %q", len(*repositories), projectName)
 
 		for _, repository := range *repositories {
 			if repository.IsDisabled != nil && *repository.IsDisabled {
@@ -63,6 +72,7 @@ func (a *AzureDevOpsSearch) ScmsGenerator(ctx context.Context) ([]azdoscm.Spec, 
 			}
 
 			if !repositoryRegex.MatchString(repositoryName) {
+				logrus.Debugf("Skipping Azure DevOps repository %q that does not match regex %q", repositoryName, a.repositoryPattern)
 				continue
 			}
 

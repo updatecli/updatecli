@@ -12,7 +12,6 @@ import (
 const (
 	DefaultRepositoryLimit = 10
 	ErrOrganizationEmpty   = "azure DevOps organization is required for azuredevopssearch SCM"
-	ErrProjectEmpty        = "azure DevOps project regex is required for azuredevopssearch SCM"
 )
 
 // Spec represents the configuration input for the azuredevopssearch SCM.
@@ -22,7 +21,7 @@ type Spec struct {
 	// "url" defines the Azure DevOps base URL.
 	URL string `yaml:",omitempty"`
 	// "project" defines the Azure DevOps project regex used to match projects to search in.
-	Project string `yaml:",omitempty" jsonschema:"required"`
+	Project string `yaml:",omitempty"`
 	// "repository" defines the Azure DevOps repository regex used to match repositories.
 	Repository string `yaml:",omitempty"`
 	// Limit defines the maximum number of repositories to return.
@@ -62,8 +61,6 @@ func (s Spec) Validate() error {
 	switch {
 	case strings.TrimSpace(s.Organization) == "":
 		return errors.New(ErrOrganizationEmpty)
-	case strings.TrimSpace(s.Project) == "":
-		return errors.New(ErrProjectEmpty)
 	default:
 		return nil
 	}

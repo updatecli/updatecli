@@ -46,13 +46,9 @@ func New(s interface{}) (*AzureDevOpsSearch, error) {
 		limit = *spec.Limit
 	}
 
-	branch := "^main$"
+	branchPattern := "^main$"
 	if spec.Branch != "" {
-		branch = spec.Branch
-	}
-
-	if _, err := regexp.Compile(spec.Project); err != nil {
-		return nil, fmt.Errorf("invalid project regex %q: %w", spec.Project, err)
+		branchPattern = spec.Branch
 	}
 
 	repositoryPattern := ".*"
@@ -60,12 +56,21 @@ func New(s interface{}) (*AzureDevOpsSearch, error) {
 		repositoryPattern = spec.Repository
 	}
 
+	projectPattern := ".*"
+	if spec.Project != "" {
+		projectPattern = spec.Project
+	}
+
+	if _, err := regexp.Compile(projectPattern); err != nil {
+		return nil, fmt.Errorf("invalid project regex %q: %w", projectPattern, err)
+	}
+
 	if _, err := regexp.Compile(repositoryPattern); err != nil {
 		return nil, fmt.Errorf("invalid repository regex %q: %w", repositoryPattern, err)
 	}
 
-	if _, err := regexp.Compile(branch); err != nil {
-		return nil, fmt.Errorf("invalid branch regex %q: %w", branch, err)
+	if _, err := regexp.Compile(branchPattern); err != nil {
+		return nil, fmt.Errorf("invalid branch regex %q: %w", branchPattern, err)
 	}
 
 	client := azureDevOpsClient{}
@@ -98,8 +103,8 @@ func New(s interface{}) (*AzureDevOpsSearch, error) {
 	return &AzureDevOpsSearch{
 		spec:              spec,
 		limit:             limit,
-		branch:            branch,
-		projectPattern:    spec.Project,
+		branch:            branchPattern,
+		projectPattern:    projectPattern,
 		repositoryPattern: repositoryPattern,
 		client:            client,
 	}, nil
