@@ -4,7 +4,9 @@ import (
 	"fmt"
 
 	"github.com/go-viper/mapstructure/v2"
+	"github.com/sirupsen/logrus"
 	azdoclient "github.com/updatecli/updatecli/pkg/plugins/resources/azuredevops/client"
+	"github.com/updatecli/updatecli/pkg/plugins/resources/azuredevops/credential"
 	azdoscm "github.com/updatecli/updatecli/pkg/plugins/scms/azuredevops"
 )
 
@@ -52,16 +54,27 @@ func New(spec interface{}, scm *azdoscm.AzureDevOps) (AzureDevOps, error) {
 		clientSpec.Repository = s.Repository
 	}
 
-	if clientSpec.Username == "" {
-		clientSpec.Username = s.Username
-	}
-
 	if clientSpec.Organization == "" {
 		clientSpec.Organization = s.Organization
 	}
 
+	usernameFromEnv, tokenFromEnv := credential.GetCredentialsFromEnv()
+
+	if clientSpec.Username == "" {
+		clientSpec.Username = s.Username
+
+		if usernameFromEnv != "" {
+			logrus.Debugf("using Azure DevOps username from environment variable %s", credential.ENVIRONMENT_AZURE_DEVOPS_USERNAME)
+			clientSpec.Username = usernameFromEnv
+		}
+	}
+
 	if clientSpec.Token == "" {
 		clientSpec.Token = s.Token
+		if tokenFromEnv != "" {
+			logrus.Debugf("using Azure DevOps token from environment variable %s", credential.ENVIRONMENT_AZURE_DEVOPS_TOKEN)
+			clientSpec.Token = tokenFromEnv
+		}
 	}
 
 	if scm != nil {

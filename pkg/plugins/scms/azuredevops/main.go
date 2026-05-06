@@ -14,6 +14,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/tmp"
 	azdoclient "github.com/updatecli/updatecli/pkg/plugins/resources/azuredevops/client"
+	"github.com/updatecli/updatecli/pkg/plugins/resources/azuredevops/credential"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git/commit"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git/sign"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
@@ -98,12 +99,22 @@ func New(spec interface{}, pipelineID string) (*AzureDevOps, error) {
 		clientSpec.Repository = s.Repository
 	}
 
+	usernameFromEnv, tokenFromEnv := credential.GetCredentialsFromEnv()
 	if clientSpec.Username == "" {
 		clientSpec.Username = s.Username
+
+		if usernameFromEnv != "" {
+			logrus.Debugf("using Azure DevOps username from environment variable %s", credential.ENVIRONMENT_AZURE_DEVOPS_USERNAME)
+			clientSpec.Username = usernameFromEnv
+		}
 	}
 
 	if clientSpec.Token == "" {
 		clientSpec.Token = s.Token
+		if tokenFromEnv != "" {
+			logrus.Debugf("using Azure DevOps token from environment variable %s", credential.ENVIRONMENT_AZURE_DEVOPS_TOKEN)
+			clientSpec.Token = tokenFromEnv
+		}
 	}
 
 	err = clientSpec.Sanitize()
