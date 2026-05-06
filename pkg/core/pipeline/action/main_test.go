@@ -76,9 +76,9 @@ func Test_Validate(t *testing.T) {
 			},
 		},
 		{
-			name: "Passing case with 'Kind: azuredevops' set to 'azuredevops/pullrequest'",
+			name: "Passing case with 'azuredevops/pullrequest'",
 			config: Config{
-				Kind:  "azuredevops",
+				Kind:  "azuredevops/pullrequest",
 				ScmID: "default",
 			},
 			wantConfig: Config{
