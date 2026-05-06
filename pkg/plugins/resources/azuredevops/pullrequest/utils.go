@@ -285,10 +285,12 @@ func getBranchRef(ctx context.Context, gitClient gitClient, project, repositoryI
 	refs, err := gitClient.GetRefs(ctx, azdogit.GetRefsArgs{
 		Project:      &project,
 		RepositoryId: &repositoryID,
+		// We need to retrieve a batch of refs.
 		// For some reason the filter doesn't seem to work
-		// We need to retrieve a batch of refs and filter them manually
-		//Filter:       &filter,
-		Top: &top,
+		// So we use the FilterContains parameter to reduce the number of refs
+		// returned and filter the rest manually
+		FilterContains: &branch,
+		Top:            &top,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("list Azure DevOps refs for branch %q: %w", branch, err)
