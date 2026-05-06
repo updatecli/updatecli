@@ -1,10 +1,11 @@
-name: Test Bitbucket scm
+name: Test Azure DevOps scm
 pipelineid: azuredevops/scm
 
 scms:
   azuredevops:
     kind: azuredevops
     spec:
+      organization: updatecli
       project: "updatecli"
       repository: "updatecli-test"
       branch: main
@@ -39,6 +40,5 @@ targets:
 
 actions:
   default:
-    title: Change readme title
     kind: azuredevops/pullrequest
     scmid: azuredevops
