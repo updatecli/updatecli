@@ -233,10 +233,6 @@ func (a *AzureDevOps) GetBranches() (sourceBranch, workingBranch, targetBranch s
 // Clone runs `git clone`.
 func (a *AzureDevOps) Clone() (string, error) {
 
-	transport.UnsupportedCapabilities = []capability.Capability{
-		capability.ThinPack,
-	}
-
 	// This global is shared across all SCMs/pipelines in the same process,
 	// Clone() mutates the global go-git setting transport.UnsupportedCapabilities and then need to be restored.
 	// otherwise it can cause surprising behavior (and data races) when multiple pipelines run or
@@ -245,6 +241,10 @@ func (a *AzureDevOps) Clone() (string, error) {
 	defer func() {
 		transport.UnsupportedCapabilities = currentUnsupportedCapabilities
 	}()
+
+	transport.UnsupportedCapabilities = []capability.Capability{
+		capability.ThinPack,
+	}
 
 	// Source:
 	//   * https://github.com/go-git/go-git/blob/master/_examples/azure_devops/main.go
