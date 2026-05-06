@@ -23,6 +23,7 @@ scms:
       url: '{{ .scm.url }}'
       project: '{{ .scm.project }}'
       repository: '{{ .scm.repository }}'
+      organization: '{{ .scm.organization }}'
       token: '{{ default $AzureDevOpsPAT .scm.token }}'
       # {{ if .scm.username }}
       username: '{{ .scm.username }}'
