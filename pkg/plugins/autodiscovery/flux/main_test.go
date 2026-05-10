@@ -316,6 +316,14 @@ targets:
 `},
 		},
 		{
+			name:              "Scenario - helmrelease without chart template",
+			digest:            true,
+			rootDir:           "testdata/helmrelease/chartref",
+			scmID:             "defaultscmid",
+			actionID:          "defaultactionid",
+			expectedPipelines: []string{},
+		},
+		{
 			name:    "Scenario - ocirepository ",
 			digest:  false,
 			rootDir: "testdata/ociRepository",
