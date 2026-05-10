@@ -104,7 +104,8 @@ func readManifest(filename string) (map[int]*ArgoCDApplicationSpec, error) {
 		// Check if the document contains a source definition that we can use to generate an Updatecli manifest
 		if !data.Spec.Source.IsZero() ||
 			!data.Spec.Template.Spec.Source.IsZero() ||
-			len(data.Spec.Sources) > 0 {
+			len(data.Spec.Sources) > 0 ||
+			len(data.Spec.Template.Spec.Sources) > 0 {
 			result[docNum-1] = &data
 		}
 
