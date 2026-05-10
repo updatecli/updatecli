@@ -1,0 +1,18 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: envoy-gateway
+  namespace: flux-system
+spec:
+  serviceAccountName: helm-controller
+  releaseName: envoy-gateway
+  targetNamespace: envoy-gateway-system
+  storageNamespace: envoy-gateway-system
+  chartRef:
+    kind: OCIRepository
+    name: gateway-helm
+  install:
+    crds: Skip
+  upgrade:
+    crds: Skip
+  interval: 5m
