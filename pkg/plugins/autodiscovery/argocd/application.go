@@ -26,7 +26,8 @@ type ArgoCDApplicationSpec struct {
 		Sources  []ApplicationSourceSpec
 		Template struct {
 			Spec struct {
-				Source ApplicationSourceSpec
+				Source  ApplicationSourceSpec
+				Sources []ApplicationSourceSpec
 			}
 		}
 	}
@@ -140,6 +141,27 @@ func (f ArgoCD) discoverArgoCDManifests() ([][]byte, error) {
 					source,
 					relativeFilepath,
 					fmt.Sprintf("$.spec.sources[%d]", i),
+					documentIndex,
+				)
+				if err != nil {
+					logrus.Errorf("error discovering application source: %s", err)
+					continue
+				}
+
+				if manifest != nil {
+					manifests = append(manifests, manifest)
+				}
+			}
+
+			for i, source := range data.Spec.Template.Spec.Sources {
+				if source.IsZero() {
+					continue
+				}
+
+				manifest, err := f.generateManifestBySource(
+					source,
+					relativeFilepath,
+					fmt.Sprintf("$.spec.template.spec.sources[%d]", i),
 					documentIndex,
 				)
 				if err != nil {
