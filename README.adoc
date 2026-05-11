@@ -1,6 +1,4 @@
 = Updatecli
-:toc: right
-:toc-title: Contents
 
 image:https://www.updatecli.io/images/updatecli.png[alt=Updatecli,float="right",align="center",width=200,height=200]
 
