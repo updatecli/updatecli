@@ -30,6 +30,10 @@ func (f Flux) discoverHelmreleaseManifests() [][]byte {
 		}
 
 		for index, d := range dataDocuments {
+			if d.Spec.Chart == nil {
+				logrus.Debugf("Ignoring Helmrelease from %q, as it does not define a chart template", relativeFoundFluxFile)
+				continue
+			}
 			helmChartName := d.Spec.Chart.Spec.Chart
 			helmChartVersion := d.Spec.Chart.Spec.Version
 

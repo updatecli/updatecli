@@ -356,6 +356,50 @@ targets:
     sourceid: 'nginx'
 `},
 		},
+		{
+			name:    "ArgoCD ApplicationSet manifests discovery with several sources",
+			rootDir: "testdata/appset-sealed-secrets_sources",
+			expectedPipelines: []string{`name: 'deps(helm): bump Helm chart "sealed-secrets" in ArgoCD manifest "manifest.yaml"'
+sources:
+  sealed-secrets:
+    name: 'Get latest "sealed-secrets" Helm chart version'
+    kind: 'helmchart'
+    spec:
+      name: 'sealed-secrets'
+      url: 'https://bitnami-labs.github.io/sealed-secrets'
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
+conditions:
+  sealed-secrets-name:
+    name: 'Ensure Helm chart name sealed-secrets is specified'
+    kind: 'yaml'
+    disablesourceinput: true
+    spec:
+      file: 'manifest.yaml'
+      key: '$.spec.template.spec.sources[0].chart'
+      documentindex: 0
+      value: 'sealed-secrets'
+  sealed-secrets-repository:
+    name: 'Ensure Helm chart repository https://bitnami-labs.github.io/sealed-secrets is specified'
+    kind: 'yaml'
+    disablesourceinput: true
+    spec:
+      file: 'manifest.yaml'
+      key: '$.spec.template.spec.sources[0].repoURL'
+      documentindex: 0
+      value: 'https://bitnami-labs.github.io/sealed-secrets'
+targets:
+  sealed-secrets:
+    name: 'deps(helm): update Helm chart "sealed-secrets" to {{ source "sealed-secrets" }}'
+    kind: 'yaml'
+    spec:
+      file: 'manifest.yaml'
+      key: '$.spec.template.spec.sources[0].targetRevision'
+      documentindex: 0
+    sourceid: 'sealed-secrets'
+`},
+		},
 	}
 
 	for _, tt := range testdata {
