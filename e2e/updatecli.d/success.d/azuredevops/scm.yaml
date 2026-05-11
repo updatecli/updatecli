@@ -6,7 +6,7 @@ scms:
     kind: azuredevops
     spec:
       organization: updatecli
-      project: "updatecli"
+      project: "updatecli-test"
       repository: "updatecli-test"
       branch: main
 
