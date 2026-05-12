@@ -11,30 +11,30 @@ scms:
       branch: main
 
 sources:
-  readme:
-    name: Retrieve readme file content
+  license:
+    name: Retrieve license file content
     kind: file
     scmid: azuredevops
     spec:
-      file: README.md
+      file: LICENSE
 
 conditions:
-  readme:
-    name: Retrieve readme file content
+  license:
+    name: Retrieve license file content
     kind: file
-    sourceid: readme
+    sourceid: license
     scmid: azuredevops
     spec:
-      file: README.md
+      file: LICENSE
 
 targets:
-  readme:
-    name: Update README title
+  license:
+    name: Update license title
     kind: file
     disablesourceinput: true
     scmid: azuredevops
     spec:
-      file: README.md
+      file: LICENSE
       content: "# Title"
       line: 1
 
