@@ -33,7 +33,7 @@ scms:
       email: '{{ .scm.email }}'
       # {{ end }}
       search: '{{ .scm.search }}'
-      limit: {{ default 3 .scm.limit }}
+      limit: {{ .scm.limit }}
       token: '{{ default $GitHubPAT .scm.token }}'
       username: '{{ default $GitHubUsername  .scm.username }}'
       #{{ if .scm.branch }}
