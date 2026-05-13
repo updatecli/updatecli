@@ -9,7 +9,10 @@ import (
 	"github.com/go-viper/mapstructure/v2"
 	azdocore "github.com/microsoft/azure-devops-go-api/azuredevops/v7/core"
 	azdogit "github.com/microsoft/azure-devops-go-api/azuredevops/v7/git"
+	"github.com/sirupsen/logrus"
 	azclient "github.com/updatecli/updatecli/pkg/plugins/resources/azuredevops/client"
+
+	"github.com/updatecli/updatecli/pkg/plugins/resources/azuredevops/credential"
 )
 
 const Kind = "azuredevopssearch"
@@ -61,6 +64,18 @@ func New(s interface{}) (*AzureDevOpsSearch, error) {
 		projectPattern = spec.Project
 	}
 
+	username, token := spec.Username, spec.Token
+	usernameFromEnv, tokenFromEnv := credential.GetCredentialsFromEnv()
+	if usernameFromEnv != "" {
+		logrus.Debugf("using Azure DevOps username from environment variable %s", credential.ENVIRONMENT_AZURE_DEVOPS_USERNAME)
+		username = usernameFromEnv
+	}
+
+	if tokenFromEnv != "" {
+		logrus.Debugf("using Azure DevOps token from environment variable %s", credential.ENVIRONMENT_AZURE_DEVOPS_TOKEN)
+		token = tokenFromEnv
+	}
+
 	if _, err := regexp.Compile(projectPattern); err != nil {
 		return nil, fmt.Errorf("invalid project regex %q: %w", projectPattern, err)
 	}
@@ -80,8 +95,8 @@ func New(s interface{}) (*AzureDevOpsSearch, error) {
 		Organization: spec.Organization,
 		Project:      spec.Project,
 		Repository:   spec.Repository,
-		Token:        spec.Token,
-		Username:     spec.Username,
+		Token:        token,
+		Username:     username,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("creating Azure DevOps client: %w", err)
