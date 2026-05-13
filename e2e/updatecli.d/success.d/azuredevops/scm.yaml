@@ -1,44 +1,49 @@
-name: Test Azure DevOps scm
-pipelineid: azuredevops/scm
-
-scms:
-  azuredevops:
-    kind: azuredevops
-    spec:
-      organization: updatecli
-      project: "updatecli-test"
-      repository: "updatecli-test"
-      branch: main
-
-sources:
-  license:
-    name: Retrieve license file content
-    kind: file
-    scmid: azuredevops
-    spec:
-      file: LICENSE
-
-conditions:
-  license:
-    name: Retrieve license file content
-    kind: file
-    sourceid: license
-    scmid: azuredevops
-    spec:
-      file: LICENSE
-
-targets:
-  license:
-    name: Update license title
-    kind: file
-    disablesourceinput: true
-    scmid: azuredevops
-    spec:
-      file: LICENSE
-      content: "# Title"
-      line: 1
-
-actions:
-  default:
-    kind: azuredevops/pullrequest
-    scmid: azuredevops
+## Disabling this test as it requires AZURE DevOps PAT
+## which is not available in the CI
+## export UPDATECLI_AZURE_DEVOPS_USERNAME=xxx
+## export UPDATECLI_AZURE_DEVOPS_TOKEN=yyy
+#
+# name: Test Azure DevOps scm
+# pipelineid: azuredevops/scm
+#
+# scms:
+#   azuredevops:
+#     kind: azuredevops
+#     spec:
+#       organization: updatecli
+#       project: "updatecli-test"
+#       repository: "updatecli-test"
+#       branch: main
+#
+# sources:
+#   license:
+#     name: Retrieve license file content
+#     kind: file
+#     scmid: azuredevops
+#     spec:
+#       file: LICENSE
+#
+# conditions:
+#   license:
+#     name: Retrieve license file content
+#     kind: file
+#     sourceid: license
+#     scmid: azuredevops
+#     spec:
+#       file: LICENSE
+#
+# targets:
+#   license:
+#     name: Update license title
+#     kind: file
+#     disablesourceinput: true
+#     scmid: azuredevops
+#     spec:
+#       file: LICENSE
+#       content: "# Title"
+#       line: 1
+#
+# actions:
+#   default:
+#     kind: azuredevops/pullrequest
+#     scmid: azuredevops
