@@ -116,7 +116,7 @@ func TestConvertVersionConstraintToVersion(t *testing.T) {
 		{expectedResult: "1.0.0", version: ">=1.0.0"},
 		{expectedResult: "1.0.0", version: "1.0.0-alpha"},
 		{expectedResult: "1.0.0", version: "1.0.0+alpha"},
-		{expectedResult: "", version: "1.0.0_alpha", expectedError: true, expectedErrorMsg: "parsing version constraint \"1.0.0_alpha\": improper constraint: 1.0.0_alpha"},
+		{expectedResult: "", version: "1.0.0_alpha", expectedError: true, expectedErrorMsg: "parsing version constraint \"1.0.0_alpha\": improper constraint: \"1.0.0_alpha\""},
 		{expectedResult: "1.0.0", version: "1.0"},
 		{expectedResult: "1.0.0", version: "1"},
 		{expectedResult: "1.0.0", version: "~1.0"},
@@ -125,7 +125,7 @@ func TestConvertVersionConstraintToVersion(t *testing.T) {
 		{expectedResult: "1.0.0", version: ">=1.0.0"},
 		{expectedResult: "1.0.0", version: "<1.0.0"},
 		{expectedResult: "1.0.0", version: "<=1.0.0"},
-		{expectedResult: "", version: "file://../dyl", expectedError: true, expectedErrorMsg: "parsing version constraint \"file://../dyl\": improper constraint: file://../dyl"},
+		{expectedResult: "", version: "file://../dyl", expectedError: true, expectedErrorMsg: "parsing version constraint \"file://../dyl\": improper constraint: \"file://../dyl\""},
 		{expectedResult: "1.0.0", version: "<1.0.0 || >= 2.3.1 < 2.4.5 || >=2.5.2 < 3.0.0"},
 		{expectedResult: "", version: "latest"},
 	}
