@@ -271,7 +271,8 @@ Here is a non-exhaustive list of possible contributions:
 More information available at link:https://github.com/updatecli/updatecli/blob/main/CONTRIBUTING.adoc[CONTRIBUTING]
 
 == Conferences
-
+* 2026
+** Devoxx (FR) - Industrialisez la maintenance de vos stacks Dev et Ops link:https://www.youtube.com/watch?v=RC489sMFrF0[Video]
 * 2025
 ** FOSDEM (BE) - Continuously Update Everything two years later link:https://fosdem.org/2025/schedule/event/fosdem-2025-6076-continuously-update-everything-two-years-later[Event]
 ** Incontro DevOps (IT) - Automate or stagnate: surviving the era of continuous updates link:https://www.youtube.com/watch?v=kVOYFFbbCho[Video]
