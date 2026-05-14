@@ -10,6 +10,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"golang.org/x/mod/modfile"
+	"golang.org/x/mod/module"
 )
 
 const (
@@ -95,4 +96,9 @@ func getGoModContent(filename string) (goVersion string, goModules map[string]st
 	}
 
 	return goVersion, goModules, replaceGoModules, nil
+}
+
+// isPseudoVersion checks if the provided version is a pseudo-version.
+func isPseudoVersion(version string) bool {
+	return module.IsPseudoVersion(version) || module.IsZeroPseudoVersion(version)
 }

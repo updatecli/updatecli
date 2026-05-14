@@ -12,6 +12,8 @@ import (
 
 // discoverDependencyManifests search for each go.mod file
 // and then try to update both "direct" Go module and the Golang version
+//
+//nolint:funlen
 func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 
 	var manifests [][]byte
@@ -94,16 +96,29 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 					}
 				}
 
-				goModuleVersionPattern, err := g.versionFilter.GreaterThanPattern(goModuleVersion)
-				if err != nil {
-					logrus.Debugf("skipping golang module %q due to: %s", goModule, err)
-					continue
+				goModuleVersionPattern := g.versionFilter.Pattern
+				goModuleVersionKind := g.versionFilter.Kind
+				switch isPseudoVersion(goModuleVersion) {
+				case false:
+					goModuleVersionPattern, err = g.versionFilter.GreaterThanPattern(goModuleVersion)
+					if err != nil {
+						logrus.Debugf("skipping golang module %q due to: %s", goModule, err)
+						continue
+					}
+
+				case true:
+					logrus.Debugf("Module %q uses a pseudo-version %q, so ignoring version filter pattern for this module as the registry will only return one version", goModule, goModuleVersion)
+					// If the new version is a pseudo-version,
+					// we cannot apply a version filter pattern as
+					// golang registry will only return one version for this module.
+					goModuleVersionKind = "latest"
+					goModuleVersionPattern = ""
 				}
 
 				moduleManifest, err := getGolangModuleManifest(
 					relativeFoundFile,
 					goModule,
-					g.versionFilter.Kind,
+					goModuleVersionKind,
 					goModuleVersionPattern,
 					g.versionFilter.Regex,
 					g.scmID,
@@ -143,10 +158,25 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 					}
 				}
 
-				goModuleVersionPattern, err := g.versionFilter.GreaterThanPattern(replace.NewVersion)
-				if err != nil {
-					logrus.Debugf("skipping golang module %q due to: %s", replace.NewPath, err)
-					continue
+				goModuleVersionPattern := g.versionFilter.Pattern
+				goModuleVersionKind := g.versionFilter.Kind
+				switch isPseudoVersion(replace.NewVersion) {
+				case false:
+					goModuleVersionPattern, err = g.versionFilter.GreaterThanPattern(replace.NewVersion)
+					if err != nil {
+						logrus.Debugf("skipping golang module %q due to: %s", replace.NewPath, err)
+						continue
+					}
+
+				case true:
+					// If the new version is a pseudo-version,
+					// we cannot apply a version filter pattern as
+					// golang registry will only return one version for this module.
+
+					logrus.Debugf("Module %q uses a pseudo-version %q, so ignoring version filter for this module as the registry will only return one version", replace.NewPath, replace.NewVersion)
+
+					goModuleVersionKind = "latest"
+					goModuleVersionPattern = ""
 				}
 
 				moduleManifest, err := getGolangReplaceModuleManifest(
@@ -154,7 +184,7 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 					replace.OldPath,
 					replace.OldVersion,
 					replace.NewPath,
-					g.versionFilter.Kind,
+					goModuleVersionKind,
 					goModuleVersionPattern,
 					g.versionFilter.Regex,
 					g.scmID,
