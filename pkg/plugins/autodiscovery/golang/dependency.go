@@ -105,7 +105,7 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 					}
 
 				case true:
-					logrus.Debugf("Module %q has a pseudo-version %q, so ignoring version filter pattern for this module as the registry will only return one version for this module\n", goModule, goModuleVersion)
+					logrus.Debugf("Module %q uses a pseudo-version %q, so ignoring version filter pattern for this module as the registry will only return one version", goModule, goModuleVersion)
 					// If the new version is a pseudo-version,
 					// we cannot apply a version filter pattern as
 					// golang registry will only return one version for this module.
@@ -171,7 +171,7 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 					// we cannot apply a version filter pattern as
 					// golang registry will only return one version for this module.
 
-					logrus.Debugf("Module %q has a pseudo-version %q, so ignoring version filter pattern for this module as the registry will only return one version for this module\n", replace.NewPath, replace.NewVersion)
+					logrus.Debugf("Module %q uses a pseudo-version %q, so ignoring version filter for this module as the registry will only return one version", replace.NewPath, replace.NewVersion)
 
 					goModuleVersionKind = "latest"
 					goModuleVersionPattern = ""
