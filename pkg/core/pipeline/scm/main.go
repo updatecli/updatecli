@@ -6,11 +6,15 @@ import (
 	"fmt"
 
 	"github.com/go-viper/mapstructure/v2"
+	"github.com/updatecli/updatecli/pkg/plugins/scms/azuredevops"
+	"github.com/updatecli/updatecli/pkg/plugins/scms/azuredevopssearch"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/bitbucket"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/gitea"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
+	"github.com/updatecli/updatecli/pkg/plugins/scms/githubsearch"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/gitlab"
+	"github.com/updatecli/updatecli/pkg/plugins/scms/gitlabsearch"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/stash"
 )
 
@@ -65,6 +69,14 @@ func (s *Scm) GenerateSCM() error {
 	}
 
 	switch s.Config.Kind {
+	case "azuredevops":
+		g, err := azuredevops.New(s.Config.Spec, s.PipelineID)
+		if err != nil {
+			return err
+		}
+
+		s.Handler = g
+
 	case "bitbucket":
 		g, err := bitbucket.New(s.Config.Spec, s.PipelineID)
 		if err != nil {
@@ -126,9 +138,11 @@ func (s *Scm) GenerateSCM() error {
 		}
 
 		s.Handler = g
-	case "githubsearch":
+	case githubsearch.Kind:
 		// githubsearch scm kind is handled during engine preparation step
-	case "gitlabsearch":
+	case azuredevopssearch.Kind:
+		// azuredevopssearch scm kind is handled during engine preparation step
+	case gitlabsearch.Kind:
 		// gitlabsearch scm kind is handled during engine preparation step
 	default:
 		return fmt.Errorf("scm of kind %q is not supported", s.Config.Kind)

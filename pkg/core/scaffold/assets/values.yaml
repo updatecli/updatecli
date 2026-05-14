@@ -27,5 +27,7 @@ scm:
   # user: updatecli-bot
   # email: updatecli-bot@example.com
   # branch: main
+  
+  limit: 3
 
 # Example: to disable SCM during local dry-runs, set `scm.enabled: false`.

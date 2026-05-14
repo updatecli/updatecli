@@ -11,23 +11,101 @@ link:https://img.shields.io/github/actions/workflow/status/updatecli/updatecli/g
 link:https://api.securityscorecards.dev/projects/github.com/updatecli/updatecli[image:https://api.securityscorecards.dev/projects/github.com/updatecli/updatecli/badge[OpenSSF Scorecard]]
 link:https://bestpractices.coreinfrastructure.org/projects/6731[image:https://bestpractices.coreinfrastructure.org/projects/6731/badge[OpenSSF Best Practices]]
 
-_"Automatically open a PR on your GitOps repository when a third party service publishes an update"_
+_"Automatically open a PR on your Git repository when a file update is needed"_
 
-Updatecli is a tool used to apply file update strategies. Designed to be used from everywhere, each application "run" detects if a value needs to be updated using a custom strategy then apply changes according to the strategy.
+Updatecli is a universal declarative update policy engine. Designed to be used from everywhere, each Updatecli "run" detects if a file needs to be updated using a tailored update policy then apply changes.
 
-You describe your update strategy in a file then you run updatecli to it.
+You describe your update strategy in a policy then you enforce it using Updatecli.
 
-Updatecli reads a yaml or a go template configuration file, then works into three stages
+Every Updatecli policy is a YAML (or Go template) file that runs through three stages:
 
-1. Sources: Based on a rule, updatecli fetches a value that will be injected in later stages such as latest application version.
-2. Conditions: Ensure that conditions are met based on the value retrieved during the source stage.
-3. Targets: Update and publish the target files based on a value retrieved from the source stage.
+1. *Sources* — Fetch the new value to apply (e.g. latest Docker image tag, newest Helm chart version, latest GitHub release).
+2. *Conditions* — Verify that all prerequisites are met before making any change (optional but recommended).
+3. *Targets* — Apply the change to the right file or service, and open a pull request if an SCM is configured.
+
+== What Can You Update?
+
+Updatecli ships with 30+ built-in integrations. Here are the most common scenarios:
+
+* 📄 *File formats* —
+  Update values in YAML, JSON, TOML, XML, HCL, CSV, Dockerfiles, and `.tool-versions` files,
+  or any text file with pattern matching.
+
+* 🐳 *Container images* —
+  Track Docker image tags and digests from Docker Hub or any OCI-compliant registry.
+
+* 📦 *Package registries* —
+  Helm charts (including OCI), npm, PyPI, Maven, Cargo (Rust crates), Go modules,
+  and Terraform providers/modules.
+
+* 🏷️ *Git & releases* —
+  GitHub/GitLab releases, Git tags and branches.
+
+* ☕ *Languages & runtimes* —
+  Jenkins LTS/weekly releases, Eclipse Temurin (JDK), Go language versions,
+  Bazel modules and registry.
+
+* ☁️ *Cloud* —
+  AWS AMIs.
+
+* 🔧 *Custom logic* —
+  Shell scripts and HTTP endpoints, for anything not covered above.
+
+Find the full list and documentation on link:https://www.updatecli.io/docs/prologue/introduction/[www.updatecli.io].
 
 == Feature
 
-* *Flexibility*: Easy to define tailored update strategies, you are just one yaml file from it.
-* *Portability*: Easy to add to your workflow whatever it is. Just one command to run.  Of course, it's easy to remove.
-* *Extensibility*: Easy to add new go packages to support more workflows.
+[cols="1,1,3,1", options="header"]
+|===
+| SCM Platform | Supported | Capabilities | Plugin
+
+| GitHub
+| ✅
+| Clone, branch, commit, push, Pull Requests, releases
+| `github`
+
+| GitLab
+| ✅
+| Clone, branch, commit, push, Merge Requests, releases
+| `gitlab`
+
+| Gitea
+| ✅
+| Clone, branch, commit, push, Pull Requests, releases
+| `gitea`
+
+| Forgejo
+| ✅
+| Compatible through Gitea API support
+| `gitea`
+
+| Bitbucket Cloud
+| ✅
+| Clone, branch, commit, push, Pull Requests
+| `bitbucket`
+
+| Bitbucket Server / Stash
+| ✅
+| Clone, branch, commit, push, Pull Requests
+| `stash`
+
+| Azure DevOps
+| ✅
+| Clone, branch, commit, push, Pull Requests
+| `azuredevops`
+
+| Generic Git Repository
+| ✅
+| Clone, branch, commit, push
+| `git`
+
+|===
+
+* *Declarative* — Define your update policy once in YAML; Updatecli handles detection and application.
+* *30+ integrations* — Docker, Helm, GitHub releases, npm, PyPI, Terraform, AWS AMIs, and more — out of the box.
+* *Any CI/CD* — Runs as a single binary. Drop it into GitHub Actions, Jenkins, GitLab CI, or any shell.
+* *Safe by default* — Use `--dry-run` to preview every change before it is applied.
+* *Extensible* — Add custom logic via shell scripts or HTTP, or contribute a new Go plugin.
 
 == Why
 
@@ -213,10 +291,11 @@ More information available at link:https://github.com/updatecli/updatecli/blob/m
 * link:https://www.updatecli.io/docs/prologue/introduction/[DOCUMENTATION]
 * link:https://github.com/updatecli/updatecli/blob/main/LICENSE[LICENSE]
 
-== Thanks to all the contributors ❤️
+== Thanks to you
+=== Contributors ❤️
 
 link:https://github.com/updatecli/updatecli/graphs/contributors"[image:https://contrib.rocks/image?repo=updatecli/updatecli[]]
 
-== Thanks to the sponsors ❤️
+=== Sponsors ❤️
 
 link:https://www.prefect.io/[image:https://avatars.githubusercontent.com/u/41086007?v=4[alt=PrefectHQ,height=200, width=200]]
