@@ -12,6 +12,8 @@ import (
 
 // discoverDependencyManifests search for each go.mod file
 // and then try to update both "direct" Go module and the Golang version
+//
+//nolint:funlen
 func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 
 	var manifests [][]byte
