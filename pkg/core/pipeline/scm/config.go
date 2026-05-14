@@ -9,6 +9,8 @@ import (
 	jschema "github.com/invopop/jsonschema"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/jsonschema"
+	"github.com/updatecli/updatecli/pkg/plugins/scms/azuredevops"
+	"github.com/updatecli/updatecli/pkg/plugins/scms/azuredevopssearch"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/bitbucket"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/gitea"
@@ -156,14 +158,16 @@ func (Config) JSONSchema() *jschema.Schema {
 	type configAlias Config
 
 	anyOfSpec := map[string]interface{}{
-		"bitbucket":    &bitbucket.Spec{},
-		"git":          &git.Spec{},
-		"gitea":        &gitea.Spec{},
-		"github":       &github.Spec{},
-		"gitlab":       &gitlab.Spec{},
-		"stash":        &stash.Spec{},
-		"githubsearch": &githubsearch.Spec{},
-		"gitlabsearch": &gitlabsearch.Spec{},
+		"azuredevops":       &azuredevops.Spec{},
+		"azuredevopssearch": &azuredevopssearch.Spec{},
+		"bitbucket":         &bitbucket.Spec{},
+		"git":               &git.Spec{},
+		"gitea":             &gitea.Spec{},
+		"github":            &github.Spec{},
+		"gitlab":            &gitlab.Spec{},
+		"stash":             &stash.Spec{},
+		"githubsearch":      &githubsearch.Spec{},
+		"gitlabsearch":      &gitlabsearch.Spec{},
 	}
 
 	return jsonschema.AppendOneOfToJsonSchema(configAlias{}, anyOfSpec)

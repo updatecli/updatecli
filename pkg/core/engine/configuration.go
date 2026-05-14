@@ -15,6 +15,8 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/reports"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/scms/azuredevops"
+	"github.com/updatecli/updatecli/pkg/plugins/scms/azuredevopssearch"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/githubsearch"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/gitlab"
@@ -172,6 +174,44 @@ func (e *Engine) LoadConfigurations() error {
 
 							loadedConfigurations = append(loadedConfigurations, newPipeline)
 							logrus.Debugf("githubsearch scm %q added new pipeline configuration for repository %s/%s", scmID, spec.Owner, spec.Repository)
+						}
+
+					case azuredevopssearch.Kind:
+
+						logrus.Debugf("Processing azuredevopssearch scm %q for potential multiple repository discovery", scmID)
+
+						ctx := context.Background()
+						azdoSearchScms, err := azuredevopssearch.New(scmConfig.Spec)
+						if err != nil {
+							return fmt.Errorf("unable to instantiate azuredevopssearch scm %q: %w", scmID, err)
+						}
+						discoveredAzureDevOpsSCms, err := azdoSearchScms.ScmsGenerator(ctx)
+						if err != nil {
+							return fmt.Errorf("unable to generate scm specs for azuredevopssearch scm %q: %w", scmID, err)
+						}
+
+						if len(discoveredAzureDevOpsSCms) == 0 {
+							return fmt.Errorf("no scm discovered for azuredevopssearch scm %q", scmID)
+						}
+
+						scmConfig.Kind = azuredevops.Kind
+						scmConfig.Spec = discoveredAzureDevOpsSCms[0]
+
+						loadedConfigurations[i].Spec.SCMs[scmID] = scmConfig
+
+						for _, spec := range discoveredAzureDevOpsSCms[1:] {
+							newPipeline := loadedConfiguration
+
+							newPipeline.Spec.SCMs = make(map[string]scm.Config, len(loadedConfiguration.Spec.SCMs))
+							maps.Copy(newPipeline.Spec.SCMs, loadedConfiguration.Spec.SCMs)
+
+							newSCM := newPipeline.Spec.SCMs[scmID]
+							newSCM.Kind = azuredevops.Kind
+							newSCM.Spec = spec
+
+							newPipeline.Spec.SCMs[scmID] = newSCM
+
+							loadedConfigurations = append(loadedConfigurations, newPipeline)
 						}
 
 					case gitlabsearch.Kind:
