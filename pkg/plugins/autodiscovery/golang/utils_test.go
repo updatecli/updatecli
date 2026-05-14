@@ -20,6 +20,7 @@ func TestSearchGoModFiles(t *testing.T) {
 			expectedFoundFiles: []string{
 				"testdata/noModule/go.mod",
 				"testdata/noSumFile/go.mod",
+				"testdata/pseudoVersion/go.mod",
 				"testdata/replace/go.mod",
 			},
 		},
@@ -85,6 +86,32 @@ func TestGetGoModContent(t *testing.T) {
 			assert.Equal(t, d.expectedModules, foundGoModules)
 			assert.Equal(t, d.expectedReplaceModules, foundReplaceGoModules)
 			assert.Equal(t, d.expectedGoVersion, foundGoVersion)
+		})
+	}
+}
+
+func TestPseudoVersion(t *testing.T) {
+	dataset := []struct {
+		name           string
+		version        string
+		expectedResult bool
+	}{
+		{
+			name:           "Valid pseudo-version",
+			version:        "v1.2.3-20230215024106-420ad0987b9b",
+			expectedResult: true,
+		},
+		{
+			name:           "Invalid pseudo-version",
+			version:        "v1.2.3",
+			expectedResult: false,
+		},
+	}
+
+	for _, d := range dataset {
+		t.Run(d.name, func(t *testing.T) {
+			result := isPseudoVersion(d.version)
+			assert.Equal(t, d.expectedResult, result)
 		})
 	}
 }

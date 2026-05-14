@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -14,6 +15,11 @@ import (
 
 const (
 	GoModFile string = "go.mod"
+)
+
+var (
+	// pseudoVersionRegex is a regular expression to match Go pseudo-versions.
+	pseudoVersionRegex *regexp.Regexp = regexp.MustCompile(`^v\d+\.\d+\.\d+-\d{14}-[a-f0-9]{12}$`)
 )
 
 type Replace struct {
@@ -95,4 +101,9 @@ func getGoModContent(filename string) (goVersion string, goModules map[string]st
 	}
 
 	return goVersion, goModules, replaceGoModules, nil
+}
+
+// isPseudoVersion checks if the provided version is a pseudo-version.
+func isPseudoVersion(version string) bool {
+	return pseudoVersionRegex.MatchString(version)
 }
