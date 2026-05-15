@@ -51,7 +51,7 @@ require (
 	github.com/google/go-containerregistry v0.21.5
 	github.com/google/go-github/v69 v69.2.0
 	github.com/goware/urlx v0.3.2
-	github.com/hashicorp/hcl/v2 v2.23.1-0.20250211201033-5c140ce1cb20
+	github.com/hashicorp/hcl/v2 v2.24.0
 	github.com/hashicorp/terraform-registry-address v0.4.0
 	github.com/invopop/jsonschema v0.14.0
 	github.com/jferrl/go-githubauth v1.6.0
