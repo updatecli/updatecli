@@ -83,7 +83,7 @@ require (
 	golang.org/x/exp v0.0.0-20260410095643-746e56fc9e2f
 	golang.org/x/text v0.36.0
 	golang.org/x/time v0.14.0
-	gopkg.in/ini.v1 v1.67.1
+	gopkg.in/ini.v1 v1.67.2
 	oras.land/oras-go/v2 v2.6.0
 )
 
