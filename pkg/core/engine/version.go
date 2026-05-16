@@ -59,13 +59,13 @@ func CheckLatestPublishedVersion() error {
 		return s
 	}
 
-	if data.Latest.Tag == version.Version {
+	if sanitizeVersion(data.Latest.Tag) == sanitizeVersion(version.Version) {
 		return nil
 	}
 
 	logrus.Infof("\n---")
-	logrus.Infof("A new version of updatecli is available: %s (current: %q)", sanitizeVersion(data.Latest.Tag), sanitizeVersion(version.Version))
-	logrus.Infof("Changelog available at: www.updatecli.io/changelsogs/updatecli/changelogs/%s/", data.Latest.Tag)
+	logrus.Infof("A new version of updatecli is available: %s (current: %s)", data.Latest.Tag, version.Version)
+	logrus.Infof("Changelog available at: www.updatecli.io/changelogs/updatecli/changelogs/%s/", data.Latest.Tag)
 	logrus.Infof("---")
 
 	return nil
