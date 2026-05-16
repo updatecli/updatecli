@@ -26,7 +26,7 @@ require (
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/oauth2 v0.36.0
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	helm.sh/helm/v3 v3.20.2
+	helm.sh/helm/v3 v3.21.0
 	sigs.k8s.io/yaml v1.6.0
 )
 
@@ -219,15 +219,14 @@ require (
 	go.opentelemetry.io/contrib/exporters/autoexport v0.67.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.63.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.43.0 // indirect
-	go.opentelemetry.io/otel/exporters/stdout/stdoutmetric v1.42.0 // indirect
 	go.opentelemetry.io/otel/metric v1.43.0 // indirect
 	go.opentelemetry.io/otel/sdk/metric v1.43.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.10.0 // indirect
-	go.yaml.in/yaml/v2 v2.4.3 // indirect
+	go.yaml.in/yaml/v2 v2.4.4 // indirect
 	golang.org/x/xerrors v0.0.0-20231012003039-104605ab7028 // indirect
 	google.golang.org/genproto v0.0.0-20260128011058-8636f8732409 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260401024825-9d38bb4040a9 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260401024825-9d38bb4040a9 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260406210006-6f92a3bedf2d // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.13.0 // indirect
 	sigs.k8s.io/controller-runtime v0.23.1 // indirect
 	sigs.k8s.io/randfill v1.0.0 // indirect
