@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"strings"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -11,15 +12,12 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/version"
 )
 
-var (
-	// versionHTTPEndpoint is the URL to check for the latest version of updatecli
-	versionHTTPEndpoint string = "https://www.updatecli.io/changelogs/updatecli/_index.json"
-)
+// versionHTTPEndpoint is the URL to check for the latest version of updatecli
+var versionHTTPEndpoint string = "https://www.updatecli.io/changelogs/updatecli/_index.json"
 
 // CheckLatestPublishedVersion check if the currently used version is the latest version
 // available
 func CheckLatestPublishedVersion() error {
-
 	client := httpclient.NewThrottledRetryClient(1*time.Second, 1)
 
 	type versionData struct {
@@ -54,12 +52,19 @@ func CheckLatestPublishedVersion() error {
 		return fmt.Errorf("unable to parse the latest version of updatecli: %v", err)
 	}
 
-	if data.Latest.Tag == version.Version {
+	sanitizeVersion := func(v string) string {
+		s := strings.TrimSpace(v)
+		s = strings.TrimPrefix(s, "v")
+
+		return s
+	}
+
+	if sanitizeVersion(data.Latest.Tag) == sanitizeVersion(version.Version) {
 		return nil
 	}
 
 	logrus.Infof("\n---")
-	logrus.Infof("A new version of updatecli is available: %s (current: %q)", data.Latest.Tag, version.Version)
+	logrus.Infof("A new version of updatecli is available: %s (current: %s)", data.Latest.Tag, version.Version)
 	logrus.Infof("Changelog available at: www.updatecli.io/changelogs/updatecli/changelogs/%s/", data.Latest.Tag)
 	logrus.Infof("---")
 
