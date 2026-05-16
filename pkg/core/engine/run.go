@@ -78,6 +78,10 @@ func (e *Engine) Run(ctx context.Context) (err error) {
 
 	for i := range e.Pipelines {
 		pipeline := e.Pipelines[i]
+		err = pipeline.Report.UpdateCIJob()
+		if err != nil {
+			logrus.Debugf("updating CI job information: %s", err)
+		}
 		err = pipeline.Report.UpdateID()
 		if err != nil {
 			errs = append(errs, fmt.Errorf("updating report ID failed: %w", err))
