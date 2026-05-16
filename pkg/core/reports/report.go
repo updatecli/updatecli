@@ -97,7 +97,7 @@ type Report struct {
 	Conditions map[string]*result.Condition
 	Targets    map[string]*result.Target
 	ReportURL  string
-	CI         CIData `json:",omitempty"`
+	CI         *CIData
 }
 
 // String returns a report as a string
@@ -142,7 +142,7 @@ func (r *Report) UpdateCIJob() error {
 		return nil
 	}
 
-	r.CI = CIData{
+	r.CI = &CIData{
 		Name: detectedCi.Name(),
 		URL:  detectedCi.URL(),
 	}
