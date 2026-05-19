@@ -146,8 +146,8 @@ func New(spec interface{}, rootDir, scmID, actionID, flavor string) (Kubernetes,
 	// If no RootDir have been provided via settings,
 	// then fallback to the current process path.
 	if len(dir) == 0 {
-		logrus.Errorln("no working directory defined")
-		return Kubernetes{}, err
+		logrus.Warningln("no working directory defined")
+		return Kubernetes{}, nil
 	}
 
 	newFilter := s.VersionFilter
@@ -177,11 +177,9 @@ func New(spec interface{}, rootDir, scmID, actionID, flavor string) (Kubernetes,
 		versionFilter: newFilter,
 		flavor:        flavor,
 	}, nil
-
 }
 
 func (k Kubernetes) DiscoverManifests() ([][]byte, error) {
-
 	logrus.Infof("\n\n%s\n", strings.ToTitle("Kubernetes"))
 	logrus.Infof("%s\n", strings.Repeat("=", len("Kubernetes")+1))
 
