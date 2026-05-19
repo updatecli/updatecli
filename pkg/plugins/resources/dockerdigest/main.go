@@ -139,5 +139,6 @@ func (d *DockerDigest) ReportConfig() interface{} {
 		Tag:          d.spec.Tag,
 		Digest:       d.spec.Digest,
 		Architecture: d.spec.Architecture,
+		HideTag:      d.spec.HideTag,
 	}
 }
