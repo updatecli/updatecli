@@ -25,6 +25,8 @@ func TestSearchFiles(t *testing.T) {
 			path: "testdata",
 			expectedResults: []string{
 				"testdata/cronjob/cronjob.yaml",
+				"testdata/empty/kubernetes.1.yaml",
+				"testdata/empty/kubernetes.2.yaml",
 				"testdata/initContainers/initContainers.yaml",
 				"testdata/kustomize/deployment.yaml",
 				"testdata/latest/pod.yaml",
