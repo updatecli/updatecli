@@ -12,6 +12,9 @@
 [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/updatecli/updatecli/go.yaml?branch=main)](https://img.shields.io/github/actions/workflow/status/updatecli/updatecli/go.yaml?branch=main)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/updatecli/updatecli/badge)](https://api.securityscorecards.dev/projects/github.com/updatecli/updatecli)
 [![OpenSSF Best Practices](https://bestpractices.coreinfrastructure.org/projects/6731/badge)](https://bestpractices.coreinfrastructure.org/projects/6731)
+[![Last Commit](https://img.shields.io/github/last-commit/updatecli/updatecli)](https://github.com/updatecli/updatecli/commits/main)
+[![Mentioned in Awesome Go](https://awesome.re/mentioned-badge.svg)](https://github.com/avelino/awesome-go)
+
 
 _"Automatically open a PR on your Git repository when a file update is needed"_
 
