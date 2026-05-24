@@ -16,6 +16,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/scms/gitlab"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/gitlabsearch"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/stash"
+	"github.com/updatecli/updatecli/pkg/plugins/scms/tangled"
 )
 
 type Scm struct {
@@ -95,6 +96,14 @@ func (s *Scm) GenerateSCM() error {
 
 	case "gitea":
 		g, err := gitea.New(s.Config.Spec, s.PipelineID)
+		if err != nil {
+			return err
+		}
+
+		s.Handler = g
+
+	case "tangled":
+		g, err := tangled.New(s.Config.Spec, s.PipelineID)
 		if err != nil {
 			return err
 		}

@@ -19,6 +19,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/scms/gitlab"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/gitlabsearch"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/stash"
+	"github.com/updatecli/updatecli/pkg/plugins/scms/tangled"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
 )
 
@@ -166,6 +167,7 @@ func (Config) JSONSchema() *jschema.Schema {
 		"github":            &github.Spec{},
 		"gitlab":            &gitlab.Spec{},
 		"stash":             &stash.Spec{},
+		"tangled":           &tangled.Spec{},
 		"githubsearch":      &githubsearch.Spec{},
 		"gitlabsearch":      &gitlabsearch.Spec{},
 	}
