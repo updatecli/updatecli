@@ -1,6 +1,8 @@
 package gomodule
 
 import (
+	"fmt"
+
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
@@ -41,6 +43,10 @@ func New(spec interface{}) (*GoModule, error) {
 		// By default, golang versioning uses semantic versioning
 		newFilter.Kind = version.SEMVERVERSIONKIND
 		newFilter.Pattern = "*"
+	}
+
+	if err = newSpec.Age.Validate(); err != nil {
+		return nil, fmt.Errorf("wrong age spec %v", err)
 	}
 
 	return &GoModule{

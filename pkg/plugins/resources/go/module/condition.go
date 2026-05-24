@@ -34,12 +34,12 @@ func (g *GoModule) Condition(ctx context.Context, source string, scm scm.ScmHand
 		if !isSupportedGoProxy(proxy) {
 			continue
 		}
-		version, err := getVersionInfoFromProxy(ctx, g.webClient, proxy, g.Spec.Module, versionToCheck)
+		versionInfo, err := getVersionInfoFromProxy(ctx, g.webClient, proxy, g.Spec.Module, versionToCheck)
 		if err != nil {
 			logrus.Debugf("skipping proxy %q due to %q\n", proxy, err)
 		}
 
-		if version != "" {
+		if versionInfo.Version != "" {
 			return true, fmt.Sprintf("version %q available", versionToCheck), nil
 		}
 	}

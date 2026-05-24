@@ -1,6 +1,7 @@
 package gomodule
 
 import (
+	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
@@ -16,4 +17,6 @@ type Spec struct {
 	Version string `yaml:",omitempty"`
 	// [S] VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
 	VersionFilter version.Filter `yaml:",omitempty"`
+	// [S] Age defines the minimum age of a release to be considered valid. It accepts a duration string (e.g., "24h", "7d").
+	Age age.Spec `yaml:",omitempty"`
 }
