@@ -48,6 +48,7 @@ func (g *GoModule) versions(ctx context.Context) (v string, versions []string, e
 			logrus.Debugf("skipping proxy %q due to %q\n", proxy, err)
 			continue
 		}
+
 		if proxyVersions == nil && isLatestVersionFilter(g.versionFilter) {
 			pseudoVersion, err := getLatestVersionFromProxy(ctx, g.webClient, proxy, g.Spec.Module)
 			if err != nil {
@@ -127,18 +128,16 @@ func getVersionsFromProxy(ctx context.Context, client httpclient.HTTPClient, pro
 		return nil, err
 	}
 
-	/*
-		The response should be a list of version separated by \n
-		as explained on https://go.dev/ref/mod#goproxy-protocol
-	*/
+	// The response should be a list of version separated by \n
+	// as explained on https://go.dev/ref/mod#goproxy-protocol
 
 	dataStr := strings.TrimSpace(string(data))
 	versions := strings.Split(dataStr, "\n")
 
-	sanitizedVersions := []string{}
-
 	// Sanitize versions by filtering out versions that are too recent based on the MinimumReleaseAge filter
 	if !releaseAge.IsZero() {
+		sanitizedVersions := []string{}
+
 		for v := range versions {
 			getVersionInfo, err := getVersionInfoFromProxy(ctx, client, proxy, module, versions[v])
 			if err != nil {
@@ -163,12 +162,9 @@ func getVersionsFromProxy(ctx context.Context, client httpclient.HTTPClient, pro
 			}
 
 			sanitizedVersions = append(sanitizedVersions, versions[v])
-
-			logrus.Debugf("version %q from proxy %q is valid and will be included\n", versions[v], proxy)
 		}
+		versions = sanitizedVersions
 	}
-
-	versions = sanitizedVersions
 
 	if len(versions) == 1 && versions[0] == "" {
 		return nil, nil
