@@ -63,5 +63,6 @@ func (g *GoModule) ReportConfig() interface{} {
 		Module:        g.Spec.Module,
 		Version:       g.Spec.Version,
 		VersionFilter: g.Spec.VersionFilter,
+		Age:           g.Spec.Age,
 	}
 }
