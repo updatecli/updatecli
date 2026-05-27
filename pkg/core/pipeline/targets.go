@@ -36,36 +36,38 @@ func (p *Pipeline) RunTarget(ctx context.Context, id string, sourceIds []string)
 		err = fmt.Errorf("%s", err)
 	}
 
-	changelogSourceID := target.Config.SourceID
-	if changelogSourceID == "" {
-		switch len(sourceIds) {
-		case 1:
-			changelogSourceID = sourceIds[0]
-		case 0:
-		// If we have more than one sourceID then we can't define in a reliable way which one to use
-		// as the order of the sourceIDs is not guaranteed.
-		default:
-			logrus.Debugf("Target depends on a too many sources that we can't determine which one to use for the changelog")
+	if !p.Options.DisableChangelog {
+		changelogSourceID := target.Config.SourceID
+		if changelogSourceID == "" {
+			switch len(sourceIds) {
+			case 1:
+				changelogSourceID = sourceIds[0]
+			case 0:
+			// If we have more than one sourceID then we can't define in a reliable way which one to use
+			// as the order of the sourceIDs is not guaranteed.
+			default:
+				logrus.Debugf("Target depends on a too many sources that we can't determine which one to use for the changelog")
+			}
 		}
-	}
 
-	if changelogSourceID != "" {
-		// Once the source is executed, then it can retrieve its changelog
-		// Any error means an empty changelog
-		if source, found := p.Sources[changelogSourceID]; found {
-			c, err := resource.New(source.Config.ResourceConfig)
+		if changelogSourceID != "" {
+			// Once the source is executed, then it can retrieve its changelog
+			// Any error means an empty changelog
+			if source, found := p.Sources[changelogSourceID]; found {
+				c, err := resource.New(source.Config.ResourceConfig)
 
-			if err == nil {
+				if err == nil {
 
-				changelogs := c.Changelog(target.Result.Information, source.OriginalOutput)
+					changelogs := c.Changelog(target.Result.Information, source.OriginalOutput)
 
-				if changelogs != nil {
-					target.Result.Changelogs = *changelogs
+					if changelogs != nil {
+						target.Result.Changelogs = *changelogs
 
-					logrus.Debugf("%s", changelogs.String())
+						logrus.Debugf("%s", changelogs.String())
 
-				} else {
-					logrus.Debugln("no changelog detected")
+					} else {
+						logrus.Debugln("no changelog detected")
+					}
 				}
 			}
 		}
