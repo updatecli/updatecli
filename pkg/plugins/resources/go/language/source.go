@@ -9,9 +9,23 @@ import (
 
 // Source returns the latest go module version
 func (l *Language) Source(ctx context.Context, workingDir string, resultSource *result.Source) error {
+
 	_, err := l.versions(ctx)
 	if err != nil {
 		return fmt.Errorf("retrieving golang version: %w", err)
+	}
+
+	switch l.Spec.Age.IsZero() {
+	case true:
+		_, err = l.versions(ctx)
+		if err != nil {
+			return fmt.Errorf("searching golang version: %w", err)
+		}
+	case false:
+		_, err = l.getTagsFromRepository()
+		if err != nil {
+			return fmt.Errorf("searching golang version from repository: %w", err)
+		}
 	}
 
 	resultSource.Information = l.Version.GetVersion()
