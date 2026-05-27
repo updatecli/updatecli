@@ -45,18 +45,24 @@ func (g *GoModule) versions(ctx context.Context) (v string, versions []string, e
 
 		proxyVersions, err := getVersionsFromProxy(ctx, g.webClient, proxy, g.Spec.Module, g.Spec.Age)
 		if err != nil {
-			logrus.Debugf("skipping proxy %q due to %q\n", proxy, err)
+			logrus.Debugf("skipping proxy %q due to %v\n", proxy, err)
 			continue
 		}
 
 		if proxyVersions == nil && isLatestVersionFilter(g.versionFilter) {
 			pseudoVersion, err := getLatestVersionFromProxy(ctx, g.webClient, proxy, g.Spec.Module)
 			if err != nil {
-				logrus.Debugf("skipping proxy %q due to %q\n", proxy, err)
+				logrus.Debugf("skipping proxy %q due to %v\n", proxy, err)
 				continue
 			}
 
 			if pseudoVersion != "" {
+
+				if !isPseudoVersionMatchingAge(pseudoVersion, g.Spec.Age) {
+					logrus.Debugf("ignoring pseudo version %q from proxy %q because it doesn't match the age filter\n", pseudoVersion, proxy)
+					return "", nil, nil
+				}
+
 				versions = append(versions, pseudoVersion)
 			}
 
@@ -164,6 +170,10 @@ func getVersionsFromProxy(ctx context.Context, client httpclient.HTTPClient, pro
 			sanitizedVersions = append(sanitizedVersions, versions[v])
 		}
 		versions = sanitizedVersions
+	}
+
+	if len(versions) == 0 {
+		return nil, nil
 	}
 
 	if len(versions) == 1 && versions[0] == "" {
@@ -299,4 +309,32 @@ func isLatestVersionFilter(versionfilter version.Filter) bool {
 	}
 
 	return false
+}
+
+func isPseudoVersionMatchingAge(pseudoVersion string, releaseAge age.Spec) bool {
+	// Pseudo versions have the format vX.0.0-yyyymmddhhmmss-abcdefabcdef
+	parts := strings.Split(pseudoVersion, "-")
+	if len(parts) < 3 {
+		logrus.Debugf("invalid pseudo version format: %q\n", pseudoVersion)
+		return false
+	}
+
+	timestamp := parts[len(parts)-2]
+	releaseDate, err := time.Parse("20060102150405", timestamp)
+	if err != nil {
+		logrus.Debugf("failed to parse release date from pseudo version %q: %q\n", pseudoVersion, err)
+		return false
+	}
+
+	if releaseAge.Minimum != "" && releaseAge.IsOlderThan(releaseDate, nil) {
+		logrus.Debugf("ignoring pseudo version %q because its age is below %q (released on %s)\n", pseudoVersion, releaseAge.Minimum, releaseDate)
+		return false
+	}
+
+	if releaseAge.Maximum != "" && releaseAge.IsNewerThan(releaseDate, nil) {
+		logrus.Debugf("ignoring pseudo version %q because its age is above %q (released on %s)\n", pseudoVersion, releaseAge.Maximum, releaseDate)
+		return false
+	}
+
+	return true
 }
