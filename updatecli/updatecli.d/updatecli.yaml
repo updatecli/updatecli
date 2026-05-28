@@ -57,7 +57,7 @@ targets:
     name: 'docs: update issue template with Updatecli version to {{ source "latestVersion" }}'
     kind: file
     spec:
-      file: README.adoc
+      file: README.md
       matchpattern: "ghcr.io/updatecli/updatecli:(.*)"
       replacepattern: 'ghcr.io/updatecli/updatecli:{{ source "latestVersion" }}'
     scmid: default
