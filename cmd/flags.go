@@ -10,6 +10,6 @@ func addDisableChangelogFlag(cmd *cobra.Command, dest *bool) {
 		dest,
 		"disable-changelog",
 		getEnvBoolOrDefault(DisableChangelogEnvVar, false),
-		"Disable changelog retrieval to avoid unnecessary requests (env: UPDATECLI_DISABLE_CHANGELOG)",
+		"Disable changelog retrieval to avoid unnecessary requests (env: "+DisableChangelogEnvVar+")",
 	)
 }
