@@ -8,6 +8,8 @@ import (
 )
 
 func TestAddDisableChangelogFlagRegistration(t *testing.T) {
+	t.Setenv(DisableChangelogEnvVar, "false")
+
 	cmd := &cobra.Command{
 		Use: "test",
 	}
