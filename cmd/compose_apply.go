@@ -53,6 +53,7 @@ var (
 			e.Options.Pipeline.Target.DryRun = false
 			e.Options.Pipeline.Target.CleanGitBranches = composeApplyCleanGitBranches
 			e.Options.Pipeline.Target.ExistingOnly = composeApplyExistingOnly
+			e.Options.Pipeline.DisableChangelog = disableChangelog
 
 			err = run("compose/apply")
 			if err != nil {
@@ -76,6 +77,8 @@ func init() {
 	composeApplyCmd.Flags().StringArrayVar(&labels, "labels", []string{}, "Filter pipelines to apply by their labels, accepted as a comma separated list (key:value)")
 	composeApplyCmd.Flags().StringArrayVar(&composeApplyOnlyPolicyIDs, "only-policy-ids", []string{}, "Filter policies to apply by their policy IDs, accepted as a comma separated list")
 	composeApplyCmd.Flags().StringArrayVar(&composeApplyIgnoredPolicyIDs, "ignored-policy-ids", []string{}, "Filter policies to ignore by their policy IDs, accepted as a comma separated list")
+
+	addDisableChangelogFlag(composeApplyCmd, &disableChangelog)
 
 	composeCmd.AddCommand(composeApplyCmd)
 }

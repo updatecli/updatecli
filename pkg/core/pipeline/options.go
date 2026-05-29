@@ -8,4 +8,6 @@ import (
 
 type Options struct {
 	Target target.Options
+	// DisableChangelog disables changelog retrieval for targets.
+	DisableChangelog bool
 }
