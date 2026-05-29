@@ -52,6 +52,11 @@ func CheckLatestPublishedVersion() error {
 		return fmt.Errorf("unable to parse the latest version of updatecli: %v", err)
 	}
 
+	// Mean that we are using a development version of updatecli, so we can't compare it with the latest version available
+	if version.Version == "" {
+		return nil
+	}
+
 	currentVersion, err := semver.NewVersion(version.Version)
 	if err != nil {
 		logrus.Warnf("unable to parse the current version of updatecli: %v", err)

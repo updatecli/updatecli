@@ -11,7 +11,7 @@ import (
 
 var (
 	// Version contains application version
-	Version string = "0.0.0-dev"
+	Version string
 
 	// BuildTime contains application build time
 	BuildTime string
