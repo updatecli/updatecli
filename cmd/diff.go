@@ -35,6 +35,7 @@ var (
 			e.Options.Pipeline.Target.Push = false
 			e.Options.Pipeline.Target.Clean = diffClean
 			e.Options.Pipeline.Target.DryRun = true
+			e.Options.Pipeline.DisableChangelog = disableChangelog
 
 			logrus.Warningln("Deprecated command, please instead use `updatecli pipeline diff`")
 
@@ -57,4 +58,6 @@ func init() {
 	diffCmd.Flags().BoolVar(&disableTLS, "disable-tls", false, "Disable TLS verification like '--disable-tls=true'")
 	diffCmd.Flags().StringArrayVar(&pipelineIds, "pipeline-ids", []string{}, "Filter pipelines to apply by their pipeline IDs, accepted a comma separated list")
 	diffCmd.Flags().StringArrayVar(&labels, "labels", []string{}, "Filter pipelines to apply by their labels, accepted as a comma separated list (key:value)")
+
+	addDisableChangelogFlag(diffCmd, &disableChangelog)
 }
