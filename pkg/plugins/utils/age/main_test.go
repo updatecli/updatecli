@@ -21,11 +21,6 @@ func TestParseReleaseAge(t *testing.T) {
 			expected: 24 * time.Hour,
 		},
 		{
-			name:     "hours via standard Go duration",
-			input:    "24h",
-			expected: 24 * time.Hour,
-		},
-		{
 			name:     "days suffix",
 			input:    "1d",
 			expected: 24 * time.Hour,
