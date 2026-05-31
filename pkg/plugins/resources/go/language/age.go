@@ -83,19 +83,13 @@ func (l *Language) getTagsFromRepository() ([]string, error) {
 			return nil
 		}
 
-		releaseDate, err := time.Parse(time.RFC3339, commit.Committer.When.Format(time.RFC3339))
-		if err != nil {
-			logrus.Debugf("ignoring version %q from repository due to invalid release date format: %q\n", tagName, err)
+		if l.Spec.Age.Minimum != "" && l.Spec.Age.IsOlderThan(commit.Committer.When, nil) {
+			logrus.Debugf("ignoring version %q from repository because its age is below %q (released on %s)\n", tagName, l.Spec.Age.Minimum, commit.Committer.When)
 			return nil
 		}
 
-		if l.Spec.Age.Minimum != "" && l.Spec.Age.IsOlderThan(releaseDate, nil) {
-			logrus.Debugf("ignoring version %q from repository because its age is below %q (released on %s)\n", tagName, l.Spec.Age.Minimum, releaseDate)
-			return nil
-		}
-
-		if l.Spec.Age.Maximum != "" && l.Spec.Age.IsNewerThan(releaseDate, nil) {
-			logrus.Debugf("ignoring version %q from repository because its age is above %q (released on %s)\n", tagName, l.Spec.Age.Maximum, releaseDate)
+		if l.Spec.Age.Maximum != "" && l.Spec.Age.IsNewerThan(commit.Committer.When, nil) {
+			logrus.Debugf("ignoring version %q from repository because its age is above %q (released on %s)\n", tagName, l.Spec.Age.Maximum, commit.Committer.When)
 			return nil
 		}
 

@@ -10,10 +10,7 @@ import (
 // Source returns the latest go module version
 func (l *Language) Source(ctx context.Context, workingDir string, resultSource *result.Source) error {
 
-	_, err := l.versions(ctx)
-	if err != nil {
-		return fmt.Errorf("retrieving golang version: %w", err)
-	}
+	var err error
 
 	switch l.Spec.Age.IsZero() {
 	case true:
