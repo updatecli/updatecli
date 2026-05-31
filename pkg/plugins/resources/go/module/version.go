@@ -60,7 +60,7 @@ func (g *GoModule) versions(ctx context.Context) (v string, versions []string, e
 
 				if !isPseudoVersionMatchingAge(pseudoVersion, g.Spec.Age) {
 					logrus.Debugf("ignoring pseudo version %q from proxy %q because it doesn't match the age filter\n", pseudoVersion, proxy)
-					return "", nil, nil
+					continue
 				}
 
 				versions = append(versions, pseudoVersion)
