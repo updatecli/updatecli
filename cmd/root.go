@@ -38,6 +38,7 @@ var (
 	verbose          bool
 	experimental     bool
 	disableTLS       bool
+	disableChangelog bool
 	uniqueTmpDir     bool
 
 	rootCmd = &cobra.Command{
