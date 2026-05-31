@@ -54,12 +54,12 @@ func (l *Language) getTagsFromRepository() ([]string, error) {
 		Depth: 1,
 	})
 	if err != nil && err != git.NoErrAlreadyUpToDate {
-		panic(err)
+		return nil, err
 	}
 
 	refs, err := repo.Tags()
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	tags := []*semver.Version{}
