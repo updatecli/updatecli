@@ -757,7 +757,6 @@ func (g GoGit) Push(username string, password string, workingDir string, force b
 	b := bytes.Buffer{}
 
 	pushOptions := git.PushOptions{
-		Auth:     &auth,
 		Progress: &b,
 		RefSpecs: []config.RefSpec{refspec},
 	}
@@ -789,9 +788,12 @@ func (g GoGit) Push(username string, password string, workingDir string, force b
 			localBranch))
 
 		pushOptions = git.PushOptions{
-			Auth:     &auth,
 			Progress: &b,
 			RefSpecs: []config.RefSpec{refspec},
+		}
+
+		if !isAuthEmpty(&auth) {
+			pushOptions.Auth = &auth
 		}
 
 		// Only push one branch at a time

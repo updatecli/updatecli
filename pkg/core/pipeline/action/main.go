@@ -17,12 +17,14 @@ import (
 	gitea "github.com/updatecli/updatecli/pkg/plugins/resources/gitea/pullrequest"
 	gitlab "github.com/updatecli/updatecli/pkg/plugins/resources/gitlab/mergerequest"
 	stash "github.com/updatecli/updatecli/pkg/plugins/resources/stash/pullrequest"
+	tangled "github.com/updatecli/updatecli/pkg/plugins/resources/tangled/pullrequest"
 	azuredevopsscm "github.com/updatecli/updatecli/pkg/plugins/scms/azuredevops"
 	bitbucketscm "github.com/updatecli/updatecli/pkg/plugins/scms/bitbucket"
 	giteascm "github.com/updatecli/updatecli/pkg/plugins/scms/gitea"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
 	gitlabscm "github.com/updatecli/updatecli/pkg/plugins/scms/gitlab"
 	stashscm "github.com/updatecli/updatecli/pkg/plugins/scms/stash"
+	tangledscm "github.com/updatecli/updatecli/pkg/plugins/scms/tangled"
 )
 
 const (
@@ -32,6 +34,7 @@ const (
 	giteaIdentifier       = "gitea"
 	stashIdentifier       = "stash"
 	bitbucketIdentifier   = "bitbucket"
+	tangledIdentifier     = "tangled"
 )
 
 // ErrWrongConfig is returned when an action has missing mandatory attributes.
@@ -257,6 +260,26 @@ func (a *Action) generateActionHandler() error {
 
 		a.Handler = &g
 
+	case "tangled/pullrequest", tangledIdentifier:
+		if a.Scm.Config.Kind != tangledIdentifier {
+			return fmt.Errorf("scm of kind %q is not compatible with action of kind %q",
+				a.Scm.Config.Kind,
+				a.Config.Kind)
+		}
+
+		ts, ok := a.Scm.Handler.(*tangledscm.Tangled)
+
+		if !ok {
+			return fmt.Errorf("scm is not of kind 'tangled'")
+		}
+
+		g, err := tangled.New(a.Config.Spec, ts)
+		if err != nil {
+			return err
+		}
+
+		a.Handler = &g
+
 	case "stash/pullrequest", stashIdentifier:
 		if a.Scm.Config.Kind != stashIdentifier {
 			return fmt.Errorf("scm of kind %q is not compatible with action of kind %q",
@@ -293,6 +316,7 @@ func (Config) JSONSchema() *jschema.Schema {
 		"github/pullrequest":      &github.ActionSpec{},
 		"gitea/pullrequest":       &gitea.Spec{},
 		"stash/pullrequest":       &stash.Spec{},
+		"tangled/pullrequest":     &tangled.Spec{},
 		"gitlab/mergerequest":     &gitlab.Spec{},
 		"bitbucket/pullrequest":   &bitbucket.Spec{},
 	}
