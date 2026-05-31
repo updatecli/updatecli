@@ -48,6 +48,7 @@ var (
 			e.Options.Pipeline.Target.DryRun = false
 			e.Options.Pipeline.Target.CleanGitBranches = applyCleanGitBranches
 			e.Options.Pipeline.Target.ExistingOnly = applyExistingOnly
+			e.Options.Pipeline.DisableChangelog = disableChangelog
 
 			logrus.Warningln("Deprecated command, please instead use `updatecli pipeline apply`")
 
@@ -74,4 +75,6 @@ func init() {
 	applyCmd.Flags().BoolVar(&applyCleanGitBranches, "clean-git-branches", false, "Remove updatecli working git branches like '--clean-git-branches=true'")
 	applyCmd.Flags().StringArrayVar(&pipelineIds, "pipeline-ids", []string{}, "Filter pipelines to apply by their pipeline IDs, accepted as comma separated list")
 	applyCmd.Flags().StringArrayVar(&labels, "labels", []string{}, "Filter pipelines by their labels, accepted as a comma separated list (key:value)")
+
+	addDisableChangelogFlag(applyCmd, &disableChangelog)
 }
