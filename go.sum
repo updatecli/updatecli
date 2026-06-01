@@ -255,8 +255,8 @@ github.com/docker/go-metrics v0.0.1 h1:AgB/0SvBxihN0X8OR4SjsblXkbMvalQ8cjmtKQ2rQ
 github.com/docker/go-metrics v0.0.1/go.mod h1:cG1hvH2utMXtqgqqYE9plW6lDxS3/5ayHzueweSI3Vw=
 github.com/docker/go-units v0.5.0 h1:69rxXcBk27SvSaaxTtLh/8llcHD8vYHT7WSdRZ/jvr4=
 github.com/docker/go-units v0.5.0/go.mod h1:fgPhTUdO+D/Jk86RDLlptpiXQzgHJF7gydDDbaIK4Dk=
-github.com/drone/go-scm v1.42.2 h1:BG25sI9L4Dw8QDxdSEfDaEho2upy4jULDXLFCbAIrOM=
-github.com/drone/go-scm v1.42.2/go.mod h1:DFIJJjhMj0TSXPz+0ni4nyZ9gtTtC40Vh/TGRugtyWw=
+github.com/drone/go-scm v1.42.3 h1:i16M9yKKjXSWz2pVCxxmJ9yvew1WbT/uM6bSOAWm47M=
+github.com/drone/go-scm v1.42.3/go.mod h1:DFIJJjhMj0TSXPz+0ni4nyZ9gtTtC40Vh/TGRugtyWw=
 github.com/dylibso/observe-sdk/go v0.0.0-20240819160327-2d926c5d788a h1:UwSIFv5g5lIvbGgtf3tVwC7Ky9rmMFBp0RMs+6f6YqE=
 github.com/dylibso/observe-sdk/go v0.0.0-20240819160327-2d926c5d788a/go.mod h1:C8DzXehI4zAbrdlbtOByKX6pfivJTBiV9Jjqv56Yd9Q=
 github.com/ebitengine/purego v0.10.0 h1:QIw4xfpWT6GWTzaW5XEKy3HXoqrJGx1ijYHzTF0/ISU=
@@ -299,8 +299,8 @@ github.com/fluxcd/pkg/apis/kustomize v1.15.1 h1:t9QZh+3ZS8EKmlxrnnbcKZcGTrg8FDvM
 github.com/fluxcd/pkg/apis/kustomize v1.15.1/go.mod h1:IZOy4CCtR/hxMGb7erK1RfbGnczVv4/dRBoVD37AywI=
 github.com/fluxcd/pkg/apis/meta v1.25.1 h1:WG1GIC/SOz0GjxT0uVuO6AMicQ3yFsk6bDozCnq+fto=
 github.com/fluxcd/pkg/apis/meta v1.25.1/go.mod h1:c7o6mJGLCMvNrfdinGZehkrdZuFT9vZdZNrn66DtVD0=
-github.com/fluxcd/source-controller/api v1.8.4 h1:ZJIh7OFhjxZgsD81ahxxbu3ggA7qySIjKWbK5+PKmOI=
-github.com/fluxcd/source-controller/api v1.8.4/go.mod h1:sio4t49RDx+S1etHRFAEEw8qfVuw0KKlOg8bRVlEYPM=
+github.com/fluxcd/source-controller/api v1.8.5 h1:mLKc9YVMk46JCt1BQbkG6irkrpBZp95kiXh2+GYB6KQ=
+github.com/fluxcd/source-controller/api v1.8.5/go.mod h1:sio4t49RDx+S1etHRFAEEw8qfVuw0KKlOg8bRVlEYPM=
 github.com/foxcpp/go-mockdns v1.2.0 h1:omK3OrHRD1IWJz1FuFBCFquhXslXoF17OvBS6JPzZF0=
 github.com/foxcpp/go-mockdns v1.2.0/go.mod h1:IhLeSFGed3mJIAXPH2aiRQB+kqz7oqu8ld2qVbOu7Wk=
 github.com/frankban/quicktest v1.14.6 h1:7Xjx+VpznH+oBnejlPUj8oUpdxnVs4f8XU8WnHkI4W8=
