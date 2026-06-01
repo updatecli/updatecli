@@ -46,6 +46,7 @@ var (
 			e.Options.Pipeline.Target.Push = false
 			e.Options.Pipeline.Target.Clean = composeCmdClean
 			e.Options.Pipeline.Target.DryRun = true
+			e.Options.Pipeline.DisableChangelog = disableChangelog
 
 			err = run("compose/diff")
 			if err != nil {
@@ -65,5 +66,8 @@ func init() {
 	composeDiffCmd.Flags().StringArrayVar(&labels, "labels", []string{}, "Filter pipelines to apply by their labels, accepted as a comma separated list (key:value)")
 	composeDiffCmd.Flags().StringArrayVar(&composeDiffOnlyPolicyIDs, "only-policy-ids", []string{}, "Filter policies to apply by their policy IDs, accepted as a comma separated list")
 	composeDiffCmd.Flags().StringArrayVar(&composeDiffIgnoredPolicyIDs, "ignored-policy-ids", []string{}, "Filter policies to ignore by their policy IDs, accepted as a comma separated list")
+
+	addDisableChangelogFlag(composeDiffCmd, &disableChangelog)
+
 	composeCmd.AddCommand(composeDiffCmd)
 }
