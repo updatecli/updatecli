@@ -38,8 +38,9 @@ var (
 	verbose          bool
 	experimental     bool
 	disableTLS       bool
-	disableChangelog bool
-	uniqueTmpDir     bool
+	disableChangelog     bool
+	uniqueTmpDir         bool
+	disableVersionCheck  bool
 
 	rootCmd = &cobra.Command{
 		Use:   "updatecli",
@@ -66,11 +67,30 @@ func Execute() {
 	}
 }
 
+// skipVersionCheckCommands lists commands where the version check is skipped
+// to avoid unnecessary network requests and prevent banner output from
+// corrupting generated content.
+var skipVersionCheckCommands = []string{
+	"completion",
+	"__complete",
+	"__completeNoDesc",
+	"docs",
+	"man",
+	"jsonschema",
+}
+
 func init() {
 
 	logrus.SetOutput(os.Stdout)
 
 	rootCmd.PersistentPostRun = func(cmd *cobra.Command, args []string) {
+		if disableVersionCheck {
+			return
+		}
+		cmdName := cmd.Name()
+		if slices.Contains(skipVersionCheckCommands, cmdName) {
+			return
+		}
 		err := engine.CheckLatestPublishedVersion()
 		if err != nil {
 			logrus.Debugf("Unable to check for the latest version of updatecli: %v", err)
@@ -80,6 +100,7 @@ func init() {
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "debug", "", false, "Debug Output")
 	rootCmd.PersistentFlags().BoolVarP(&experimental, "experimental", "", false, "Enable Experimental mode")
 	rootCmd.PersistentFlags().BoolVar(&uniqueTmpDir, "unique-tmp-dir", false, "Use a unique temporary directory to allow running multiple Updatecli instances in parallel")
+	rootCmd.PersistentFlags().BoolVar(&disableVersionCheck, "disable-version-check", getEnvBoolOrDefault(DisableVersionCheckEnvVar, false), "Disable version check (env: "+DisableVersionCheckEnvVar+")")
 	rootCmd.PersistentPreRun = func(cmd *cobra.Command, args []string) {
 		if verbose {
 			logrus.SetLevel(logrus.DebugLevel)
