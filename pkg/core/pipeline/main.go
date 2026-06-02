@@ -144,7 +144,7 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 		p.Sources[id] = source.Source{
 			Config: config.Spec.Sources[id],
 			Result: &result.Source{
-				Result: result.SKIPPED,
+				Result: "",
 			},
 			Scm: scmPointer,
 		}
@@ -468,6 +468,7 @@ func (p *Pipeline) runFlowCallbackWithCtx(ctx context.Context, d *dag.DAG, id st
 		switch leaf.Category {
 		case sourceCategory:
 			sourceId := strings.ReplaceAll(id, "source#", "")
+			p.updateSource(sourceId, result.SKIPPED)
 			updateSourceResult(sourceId)
 		case conditionCategory:
 			conditionId := strings.ReplaceAll(id, "condition#", "")

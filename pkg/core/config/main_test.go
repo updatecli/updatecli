@@ -149,6 +149,34 @@ var (
 			ExpectedUpdateErr:   fmt.Errorf("template: cfg:1:19: executing \"cfg\" at <source \"default\">: error calling source: parent source \"default\" failed"),
 			ExpectedValidateErr: nil,
 		},
+		// Test a skipped source
+		{
+			ID: "1.3",
+			Config: Config{
+				Spec: Spec{
+					Name: "jenkins - {{ source \"default\" }}",
+					Sources: map[string]source.Config{
+						"default": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Get Version",
+								Kind: "jenkins",
+							},
+						},
+					},
+				},
+			},
+			Context: context{
+				Sources: map[string]mockSourceContext{
+					"default": {
+						Result: result.Source{
+							Result: result.SKIPPED,
+						},
+					},
+				},
+			},
+			ExpectedUpdateErr:   fmt.Errorf("template: cfg:1:19: executing \"cfg\" at <source \"default\">: error calling source: parent source \"default\" was skipped"),
+			ExpectedValidateErr: nil,
+		},
 		// Testing key case sensitive
 		{
 			ID: "2",
