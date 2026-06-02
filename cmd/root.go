@@ -87,9 +87,10 @@ func init() {
 		if disableVersionCheck {
 			return
 		}
-		cmdName := cmd.Name()
-		if slices.Contains(skipVersionCheckCommands, cmdName) {
-			return
+		for c := cmd; c != nil; c = c.Parent() {
+			if slices.Contains(skipVersionCheckCommands, c.Name()) {
+				return
+			}
 		}
 		err := engine.CheckLatestPublishedVersion()
 		if err != nil {
