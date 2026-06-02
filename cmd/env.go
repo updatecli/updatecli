@@ -10,6 +10,8 @@ import (
 
 const DisableChangelogEnvVar = "UPDATECLI_DISABLE_CHANGELOG"
 
+const DisableVersionCheckEnvVar = "UPDATECLI_DISABLE_VERSION_CHECK"
+
 // getEnvBoolOrDefault reads a boolean environment variable.
 // It returns defaultValue when the variable is unset or invalid.
 func getEnvBoolOrDefault(envVar string, defaultValue bool) bool {
