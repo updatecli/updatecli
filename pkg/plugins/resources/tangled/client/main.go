@@ -13,6 +13,8 @@ import (
 	"github.com/bluesky-social/indigo/atproto/syntax"
 	lexutil "github.com/bluesky-social/indigo/lex/util"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/httpclient"
+	"github.com/updatecli/updatecli/pkg/core/version"
 )
 
 // Client wraps an indigo atproto APIClient authenticated with an app password.
@@ -112,6 +114,19 @@ func (c *Client) API(ctx context.Context) (*atclient.APIClient, error) {
 	if err != nil {
 		return nil, fmt.Errorf("login with app password: %w", err)
 	}
+
+	// Replace the default http.Client with updatecli's retry client so that
+	// all atproto calls benefit from exponential backoff on transient errors
+	// (429, 5xx), proxy support, and OTel tracing.
+	api.Client = httpclient.NewRetryClient()
+
+	// Override the User-Agent set by indigo's NewAPIClient so that requests
+	// are identifiable as Updatecli traffic on the server side.
+	ua := "Updatecli"
+	if version.Version != "" {
+		ua = "Updatecli/" + version.Version
+	}
+	api.Headers.Set("User-Agent", ua)
 
 	c.api = api
 	if api.AccountDID != nil {
