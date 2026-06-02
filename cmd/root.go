@@ -27,20 +27,20 @@ import (
 )
 
 var (
-	pipelineIds      []string
-	labels           []string
-	manifestFiles    []string
-	valuesFiles      []string
-	valuesInline     []string
-	secretsFiles     []string
-	policyReferences []string
-	e                engine.Engine
-	verbose          bool
-	experimental     bool
-	disableTLS       bool
-	disableChangelog     bool
-	uniqueTmpDir         bool
-	disableVersionCheck  bool
+	pipelineIds         []string
+	labels              []string
+	manifestFiles       []string
+	valuesFiles         []string
+	valuesInline        []string
+	secretsFiles        []string
+	policyReferences    []string
+	e                   engine.Engine
+	verbose             bool
+	experimental        bool
+	disableTLS          bool
+	disableChangelog    bool
+	uniqueTmpDir        bool
+	disableVersionCheck bool
 
 	rootCmd = &cobra.Command{
 		Use:   "updatecli",
