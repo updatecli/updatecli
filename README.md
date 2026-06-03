@@ -123,7 +123,7 @@ sha256sum --ignore-missing -c checksums.txt
 **Verify Container signature**
 
 ```
-cosign verify --certificate-identity-regexp "https://github.com/updatecli/updatecli" --certificate-oidc-issuer "https://token.actions.githubusercontent.com" ghcr.io/updatecli/updatecli:v0.117.1
+cosign verify --certificate-identity-regexp "https://github.com/updatecli/updatecli" --certificate-oidc-issuer "https://token.actions.githubusercontent.com" ghcr.io/updatecli/updatecli:v0.118.0
 ```
 
 ## Documentation
