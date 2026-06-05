@@ -10,6 +10,8 @@ import (
 
 // Condition checks if a specific stable Golang version is published
 func (l *Language) Condition(ctx context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
+	var versions []string
+
 	if scm != nil {
 		logrus.Debugln("scm is not supported")
 	}
@@ -21,9 +23,17 @@ func (l *Language) Condition(ctx context.Context, source string, scm scm.ScmHand
 		return false, "", fmt.Errorf("no version defined")
 	}
 
-	versions, err := l.versions(ctx)
-	if err != nil {
-		return false, "", fmt.Errorf("searching golang version: %w", err)
+	switch l.Spec.Age.IsZero() {
+	case true:
+		versions, err = l.versions(ctx)
+		if err != nil {
+			return false, "", fmt.Errorf("searching golang version: %w", err)
+		}
+	case false:
+		versions, err = l.getTagsFromRepository()
+		if err != nil {
+			return false, "", fmt.Errorf("searching golang version: %w", err)
+		}
 	}
 
 	for _, v := range versions {
