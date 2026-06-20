@@ -149,9 +149,40 @@ var (
 			ExpectedUpdateErr:   fmt.Errorf("template: cfg:1:19: executing \"cfg\" at <source \"default\">: error calling source: parent source \"default\" failed"),
 			ExpectedValidateErr: nil,
 		},
-		// Test a skipped source
+		// Test a source explicitly skipped by the pipeline (IsRun true)
 		{
 			ID: "1.3",
+			Config: Config{
+				Spec: Spec{
+					Name: "jenkins - {{ source \"default\" }}",
+					Sources: map[string]source.Config{
+						"default": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Get Version",
+								Kind: "jenkins",
+							},
+						},
+					},
+				},
+			},
+			Context: context{
+				Sources: map[string]mockSourceContext{
+					"default": {
+						Result: result.Source{
+							Result: result.SKIPPED,
+							IsRun:  true,
+						},
+					},
+				},
+			},
+			ExpectedUpdateErr:   fmt.Errorf("template: cfg:1:19: executing \"cfg\" at <source \"default\">: error calling source: parent source \"default\" was skipped"),
+			ExpectedValidateErr: nil,
+		},
+		// Test a source still pending execution (SKIPPED default result, IsRun
+		// false): the reference is returned literally so it can be retried on a
+		// later configuration iteration rather than failing the pipeline.
+		{
+			ID: "1.4",
 			Config: Config{
 				Spec: Spec{
 					Name: "jenkins - {{ source \"default\" }}",
@@ -174,7 +205,20 @@ var (
 					},
 				},
 			},
-			ExpectedUpdateErr:   fmt.Errorf("template: cfg:1:19: executing \"cfg\" at <source \"default\">: error calling source: parent source \"default\" was skipped"),
+			ExpectedConfig: Config{
+				Spec: Spec{
+					Name: "jenkins - {{ source \"default\" }}",
+					Sources: map[string]source.Config{
+						"default": {
+							ResourceConfig: resource.ResourceConfig{
+								Name: "Get Version",
+								Kind: "jenkins",
+							},
+						},
+					},
+				},
+			},
+			ExpectedUpdateErr:   nil,
 			ExpectedValidateErr: nil,
 		},
 		// Testing key case sensitive

@@ -144,7 +144,7 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 		p.Sources[id] = source.Source{
 			Config: config.Spec.Sources[id],
 			Result: &result.Source{
-				Result: "",
+				Result: result.SKIPPED,
 			},
 			Scm: scmPointer,
 		}
@@ -465,16 +465,21 @@ func (p *Pipeline) runFlowCallbackWithCtx(ctx context.Context, d *dag.DAG, id st
 		leaf.Result = result.SKIPPED
 		span.SetAttributes(attribute.String("updatecli.resource.result", result.SKIPPED))
 
+		// A skipped resource never reaches its Run method, so mark it as
+		// finalized here to distinguish it from one still pending execution.
 		switch leaf.Category {
 		case sourceCategory:
 			sourceId := strings.ReplaceAll(id, "source#", "")
 			p.updateSource(sourceId, result.SKIPPED)
+			p.Sources[sourceId].Result.IsRun = true
 			updateSourceResult(sourceId)
 		case conditionCategory:
 			conditionId := strings.ReplaceAll(id, "condition#", "")
+			p.Conditions[conditionId].Result.IsRun = true
 			updateConditionResult(conditionId)
 		case targetCategory:
 			targetId := strings.ReplaceAll(id, "target#", "")
+			p.Targets[targetId].Result.IsRun = true
 			updateTargetResult(targetId)
 		}
 	}
