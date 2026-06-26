@@ -198,8 +198,6 @@ func (p Pyproject) buildTemplateParams(
 		}
 	}
 
-	relLockFile := filepath.Join(workdir, "uv.lock")
-
 	return manifestTemplateParams{
 		ManifestName:               manifestName,
 		ActionID:                   p.actionID,
@@ -214,7 +212,7 @@ func (p Pyproject) buildTemplateParams(
 		TargetName:                 fmt.Sprintf("deps(pypi): bump %q to {{ source %q }}", dep.Name, dep.Name),
 		ScmID:                      p.scmID,
 		UvEnabled:                  lockSupport.uv,
-		LockFile:                   relLockFile,
+		LockFile:                   "uv.lock",
 		Workdir:                    workdir,
 	}
 }
