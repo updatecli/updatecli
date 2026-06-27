@@ -49,6 +49,16 @@ func TestValidate(t *testing.T) {
 			spec:    Spec{},
 			wantErr: "the attribute `spec.file` is required",
 		},
+		{
+			name: "Negative index",
+			spec: Spec{
+				File:    "test.container",
+				Section: "Container",
+				Option:  "Image",
+				Index:   -1,
+			},
+			wantErr: "the attribute `spec.index` must be greater than or equal to 0",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

@@ -43,6 +43,18 @@ type Spec struct {
 	//       "Image"
 	//
 	Option string `yaml:",omitempty"`
+	//   `index` specifies which matching option to read or update when the same option is defined multiple times.
+	//   It starts at 0, so index 0 selects the first match, index 1 selects the second match, and so on.
+	//
+	//   compatible:
+	//       * source
+	//       * condition
+	//       * target
+	//
+	//   default:
+	//       0
+	//
+	Index int `yaml:",omitempty"`
 	//   `value` specifies the value for a specific option.
 	//
 	//   compatible:
@@ -68,6 +80,10 @@ func (s *Spec) Validate() error {
 
 	if s.Option == "" {
 		validationErrors = append(validationErrors, "Validation error in resource of type 'systemd': the attribute `spec.option` is required.")
+	}
+
+	if s.Index < 0 {
+		validationErrors = append(validationErrors, "Validation error in resource of type 'systemd': the attribute `spec.index` must be greater than or equal to 0.")
 	}
 
 	if len(validationErrors) > 0 {

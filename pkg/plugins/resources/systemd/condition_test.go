@@ -46,6 +46,34 @@ func TestCondition(t *testing.T) {
 			shouldPass: true,
 		},
 		{
+			name:   "Value from spec takes precedence over source",
+			source: "nginx:1.26",
+			spec: Spec{
+				File:    "test.container",
+				Section: "Container",
+				Option:  "Image",
+				Value:   "nginx:1.25",
+			},
+			mockedContents: map[string]string{
+				"test.container": "[Unit]\nDescription=test\n\n[Container]\nImage=nginx:1.25\n",
+			},
+			shouldPass: true,
+		},
+		{
+			name:   "Value matches repeated option index",
+			source: "/etc/wg-easy:/etc/wireguard:rw",
+			spec: Spec{
+				File:    "test.container",
+				Section: "Container",
+				Option:  "Volume",
+				Index:   1,
+			},
+			mockedContents: map[string]string{
+				"test.container": "[Container]\nVolume=/lib/modules:/lib/modules:ro\nVolume=/etc/wg-easy:/etc/wireguard:rw\n",
+			},
+			shouldPass: true,
+		},
+		{
 			name:   "Value does not match",
 			source: "nginx:1.26",
 			spec: Spec{

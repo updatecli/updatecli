@@ -9,9 +9,9 @@ import (
 )
 
 func (s *Systemd) Condition(_ context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
-	expected := source
+	expected := s.spec.Value
 	if expected == "" {
-		expected = s.spec.Value
+		expected = source
 	}
 
 	rootDir := ""

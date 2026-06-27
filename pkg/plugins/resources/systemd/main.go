@@ -59,12 +59,13 @@ func (s *Systemd) ReportConfig() any {
 		File:    s.spec.File,
 		Section: s.spec.Section,
 		Option:  s.spec.Option,
+		Index:   s.spec.Index,
 		Value:   s.spec.Value,
 	}
 }
 
 // readOptions reads and parses a systemd unit file, returning all options
-// and the one matching the configured section/option.
+// and the one matching the configured section/option/index.
 func (s *Systemd) readOptions(filePath string) ([]*unit.UnitOption, *unit.UnitOption, error) {
 	if !s.contentRetriever.FileExists(filePath) {
 		return nil, nil, fmt.Errorf("the file %s does not exist", filePath)
@@ -80,11 +81,15 @@ func (s *Systemd) readOptions(filePath string) ([]*unit.UnitOption, *unit.UnitOp
 		return nil, nil, fmt.Errorf("parsing systemd unit file: %w", err)
 	}
 
+	index := 0
 	for _, opt := range opts {
 		if opt.Section == s.spec.Section && opt.Name == s.spec.Option {
-			return opts, opt, nil
+			if index == s.spec.Index {
+				return opts, opt, nil
+			}
+			index++
 		}
 	}
 
-	return nil, nil, fmt.Errorf("option %q not found in section %q", s.spec.Option, s.spec.Section)
+	return nil, nil, fmt.Errorf("option %q with index %d not found in section %q", s.spec.Option, s.spec.Index, s.spec.Section)
 }

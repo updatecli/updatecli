@@ -59,6 +59,44 @@ func TestTarget(t *testing.T) {
 			},
 		},
 		{
+			name:   "Real run with value from spec takes precedence over source",
+			source: "nginx:1.26",
+			spec: Spec{
+				File:    "test.container",
+				Section: "Container",
+				Option:  "Image",
+				Value:   "nginx:1.27",
+			},
+			dryRun: false,
+			mockedContents: map[string]string{
+				"test.container": "[Unit]\nDescription=test\n\n[Container]\nImage=nginx:1.25\n",
+			},
+			expectedResult: result.ATTENTION,
+			expectChange:   true,
+			expectedContents: map[string]string{
+				"test.container": "[Unit]\nDescription=test\n\n[Container]\nImage=nginx:1.27\n",
+			},
+		},
+		{
+			name:   "Real run with repeated option index",
+			source: "xxx",
+			spec: Spec{
+				File:    "test.container",
+				Section: "Container",
+				Option:  "Volume",
+				Index:   1,
+			},
+			dryRun: false,
+			mockedContents: map[string]string{
+				"test.container": "[Container]\nVolume=/lib/modules:/lib/modules:ro\nVolume=/etc/wg-easy:/etc/wireguard:rw\n",
+			},
+			expectedResult: result.ATTENTION,
+			expectChange:   true,
+			expectedContents: map[string]string{
+				"test.container": "[Container]\nVolume=/lib/modules:/lib/modules:ro\nVolume=xxx\n",
+			},
+		},
+		{
 			name:   "Value already matches",
 			source: "nginx:1.25",
 			spec: Spec{
@@ -100,6 +138,20 @@ func TestTarget(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name:   "Option index not found in file",
+			source: "xxx",
+			spec: Spec{
+				File:    "test.container",
+				Section: "Container",
+				Option:  "Volume",
+				Index:   2,
+			},
+			mockedContents: map[string]string{
+				"test.container": "[Container]\nVolume=/lib/modules:/lib/modules:ro\nVolume=/etc/wg-easy:/etc/wireguard:rw\n",
+			},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -121,8 +173,12 @@ func TestTarget(t *testing.T) {
 			require.NoError(t, gotErr)
 			assert.Equal(t, tt.expectedResult, gotResult.Result)
 			assert.Equal(t, tt.expectChange, gotResult.Changed)
-			assert.Equal(t, "nginx:1.25", gotResult.Information)
-			assert.Equal(t, tt.source, gotResult.NewInformation)
+			assert.NotEmpty(t, gotResult.Information)
+			expectedNewInformation := tt.spec.Value
+			if expectedNewInformation == "" {
+				expectedNewInformation = tt.source
+			}
+			assert.Equal(t, expectedNewInformation, gotResult.NewInformation)
 			assert.Equal(t, []string{"test.container"}, gotResult.Files)
 
 			for filePath, expectedContent := range tt.expectedContents {

@@ -12,9 +12,9 @@ import (
 )
 
 func (s *Systemd) Target(_ context.Context, source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
-	expected := source
+	expected := s.spec.Value
 	if expected == "" {
-		expected = s.spec.Value
+		expected = source
 	}
 
 	rootDir := ""
