@@ -547,6 +547,39 @@ targets:
 `,
 			},
 		},
+		{
+			name:        "Scenario 12 -- nested subdirectory project tracks uv.lock relative to its workdir",
+			rootDir:     "testdata/subdir_project",
+			uvAvailable: true,
+			expectedPipelines: []string{
+				`name: 'deps(pypi): bump "requests" for "nested-project" project'
+sources:
+  requests:
+    name: 'Get latest "requests" package version'
+    kind: 'pypi'
+    spec:
+      name: 'requests'
+      versionfilter:
+        kind: 'pep440'
+        pattern: '>=2.28'
+targets:
+  requests:
+    name: 'deps(pypi): bump "requests" to {{ source "requests" }}'
+    kind: 'shell'
+    spec:
+      command: 'uv lock --upgrade-package requests=={{ source "requests" }}'
+      changedif:
+        kind: file/checksum
+        spec:
+          files:
+            - "uv.lock"
+      environments:
+        - name: PATH
+      workdir: 'foo/bar'
+    disablesourceinput: true
+`,
+			},
+		},
 	}
 
 	for _, tt := range testdata {
