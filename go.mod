@@ -332,7 +332,7 @@ require (
 	github.com/xlab/treeprint v1.2.0 // indirect
 	gitlab.com/gitlab-org/api/client-go v1.46.0
 	golang.org/x/crypto v0.53.0 // indirect
-	golang.org/x/mod v0.36.0
+	golang.org/x/mod v0.37.0
 	golang.org/x/net v0.56.0
 	golang.org/x/sync v0.21.0 // indirect
 	golang.org/x/sys v0.46.0 // indirect
