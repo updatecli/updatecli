@@ -94,11 +94,17 @@ func (t Terraform) getTerraformManifest(filename, provider, versionFilterPattern
 		return nil, err
 	}
 
+	var providerHostname string
+	if p.Hostname.String() != "registry.terraform.io" {
+		providerHostname = p.Hostname.String()
+	}
+
 	params := struct {
 		ActionID             string
 		TerraformLockFile    string
 		Platforms            []string
 		Provider             string
+		ProviderHostname     string
 		ProviderNamespace    string
 		ProviderName         string
 		VersionFilterKind    string
@@ -111,6 +117,7 @@ func (t Terraform) getTerraformManifest(filename, provider, versionFilterPattern
 		TerraformLockFile:    filename,
 		Platforms:            t.spec.Platforms,
 		Provider:             p.ForDisplay(),
+		ProviderHostname:     providerHostname,
 		ProviderNamespace:    p.Namespace,
 		ProviderName:         p.Type,
 		VersionFilterKind:    t.versionFilter.Kind,
