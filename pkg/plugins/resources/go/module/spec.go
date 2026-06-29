@@ -34,7 +34,7 @@ type Spec struct {
 	//   * source
 	//
 	VersionFilter version.Filter `yaml:",omitempty"`
-	// Age defines the minimum age of a release to be considered valid. It accepts a duration string (e.g., "24h", "7d").
+	// Age defines the minimum or maximum age of a release to be considered valid. It accepts a duration string (e.g., "24h", "7d").
 	//
 	// Compatible:
 	//   * source
