@@ -15,6 +15,9 @@ sources:
       type: provider
       namespace: {{ .ProviderNamespace }}
       name: {{ .ProviderName }}
+      {{- if .ProviderHostname }}
+      hostname: {{ .ProviderHostname }}
+      {{- end }}
       versionfilter:
         kind: '{{ .VersionFilterKind }}'
         pattern: '{{ .VersionFilterPattern }}'
