@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 )
 
 func TestDiscoverManifests(t *testing.T) {
@@ -13,8 +14,107 @@ func TestDiscoverManifests(t *testing.T) {
 	testdata := []struct {
 		name              string
 		rootDir           string
+		spec              Spec
 		expectedPipelines []string
 	}{
+		{
+			name:    "Maximum one year old Golang Version",
+			rootDir: "testdata/noSumFile",
+			spec: Spec{
+				Age: age.Spec{
+					Maximum: "1y",
+				},
+			},
+			expectedPipelines: []string{`name: 'deps(go): bump module gopkg.in/yaml.v3'
+sources:
+  module:
+    name: 'Get latest golang module gopkg.in/yaml.v3 version'
+    kind: 'golang/module'
+    spec:
+      age:
+        maximum: '1y'
+      module: 'gopkg.in/yaml.v3'
+      versionfilter:
+        kind: 'semver'
+        pattern: '>=3.0.1'
+targets:
+  module:
+    name: 'deps(go): bump module gopkg.in/yaml.v3 to {{ source "module" }}'
+    kind: 'golang/gomod'
+    sourceid: 'module'
+    spec:
+      file: 'go.mod'
+      module: 'gopkg.in/yaml.v3'
+`, `name: 'deps(golang): bump Go version'
+sources:
+  go:
+    name: 'Get latest Go version'
+    kind: 'golang'
+    spec:
+      age:
+        maximum: '1y'
+      versionfilter:
+        kind: 'semver'
+        pattern: '>=1.20.0'
+targets:
+  go:
+    name: 'deps(golang): bump Go version to {{ source "go" }}'
+    kind: 'golang/gomod'
+    sourceid: 'go'
+    spec:
+      file: 'go.mod'
+`,
+			},
+		},
+		{
+			name:    "Minimum one year old Golang Version",
+			rootDir: "testdata/noSumFile",
+			spec: Spec{
+				Age: age.Spec{
+					Minimum: "1y",
+				},
+			},
+			expectedPipelines: []string{`name: 'deps(go): bump module gopkg.in/yaml.v3'
+sources:
+  module:
+    name: 'Get latest golang module gopkg.in/yaml.v3 version'
+    kind: 'golang/module'
+    spec:
+      age:
+        minimum: '1y'
+      module: 'gopkg.in/yaml.v3'
+      versionfilter:
+        kind: 'semver'
+        pattern: '>=3.0.1'
+targets:
+  module:
+    name: 'deps(go): bump module gopkg.in/yaml.v3 to {{ source "module" }}'
+    kind: 'golang/gomod'
+    sourceid: 'module'
+    spec:
+      file: 'go.mod'
+      module: 'gopkg.in/yaml.v3'
+`, `name: 'deps(golang): bump Go version'
+sources:
+  go:
+    name: 'Get latest Go version'
+    kind: 'golang'
+    spec:
+      age:
+        minimum: '1y'
+      versionfilter:
+        kind: 'semver'
+        pattern: '>=1.20.0'
+targets:
+  go:
+    name: 'deps(golang): bump Go version to {{ source "go" }}'
+    kind: 'golang/gomod'
+    sourceid: 'go'
+    spec:
+      file: 'go.mod'
+`,
+			},
+		},
 		{
 			name:    "Test with pseudo version",
 			rootDir: "testdata/pseudoVersion",
@@ -278,7 +378,7 @@ targets:
 	for _, tt := range testdata {
 		t.Run(tt.name, func(t *testing.T) {
 			resource, err := New(
-				Spec{}, tt.rootDir, "", "")
+				tt.spec, tt.rootDir, "", "")
 			require.NoError(t, err)
 
 			var pipelines []string
