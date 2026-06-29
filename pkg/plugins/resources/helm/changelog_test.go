@@ -86,7 +86,7 @@ func TestChangelog(t *testing.T) {
 			expected: &result.Changelogs{
 				{
 					Title:       "3.3.5",
-					PublishedAt: "2025-02-06 11:06:30.639777967 +0000 UTC",
+					PublishedAt: "2026-06-21 16:33:28.043578633 +0530 +0530",
 					Body:        "\n## Added\n\n* added a new option .reportsController.sanityChecks to disable checks for policy reports crds\n\n## Fixed\n\n* fix validation error in validate.yaml\n* fixed global image registry config by introducing *.image.defaultRegistry.\n",
 				},
 			},
