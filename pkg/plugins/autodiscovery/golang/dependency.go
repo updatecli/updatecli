@@ -8,6 +8,7 @@ import (
 	"text/template"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 )
 
 // discoverDependencyManifests search for each go.mod file
@@ -125,6 +126,7 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 					g.actionID,
 					relativeWorkDir,
 					goModTidyEnabled,
+					g.spec.Age,
 				)
 				if err != nil {
 					logrus.Debugf("skipping golang module %q module due to: %s", goModule, err)
@@ -191,6 +193,7 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 					g.actionID,
 					relativeWorkDir,
 					goModTidyEnabled,
+					g.spec.Age,
 				)
 				if err != nil {
 					logrus.Debugf("skipping golang module %q module due to: %s", replace.NewPath, err)
@@ -235,7 +238,8 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 				g.versionFilter.Regex,
 				goVersionPattern,
 				g.scmID,
-				g.actionID)
+				g.actionID,
+				g.spec.Age)
 			if err != nil {
 				logrus.Debugln(err)
 				logrus.Debugln("skipping golang version manifest due to previous error")
@@ -250,7 +254,14 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 	return manifests, nil
 }
 
-func getGolangVersionManifest(filename, versionFilterKind, versionFilterRegex, versionFilterPattern, scmID, actionID string) ([]byte, error) {
+func getGolangVersionManifest(
+	filename,
+	versionFilterKind,
+	versionFilterRegex,
+	versionFilterPattern,
+	scmID,
+	actionID string,
+	a age.Spec) ([]byte, error) {
 	tmpl, err := template.New("manifest").Parse(goManifestTemplate)
 	if err != nil {
 		logrus.Debugln(err)
@@ -264,6 +275,7 @@ func getGolangVersionManifest(filename, versionFilterKind, versionFilterRegex, v
 		VersionFilterPattern string
 		VersionFilterRegex   string
 		ScmID                string
+		Age                  age.Spec
 	}{
 		ActionID:             actionID,
 		GoModFile:            filename,
@@ -271,6 +283,7 @@ func getGolangVersionManifest(filename, versionFilterKind, versionFilterRegex, v
 		VersionFilterPattern: versionFilterPattern,
 		VersionFilterRegex:   versionFilterRegex,
 		ScmID:                scmID,
+		Age:                  a,
 	}
 
 	manifest := bytes.Buffer{}
@@ -281,7 +294,17 @@ func getGolangVersionManifest(filename, versionFilterKind, versionFilterRegex, v
 	return manifest.Bytes(), nil
 }
 
-func getGolangModuleManifest(filename, module, versionFilterKind, versionFilterPattern, versionFilterRegex, scmID, actionID, workdir string, goModTidy bool) ([]byte, error) {
+func getGolangModuleManifest(
+	filename,
+	module,
+	versionFilterKind,
+	versionFilterPattern,
+	versionFilterRegex,
+	scmID,
+	actionID,
+	workdir string,
+	goModTidy bool,
+	a age.Spec) ([]byte, error) {
 
 	tmpl, err := template.New("manifest").Parse(goModuleManifestTemplate)
 	if err != nil {
@@ -299,6 +322,7 @@ func getGolangModuleManifest(filename, module, versionFilterKind, versionFilterP
 		GoModTidyEnabled     bool
 		ScmID                string
 		WorkDir              string
+		Age                  age.Spec
 	}{
 		ActionID:             actionID,
 		GoModFile:            filename,
@@ -309,6 +333,7 @@ func getGolangModuleManifest(filename, module, versionFilterKind, versionFilterP
 		GoModTidyEnabled:     goModTidy,
 		ScmID:                scmID,
 		WorkDir:              workdir,
+		Age:                  a,
 	}
 
 	manifest := bytes.Buffer{}
@@ -330,7 +355,7 @@ func getGolangReplaceModuleManifest(filename,
 	actionID,
 	workdir string,
 	goModTidy bool,
-) ([]byte, error) {
+	a age.Spec) ([]byte, error) {
 
 	tmpl, err := template.New("manifest").Parse(goReplaceModuleManifestTemplate)
 	if err != nil {
@@ -350,6 +375,7 @@ func getGolangReplaceModuleManifest(filename,
 		GoModTidyEnabled     bool
 		ScmID                string
 		WorkDir              string
+		Age                  age.Spec
 	}{
 		ActionID:             actionID,
 		GoModFile:            filename,
@@ -362,6 +388,7 @@ func getGolangReplaceModuleManifest(filename,
 		GoModTidyEnabled:     goModTidy,
 		ScmID:                scmID,
 		WorkDir:              workdir,
+		Age:                  a,
 	}
 
 	manifest := bytes.Buffer{}
