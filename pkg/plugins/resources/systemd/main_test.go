@@ -15,15 +15,19 @@ func TestNew(t *testing.T) {
 		wantErr string
 	}{
 		{
-			name: "Default section and option",
+			name: "Missing section and option",
 			spec: Spec{
 				File: "test.container",
 			},
-			want: Spec{
+			wantErr: "the attribute `spec.section` is required",
+		},
+		{
+			name: "Missing option",
+			spec: Spec{
 				File:    "test.container",
-				Section: "Container",
-				Option:  "Image",
+				Section: "Service",
 			},
+			wantErr: "the attribute `spec.option` is required",
 		},
 		{
 			name: "Explicit section and option",
@@ -44,7 +48,7 @@ func TestNew(t *testing.T) {
 				Section: "Service",
 				Option:  "ExecStart",
 			},
-			wantErr: "Validation error in resource of type 'systemd': the attribute `spec.file` is required.",
+			wantErr: "the attribute `spec.file` is required.",
 		},
 	}
 	for _, tt := range tests {

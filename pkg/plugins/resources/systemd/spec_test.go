@@ -55,7 +55,7 @@ func TestValidate(t *testing.T) {
 				File:    "test.container",
 				Section: "Container",
 				Option:  "Image",
-				Index:   -1,
+				Index:   intPtr(-1),
 			},
 			wantErr: "the attribute `spec.index` must be greater than or equal to 0",
 		},

@@ -84,7 +84,7 @@ func TestTarget(t *testing.T) {
 				File:    "test.container",
 				Section: "Container",
 				Option:  "Volume",
-				Index:   1,
+				Index:   intPtr(1),
 			},
 			dryRun: false,
 			mockedContents: map[string]string{
@@ -145,7 +145,7 @@ func TestTarget(t *testing.T) {
 				File:    "test.container",
 				Section: "Container",
 				Option:  "Volume",
-				Index:   2,
+				Index:   intPtr(2),
 			},
 			mockedContents: map[string]string{
 				"test.container": "[Container]\nVolume=/lib/modules:/lib/modules:ro\nVolume=/etc/wg-easy:/etc/wireguard:rw\n",

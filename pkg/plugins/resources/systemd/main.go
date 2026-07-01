@@ -10,6 +10,11 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/text"
 )
 
+// intPtr is an helper function to create a pointer to an int value.
+func intPtr(i int) *int {
+	return &i
+}
+
 // Systemd defines a resource of kind "systemd"
 type Systemd struct {
 	spec             Spec
@@ -23,14 +28,6 @@ func New(spec any) (*Systemd, error) {
 	err := mapstructure.Decode(spec, &newSpec)
 	if err != nil {
 		return nil, err
-	}
-
-	if newSpec.Section == "" {
-		newSpec.Section = "Container"
-	}
-
-	if newSpec.Option == "" {
-		newSpec.Option = "Image"
 	}
 
 	newResource := &Systemd{
@@ -65,10 +62,10 @@ func (s *Systemd) ReportConfig() any {
 }
 
 // readOptions reads and parses a systemd unit file, returning all options
-// and the one matching the configured section/option/index.
-func (s *Systemd) readOptions(filePath string) ([]*unit.UnitOption, *unit.UnitOption, error) {
+// and the all options matching the configured section/option/index.
+func (s *Systemd) readOptions(filePath string) ([]*unit.UnitOption, []*unit.UnitOption, error) {
 	if !s.contentRetriever.FileExists(filePath) {
-		return nil, nil, fmt.Errorf("the file %s does not exist", filePath)
+		return nil, nil, fmt.Errorf("the file %q does not exist", filePath)
 	}
 
 	content, err := s.contentRetriever.ReadAll(filePath)
@@ -81,15 +78,24 @@ func (s *Systemd) readOptions(filePath string) ([]*unit.UnitOption, *unit.UnitOp
 		return nil, nil, fmt.Errorf("parsing systemd unit file: %w", err)
 	}
 
+	matchingOpts := []*unit.UnitOption{}
 	index := 0
+
 	for _, opt := range opts {
 		if opt.Section == s.spec.Section && opt.Name == s.spec.Option {
-			if index == s.spec.Index {
-				return opts, opt, nil
-			}
+			matchingOpts = append(matchingOpts, opt)
 			index++
 		}
 	}
 
-	return nil, nil, fmt.Errorf("option %q with index %d not found in section %q", s.spec.Option, s.spec.Index, s.spec.Section)
+	if len(matchingOpts) > 0 {
+		return opts, matchingOpts, nil
+	}
+
+	specIndex := 0
+	if s.spec.Index != nil {
+		specIndex = *s.spec.Index
+	}
+
+	return nil, nil, fmt.Errorf("option %q with index %d not found in section %q", s.spec.Option, specIndex, s.spec.Section)
 }

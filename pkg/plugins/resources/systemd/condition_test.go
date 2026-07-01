@@ -66,10 +66,36 @@ func TestCondition(t *testing.T) {
 				File:    "test.container",
 				Section: "Container",
 				Option:  "Volume",
-				Index:   1,
+				Index:   intPtr(1),
 			},
 			mockedContents: map[string]string{
 				"test.container": "[Container]\nVolume=/lib/modules:/lib/modules:ro\nVolume=/etc/wg-easy:/etc/wireguard:rw\n",
+			},
+			shouldPass: true,
+		},
+		{
+			name:   "Value doesn't matches all repeated option index",
+			source: "/etc/wg-easy:/etc/wireguard:rw",
+			spec: Spec{
+				File:    "test.container",
+				Section: "Container",
+				Option:  "Volume",
+			},
+			mockedContents: map[string]string{
+				"test.container": "[Container]\nVolume=/lib/modules:/lib/modules:ro\nVolume=/etc/wg-easy:/etc/wireguard:rw\n",
+			},
+			shouldPass: false,
+		},
+		{
+			name:   "Value matches all repeated option index",
+			source: "/lib/modules:/lib/modules:ro",
+			spec: Spec{
+				File:    "test.container",
+				Section: "Container",
+				Option:  "Volume",
+			},
+			mockedContents: map[string]string{
+				"test.container": "[Container]\nVolume=/lib/modules:/lib/modules:ro\nVolume=/lib/modules:/lib/modules:ro\n",
 			},
 			shouldPass: true,
 		},
