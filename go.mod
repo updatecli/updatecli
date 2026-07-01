@@ -59,7 +59,7 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/microsoft/azure-devops-go-api/azuredevops/v7 v7.1.0
 	github.com/minamijoyo/hcledit v0.2.18
-	github.com/minamijoyo/tfupdate v0.8.0
+	github.com/minamijoyo/tfupdate v0.9.4
 	github.com/muesli/mango-cobra v1.3.0
 	github.com/muesli/roff v0.1.0
 	github.com/nirasan/go-oauth-pkce-code-verifier v0.0.0-20220510032225-4f9f17eaec4c
@@ -178,7 +178,6 @@ require (
 	github.com/google/go-querystring v1.2.0 // indirect
 	github.com/google/s2a-go v0.1.9 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.28.0 // indirect
-	github.com/hashicorp/terraform-config-inspect v0.0.0-20230614215431-f32df32a01cd // indirect
 	github.com/hashicorp/terraform-svchost v0.1.1 // indirect
 	github.com/huaweicloud/huaweicloud-sdk-go-v3 v0.1.195 // indirect
 	github.com/ianlancetaylor/demangle v0.0.0-20240805132620-81f5be970eca // indirect
@@ -186,6 +185,7 @@ require (
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect
 	github.com/magiconair/properties v1.8.10 // indirect
+	github.com/minamijoyo/terraform-config-inspect v0.0.0-20250505010908-6ad6eb27d3c9 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/moby/docker-image-spec v1.3.1 // indirect
 	github.com/moby/go-archive v0.2.0 // indirect
