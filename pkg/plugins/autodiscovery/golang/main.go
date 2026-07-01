@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
@@ -20,35 +21,35 @@ type Spec struct {
 	OnlyGoModule *bool `yaml:",omitempty"`
 	// ignore allows to specify "rule" to ignore autodiscovery a specific go.mod rule
 	Ignore MatchingRules `yaml:",omitempty"`
-	/*
-		`only` allows to specify rule to "only" autodiscover manifest for a specific golang rule
-	*/
+	// `only` allows to specify rule to "only" autodiscover manifest for a specific golang rule
 	Only MatchingRules `yaml:",omitempty"`
-	/*
-		`versionfilter` provides parameters to specify the version pattern to use when generating manifest.
-
-		kind - semver
-			versionfilter of kind `semver` uses semantic versioning as version filtering
-			pattern accepts one of:
-				`patch` - patch only update patch version
-				`minor` - minor only update minor version
-				`major` - major only update major versions
-				`a version constraint` such as `>= 1.0.0`
-
-		kind - regex
-			versionfilter of kind `regex` uses regular expression as version filtering
-			pattern accepts a valid regular expression
-
-		example:
-		```
-			versionfilter:
-				kind: semver
-				pattern: minor
-		```
-
-		and its type like regex, semver, or just latest.
-	*/
+	// `versionfilter` provides parameters to specify the version pattern to use when generating manifest.
+	//
+	// kind - semver
+	// 	versionfilter of kind `semver` uses semantic versioning as version filtering
+	// 	pattern accepts one of:
+	// 	  `patch` - patch only update patch version
+	// 	  `minor` - minor only update minor version
+	// 	  `major` - major only update major versions
+	// 	  `a version constraint` such as `>= 1.0.0`
+	//
+	// kind - regex
+	// 	versionfilter of kind `regex` uses regular expression as version filtering
+	// 	pattern accepts a valid regular expression
+	//
+	// example:
+	// ```
+	// 	versionfilter:
+	// 		kind: semver
+	// 		pattern: minor
+	// ```
+	//
+	// and its type like regex, semver, or just latest.
+	//
 	VersionFilter version.Filter `yaml:",omitempty"`
+	// Age defines the minimum or maximum age of a release to be considered valid.
+	// It accepts a duration string (e.g., "24h", "7d", "1w").
+	Age age.Spec `yaml:",omitempty"`
 }
 
 // Golang holds all information needed to generate golang manifest.

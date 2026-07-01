@@ -39,6 +39,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/resources/shell"
 	stashBranch "github.com/updatecli/updatecli/pkg/plugins/resources/stash/branch"
 	stashTag "github.com/updatecli/updatecli/pkg/plugins/resources/stash/tag"
+	"github.com/updatecli/updatecli/pkg/plugins/resources/systemd"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/temurin"
 	terraformLock "github.com/updatecli/updatecli/pkg/plugins/resources/terraform/lock"
 	terraformProvider "github.com/updatecli/updatecli/pkg/plugins/resources/terraform/provider"
@@ -225,6 +226,10 @@ func New(rs ResourceConfig) (resource Resource, err error) {
 
 		return stashTag.New(rs.Spec)
 
+	case "systemd":
+
+		return systemd.New(rs.Spec)
+
 	case "terraform/file":
 
 		return hcl.New(rs.Spec)
@@ -318,6 +323,7 @@ func GetResourceMapping() map[string]interface{} {
 		"shell":              &shell.Spec{},
 		"stash/branch":       &stashBranch.Spec{},
 		"stash/tag":          &stashTag.Spec{},
+		"systemd":            &systemd.Spec{},
 		"temurin":            &temurin.Spec{},
 		"terraform/file":     &hcl.Spec{},
 		"terraform/lock":     &terraformLock.Spec{},
