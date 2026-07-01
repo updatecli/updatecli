@@ -2,7 +2,6 @@ package systemd
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -18,7 +17,7 @@ func (s *Systemd) Source(_ context.Context, workingDir string, sourceResult *res
 	// source core codebase.
 	currentWorkingDirectory, err := os.Getwd()
 	if err != nil {
-		return errors.New("fail getting current working directory")
+		return fmt.Errorf("fail getting current working directory: %w", err)
 	}
 
 	if workingDir == currentWorkingDirectory {

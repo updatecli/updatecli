@@ -37,7 +37,7 @@ type Spec struct {
 	Option string `yaml:",omitempty"`
 	// index specifies which matching option to read or update when the same option is defined multiple times.
 	// It starts at 0, so index 0 selects the first match, index 1 selects the second match, and so on.
-	// If unset then a condition or a target matches every occurences.
+	// If unset then a condition or a target matches every occurrences.
 	//
 	// compatible:
 	//     * source

@@ -110,17 +110,20 @@ func (s *Systemd) Target(_ context.Context, source string, scm scm.ScmHandler, d
 		for _, i := range totalNotMatchingOpts {
 			resultTarget.Information = strings.Join([]string{resultTarget.Information, matchingOpts[i].Value}, ", ")
 
+			oldValue := matchingOpts[i].Value
 			matchingOpts[i].Value = expected
 			resultTarget.Description = fmt.Sprintf("option %q value %q updated to %q for file %q",
-				matchingOpts[i].Name, matchingOpts[i].Value, expected, s.spec.File)
+				matchingOpts[i].Name, oldValue, expected, s.spec.File)
 		}
 	default:
 		resultTarget.Information = matchingOpts[optIndex].Value
 
 		matchingOpts[optIndex].Value = expected
 
+		oldValue := matchingOpts[optIndex].Value
+		matchingOpts[optIndex].Value = expected
 		resultTarget.Description = fmt.Sprintf("option %q value %q updated to %q for file %q",
-			matchingOpts[optIndex].Name, matchingOpts[optIndex].Value, expected, s.spec.File)
+			matchingOpts[optIndex].Name, oldValue, expected, s.spec.File)
 
 	}
 

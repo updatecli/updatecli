@@ -79,12 +79,9 @@ func (s *Systemd) readOptions(filePath string) ([]*unit.UnitOption, []*unit.Unit
 	}
 
 	matchingOpts := []*unit.UnitOption{}
-	index := 0
-
 	for _, opt := range opts {
 		if opt.Section == s.spec.Section && opt.Name == s.spec.Option {
 			matchingOpts = append(matchingOpts, opt)
-			index++
 		}
 	}
 
