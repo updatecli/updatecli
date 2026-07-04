@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 )
 
 func TestCondition(t *testing.T) {
@@ -29,6 +30,26 @@ func TestCondition(t *testing.T) {
 				Version: "1.11.1111",
 			},
 			expectedResult: false,
+		},
+		{
+			name: "TestSourceWithVersionFilterAndMinimumAge",
+			spec: Spec{
+				Version: "1.19.13",
+				Age: age.Spec{
+					Minimum: "1y",
+				},
+			},
+			expectedResult: true,
+		},
+		{
+			name: "TestSourceWithVersionFilterAndMaximumAge",
+			spec: Spec{
+				Version: "1.19.13",
+				Age: age.Spec{
+					Maximum: "100y",
+				},
+			},
+			expectedResult: true,
 		},
 	}
 	for _, tt := range tests {
