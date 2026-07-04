@@ -59,7 +59,7 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/microsoft/azure-devops-go-api/azuredevops/v7 v7.1.0
 	github.com/minamijoyo/hcledit v0.2.18
-	github.com/minamijoyo/tfupdate v0.8.0
+	github.com/minamijoyo/tfupdate v0.10.0
 	github.com/muesli/mango-cobra v1.3.0
 	github.com/muesli/roff v0.1.0
 	github.com/nirasan/go-oauth-pkce-code-verifier v0.0.0-20220510032225-4f9f17eaec4c
