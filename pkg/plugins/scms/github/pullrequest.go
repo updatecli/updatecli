@@ -952,6 +952,7 @@ func (p *PullRequest) getRemotePullRequest(ctx context.Context, resetBody bool, 
 	// If no pull-request found, then we can exit
 	if len(query.Repository.PullRequests.Nodes) == 0 {
 		logrus.Debugf("No existing pull-request found in repo: %s/%s", owner, name)
+		p.remotePullRequest = PullRequestApi{}
 		return nil
 	}
 
