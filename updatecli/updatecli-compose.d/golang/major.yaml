@@ -19,8 +19,6 @@ policies:
       pipelineid: "golang/gomod/major"
       spec:
         ignore:
-          # This repository contains other go.sum file used for testing.
-          # So we want to be sure that we only update the one at the root of the repository
           - path: "go.mod"
             modules:
               "golang.org/*": ""
@@ -37,8 +35,6 @@ policies:
       groupby: all
       spec:
         only:
-          # This repository contains other go.sum file used for testing.
-          # So we want to be sure that we only update the one at the root of the repository
           - path: "go.mod"
             modules:
               "golang.org/*": ""
@@ -52,8 +48,6 @@ policies:
       groupby: all
       spec:
         only:
-          # This repository contains other go.sum file used for testing.
-          # So we want to be sure that we only update the one at the root of the repository
           - path: "go.mod"
             modules:
               "github.com/Masterminds/*": ""
@@ -66,8 +60,6 @@ policies:
       groupby: all
       spec:
         only:
-          # This repository contains other go.sum file used for testing.
-          # So we want to be sure that we only update the one at the root of the repository
           - path: "go.mod"
             modules:
               "github.com/shurcooL/*": ""
@@ -81,8 +73,6 @@ policies:
       groupby: all
       spec:
         only:
-          # This repository contains other go.sum file used for testing.
-          # So we want to be sure that we only update the one at the root of the repository
           - path: "go.mod"
             modules:
               "github.com/aws/*": ""
@@ -96,8 +86,6 @@ policies:
       groupby: all
       spec:
         only:
-          # This repository contains other go.sum file used for testing.
-          # So we want to be sure that we only update the one at the root of the repository
           - path: "go.mod"
             modules:
               "go.opentelemetry.io/*": ""
