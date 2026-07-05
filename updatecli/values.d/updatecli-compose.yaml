@@ -1,5 +1,0 @@
-spec:
-  files:
-    - "updatecli-compose.yaml"
-  only:
-    - path: "updatecli-compose.yaml"
