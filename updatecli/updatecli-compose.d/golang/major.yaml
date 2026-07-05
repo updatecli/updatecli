@@ -1,0 +1,91 @@
+name: Golang Major Update
+
+values:
+  - "../../values.d/scm.yaml"
+
+valuesinline:
+  versionfilter:
+    kind: semver
+    pattern: majoronly
+  age:
+    minimum: 7d
+
+policies:
+  - name: Default
+    id: golang_major_default
+    policy: ghcr.io/updatecli/policies/autodiscovery/golang:0.13.1@sha256:85a008b9760fc02b05f68f4047d53b7c05f7250d5a8e8e7da33e925c72c885e0
+    valuesinline:
+      name: "deps(golang): Bump Major version for Golang module"
+      pipelineid: "golang/gomod/major"
+      spec:
+        ignore:
+          - path: "go.mod"
+            modules:
+              "golang.org/*": ""
+              "github.com/Masterminds/*": ""
+              "github.com/shurcooL/*": ""
+              "github.com/aws/*": ""
+
+  - name: Module from golang.org
+    id: golang_major_golang.org
+    policy: ghcr.io/updatecli/policies/autodiscovery/golang:0.13.1@sha256:85a008b9760fc02b05f68f4047d53b7c05f7250d5a8e8e7da33e925c72c885e0
+    valuesinline:
+      name: "deps(golang): Bump Major version for Golang module"
+      pipelineid: "golang/gomod/major/golang/org"
+      groupby: all
+      spec:
+        only:
+          - path: "go.mod"
+            modules:
+              "golang.org/*": ""
+
+  - name: Module from github.com/Masterminds
+    id: golang_major_masterminds
+    policy: ghcr.io/updatecli/policies/autodiscovery/golang:0.13.1@sha256:85a008b9760fc02b05f68f4047d53b7c05f7250d5a8e8e7da33e925c72c885e0
+    valuesinline:
+      name: "deps(golang): Bump Major version for github.com/masterminds module"
+      pipelineid: "golang/gomod/major/github/com/masterminds"
+      groupby: all
+      spec:
+        only:
+          - path: "go.mod"
+            modules:
+              "github.com/Masterminds/*": ""
+  - name: Module from github.com/shurcooL
+    id: golang_major_shurcooL
+    policy: ghcr.io/updatecli/policies/autodiscovery/golang:0.13.1@sha256:85a008b9760fc02b05f68f4047d53b7c05f7250d5a8e8e7da33e925c72c885e0
+    valuesinline:
+      name: "deps(golang): Bump Major version for github.com/shurcooL module"
+      pipelineid: "golang/gomod/major/github/com/shurcooL"
+      groupby: all
+      spec:
+        only:
+          - path: "go.mod"
+            modules:
+              "github.com/shurcooL/*": ""
+
+  - name: Module from github.com/aws
+    id: golang_major_aws
+    policy: ghcr.io/updatecli/policies/autodiscovery/golang:0.13.1@sha256:85a008b9760fc02b05f68f4047d53b7c05f7250d5a8e8e7da33e925c72c885e0
+    valuesinline:
+      name: "deps(golang): Bump Major version for github.com/aws module"
+      pipelineid: "golang/gomod/major/github/com/aws"
+      groupby: all
+      spec:
+        only:
+          - path: "go.mod"
+            modules:
+              "github.com/aws/*": ""
+
+  - name: Module from go.opentelemetry.io
+    id: golang_major_go_opentelemetry_io
+    policy: ghcr.io/updatecli/policies/autodiscovery/golang:0.13.1@sha256:85a008b9760fc02b05f68f4047d53b7c05f7250d5a8e8e7da33e925c72c885e0
+    valuesinline:
+      name: "deps(golang): Bump Major version for go.opentelemetry.io module"
+      pipelineid: "golang/gomod/major/go/opentelemetry/io"
+      groupby: all
+      spec:
+        only:
+          - path: "go.mod"
+            modules:
+              "go.opentelemetry.io/*": ""
