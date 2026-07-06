@@ -11,7 +11,7 @@ require (
 replace (
 	github.com/rancher/saml => github.com/rancher/saml v0.4.14
 
-	github.com/crewjam/saml v0.6.0 => github.com/crewjam/saml v0.5.0
+	github.com/crewjam/saml v0.6.0 => github.com/crewjam/saml v0.5.1
 
 	github.com/stretchr/testify => ../local/testify
 )
