@@ -4,7 +4,6 @@
 
 [![](https://img.shields.io/matrix/updatecli:matrix.org)](https://matrix.to/#/#Updatecli_community:gitter.im)
 [![GitHub](https://img.shields.io/github/license/updatecli/updatecli)](https://github.com/updatecli/updatecli/blob/main/LICENSE)
-[![Go Report Card](https://goreportcard.com/badge/github.com/updatecli/updatecli)](https://goreportcard.com/report/github.com/updatecli/updatecli)
 [![Codecov](https://img.shields.io/codecov/c/github/updatecli/updatecli)](https://codecov.io/gh/updatecli/updatecli)
 [![go.dev reference](https://img.shields.io/badge/go.dev-reference-007d9c)](https://pkg.go.dev/github.com/updatecli/updatecli)
 [![GitHub Releases](https://img.shields.io/github/downloads/updatecli/updatecli/total)](https://github.com/updatecli/updatecli/releases)
