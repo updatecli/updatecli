@@ -35,6 +35,7 @@ jobs:
         run: |
           gh issue create \
             --title "Monthly issue metrics report" \
-            --body-file issue_metrics.md
+            --body-file issue_metrics.md \ 
+            --repo updatecli/updatecli
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
