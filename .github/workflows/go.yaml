@@ -46,7 +46,7 @@ jobs:
           # Required: the version of golangci-lint is required
           # and must be specified without patch version:
           # we always use the latest patch version.
-          version: v2.9.0
+          version: v2.12.2
           install-mode: "binary"
       - uses: "pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093" # v6.0.8
         with:
