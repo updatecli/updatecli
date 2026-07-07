@@ -1,3 +1,3 @@
 module github.com/updatecli/updatecli
 
-go 1.20
+go 1.26
