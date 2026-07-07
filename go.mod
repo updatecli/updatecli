@@ -43,7 +43,7 @@ require (
 	github.com/aws/smithy-go v1.27.3
 	github.com/beevik/etree v1.6.0
 	github.com/coreos/go-systemd/v22 v22.7.0
-	github.com/drone/go-scm v1.42.7
+	github.com/drone/go-scm v1.42.9
 	github.com/extism/go-sdk v1.7.1
 	github.com/fluxcd/helm-controller/api v1.5.5
 	github.com/fluxcd/source-controller/api v1.8.5
