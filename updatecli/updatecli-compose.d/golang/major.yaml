@@ -6,7 +6,7 @@ values:
 valuesinline:
   versionfilter:
     kind: semver
-    pattern: majoronly
+    pattern: major
   age:
     minimum: 7d
 
