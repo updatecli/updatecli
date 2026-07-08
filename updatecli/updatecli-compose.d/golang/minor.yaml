@@ -16,8 +16,12 @@ policies:
     policy: ghcr.io/updatecli/policies/autodiscovery/golang:0.13.1@sha256:85a008b9760fc02b05f68f4047d53b7c05f7250d5a8e8e7da33e925c72c885e0
     valuesinline:
       name: "deps(golang): Bump minor version for Golang module"
-      pipelineid: "golang/gomod/major"
+      pipelineid: "golang/gomod/minor/default"
+      groupby: individual
       spec:
+        onlygomodule: true
+        only:
+          - path: "go.mod"
         ignore:
           - path: "go.mod"
             modules:
@@ -69,7 +73,7 @@ policies:
     policy: ghcr.io/updatecli/policies/autodiscovery/golang:0.13.1@sha256:85a008b9760fc02b05f68f4047d53b7c05f7250d5a8e8e7da33e925c72c885e0
     valuesinline:
       name: "deps(golang): Bump minor version for github.com/aws module"
-      pipelineid: "golang/gomod/major/github/com/aws"
+      pipelineid: "golang/gomod/minor/github/com/aws"
       groupby: all
       spec:
         only:
@@ -82,7 +86,7 @@ policies:
     policy: ghcr.io/updatecli/policies/autodiscovery/golang:0.13.1@sha256:85a008b9760fc02b05f68f4047d53b7c05f7250d5a8e8e7da33e925c72c885e0
     valuesinline:
       name: "deps(golang): Bump minor version for go.opentelemetry.io module"
-      pipelineid: "golang/gomod/major/go/opentelemetry/io"
+      pipelineid: "golang/gomod/minor/go/opentelemetry/io"
       groupby: all
       spec:
         only:
