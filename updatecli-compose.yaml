@@ -26,7 +26,6 @@ policies:
           ecosystem: updatecli
           monitor: active
 
-
   - name: Default Update Updatecli policies
     id: updatecli_policies
     policy: ghcr.io/updatecli/policies/updatecli/autodiscovery:0.8.1@sha256:f8edda1a6cbf0d7274e2b847ede29fc4dc70dd5302ccb8575ae21b069cc0d8a0
@@ -50,14 +49,26 @@ policies:
           ecosystem: golang
           monitor: active
 
-
   - name: Update golangci-lint
     id: golangci-lint
     policy: ghcr.io/updatecli/policies/golangci-lint/githubaction:0.8.1@sha256:7fb34ae17a84641f02c3ff2aa0f8156a7108f32f21282b0070b8883c86ba6e67
+
+  - name: Update Updatecli version in GitHub action
+    id: updatecli_github_action
+    policy: ghcr.io/updatecli/policies/updatecli/githubaction:0.8.1@sha256:48872bbf1a09cfff32ff5ffa07086c20b40d6888c19c36048b18f84bbdad37fe
+    valuesinline:
+      spec:
+        rootdir: ".github"
+      pipeline:
+        labels:
+          release: updatecli
+          monitor: active
+          ecosystem: updatecli
+          policy: gha
 
   - name: Update githubactions
     id: githubactions
     policy: ghcr.io/updatecli/policies/autodiscovery/githubaction:0.4.1@sha256:869b676074f9fee7edd5d488140a12c3b09a5f8a175f12f26ea85a4f8bd0a9d1
     valuesinline:
       spec:
-        rootdir: '.github'
+        rootdir: ".github"
