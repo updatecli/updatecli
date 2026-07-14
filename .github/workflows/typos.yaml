@@ -16,6 +16,6 @@ jobs:
         with:
           persist-credentials: false
       - name: Run typos
-        uses: crate-ci/typos@cf5f1c29a8ac336af8568821ec41919923b05a83 # v1.45.1
+        uses: crate-ci/typos@bee27e3a4fd1ea2111cf90ab89cd076c870fce14 # v1.48.0
         with:
           config: _typos.toml
