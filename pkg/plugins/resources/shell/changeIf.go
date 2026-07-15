@@ -33,7 +33,7 @@ type SpecChangedIf struct {
 	Spec interface{} `yaml:",omitempty"`
 }
 
-type Successer interface {
+type Successor interface {
 	PreCommand(workingDir string) error
 	PostCommand(workingDir string) error
 	SourceResult(resultSource *result.Source) error
