@@ -333,19 +333,41 @@ func (g GoGit) GetChangedFiles(workingDir string) ([]string, error) {
 	return filesChanged, nil
 }
 
-// GetLatestCommitHash returns the latest commit hash from the working directory
-func (g GoGit) GetLatestCommitHash(workingDir string) (string, error) {
+// GetCommitHash returns the commit hash referenced by a local or remote branch.
+func (g GoGit) GetCommitHash(workingDir, branch string) (string, error) {
 	gitRepository, err := git.PlainOpen(workingDir)
 	if err != nil {
 		return "", fmt.Errorf("opening %q git directory: %s", workingDir, err)
 	}
 
-	head, err := gitRepository.Head()
-	if err != nil {
-		return "", fmt.Errorf("getting HEAD: %s", err)
+	if branch == "" {
+		head, err := gitRepository.Head()
+		if err != nil {
+			return "", fmt.Errorf("getting HEAD: %s", err)
+		}
+		return head.Hash().String(), nil
 	}
 
-	return head.Hash().String(), nil
+	references := []plumbing.ReferenceName{
+		plumbing.NewBranchReferenceName(branch),
+		plumbing.NewRemoteReferenceName(DefaultRemoteReferenceName, branch),
+	}
+	for _, referenceName := range references {
+		reference, err := gitRepository.Reference(referenceName, true)
+		if err == nil {
+			return reference.Hash().String(), nil
+		}
+		if err != plumbing.ErrReferenceNotFound {
+			return "", fmt.Errorf("getting branch %q: %s", branch, err)
+		}
+	}
+
+	return "", fmt.Errorf("branch %q not found", branch)
+}
+
+// GetLatestCommitHash returns the latest commit hash from the working directory
+func (g GoGit) GetLatestCommitHash(workingDir string) (string, error) {
+	return g.GetCommitHash(workingDir, "")
 }
 
 // Add run `git add`.

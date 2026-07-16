@@ -1,0 +1,28 @@
+name: End to end test of the gitcommit resource
+
+scms:
+  git-repository:
+    kind: git
+    spec:
+      branch: main
+      url: https://github.com/updatecli-test/updatecli-submodules.git
+
+sources:
+  from-scm:
+    name: Get the latest commit from an SCM working directory
+    kind: gitcommit
+    scmid: git-repository
+    spec:
+      branch: main
+  from-url:
+    name: Get the latest commit from a Git URL
+    kind: gitcommit
+    spec:
+      branch: main
+      depth: 1
+      url: https://github.com/updatecli-test/updatecli-submodules.git
+  from-path:
+    name: Get the latest commit from the current working directory
+    kind: gitcommit
+    spec:
+      path: ./

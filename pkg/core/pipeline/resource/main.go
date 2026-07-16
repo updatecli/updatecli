@@ -18,6 +18,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/resources/dockerimage"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/file"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/gitbranch"
+	"github.com/updatecli/updatecli/pkg/plugins/resources/gitcommit"
 	giteaBranch "github.com/updatecli/updatecli/pkg/plugins/resources/gitea/branch"
 	giteaRelease "github.com/updatecli/updatecli/pkg/plugins/resources/gitea/release"
 	giteaTag "github.com/updatecli/updatecli/pkg/plugins/resources/gitea/tag"
@@ -133,6 +134,10 @@ func New(rs ResourceConfig) (resource Resource, err error) {
 	case "gitbranch":
 
 		return gitbranch.New(rs.Spec)
+
+	case "gitcommit":
+
+		return gitcommit.New(rs.Spec)
 
 	case "gitea/branch":
 
@@ -302,6 +307,7 @@ func GetResourceMapping() map[string]interface{} {
 		"file":               &file.Spec{},
 		"gittag":             &gittag.Spec{},
 		"gitbranch":          &gitbranch.Spec{},
+		"gitcommit":          &gitcommit.Spec{},
 		"gitea/branch":       &giteaBranch.Spec{},
 		"gitea/release":      &giteaRelease.Spec{},
 		"gitea/tag":          &giteaTag.Spec{},
