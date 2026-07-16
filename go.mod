@@ -69,7 +69,7 @@ require (
 	github.com/tomwright/dasel v1.27.3
 	github.com/tomwright/dasel/v2 v2.8.1
 	github.com/vmware-labs/yaml-jsonpath v0.3.2
-	github.com/yuin/goldmark v1.8.2
+	github.com/yuin/goldmark v1.8.4
 	github.com/zclconf/go-cty v1.18.1
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.69.0
 	go.opentelemetry.io/otel v1.44.0
