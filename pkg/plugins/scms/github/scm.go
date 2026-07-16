@@ -102,6 +102,7 @@ func (g *Github) Clone() (string, error) {
 		g.Spec.Depth,
 		g.Spec.Branch,
 		g.Spec.SingleBranch != nil && *g.Spec.SingleBranch,
+		g.Spec.RefSpecs,
 	)
 	if err != nil {
 		logrus.Errorf("failed cloning GitHub repository %q", g.GetURL())

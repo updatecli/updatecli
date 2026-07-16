@@ -28,12 +28,15 @@ const (
 	ErrNoBranchFound = "no branch found"
 	// ErrNoGitTagFound is the error message when no tag is found
 	ErrNoGitTagFound = "no tag found"
+	// DefaultRefSpec is the default refspec used when fetching remote branches after cloning,
+	// and no refSpecs is specified in the pipeline.
+	DefaultRefSpec = "refs/*:refs/*"
 )
 
 type GitHandler interface {
 	Add(files []string, workingDir string) error
 	Checkout(username, password, branch, remoteBranch, workingDir string, forceReset bool, depth *int) error
-	Clone(username, password, URL, workingDir string, withSubmodules *bool, depth *int, branch string, singleBranch bool) error
+	Clone(username, password, URL, workingDir string, withSubmodules *bool, depth *int, branch string, singleBranch bool, refSpecs []string) error
 	Commit(user, email, message, workingDir string, signingKey string, passphrase string) error
 	DeleteBranch(branch, gitRepositoryPath, username, password string) error
 	GetChangedFiles(workingDir string) ([]string, error)
@@ -458,8 +461,9 @@ func (g *GoGit) Checkout(username, password, basedBranch, newBranch, gitReposito
 		// For large repository, the pull can take a long time so ideally we would like to only do it once
 		// when Updatecli is started.
 		pullOptions := git.PullOptions{
-			Force:    true,
-			Progress: &b,
+			Force:        true,
+			Progress:     &b,
+			SingleBranch: true,
 		}
 
 		if depth != nil {
@@ -473,6 +477,7 @@ func (g *GoGit) Checkout(username, password, basedBranch, newBranch, gitReposito
 			pullOptions.Auth = &auth
 		}
 
+		logrus.Debugf("Creating a worktree at %q and pulling changes from remote branch %q with options: %+v", gitRepositoryPath, newBranch, pullOptions)
 		err = worktree.Pull(&pullOptions)
 		if b.String() != "" {
 			logrus.Debugln(b.String())
@@ -480,7 +485,8 @@ func (g *GoGit) Checkout(username, password, basedBranch, newBranch, gitReposito
 		b.Reset()
 		if err != nil &&
 			err != git.ErrNonFastForwardUpdate &&
-			err != git.NoErrAlreadyUpToDate {
+			err != git.NoErrAlreadyUpToDate &&
+			err.Error() != "object not found" {
 			logrus.Debugln(err)
 			return err
 		}
@@ -572,7 +578,7 @@ func (g GoGit) Commit(user, email, message, workingDir string, signingKey string
 }
 
 // Clone run `git clone`.
-func (g GoGit) Clone(username, password, URL, workingDir string, withSubmodules *bool, depth *int, branch string, singleBranch bool) error {
+func (g GoGit) Clone(username, password, URL, workingDir string, withSubmodules *bool, depth *int, branch string, singleBranch bool, refSpecs []string) error {
 	var repo *git.Repository
 
 	auth := transportHttp.BasicAuth{
@@ -593,6 +599,7 @@ func (g GoGit) Clone(username, password, URL, workingDir string, withSubmodules 
 	}
 
 	if singleBranch && branch != "" {
+		logrus.Debugf("cloning single branch %q", branch)
 		cloneOptions.SingleBranch = true
 		cloneOptions.ReferenceName = plumbing.NewBranchReferenceName(branch)
 	}
@@ -693,11 +700,20 @@ func (g GoGit) Clone(username, password, URL, workingDir string, withSubmodules 
 
 	logrus.Debugf("Fetching remote branches for resetting local ones")
 
+	gitRefSpecs := []config.RefSpec{}
+	if len(refSpecs) == 0 {
+		refSpecs = []string{DefaultRefSpec}
+	}
+	for _, refSpec := range refSpecs {
+		gitRefSpecs = append(gitRefSpecs, config.RefSpec(refSpec))
+	}
+	logrus.Debugf("Using refspecs: %v", gitRefSpecs)
+
 	for _, r := range remotes {
 
 		fetchOptions := git.FetchOptions{
 			Progress: &b,
-			RefSpecs: []config.RefSpec{"refs/*:refs/*"},
+			RefSpecs: gitRefSpecs,
 			Force:    true,
 		}
 
@@ -712,11 +728,13 @@ func (g GoGit) Clone(username, password, URL, workingDir string, withSubmodules 
 			fetchOptions.Auth = &auth
 		}
 
+		logrus.Debugf("fetching remote %q", r.Config().Name)
 		err := r.Fetch(&fetchOptions)
 
 		if b.String() != "" {
 			logrus.Debugln(b.String())
 		}
+		logrus.Debugf("Resetting local branches to match remote branches for remote %q", r.Config().Name)
 		b.Reset()
 
 		if err != nil &&

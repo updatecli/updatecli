@@ -64,6 +64,14 @@ type Spec struct {
 	//   As a trade-off, Updatecli may not detect an already published working branch in some
 	//   edge cases, which could result in a duplicate pull request being created.
 	SingleBranch *bool `yaml:",omitempty"`
+	// RefSpecs defines the list of refspecs used when fetching remote references after cloning.
+	//
+	// Default: ["refs/*:refs/*"]
+	//
+	// Remark:
+	//   Providing a more targeted list of refspecs (for example limiting the fetch to branches only)
+	//   can drastically speed up operations on repositories with a large number of refs.
+	RefSpecs []string `yaml:",omitempty"`
 	//  "email" defines the email used to commit changes.
 	//
 	//  compatible:

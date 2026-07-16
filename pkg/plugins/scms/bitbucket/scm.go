@@ -102,6 +102,7 @@ func (b *Bitbucket) Clone() (string, error) {
 		b.Spec.Depth,
 		b.Spec.Branch,
 		b.Spec.SingleBranch != nil && *b.Spec.SingleBranch,
+		b.Spec.RefSpecs,
 	)
 	if err != nil {
 		logrus.Errorf("failed cloning Bitbucket Cloud repository %q", b.GetURL())

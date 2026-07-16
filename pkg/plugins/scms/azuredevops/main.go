@@ -46,6 +46,14 @@ type Spec struct {
 	//   As a trade-off, Updatecli may not detect an already published working branch in some
 	//   edge cases, which could result in a duplicate pull request being created.
 	SingleBranch *bool `yaml:",omitempty"`
+	// RefSpecs defines the list of refspecs used when fetching remote references after cloning.
+	//
+	// Default: ["refs/*:refs/*"]
+	//
+	// Remark:
+	//   Providing a more targeted list of refspecs (for example limiting the fetch to branches only)
+	//   can drastically speed up operations on repositories with a large number of refs.
+	RefSpecs []string `yaml:",omitempty"`
 	// "email" defines the email used to commit changes.
 	Email string `yaml:",omitempty"`
 	// "force" is used during the git push phase to run `git push --force`.
@@ -286,6 +294,7 @@ func (a *AzureDevOps) Clone() (string, error) {
 		a.Spec.Depth,
 		a.Spec.Branch,
 		a.Spec.SingleBranch != nil && *a.Spec.SingleBranch,
+		a.Spec.RefSpecs,
 	)
 	if err != nil {
 		logrus.Errorf("failed cloning Azure DevOps repository %q", a.GetURL())
