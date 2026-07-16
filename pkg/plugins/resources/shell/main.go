@@ -148,7 +148,7 @@ type Shell struct {
 	executor     commandExecutor
 	spec         Spec
 	result       commandResult
-	success      Successer
+	success      Evaluator
 	interpreter  string
 	environments Environments
 }

@@ -33,7 +33,7 @@ const (
 type GitHandler interface {
 	Add(files []string, workingDir string) error
 	Checkout(username, password, branch, remoteBranch, workingDir string, forceReset bool, depth *int) error
-	Clone(username, password, URL, workingDir string, withSubmodules *bool, depth *int) error
+	Clone(username, password, URL, workingDir string, withSubmodules *bool, depth *int, branch string, singleBranch bool) error
 	Commit(user, email, message, workingDir string, signingKey string, passphrase string) error
 	DeleteBranch(branch, gitRepositoryPath, username, password string) error
 	GetChangedFiles(workingDir string) ([]string, error)
@@ -572,7 +572,7 @@ func (g GoGit) Commit(user, email, message, workingDir string, signingKey string
 }
 
 // Clone run `git clone`.
-func (g GoGit) Clone(username, password, URL, workingDir string, withSubmodules *bool, depth *int) error {
+func (g GoGit) Clone(username, password, URL, workingDir string, withSubmodules *bool, depth *int, branch string, singleBranch bool) error {
 	var repo *git.Repository
 
 	auth := transportHttp.BasicAuth{
@@ -590,6 +590,11 @@ func (g GoGit) Clone(username, password, URL, workingDir string, withSubmodules 
 		URL:               URL,
 		Progress:          &b,
 		RecurseSubmodules: submodule,
+	}
+
+	if singleBranch && branch != "" {
+		cloneOptions.SingleBranch = true
+		cloneOptions.ReferenceName = plumbing.NewBranchReferenceName(branch)
 	}
 
 	if depth != nil {
@@ -671,6 +676,14 @@ func (g GoGit) Clone(username, password, URL, workingDir string, withSubmodules 
 			return fmt.Errorf("cloning: %w\n\tIt appears that a password has been specified without a username, could it be related?", err)
 		}
 		return fmt.Errorf("cloning: %w", err)
+	}
+
+	// Skip the full ref reconciliation fetch below when singleBranch is enabled: it
+	// intentionally mirrors every ref from the remote (branches, tags, pull request refs,
+	// etc.), which defeats the purpose of only cloning/fetching the configured branch and
+	// can be very expensive on repositories with a large number of refs.
+	if singleBranch {
+		return nil
 	}
 
 	remotes, err := repo.Remotes()
