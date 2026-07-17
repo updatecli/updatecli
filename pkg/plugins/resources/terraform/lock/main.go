@@ -14,6 +14,7 @@ import (
 	terraformRegistryAddress "github.com/hashicorp/terraform-registry-address"
 	"github.com/minamijoyo/tfupdate/lock"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/httpclient"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/text"
 	terraformUtils "github.com/updatecli/updatecli/pkg/plugins/resources/terraform"
@@ -43,6 +44,7 @@ type TerraformLock struct {
 	files            map[string]file // map of file paths to file contents
 	lockIndex        lock.Index      // index is a cached index for updating dependency lock files.
 	provider         terraformRegistryAddress.Provider
+	httpClient       httpclient.HTTPClient
 }
 
 type file struct {
@@ -62,6 +64,7 @@ func New(spec interface{}) (*TerraformLock, error) {
 	newResource := &TerraformLock{
 		spec:             newSpec,
 		contentRetriever: &text.Text{},
+		httpClient:       httpclient.NewRetryClient(),
 	}
 
 	err = newResource.spec.Validate()
@@ -233,7 +236,7 @@ func (t *TerraformLock) getOpenTofuProviderHashes(version string) ([]string, err
 	if err != nil {
 		return nil, err
 	}
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := t.httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -265,7 +268,7 @@ func (t *TerraformLock) getOpenTofuProviderHashes(version string) ([]string, err
 	if err != nil {
 		return nil, err
 	}
-	respDownload, err := http.DefaultClient.Do(reqDownload)
+	respDownload, err := t.httpClient.Do(reqDownload)
 	if err != nil {
 		return nil, err
 	}
