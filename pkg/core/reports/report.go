@@ -168,19 +168,6 @@ func (r *Report) UpdateID() error {
 		reportHash = append(reportHash, r.Name)
 	}
 
-	// We need to sort the actions by their ID to make sure that the hash is always the same
-	for _, i := range slices.Sorted(maps.Keys(r.Actions)) {
-		action := r.Actions[i]
-		action.ID, err = getSha256HashFromStruct(action)
-		if err != nil {
-			return err
-		}
-
-		reportHash = append(reportHash, action.ID)
-
-		r.Actions[i] = action
-	}
-
 	// We need to sort the conditions by their ID to make sure that the hash is always the same
 	for _, i := range slices.Sorted(maps.Keys(r.Conditions)) {
 		condition := r.Conditions[i]
