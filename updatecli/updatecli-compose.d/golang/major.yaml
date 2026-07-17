@@ -4,11 +4,12 @@ values:
   - "../../values.d/scm.yaml"
 
 valuesinline:
-  versionfilter:
-    kind: semver
-    pattern: major
-  age:
-    minimum: 7d
+  spec:
+    versionfilter:
+      kind: semver
+      pattern: majoronly
+    age:
+      minimum: 7d
 
 policies:
   - name: Default
