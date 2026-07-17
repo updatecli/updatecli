@@ -105,7 +105,7 @@ func (y *Yaml) Source(_ context.Context, workingDir string, resultSource *result
 			}
 
 			if node != nil {
-				results = append(results, node.String())
+				results = append(results, nodeValue(node))
 				break
 			}
 		}
