@@ -14,6 +14,7 @@ type Spec struct {
 	//
 	// compatible:
 	//   * source
+	//   * condition
 	//
 	// remarks:
 	//   * Path overrides the working directory provided by an SCM configuration.
@@ -26,10 +27,19 @@ type Spec struct {
 	// default:
 	//   The repository's current HEAD branch.
 	Branch string `yaml:",omitempty"`
+	// Hash specifies the commit hash checked by the condition.
+	//
+	// compatible:
+	//   * condition
+	//
+	// default:
+	//   The source output.
+	Hash string `yaml:",omitempty"`
 	// Depth limits the number of commits fetched from the Git repository.
 	//
 	// compatible:
 	//   * source
+	//   * condition
 	//
 	// default:
 	//   0 (no limit)
@@ -38,6 +48,7 @@ type Spec struct {
 	//
 	// compatible:
 	//   * source
+	//   * condition
 	//
 	// example:
 	//   * git@github.com:updatecli/updatecli.git
@@ -50,23 +61,26 @@ type Spec struct {
 	//
 	// compatible:
 	//   * source
+	//   * condition
 	Username string `yaml:",omitempty"`
 	// Password specifies the password used with the HTTP protocol.
 	//
 	// compatible:
 	//   * source
+	//   * condition
 	Password string `yaml:",omitempty"`
 }
 
 // GitCommit defines a resource of kind "gitcommit".
 type GitCommit struct {
 	spec             Spec
-	nativeGitHandler commitHashFinder
+	nativeGitHandler commitHandler
 	directory        string
 }
 
-type commitHashFinder interface {
+type commitHandler interface {
 	GetCommitHash(workingDir, branch string) (string, error)
+	IsCommitExist(workingDir, commit string) (bool, error)
 }
 
 // New returns a newly initialized GitCommit resource.
@@ -105,6 +119,7 @@ func (gc *GitCommit) ReportConfig() interface{} {
 	return Spec{
 		Path:   gc.spec.Path,
 		Branch: gc.spec.Branch,
+		Hash:   gc.spec.Hash,
 		Depth:  gc.spec.Depth,
 		URL:    redact.URL(gc.spec.URL),
 	}

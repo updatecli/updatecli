@@ -12,15 +12,23 @@ import (
 
 type mockGitHandler struct {
 	hash         string
+	exists       bool
 	err          error
 	gotDirectory string
 	gotBranch    string
+	gotCommit    string
 }
 
 func (m *mockGitHandler) GetCommitHash(workingDir, branch string) (string, error) {
 	m.gotDirectory = workingDir
 	m.gotBranch = branch
 	return m.hash, m.err
+}
+
+func (m *mockGitHandler) IsCommitExist(workingDir, commit string) (bool, error) {
+	m.gotDirectory = workingDir
+	m.gotCommit = commit
+	return m.exists, m.err
 }
 
 func TestSource(t *testing.T) {

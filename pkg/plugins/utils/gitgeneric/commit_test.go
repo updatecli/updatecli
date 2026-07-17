@@ -75,3 +75,52 @@ func TestGetCommitHash(t *testing.T) {
 		})
 	}
 }
+
+func TestIsCommitExist(t *testing.T) {
+	directory := t.TempDir()
+	repository, err := git.PlainInit(directory, false)
+	require.NoError(t, err)
+
+	worktree, err := repository.Worktree()
+	require.NoError(t, err)
+
+	require.NoError(t, os.WriteFile(directory+"/file.txt", []byte("content"), 0o600))
+	_, err = worktree.Add("file.txt")
+	require.NoError(t, err)
+	hash, err := worktree.Commit("initial commit", &git.CommitOptions{
+		Author: &object.Signature{
+			Name:  "Updatecli Test",
+			Email: "test@updatecli.io",
+			When:  time.Now(),
+		},
+	})
+	require.NoError(t, err)
+
+	handler := GoGit{}
+	tests := []struct {
+		name       string
+		commit     string
+		want       bool
+		wantErr    string
+		workingDir string
+	}{
+		{name: "full hash", commit: hash.String(), want: true, workingDir: directory},
+		{name: "abbreviated hash", commit: hash.String()[:7], want: true, workingDir: directory},
+		{name: "missing commit", commit: "0123456789012345678901234567890123456789", workingDir: directory},
+		{name: "unknown revision", commit: "not-a-commit", workingDir: directory},
+		{name: "invalid repository", commit: hash.String(), wantErr: "opening", workingDir: directory + "/missing"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := handler.IsCommitExist(tt.workingDir, tt.commit)
+			if tt.wantErr != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.wantErr)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}

@@ -22,6 +22,7 @@ func TestReportConfig(t *testing.T) {
 	resource := &GitCommit{spec: Spec{
 		Path:     "/tmp/repository",
 		Branch:   "main",
+		Hash:     "abc123",
 		Depth:    &depth,
 		URL:      "https://user:secret@example.com/owner/repository.git",
 		Username: "user",
@@ -31,6 +32,7 @@ func TestReportConfig(t *testing.T) {
 	assert.Equal(t, Spec{
 		Path:   "/tmp/repository",
 		Branch: "main",
+		Hash:   "abc123",
 		Depth:  &depth,
 		URL:    "https://****:****@example.com/owner/repository.git",
 	}, resource.ReportConfig())

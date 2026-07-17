@@ -26,3 +26,17 @@ sources:
     kind: gitcommit
     spec:
       path: ./
+
+conditions:
+  exists-in-scm:
+    name: Check that the source commit exists in the SCM working directory
+    kind: gitcommit
+    scmid: git-repository
+    sourceid: from-scm
+  exists-in-url:
+    name: Check that a pinned commit exists in the cloned repository
+    kind: gitcommit
+    disablesourceinput: true
+    spec:
+      url: https://github.com/updatecli-test/updatecli-submodules.git
+      hash: 69619610a3fac402931709dfbe89d113041c8776

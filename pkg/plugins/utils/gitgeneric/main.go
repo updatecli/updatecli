@@ -2,6 +2,7 @@ package gitgeneric
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"path/filepath"
 	"sort"
@@ -368,6 +369,34 @@ func (g GoGit) GetCommitHash(workingDir, branch string) (string, error) {
 // GetLatestCommitHash returns the latest commit hash from the working directory
 func (g GoGit) GetLatestCommitHash(workingDir string) (string, error) {
 	return g.GetCommitHash(workingDir, "")
+}
+
+// IsCommitExist checks whether a commit exists in the repository.
+// The commit is resolved with the Git revision syntax so abbreviated hashes are supported.
+func (g GoGit) IsCommitExist(workingDir, commit string) (bool, error) {
+	gitRepository, err := git.PlainOpen(workingDir)
+	if err != nil {
+		return false, fmt.Errorf("opening %q git directory: %s", workingDir, err)
+	}
+
+	hash, err := gitRepository.ResolveRevision(plumbing.Revision(commit))
+	if err != nil {
+		if errors.Is(err, plumbing.ErrReferenceNotFound) || errors.Is(err, plumbing.ErrObjectNotFound) {
+			return false, nil
+		}
+		return false, fmt.Errorf("resolving revision %q: %s", commit, err)
+	}
+
+	// ResolveRevision does not guarantee that the returned hash points to an
+	// existing commit object, for example when a full hash is provided.
+	if _, err := gitRepository.CommitObject(*hash); err != nil {
+		if errors.Is(err, plumbing.ErrObjectNotFound) {
+			return false, nil
+		}
+		return false, fmt.Errorf("getting commit %q: %s", commit, err)
+	}
+
+	return true, nil
 }
 
 // Add run `git add`.
