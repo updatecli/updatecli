@@ -106,6 +106,18 @@ type Spec struct {
 	//   This may cause some issues when Updatecli tries to push changes to the remote repository.
 	//   In that case, you may need to set the force option to true to force push changes to the remote repository.
 	Depth *int `yaml:",omitempty"`
+	// SingleBranch defines if Updatecli should only clone/fetch the configured branch
+	// instead of every branch, tag, and other ref on the remote.
+	//
+	// Default: false (fetch everything)
+	//
+	// Remark:
+	//   Enabling this option can drastically speed up operations on repositories with a large
+	//   number of branches, tags, or other refs, since Updatecli skips the reconciliation
+	//   fetch that otherwise mirrors every ref from the remote.
+	//   As a trade-off, Updatecli may not detect an already published working branch in some
+	//   edge cases, which could result in a duplicate pull request being created.
+	SingleBranch *bool `yaml:",omitempty"`
 	//	"directory" defines the local path where the git repository is cloned.
 	//
 	//	compatible:
