@@ -55,7 +55,7 @@ policies:
 
   - name: Update Updatecli version in GitHub action
     id: updatecli_github_action
-    policy: ghcr.io/updatecli/policies/updatecli/githubaction:0.8.1@sha256:48872bbf1a09cfff32ff5ffa07086c20b40d6888c19c36048b18f84bbdad37fe
+    policy: ghcr.io/updatecli/policies/updatecli/githubaction:0.9.0@sha256:5d21b1af9a9c3c1ed0c05bf0e12b4e3e6d98050d3d6a65bda0f12f7adce94c69
     valuesinline:
       spec:
         rootdir: ".github"

@@ -148,6 +148,26 @@ github:
 			isResultWanted: true,
 		},
 		{
+			name: "Passing Case with quoted version string",
+			spec: Spec{
+				File: "test.yaml",
+				Key:  "$.version",
+			},
+			files: map[string]file{
+				"test.yaml": {
+					originalFilePath: "test.yaml",
+					filePath:         "test.yaml",
+				},
+			},
+			inputSourceValue: "4.3.1",
+			mockedContents: map[string]string{
+				"test.yaml": `---
+version: "4.3.1"
+`,
+			},
+			isResultWanted: true,
+		},
+		{
 			name: "Passing Case using yamlpath engine",
 			spec: Spec{
 				File:   "test.yaml",
