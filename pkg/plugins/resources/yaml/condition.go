@@ -89,7 +89,7 @@ func (y *Yaml) Condition(_ context.Context, source string, scm scm.ScmHandler) (
 					continue
 				}
 
-				results = append(results, node.String())
+				results = append(results, nodeValue(node))
 			}
 
 		case EngineYamlPath:
