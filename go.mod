@@ -44,7 +44,7 @@ require (
 	github.com/coreos/go-systemd/v22 v22.7.0
 	github.com/drone/go-scm v1.42.10
 	github.com/extism/go-sdk v1.7.1
-	github.com/fluxcd/helm-controller/api v1.5.5
+	github.com/fluxcd/helm-controller/api v1.6.2
 	github.com/fluxcd/source-controller/api v1.9.3
 	github.com/go-viper/mapstructure/v2 v2.5.0
 	github.com/goccy/go-yaml v1.19.2
