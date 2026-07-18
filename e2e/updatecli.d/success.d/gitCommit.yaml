@@ -1,0 +1,42 @@
+name: End to end test of the gitcommit resource
+
+scms:
+  git-repository:
+    kind: git
+    spec:
+      branch: main
+      url: https://github.com/updatecli-test/updatecli-submodules.git
+
+sources:
+  from-scm:
+    name: Get the latest commit from an SCM working directory
+    kind: gitcommit
+    scmid: git-repository
+    spec:
+      branch: main
+  from-url:
+    name: Get the latest commit from a Git URL
+    kind: gitcommit
+    spec:
+      branch: main
+      depth: 1
+      url: https://github.com/updatecli-test/updatecli-submodules.git
+  from-path:
+    name: Get the latest commit from the current working directory
+    kind: gitcommit
+    spec:
+      path: ./
+
+conditions:
+  exists-in-scm:
+    name: Check that the source commit exists in the SCM working directory
+    kind: gitcommit
+    scmid: git-repository
+    sourceid: from-scm
+  exists-in-url:
+    name: Check that a pinned commit exists in the cloned repository
+    kind: gitcommit
+    disablesourceinput: true
+    spec:
+      url: https://github.com/updatecli-test/updatecli-submodules.git
+      hash: 69619610a3fac402931709dfbe89d113041c8776
