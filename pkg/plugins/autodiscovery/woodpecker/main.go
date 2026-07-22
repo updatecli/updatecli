@@ -31,45 +31,46 @@ type Spec struct {
 	//
 	// example:
 	//
-	// ---
+	// ```
 	// auths:
 	//   "ghcr.io":
 	//     token: "xxx"
 	//   "index.docker.io":
 	//     username: "admin"
 	//     password: "password"
-	// ---
+	// ```
 	//
 	Auths map[string]docker.InlineKeyChain `yaml:",omitempty"`
 	// FileMatch allows to override default Woodpecker workflow file matching.
-	// Default [".woodpecker.yml", ".woodpecker.yaml", ".woodpecker/*.yml", ".woodpecker/*.yaml", ".woodpecker/**/*.yml", ".woodpecker/**/*.yaml"]
+	// Default `[".woodpecker.yml", ".woodpecker.yaml", ".woodpecker/*.yml", ".woodpecker/*.yaml", ".woodpecker/**/*.yml", ".woodpecker/**/*.yaml"]`
 	FileMatch []string `yaml:",omitempty"`
-	// versionfilter provides parameters to specify the version pattern used when generating manifest.
+	//  `versionfilter` provides parameters to specify the version pattern used when generating manifest.
 	//
-	// More information available at
-	// https://www.updatecli.io/docs/core/versionfilter/
+	//  kind - semver
+	//    versionfilter of kind `semver` uses semantic versioning as version filtering
+	//    pattern accepts one of:
+	//      `prerelease` - Updatecli tries to identify the latest prerelease whatever it means
+	//      `patch` - Updatecli only handles patch version update
+	//      `minor` - Updatecli handles patch AND minor version update
+	//      `minoronly` - Updatecli handles minor version only
+	//      `major` - Updatecli handles patch, minor, AND major version update
+	//      `majoronly` - Updatecli only handles major version update
+	//      `a version constraint` such as `>= 1.0.0`
 	//
-	// kind - semver
-	//   versionfilter of kind `semver` uses semantic versioning as version filtering
-	//   pattern accepts one of:
-	//     `patch` - patch only update patch version
-	//     `minor` - minor only update minor version
-	//     `major` - major only update major versions
-	//     `a version constraint` such as `>= 1.0.0`
+	//  kind - regex
+	//    versionfilter of kind `regex` uses regular expression as version filtering
+	//    pattern accepts a valid regular expression
 	//
-	// kind - regex
-	// versionfilter of kind `regex` uses regular expression as version filtering
-	// pattern accepts a valid regular expression
+	//  example:
+	//  ```
+	//    versionfilter:
+	//      kind: semver
+	//      pattern: minor
+	//  ```
 	//
-	// example:
-	// ```
-	//   versionfilter:
-	//   kind: semver
-	//   pattern: minor
-	//```
+	//  and its type like regex, semver, or just latest.
 	//
-	// More version filter available at https://www.updatecli.io/docs/core/versionfilter/
-	//
+	//  More examples can be found at https://www.updatecli.io/docs/core/versionfilter/
 	VersionFilter version.Filter `yaml:",omitempty"`
 }
 

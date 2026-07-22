@@ -12,18 +12,18 @@ import (
 
 // Spec defines the parameters which can be provided to the argocd builder.
 type Spec struct {
-	// RootDir defines the root directory used to recursively search for ArgoCD manifest
+	// rootDir defines the root directory used to recursively search for ArgoCD manifest
 	RootDir string `yaml:",omitempty"`
-	// Ignore allows to specify rule to ignore autodiscovery a specific Argocd manifest based on a rule
+	// ignore allows to specify rule to ignore autodiscovery a specific Argocd manifest based on a rule
 	Ignore MatchingRules `yaml:",omitempty"`
-	// Only allows to specify rule to only autodiscover manifest for a specific ArgoCD manifest based on a rule
+	// only allows to specify rule to only autodiscover manifest for a specific ArgoCD manifest based on a rule
 	Only MatchingRules `yaml:",omitempty"`
-	//  versionfilter provides parameters to specify the version pattern used when generating manifest.
+	//  `versionfilter` provides parameters to specify the version pattern used when generating manifest.
 	//
 	//  kind - semver
 	//    versionfilter of kind `semver` uses semantic versioning as version filtering
 	//    pattern accepts one of:
-	//      `prerelease` - Updatecli tries to identify the latest "prerelease" whatever it means
+	//      `prerelease` - Updatecli tries to identify the latest prerelease whatever it means
 	//      `patch` - Updatecli only handles patch version update
 	//      `minor` - Updatecli handles patch AND minor version update
 	//      `minoronly` - Updatecli handles minor version only
@@ -37,12 +37,15 @@ type Spec struct {
 	//
 	//  example:
 	//  ```
-	//  	versionfilter:
-	//  		kind: semver
-	//  		pattern: minor
+	//    versionfilter:
+	//      kind: semver
+	//      pattern: minor
 	//  ```
 	//
-	//	and its type like regex, semver, or just latest.
+	//  and its type like regex, semver, or just latest.
+	//
+	//  More examples can be found at https://www.updatecli.io/docs/core/versionfilter/
+
 	VersionFilter version.Filter `yaml:",omitempty"`
 	// Auths holds a map of string to string where the key is the registry URL and the value the token used for authentication
 	//
@@ -50,7 +53,7 @@ type Spec struct {
 	//
 	// Example:
 	//
-	// ```yaml
+	// ```
 	// auths:
 	//   "my-helm-repo.com": "my-secret-token"
 	// ```
