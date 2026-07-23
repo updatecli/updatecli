@@ -34,7 +34,7 @@ func (f *FileContent) Write() error {
 	defer newFile.Close()
 
 	switch f.DataType {
-	case "json":
+	case TYPEJSON:
 		err = f.DaselNode.Write(
 			newFile,
 			f.DataType,
@@ -57,7 +57,7 @@ func (f *FileContent) Write() error {
 			return fmt.Errorf("unable to write to file %s: %w", f.FilePath, err)
 		}
 
-	case "toml":
+	case TYPETOML:
 		err = f.DaselNode.Write(
 			newFile,
 			f.DataType,
@@ -100,7 +100,7 @@ func (f *FileContent) WriteV3() error {
 	defer newFile.Close()
 
 	switch f.DataType {
-	case "json":
+	case TYPEJSON:
 		encoder := json.NewEncoder(newFile)
 		encoder.SetIndent("", "  ")
 		encoder.SetEscapeHTML(false)
@@ -109,7 +109,7 @@ func (f *FileContent) WriteV3() error {
 			return fmt.Errorf("unable to write to file %s: %w", f.FilePath, err)
 		}
 
-	case "toml":
+	case TYPETOML:
 		encoder := toml.NewEncoder(newFile)
 		encoder.Indent = "  "
 

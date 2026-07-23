@@ -116,7 +116,7 @@ func (f *FileContent) QueryV2(query string) ([]string, error) {
 }
 
 // QueryV3 returns the value(s) for a specific query using the dasel v3 engine.
-// dasel v3 operates on the native parsed data (stored in DaselV2Node) and uses
+// dasel v3 operates on the native parsed data (stored in DaselV3Node) and uses
 // a new selector syntax, more information on https://github.com/tomwright/dasel
 func (f *FileContent) QueryV3(query string) ([]string, error) {
 	if f.DaselV3Data == nil {

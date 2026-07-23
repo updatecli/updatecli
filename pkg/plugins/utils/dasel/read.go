@@ -27,13 +27,13 @@ func (f *FileContent) Read(rootDir string) error {
 	var data any
 	switch f.DataType {
 
-	case "json":
+	case TYPEJSON:
 		err = json.Unmarshal([]byte(textContent), &data)
 		if err != nil {
 			return fmt.Errorf("failed to unmarshal json content: %w", err)
 		}
 
-	case "toml":
+	case TYPETOML:
 		err := toml.Unmarshal([]byte(textContent), &data)
 
 		if err != nil {

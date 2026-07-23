@@ -12,6 +12,13 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/text"
 )
 
+const (
+	// TYPEJSON defines the json data type
+	TYPEJSON string = "json"
+	// TYPETOML defines the toml data type
+	TYPETOML string = "toml"
+)
+
 var (
 	// ErrDaselFailedParsingByteFormat is returned if dasel couldn't parse the byteData
 	ErrDaselFailedParsingByteFormat error = errors.New("failed to parse file")
