@@ -7,14 +7,28 @@ sources:
     spec:
       file: pkg/plugins/resources/json/testdata/data.json
       key: firstName
-      engine: dasel/v2
+      engine: dasel/v3
   http:
     name: Get value from json
     kind: json
     spec:
       file: https://www.updatecli.io/schema/latest/config.json
       key: $id
-      engine: dasel/v2
+      engine: dasel/v3
+  localdasel:
+    name: Get value from json
+    kind: json
+    spec:
+      file: pkg/plugins/resources/json/testdata/data.json
+      key: firstName
+      engine: dasel
+  httpdasel:
+    name: Get value from json
+    kind: json
+    spec:
+      file: https://www.updatecli.io/schema/latest/config.json
+      key: $id
+      engine: dasel
 
 conditions:
   local:
@@ -26,7 +40,7 @@ conditions:
         - pkg/plugins/resources/json/testdata/data.json
         - pkg/plugins/resources/json/testdata/data.2.json
       key: firstName
-      engine: dasel/v2
+      engine: dasel/v3
   http:
     name: Test value from json
     kind: json
@@ -35,7 +49,26 @@ conditions:
       file: https://www.updatecli.io/schema/latest/config.json
       key: $schema
       value: http://json-schema.org/draft-04/schema
-      engine: dasel/v2
+      engine: dasel/v3
+  localdasel:
+    name: Test value from json
+    kind: json
+    sourceid: local
+    spec:
+      files:
+        - pkg/plugins/resources/json/testdata/data.json
+        - pkg/plugins/resources/json/testdata/data.2.json
+      key: firstName
+      engine: dasel
+  httpdasel:
+    name: Test value from json
+    kind: json
+    disablesourceinput: true
+    spec:
+      file: https://www.updatecli.io/schema/latest/config.json
+      key: $schema
+      value: http://json-schema.org/draft-04/schema
+      engine: dasel
 
 targets:
   local:
@@ -46,7 +79,7 @@ targets:
       file: pkg/plugins/resources/json/testdata/data.json
       key: firstName
       value: John
-      engine: dasel/v2
+      engine: dasel/v3
 
   local2:
     name: Test value from json
@@ -58,4 +91,25 @@ targets:
         - pkg/plugins/resources/json/testdata/data.2.json
       key: firstName
       value: John
-      engine: dasel/v2
+      engine: dasel/v3
+  localdasel:
+    name: Test value from json
+    kind: json
+    sourceid: local
+    spec:
+      file: pkg/plugins/resources/json/testdata/data.json
+      key: firstName
+      value: John
+      engine: dasel
+
+  local2dasel:
+    name: Test value from json
+    kind: json
+    sourceid: local
+    spec:
+      files:
+        - pkg/plugins/resources/json/testdata/data.json
+        - pkg/plugins/resources/json/testdata/data.2.json
+      key: firstName
+      value: John
+      engine: dasel
