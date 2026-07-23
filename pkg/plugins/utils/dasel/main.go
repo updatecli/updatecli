@@ -30,4 +30,7 @@ type FileContent struct {
 	DaselNode *dasel.Node
 	// DaselV2Node contains the dasel v2 representation of the file
 	DaselV2Node any
+	// DaselV3Data contains the native parsed data manipulated by the dasel v3 engine.
+	// dasel v3 has no stateful node object: its API operates directly on this value.
+	DaselV3Data any
 }

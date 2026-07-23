@@ -4,6 +4,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	"os"
+	"reflect"
 	"strings"
 
 	das "github.com/tomwright/dasel"
@@ -75,7 +76,30 @@ func (c *csvContent) Read(rootDir string) error {
 
 	c.DaselNode = das.New(c.csvDocument.Documents())
 
+	// dasel v2 and v3 operate on the native parsed rows. They share the same
+	// []map[string]interface{} backing slice as csvDocument.Value so that a v3
+	// in-place modification is reflected when the file is written back.
+	c.DaselV2Node = c.csvDocument.Value
+	c.DaselV3Data = c.csvDocument.Value
+
 	return nil
+}
+
+// derefValue unwraps pointer/interface indirections around a value. The dasel v3
+// engine stores modified values as *interface{}, so this resolves them to the
+// underlying value before serialization. It is a no-op for plain values (v1/v2).
+func derefValue(v interface{}) interface{} {
+	rv := reflect.ValueOf(v)
+	for rv.IsValid() && (rv.Kind() == reflect.Ptr || rv.Kind() == reflect.Interface) {
+		if rv.IsNil() {
+			return nil
+		}
+		rv = rv.Elem()
+	}
+	if !rv.IsValid() {
+		return nil
+	}
+	return rv.Interface()
 }
 
 func (c *csvContent) Write() error {
@@ -104,7 +128,7 @@ func (c *csvContent) Write() error {
 			if !ok {
 				val = ""
 			}
-			values = append(values, fmt.Sprint(val))
+			values = append(values, fmt.Sprint(derefValue(val)))
 		}
 
 		if err := writer.Write(values); err != nil {

@@ -59,7 +59,9 @@ func New(spec interface{}) (*Json, error) {
 
 	engine := ENGINEDEFAULT
 	if newSpec.Engine != nil {
-		engine = *newSpec.Engine
+		// Resolve aliases (e.g. bare "dasel" -> latest engine) so the rest of the
+		// code only ever deals with explicit engine versions.
+		engine = resolveEngine(*newSpec.Engine)
 	}
 
 	if engine == ENGINEDASEL_V1 {

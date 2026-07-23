@@ -79,6 +79,13 @@ func (j *Json) Target(_ context.Context, source string, scm scm.ScmHandler, dryR
 				return fmt.Errorf("querying file %q: %w", j.contents[i].FilePath, err)
 			}
 
+		case ENGINEDASEL_V3:
+			logrus.Debugf("Using engine %q", ENGINEDASEL_V3)
+			queryResults, err = j.contents[i].QueryV3(j.spec.Key)
+			if err != nil {
+				return fmt.Errorf("querying file %q: %w", j.contents[i].FilePath, err)
+			}
+
 		default:
 			return fmt.Errorf("engine %q is not supported", j.engine)
 		}
@@ -125,26 +132,40 @@ func (j *Json) Target(_ context.Context, source string, scm scm.ScmHandler, dryR
 			continue
 		}
 
-		// Update the target file with the new value
-		switch len(j.spec.Query) > 0 {
-		case true:
-			err = j.contents[i].PutMultiple(j.spec.Query, j.spec.Value)
-
-			if err != nil {
+		// Update the target file with the new value.
+		// The dasel v3 engine operates on the native parsed data and requires its
+		// own put/write path; v1 and v2 both write through the shared v1 node.
+		switch j.engine {
+		case ENGINEDASEL_V3:
+			if err = j.contents[i].PutV3(j.spec.Key, j.spec.Value); err != nil {
 				return fmt.Errorf("updating json file %q: %w", filename, err)
 			}
 
-		case false:
-			err = j.contents[i].Put(j.spec.Key, j.spec.Value)
-
-			if err != nil {
-				return fmt.Errorf("updating json file %q: %w", filename, err)
+			if err = j.contents[i].WriteV3(); err != nil {
+				return fmt.Errorf("writing json file %q: %w", filename, err)
 			}
-		}
 
-		err = j.contents[i].Write()
-		if err != nil {
-			return fmt.Errorf("writing json file %q: %w", filename, err)
+		default:
+			switch len(j.spec.Query) > 0 {
+			case true:
+				err = j.contents[i].PutMultiple(j.spec.Query, j.spec.Value)
+
+				if err != nil {
+					return fmt.Errorf("updating json file %q: %w", filename, err)
+				}
+
+			case false:
+				err = j.contents[i].Put(j.spec.Key, j.spec.Value)
+
+				if err != nil {
+					return fmt.Errorf("updating json file %q: %w", filename, err)
+				}
+			}
+
+			err = j.contents[i].Write()
+			if err != nil {
+				return fmt.Errorf("writing json file %q: %w", filename, err)
+			}
 		}
 	}
 

@@ -79,6 +79,36 @@ func TestTarget(t *testing.T) {
 			sourceInput:    "home",
 			expectedResult: false,
 		},
+		{
+			name: "Unchanged key successful workflow using Dasel v3",
+			spec: Spec{
+				File:   "testdata/data.json",
+				Key:    "firstName",
+				Engine: strPtr(ENGINEDASEL_V3),
+			},
+			sourceInput:    "Jack",
+			expectedResult: false,
+		},
+		{
+			name: "Changed key successful workflow using Dasel v3",
+			spec: Spec{
+				File:   "testdata/data.json",
+				Key:    "firstName",
+				Engine: strPtr(ENGINEDASEL_V3),
+			},
+			sourceInput:    "Tom",
+			expectedResult: true,
+		},
+		{
+			name: "Update first array item successful workflow using Dasel v3",
+			spec: Spec{
+				File:   "testdata/data.json",
+				Key:    "phoneNumbers[0].type",
+				Engine: strPtr(ENGINEDASEL_V3),
+			},
+			sourceInput:    "apartment",
+			expectedResult: true,
+		},
 	}
 
 	for _, tt := range testData {
@@ -117,9 +147,13 @@ func TestTargetPreservesSpecialCharacters(t *testing.T) {
 	engines := []struct {
 		name   string
 		engine *string
+		// key holds the selector for the "version" field. dasel v3 uses a new
+		// selector syntax that does not accept the leading dot used by v1/v2.
+		key string
 	}{
-		{name: "dasel/v1 (default)", engine: nil},
-		{name: "dasel/v2", engine: strPtr(ENGINEDASEL_V2)},
+		{name: "dasel/v1 (default)", engine: nil, key: ".version"},
+		{name: "dasel/v2", engine: strPtr(ENGINEDASEL_V2), key: ".version"},
+		{name: "dasel/v3", engine: strPtr(ENGINEDASEL_V3), key: "version"},
 	}
 
 	for _, e := range engines {
@@ -132,7 +166,7 @@ func TestTargetPreservesSpecialCharacters(t *testing.T) {
 
 			spec := Spec{
 				File:   filePath,
-				Key:    ".version",
+				Key:    e.key,
 				Engine: e.engine,
 			}
 

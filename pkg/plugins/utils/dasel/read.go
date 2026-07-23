@@ -49,6 +49,8 @@ func (f *FileContent) Read(rootDir string) error {
 
 	f.DaselV2Node = data
 
+	f.DaselV3Data = data
+
 	if f.DaselNode == nil || f.DaselV2Node == nil {
 		return ErrDaselFailedParsingByteFormat
 	}
