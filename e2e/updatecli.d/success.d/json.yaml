@@ -13,7 +13,7 @@ sources:
     kind: json
     spec:
       file: https://www.updatecli.io/schema/latest/config.json
-      key: $id
+      key: additionalProperties
       engine: dasel/v3
   localdasel:
     name: Get value from json
@@ -27,9 +27,15 @@ sources:
     kind: json
     spec:
       file: https://www.updatecli.io/schema/latest/config.json
-      key: $id
+      key: additionalProperties
       engine: dasel
-
+  httpdasel2:
+    name: Get value from json
+    kind: json
+    spec:
+      file: https://www.updatecli.io/schema/latest/config.json
+      key: '["$id"]'
+      engine: dasel
 conditions:
   local:
     name: Test value from json
@@ -47,8 +53,8 @@ conditions:
     disablesourceinput: true
     spec:
       file: https://www.updatecli.io/schema/latest/config.json
-      key: $schema
-      value: http://json-schema.org/draft-04/schema
+      key: additionalProperties
+      value: "false"
       engine: dasel/v3
   localdasel:
     name: Test value from json
@@ -66,14 +72,15 @@ conditions:
     disablesourceinput: true
     spec:
       file: https://www.updatecli.io/schema/latest/config.json
-      key: $schema
-      value: http://json-schema.org/draft-04/schema
+      value: "false"
+      key: additionalProperties
       engine: dasel
 
 targets:
   local:
     name: Test value from json
     kind: json
+    disableconditions: true
     sourceid: local
     spec:
       file: pkg/plugins/resources/json/testdata/data.json
@@ -83,6 +90,7 @@ targets:
 
   local2:
     name: Test value from json
+    disableconditions: true
     kind: json
     sourceid: local
     spec:
@@ -94,6 +102,7 @@ targets:
       engine: dasel/v3
   localdasel:
     name: Test value from json
+    disableconditions: true
     kind: json
     sourceid: local
     spec:
@@ -105,6 +114,7 @@ targets:
   local2dasel:
     name: Test value from json
     kind: json
+    disableconditions: true
     sourceid: local
     spec:
       files:
