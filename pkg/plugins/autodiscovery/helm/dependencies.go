@@ -115,13 +115,17 @@ func (h Helm) discoverHelmDependenciesManifests() ([][]byte, error) {
 				}
 			}
 
+			username := ""
+			password := ""
 			token := ""
 			repoURL, err := url.Parse(dependency.Repository)
 			switch err {
 			case nil:
 				if _, ok := h.spec.Auths[repoURL.Host]; ok {
+					username = h.spec.Auths[repoURL.Host].Username
+					password = h.spec.Auths[repoURL.Host].Password
 					token = h.spec.Auths[repoURL.Host].Token
-					logrus.Debugf("found token for repository %q", dependency.Repository)
+					logrus.Debugf("found credentials for repository %q", dependency.Repository)
 				}
 			default:
 				logrus.Debugf("Ignoring auth configuration due to invalid Helm repository URL: %s", err)
@@ -155,6 +159,8 @@ func (h Helm) discoverHelmDependenciesManifests() ([][]byte, error) {
 				TargetChartSkipPackaging    bool
 				TargetChartVersionIncrement string
 				TargetFile                  string
+				Username                    string
+				Password                    string
 				Token                       string
 				File                        string
 				ScmID                       string
@@ -178,6 +184,8 @@ func (h Helm) discoverHelmDependenciesManifests() ([][]byte, error) {
 				TargetChartVersionIncrement: h.spec.VersionIncrement,
 				TargetFile:                  filepath.Base(foundChartFile),
 				File:                        relativeFoundChartFile,
+				Username:                    username,
+				Password:                    password,
 				Token:                       token,
 				ScmID:                       h.scmID,
 			}

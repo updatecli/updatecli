@@ -15,6 +15,12 @@ sources:
     spec:
       name: '{{ .ChartName }}'
       url: '{{ .SourceChartRepository }}'
+      {{- if .Username }}
+      username: '{{ .Username }}'
+      {{- end }}
+      {{- if .Password }}
+      password: '{{ .Password }}'
+      {{- end }}
       {{- if .Token }}
       token: '{{ .Token }}'
       {{- end }}
