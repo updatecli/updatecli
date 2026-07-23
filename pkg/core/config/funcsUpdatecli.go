@@ -68,6 +68,12 @@ func updatecliRuntimeFuncMap(data interface{}) template.FuncMap {
 				then we assume that the value will be set later in the run.
 				Otherwise it returns the value.
 				This func is design to constantly reevaluate if a configuration changed
+				
+				The source function output can be piped to sprig template functions for transformation.
+				Examples:
+				  - {{ source "version" | replace "." "_" }}
+				  - {{ source "name" | upper }}
+				  - {{ source "id" | replace "." "_" | replace "-" "_" }}
 			*/
 
 			sourceResult, err := getFieldValueByQuery(data, []string{"Sources", s, "Result", "Result"})
