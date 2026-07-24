@@ -40,7 +40,8 @@ sources:
 {{- end }}
     spec:
       file: '{{ .CargoFile }}'
-      Key: '{{ .ExistingSourceKey }}'
+      key: '{{ .ExistingSourceKey }}'
+      engine: 'dasel'
 conditions:
   {{ .ConditionID }}:
     name: 'Test if version of "{{ .DependencyName }}" {{"{{"}} source "{{ .ExistingSourceID }}" {{"}}"}} differs from {{"{{"}} source "{{ .SourceID }}" {{"}}"}}'
@@ -80,6 +81,7 @@ targets:
     spec:
       file: '{{ .CargoFile }}'
       key: '{{ .TargetKey }}'
+      engine: 'dasel'
     sourceid: '{{ .SourceID }}'
 {{- if .CargoLockFile }}
   lockfile:

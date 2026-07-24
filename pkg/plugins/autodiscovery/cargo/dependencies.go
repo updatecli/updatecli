@@ -55,21 +55,21 @@ func (c Cargo) generateManifest(
 	}
 	var existingSourceKey string
 	if dependency.Inlined {
-		existingSourceKey = fmt.Sprintf("%s.%s", dependencyType, dependency.Name)
+		existingSourceKey = fmt.Sprintf("get(%q).get(%q)", dependencyType, dependency.Name)
 	} else {
-		existingSourceKey = fmt.Sprintf("%s.%s.version", dependencyType, dependency.Name)
+		existingSourceKey = fmt.Sprintf("get(%q).get(%q).version", dependencyType, dependency.Name)
 	}
 	var ConditionQuery string
 	if dependency.Inlined {
-		ConditionQuery = fmt.Sprintf("%s.(?:-=%s)", dependencyType, dependency.Name)
+		ConditionQuery = fmt.Sprintf("get(%q).(?:-=%q)", dependencyType, dependency.Name)
 	} else {
-		ConditionQuery = fmt.Sprintf("%s.(?:-=%s).version", dependencyType, dependency.Name)
+		ConditionQuery = fmt.Sprintf("get(%q).(?:-=%q).version", dependencyType, dependency.Name)
 	}
 	var TargetKey string
 	if dependency.Inlined {
-		TargetKey = fmt.Sprintf("%s.%s", dependencyType, dependency.Name)
+		TargetKey = fmt.Sprintf("get(%q).get(%q)", dependencyType, dependency.Name)
 	} else {
-		TargetKey = fmt.Sprintf("%s.%s.version", dependencyType, dependency.Name)
+		TargetKey = fmt.Sprintf("get(%q).get(%q).version", dependencyType, dependency.Name)
 	}
 	var Registry cargo.Registry
 	if dependency.Registry != "" {
