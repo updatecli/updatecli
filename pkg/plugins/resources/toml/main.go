@@ -24,6 +24,9 @@ type Toml struct {
 	foundVersion version.Version
 	// Holds the "valid" version.filter, that might be different than the user-specified filter (Spec.VersionFilter)
 	versionFilter version.Filter
+	// engine defines the engine used to manipulate the toml file
+	// If not set, the default engine is dasel/v1
+	engine string
 }
 
 func New(spec interface{}) (*Toml, error) {
@@ -60,9 +63,31 @@ func New(spec interface{}) (*Toml, error) {
 		return nil, err
 	}
 
+	engine := ENGINEDEFAULT
+	if newSpec.Engine != nil {
+		// Resolve aliases (e.g. bare "dasel" -> latest engine) so the rest of the
+		// code only ever deals with explicit engine versions.
+		engine = resolveEngine(*newSpec.Engine)
+	}
+
+	if engine == ENGINEDASEL_V1 {
+		logrus.Warningf("Engine %q is deprecated and will be removed in a future updatecli version. Please use %q instead.",
+			ENGINEDASEL_V1,
+			ENGINEDASEL_V3,
+		)
+	}
+
+	if engine == ENGINEDASEL_V2 {
+		logrus.Warningf("Engine %q is deprecated and will be removed in a future updatecli version. Please use %q instead.",
+			ENGINEDASEL_V2,
+			ENGINEDASEL_V3,
+		)
+	}
+
 	j := Toml{
 		spec:          newSpec,
 		versionFilter: newFilter,
+		engine:        engine,
 	}
 
 	// Init currentContents
@@ -101,5 +126,6 @@ func (s *Toml) ReportConfig() interface{} {
 		Multiple:         s.spec.Multiple,
 		VersionFilter:    s.spec.VersionFilter,
 		CreateMissingKey: s.spec.CreateMissingKey,
+		Engine:           s.spec.Engine,
 	}
 }

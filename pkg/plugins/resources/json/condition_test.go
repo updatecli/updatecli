@@ -76,6 +76,36 @@ func TestCondition(t *testing.T) {
 			expectedResult: true,
 		},
 		{
+			name: "Default scenario with Dasel v3",
+			spec: Spec{
+				File:   "testdata/data.json",
+				Key:    "firstName",
+				Value:  "Jack",
+				Engine: strPtr(ENGINEDASEL_V3),
+			},
+			expectedResult: true,
+		},
+		{
+			name: "Nested array item with Dasel v3",
+			spec: Spec{
+				File:   "testdata/data.json",
+				Key:    "phoneNumbers[0].type",
+				Value:  "home",
+				Engine: strPtr(ENGINEDASEL_V3),
+			},
+			expectedResult: true,
+		},
+		{
+			name: "Mismatching value with Dasel v3",
+			spec: Spec{
+				File:   "testdata/data.json",
+				Key:    "firstName",
+				Value:  "NotJack",
+				Engine: strPtr(ENGINEDASEL_V3),
+			},
+			expectedResult: false,
+		},
+		{
 			name: "Test key do not exist",
 			spec: Spec{
 				File:  "testdata/data.json",

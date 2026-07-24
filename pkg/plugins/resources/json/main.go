@@ -59,13 +59,22 @@ func New(spec interface{}) (*Json, error) {
 
 	engine := ENGINEDEFAULT
 	if newSpec.Engine != nil {
-		engine = *newSpec.Engine
+		// Resolve aliases (e.g. bare "dasel" -> latest engine) so the rest of the
+		// code only ever deals with explicit engine versions.
+		engine = resolveEngine(*newSpec.Engine)
 	}
 
 	if engine == ENGINEDASEL_V1 {
 		logrus.Warningf("Engine %q is deprecated and will be removed in a future updatecli version. Please use %q instead.",
 			ENGINEDASEL_V1,
+			ENGINEDASEL_V3,
+		)
+	}
+
+	if engine == ENGINEDASEL_V2 {
+		logrus.Warningf("Engine %q is deprecated and will be removed in a future updatecli version. Please use %q instead.",
 			ENGINEDASEL_V2,
+			ENGINEDASEL_V3,
 		)
 	}
 

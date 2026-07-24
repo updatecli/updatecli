@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
@@ -45,27 +46,48 @@ func (t *Toml) Target(_ context.Context, source string, scm scm.ScmHandler, dryR
 		var queryResults []string
 		var err error
 
-		switch len(t.spec.Query) > 0 {
-		case true:
-			queryResults, err = t.contents[i].MultipleQuery(t.spec.Query)
-			if err != nil {
-				return err
-			}
-
-		case false:
-			if t.spec.CreateMissingKey {
+		switch t.engine {
+		case ENGINEDASEL_V1:
+			logrus.Debugf("Using engine %q", t.engine)
+			switch len(t.spec.Query) > 0 {
+			case true:
 				queryResults, err = t.contents[i].MultipleQuery(t.spec.Query)
 				if err != nil {
 					return err
 				}
-			} else {
-				queryResult, err := t.contents[i].Query(t.spec.Key)
-				if err != nil {
-					return err
+
+			case false:
+				if t.spec.CreateMissingKey {
+					queryResults, err = t.contents[i].MultipleQuery(t.spec.Query)
+					if err != nil {
+						return err
+					}
+				} else {
+					queryResult, err := t.contents[i].Query(t.spec.Key)
+					if err != nil {
+						return err
+					}
+					queryResults = append(queryResults, queryResult)
 				}
-				queryResults = append(queryResults, queryResult)
+
 			}
 
+		case ENGINEDASEL_V2:
+			logrus.Debugf("Using engine %q", t.engine)
+			queryResults, err = t.contents[i].QueryV2(t.spec.Key)
+			if err != nil {
+				return fmt.Errorf("querying file %q: %w", t.contents[i].FilePath, err)
+			}
+
+		case ENGINEDASEL_V3:
+			logrus.Debugf("Using engine %q", t.engine)
+			queryResults, err = t.contents[i].QueryV3(t.spec.Key)
+			if err != nil {
+				return fmt.Errorf("querying file %q: %w", t.contents[i].FilePath, err)
+			}
+
+		default:
+			return fmt.Errorf("engine %q is not supported", t.engine)
 		}
 
 		changedFile := false
@@ -96,26 +118,40 @@ func (t *Toml) Target(_ context.Context, source string, scm scm.ScmHandler, dryR
 			continue
 		}
 
-		// Update the target file with the new value
-		switch len(t.spec.Query) > 0 {
-		case true:
-			err = t.contents[i].PutMultiple(t.spec.Query, t.spec.Value)
-
-			if err != nil {
+		// Update the target file with the new value.
+		// The dasel v3 engine operates on the native parsed data and requires its
+		// own put/write path; v1 and v2 both write through the shared v1 node.
+		switch t.engine {
+		case ENGINEDASEL_V3:
+			if err = t.contents[i].PutV3(t.spec.Key, t.spec.Value); err != nil {
 				return err
 			}
 
-		case false:
-			err = t.contents[i].Put(t.spec.Key, t.spec.Value)
+			if err = t.contents[i].WriteV3(); err != nil {
+				return err
+			}
 
+		default:
+			switch len(t.spec.Query) > 0 {
+			case true:
+				err = t.contents[i].PutMultiple(t.spec.Query, t.spec.Value)
+
+				if err != nil {
+					return err
+				}
+
+			case false:
+				err = t.contents[i].Put(t.spec.Key, t.spec.Value)
+
+				if err != nil {
+					return err
+				}
+			}
+
+			err = t.contents[i].Write()
 			if err != nil {
 				return err
 			}
-		}
-
-		err = t.contents[i].Write()
-		if err != nil {
-			return err
 		}
 
 		resultTarget.Files = append(resultTarget.Files, resourceFile)
