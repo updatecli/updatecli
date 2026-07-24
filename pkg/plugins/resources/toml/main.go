@@ -73,7 +73,14 @@ func New(spec interface{}) (*Toml, error) {
 	if engine == ENGINEDASEL_V1 {
 		logrus.Warningf("Engine %q is deprecated and will be removed in a future updatecli version. Please use %q instead.",
 			ENGINEDASEL_V1,
+			ENGINEDASEL_V3,
+		)
+	}
+
+	if engine == ENGINEDASEL_V2 {
+		logrus.Warningf("Engine %q is deprecated and will be removed in a future updatecli version. Please use %q instead.",
 			ENGINEDASEL_V2,
+			ENGINEDASEL_V3,
 		)
 	}
 
