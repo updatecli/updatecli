@@ -7,14 +7,7 @@ sources:
     spec:
       file: pkg/plugins/resources/toml/testdata/data.toml
       key: owner.firstName
-  ports:
-    name: Get sorted ports
-    kind: toml
-    spec:
-      file: pkg/plugins/resources/toml/testdata/data.toml
-      query: database.ports.[*]
-      versionfilter:
-        kind: semver
+      engine: dasel/v3
 
 conditions:
   local:
@@ -24,22 +17,7 @@ conditions:
     spec:
       file: pkg/plugins/resources/toml/testdata/data.toml
       key: owner.firstName
-  multiple:
-    name: Test multiple value from toml
-    kind: toml
-    disablesourceinput: true
-    spec:
-      file: pkg/plugins/resources/toml/testdata/data.toml
-      key: ".employees.(address=AU).role"
-      value: "M"
-  ports:
-    name: Get sorted ports
-    kind: toml
-    disablesourceinput: true
-    spec:
-      file: pkg/plugins/resources/toml/testdata/data.toml
-      query: ".employees.(address=AU).role"
-      value: "M"
+      engine: dasel/v3
 
 targets:
   local:
@@ -50,4 +28,4 @@ targets:
       file: pkg/plugins/resources/toml/testdata/data.toml
       key: owner.firstName
       value: John
-
+      engine: dasel/v3

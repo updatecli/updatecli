@@ -8,17 +8,20 @@ sources:
     spec:
       files:
         - pkg/plugins/resources/csv/testdata/data.csv
-      key: .[0].firstname
+      key: "$this[0].firstname"
+      engine: dasel/v3
+
   versionfilter:
     name: Test Version filter`
     kind: csv
     spec:
-      files: 
+      files:
         - pkg/plugins/resources/csv/testdata/data.csv
-      query: ".[*].firstname"
+      key: "map(firstname)..."
       versionfilter:
         kind: regex
         pattern: "^Jo"
+      engine: dasel/v3
 
 conditions:
   single:
@@ -29,8 +32,9 @@ conditions:
       files:
         - pkg/plugins/resources/csv/testdata/data.csv
         - pkg/plugins/resources/csv/testdata/data.csv
-      key: .[0].firstname
+      key: $this[0].firstname
       value: John
+      engine: dasel/v3
 
 targets:
   single:
@@ -38,11 +42,12 @@ targets:
     kind: csv
     sourceid: default
     spec:
-      files: 
+      files:
         - pkg/plugins/resources/csv/testdata/data.csv
         - pkg/plugins/resources/csv/testdata/data.csv
-      query: .[1].firstname
+      key: $this[1].firstname
       value: John
+      engine: dasel/v3
 
   multiple:
     name: Multiple target update
@@ -52,4 +57,5 @@ targets:
       files:
         - pkg/plugins/resources/csv/testdata/data.csv
         - pkg/plugins/resources/csv/testdata/data.csv
-      query: .[*].firstname
+      key: "map(firstname)..."
+      engine: dasel/v3
