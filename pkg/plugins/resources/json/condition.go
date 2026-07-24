@@ -57,6 +57,13 @@ func (j *Json) Condition(_ context.Context, source string, scm scm.ScmHandler) (
 				return false, "", fmt.Errorf("querying file %q: %w", j.contents[i].FilePath, err)
 			}
 
+		case ENGINEDASEL_V3:
+			logrus.Debugf("Using engine %q", ENGINEDASEL_V3)
+			queryResults, err = j.contents[i].QueryV3(j.spec.Key)
+			if err != nil {
+				return false, "", fmt.Errorf("querying file %q: %w", j.contents[i].FilePath, err)
+			}
+
 		default:
 			return false, "", fmt.Errorf("engine %q is not supported", j.engine)
 		}

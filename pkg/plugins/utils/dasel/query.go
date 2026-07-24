@@ -1,12 +1,14 @@
 package dasel
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
 	"github.com/sirupsen/logrus"
 
 	daselV2 "github.com/tomwright/dasel/v2"
+	daselV3 "github.com/tomwright/dasel/v3"
 )
 
 // MultipleQuery returns multiple query from a Dasel Node
@@ -108,6 +110,34 @@ func (f *FileContent) QueryV2(query string) ([]string, error) {
 
 	for k, v := range results {
 		stringResults[k] = fmt.Sprint(v)
+	}
+
+	return stringResults, nil
+}
+
+// QueryV3 returns the value(s) for a specific query using the dasel v3 engine.
+// dasel v3 operates on the native parsed data (stored in DaselV3Node) and uses
+// a new selector syntax, more information on https://github.com/tomwright/dasel
+func (f *FileContent) QueryV3(query string) ([]string, error) {
+	if f.DaselV3Data == nil {
+		return nil, ErrDaselFailedParsingByteFormat
+	}
+
+	queryResults, _, err := daselV3.Query(context.Background(), f.DaselV3Data, query)
+	if err != nil {
+		return nil, fmt.Errorf("querying dasel v3 node: %w", err)
+	}
+
+	if len(queryResults) == 0 {
+		err = fmt.Errorf("could not find value for query %q from file %q",
+			query,
+			f.FilePath)
+		return nil, err
+	}
+
+	stringResults := make([]string, len(queryResults))
+	for k, v := range queryResults {
+		stringResults[k] = fmt.Sprint(v.Interface())
 	}
 
 	return stringResults, nil
