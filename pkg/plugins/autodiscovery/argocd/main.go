@@ -55,9 +55,9 @@ type Spec struct {
 	//
 	// ```
 	// auths:
-	//   "my-helm-repo.com": 
+	//   "my-helm-repo.com":
 	//     token: "my-secret-token"
-	//   "my-second-helm-repo.com": 
+	//   "my-second-helm-repo.com":
 	//     username: "username"
 	//     password: "my-secret-password"
 	// ```
@@ -67,7 +67,7 @@ type Spec struct {
 type auth struct {
 	Username string `yaml:",omitempty"`
 	Password string `yaml:",omitempty"`
-	Token string `yaml:",omitempty"`
+	Token    string `yaml:",omitempty"`
 }
 
 // ArgoCD holds all information needed to generate argocd pipelines.
