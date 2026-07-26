@@ -47,9 +47,9 @@ type Spec struct {
 	//  More examples can be found at https://www.updatecli.io/docs/core/versionfilter/
 
 	VersionFilter version.Filter `yaml:",omitempty"`
-	// Auths holds a map of registry credentials where the key is the registry URL without scheme.
+	// Auths holds a map of registry credentials where the key is the registry host (domain[:port]) without scheme.
 	//
-	// Please be aware that only the host part of the URL is used to lookup for authentication token.
+	// Please be aware that only the host part of the URL is used to lookup for authentication credentials.
 	//
 	// Example:
 	//
