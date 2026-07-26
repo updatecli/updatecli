@@ -3,6 +3,8 @@ package toml
 import (
 	"context"
 	"errors"
+	"os"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -123,6 +125,36 @@ func TestTarget(t *testing.T) {
 			sourceInput:    "50",
 			expectedResult: true,
 		},
+		{
+			name: "Successful single update workflow with Dasel v3",
+			spec: Spec{
+				File:   "testdata/data.toml",
+				Key:    "owner.firstName",
+				Engine: strPtr(ENGINEDASEL_V3),
+			},
+			sourceInput:    "Tom",
+			expectedResult: true,
+		},
+		{
+			name: "Successful no update workflow with Dasel v3",
+			spec: Spec{
+				File:   "testdata/data.toml",
+				Key:    "owner.firstName",
+				Engine: strPtr(ENGINEDASEL_V3),
+			},
+			sourceInput:    "Jack",
+			expectedResult: false,
+		},
+		{
+			name: "Update nested array item with Dasel v3",
+			spec: Spec{
+				File:   "testdata/data.toml",
+				Key:    "servers.beta.role",
+				Engine: strPtr(ENGINEDASEL_V3),
+			},
+			sourceInput:    "database",
+			expectedResult: true,
+		},
 	}
 
 	for _, tt := range testData {
@@ -145,4 +177,55 @@ func TestTarget(t *testing.T) {
 			assert.Equal(t, tt.expectedResult, gotResult.Changed)
 		})
 	}
+}
+
+// TestTargetDaselV3Write exercises the dasel v3 write path (PutV3 + WriteV3) with a
+// real (dryRun=false) write to disk, ensuring the value is updated, the rest of the
+// document (including a TOML datetime) survives the round-trip, and the output keeps
+// a 2-space indentation for nested tables.
+func TestTargetDaselV3Write(t *testing.T) {
+	initialTOML := `title = "TOML Example"
+
+[owner]
+firstName = "Jack"
+dob = 1979-05-27T07:32:00-08:00
+
+[servers]
+
+  [servers.beta]
+  ip = "10.0.0.2"
+  role = "backend"
+`
+
+	dir := t.TempDir()
+	filePath := dir + "/data.toml"
+	require.NoError(t, os.WriteFile(filePath, []byte(initialTOML), 0600))
+
+	spec := Spec{
+		File:   filePath,
+		Key:    "owner.firstName",
+		Engine: strPtr(ENGINEDASEL_V3),
+	}
+
+	j, err := New(spec)
+	require.NoError(t, err)
+
+	gotResult := result.Target{}
+	// dryRun=false so the file is actually written back to disk.
+	err = j.Target(context.Background(), "Tom", nil, false, &gotResult)
+	require.NoError(t, err)
+	assert.True(t, gotResult.Changed)
+
+	content, err := os.ReadFile(filePath)
+	require.NoError(t, err)
+
+	got := string(content)
+	assert.True(t, strings.Contains(got, `firstName = "Tom"`),
+		"expected firstName to be updated to Tom, got:\n%s", got)
+	// The datetime must survive the write cycle untouched.
+	assert.True(t, strings.Contains(got, "1979-05-27T07:32:00-08:00"),
+		"expected the TOML datetime to be preserved, got:\n%s", got)
+	// Nested tables should be indented with 2 spaces.
+	assert.True(t, strings.Contains(got, "  [servers.beta]"),
+		"expected nested table to be indented with 2 spaces, got:\n%s", got)
 }

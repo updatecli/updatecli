@@ -47,21 +47,27 @@ type Spec struct {
 	//  More examples can be found at https://www.updatecli.io/docs/core/versionfilter/
 
 	VersionFilter version.Filter `yaml:",omitempty"`
-	// Auths holds a map of string to string where the key is the registry URL and the value the token used for authentication
+	// Auths holds a map of registry credentials where the key is the registry host (domain[:port]) without scheme.
 	//
-	// Please be aware that only the host part of the URL is used to lookup for authentication token.
+	// Please be aware that only the host part of the URL is used to lookup for authentication credentials.
 	//
 	// Example:
 	//
 	// ```
 	// auths:
-	//   "my-helm-repo.com": "my-secret-token"
+	//   "my-helm-repo.com":
+	//     token: "my-secret-token"
+	//   "my-second-helm-repo.com":
+	//     username: "username"
+	//     password: "my-secret-password"
 	// ```
 	Auths map[string]auth `yaml:",omitempty"`
 }
 
 type auth struct {
-	Token string `yaml:",omitempty"`
+	Username string `yaml:",omitempty"`
+	Password string `yaml:",omitempty"`
+	Token    string `yaml:",omitempty"`
 }
 
 // ArgoCD holds all information needed to generate argocd pipelines.

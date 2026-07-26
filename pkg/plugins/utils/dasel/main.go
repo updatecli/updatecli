@@ -12,6 +12,13 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/text"
 )
 
+const (
+	// TYPEJSON defines the json data type
+	TYPEJSON string = "json"
+	// TYPETOML defines the toml data type
+	TYPETOML string = "toml"
+)
+
 var (
 	// ErrDaselFailedParsingByteFormat is returned if dasel couldn't parse the byteData
 	ErrDaselFailedParsingByteFormat error = errors.New("failed to parse file")
@@ -30,4 +37,7 @@ type FileContent struct {
 	DaselNode *dasel.Node
 	// DaselV2Node contains the dasel v2 representation of the file
 	DaselV2Node any
+	// DaselV3Data contains the native parsed data manipulated by the dasel v3 engine.
+	// dasel v3 has no stateful node object: its API operates directly on this value.
+	DaselV3Data any
 }

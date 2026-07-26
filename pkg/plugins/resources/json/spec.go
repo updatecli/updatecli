@@ -25,7 +25,8 @@ type Spec struct {
 	// accepted values:
 	//   * "dasel/v1" for dasel v1 engine
 	//   * "dasel/v2" for dasel v2 engine
-	//   * "dasel" for the latest dasel engine which is currently dasel v2
+	//   * "dasel/v3" for dasel v3 engine
+	//   * "dasel" for the latest dasel engine which is currently dasel v3
 	Engine *string `yaml:",omitempty"`
 	// file defines the Json file path to interact with.
 	//
@@ -119,8 +120,24 @@ var (
 const (
 	ENGINEDASEL_V1 = "dasel/v1"
 	ENGINEDASEL_V2 = "dasel/v2"
-	ENGINEDEFAULT  = ENGINEDASEL_V1
+	ENGINEDASEL_V3 = "dasel/v3"
+	// ENGINEDASEL_LATEST is an alias resolving to the latest dasel engine.
+	ENGINEDASEL_LATEST = "dasel"
+	ENGINEDEFAULT      = ENGINEDASEL_V1
 )
+
+// resolveEngine normalizes a user-provided engine value, resolving the "dasel"
+// alias to the latest supported engine. An empty value resolves to the default.
+func resolveEngine(engine string) string {
+	switch engine {
+	case "":
+		return ENGINEDEFAULT
+	case ENGINEDASEL_LATEST:
+		return ENGINEDASEL_V3
+	default:
+		return engine
+	}
+}
 
 // Validate checks if the Spec is properly defined
 func (s *Spec) Validate() error {
@@ -139,11 +156,12 @@ func (s *Spec) Validate() error {
 
 	engine := ENGINEDEFAULT
 	if s.Engine != nil {
-		engine = *s.Engine
+		engine = resolveEngine(*s.Engine)
 	}
 
-	if engine == ENGINEDASEL_V2 && len(s.Query) > 0 && len(s.Key) == 0 {
-		errs = append(errs, fmt.Errorf("engine %q requires the parameter \"key\" over \"query\"", ENGINEDASEL_V2))
+	// dasel v2 and v3 deprecate the "query" parameter in favor of "key".
+	if (engine == ENGINEDASEL_V2 || engine == ENGINEDASEL_V3) && len(s.Query) > 0 && len(s.Key) == 0 {
+		errs = append(errs, fmt.Errorf("engine %q requires the parameter \"key\" over \"query\"", engine))
 	}
 
 	for _, e := range errs {
