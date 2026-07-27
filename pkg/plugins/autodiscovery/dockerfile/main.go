@@ -28,26 +28,29 @@ type Spec struct {
 	//
 	// example:
 	//
-	// ---
+	// ```
 	// auths:
 	//   "ghcr.io":
 	//     token: "xxx"
 	//   "index.docker.io":
 	//     username: "admin"
 	//     password: "password"
-	// ---
+	// ```
 	//
 	Auths map[string]docker.InlineKeyChain `yaml:",omitempty"`
-	// FileMatch allows to override default Dockerfile file matching. Default ["Dockerfile"]
+	// FileMatch allows to override default Dockerfile file matching. Default `["Dockerfile"]`
 	FileMatch []string `yaml:",omitempty"`
-	//  versionfilter provides parameters to specify the version pattern used when generating manifest.
+	//  `versionfilter` provides parameters to specify the version pattern used when generating manifest.
 	//
 	//  kind - semver
 	//    versionfilter of kind `semver` uses semantic versioning as version filtering
 	//    pattern accepts one of:
-	//      `patch` - patch only update patch version
-	//      `minor` - minor only update minor version
-	//      `major` - major only update major versions
+	//      `prerelease` - Updatecli tries to identify the latest prerelease whatever it means
+	//      `patch` - Updatecli only handles patch version update
+	//      `minor` - Updatecli handles patch AND minor version update
+	//      `minoronly` - Updatecli handles minor version only
+	//      `major` - Updatecli handles patch, minor, AND major version update
+	//      `majoronly` - Updatecli only handles major version update
 	//      `a version constraint` such as `>= 1.0.0`
 	//
 	//  kind - regex
@@ -55,15 +58,15 @@ type Spec struct {
 	//    pattern accepts a valid regular expression
 	//
 	//  example:
-	//
 	//  ```
-	//  versionfilter:
-	//    kind: semver
-	//    pattern: minor
+	//    versionfilter:
+	//      kind: semver
+	//      pattern: minor
 	//  ```
 	//
-	//  More version filter available at https://www.updatecli.io/docs/core/versionfilter/
+	//  and its type like regex, semver, or just latest.
 	//
+	//  More examples can be found at https://www.updatecli.io/docs/core/versionfilter/
 	VersionFilter version.Filter `yaml:",omitempty"`
 }
 

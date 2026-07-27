@@ -23,7 +23,33 @@ type Bazel struct {
 	rootDir string
 	// scmID holds the scmID used by the newly generated manifest
 	scmID string
-	// versionFilter holds the "valid" version.filter, that might be different from the user-specified filter (Spec.VersionFilter)
+	//  `versionfilter` provides parameters to specify the version pattern used when generating manifest.
+	//
+	//  kind - semver
+	//    versionfilter of kind `semver` uses semantic versioning as version filtering
+	//    pattern accepts one of:
+	//      `prerelease` - Updatecli tries to identify the latest prerelease whatever it means
+	//      `patch` - Updatecli only handles patch version update
+	//      `minor` - Updatecli handles patch AND minor version update
+	//      `minoronly` - Updatecli handles minor version only
+	//      `major` - Updatecli handles patch, minor, AND major version update
+	//      `majoronly` - Updatecli only handles major version update
+	//      `a version constraint` such as `>= 1.0.0`
+	//
+	//  kind - regex
+	//    versionfilter of kind `regex` uses regular expression as version filtering
+	//    pattern accepts a valid regular expression
+	//
+	//  example:
+	//  ```
+	//    versionfilter:
+	//      kind: semver
+	//      pattern: minor
+	//  ```
+	//
+	//  and its type like regex, semver, or just latest.
+	//
+	//  More examples can be found at https://www.updatecli.io/docs/core/versionfilter/
 	versionFilter version.Filter
 }
 

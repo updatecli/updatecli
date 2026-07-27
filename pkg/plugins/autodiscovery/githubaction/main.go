@@ -31,17 +31,21 @@ type Spec struct {
 	// files allows to specify the accepted Action workflow file name
 	//
 	// default:
+	// ```
 	//   - ".github/workflows/*.yaml",
 	//   - ".github/workflows/*.yml",
 	//   - ".gitea/workflows/*.yaml",
 	//   - ".gitea/workflows/*.yml",
 	//   - ".forgejo/workflows/*.yaml",
 	//   - ".forgejo/workflows/*.yml",
+	// ```
 	Files []string `yaml:",omitempty"`
 	// actions allows to specify the accepted Composite Action names
 	//
 	// default:
+	// ```
 	//   - "*",
+	// ```
 	Actions []string `yaml:",omitempty"`
 
 	// ignore allows to specify rule to ignore autodiscovery a specific GitHub action based on a rule
@@ -58,29 +62,33 @@ type Spec struct {
 	//
 	// default: empty
 	RootDir string `yaml:",omitempty"`
-	// versionfilter provides parameters to specify the version pattern used when generating manifest.
+	//  `versionfilter` provides parameters to specify the version pattern used when generating manifest.
 	//
-	// kind - semver
-	//		versionfilter of kind `semver` uses semantic versioning as version filtering
-	//		pattern accepts one of:
-	//			`patch` - patch only update patch version
-	//			`minor` - minor only update minor version
-	//			`major` - major only update major versions
-	//			`a version constraint` such as `>= 1.0.0`
+	//  kind - semver
+	//    versionfilter of kind `semver` uses semantic versioning as version filtering
+	//    pattern accepts one of:
+	//      `prerelease` - Updatecli tries to identify the latest prerelease whatever it means
+	//      `patch` - Updatecli only handles patch version update
+	//      `minor` - Updatecli handles patch AND minor version update
+	//      `minoronly` - Updatecli handles minor version only
+	//      `major` - Updatecli handles patch, minor, AND major version update
+	//      `majoronly` - Updatecli only handles major version update
+	//      `a version constraint` such as `>= 1.0.0`
 	//
-	//	kind - regex
-	//		versionfilter of kind `regex` uses regular expression as version filtering
-	//		pattern accepts a valid regular expression
+	//  kind - regex
+	//    versionfilter of kind `regex` uses regular expression as version filtering
+	//    pattern accepts a valid regular expression
 	//
-	//	example:
-	//	```
-	//		versionfilter:
-	//			kind: semver
-	//			pattern: minor
-	//	```
+	//  example:
+	//  ```
+	//    versionfilter:
+	//      kind: semver
+	//      pattern: minor
+	//  ```
 	//
-	//	and its type like regex, semver, or just latest.
+	//  and its type like regex, semver, or just latest.
 	//
+	//  More examples can be found at https://www.updatecli.io/docs/core/versionfilter/
 	VersionFilter version.Filter `yaml:",omitempty"`
 	// Credentials allows to specify the credentials to use to authenticate to the git provider
 	// The ID of the credential must be the domain of the git provider to configure
@@ -140,21 +148,21 @@ type GitHubAction struct {
 type gitProviderToken struct {
 	// Kind defines the Kind of git provider to use
 	//
-	// accepted values: ['github','gitea','forgejo']
+	// accepted values: `['github','gitea','forgejo']`
 	Kind string `yaml:",omitempty"`
 	// Token defines the Token to use to authenticate to the git provider
 	//
 	// The default value depends on the action domain
-	// For 'github.com', the default value is set to first environment detected
-	//  1. "UPDATECLI_GITHUB_TOKEN"
-	//  2. "GITHUB_TOKEN"
+	// For `github.com`, the default value is set to first environment detected
+	//  1. `UPDATECLI_GITHUB_TOKEN`
+	//  2. `GITHUB_TOKEN`
 	//
-	// For 'gitea.com' and 'codeberg.org', the default value is set to first environment detected
-	//  1. "UPDATECLI_GITHUB_TOKEN"
-	//  1. "GITEA_TOKEN"
+	// For `gitea.com` and `codeberg.org`, the default value is set to first environment detected
+	//  1. `UPDATECLI_GITHUB_TOKEN`
+	//  1. `GITEA_TOKEN`
 	Token string `yaml:",omitempty"`
 	// App defines the GitHub App credentials used to authenticate with GitHub API.
-	// It is not compatible with the "token" field.
+	// It is not compatible with the `token` field.
 	// It is recommended to use the GitHub App authentication method for better security and granular permissions.
 	// For more information, please refer to the following documentation:
 	// https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/authenticating-as-a-github-app-installation

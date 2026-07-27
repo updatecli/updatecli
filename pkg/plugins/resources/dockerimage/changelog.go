@@ -112,8 +112,8 @@ func getChangelogAnnotation(desc v1.Descriptor) string {
 // redirectToGitHubRawContent tries to redirect a github url to its associated file raw content
 func redirectToGitHubRawContent(u *url.URL) {
 	beforePath := u.Path
-	if strings.Split(u.Path, "/")[3] == "tree" {
-		s := strings.Split(u.Path, "/")
+	s := strings.Split(u.Path, "/")
+	if len(s) > 3 && s[3] == "tree" {
 		s[3] = "blob"
 		u.Path = strings.Join(s, "/")
 	}

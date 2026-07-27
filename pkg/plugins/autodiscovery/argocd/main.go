@@ -12,18 +12,18 @@ import (
 
 // Spec defines the parameters which can be provided to the argocd builder.
 type Spec struct {
-	// RootDir defines the root directory used to recursively search for ArgoCD manifest
+	// rootDir defines the root directory used to recursively search for ArgoCD manifest
 	RootDir string `yaml:",omitempty"`
-	// Ignore allows to specify rule to ignore autodiscovery a specific Argocd manifest based on a rule
+	// ignore allows to specify rule to ignore autodiscovery a specific Argocd manifest based on a rule
 	Ignore MatchingRules `yaml:",omitempty"`
-	// Only allows to specify rule to only autodiscover manifest for a specific ArgoCD manifest based on a rule
+	// only allows to specify rule to only autodiscover manifest for a specific ArgoCD manifest based on a rule
 	Only MatchingRules `yaml:",omitempty"`
-	//  versionfilter provides parameters to specify the version pattern used when generating manifest.
+	//  `versionfilter` provides parameters to specify the version pattern used when generating manifest.
 	//
 	//  kind - semver
 	//    versionfilter of kind `semver` uses semantic versioning as version filtering
 	//    pattern accepts one of:
-	//      `prerelease` - Updatecli tries to identify the latest "prerelease" whatever it means
+	//      `prerelease` - Updatecli tries to identify the latest prerelease whatever it means
 	//      `patch` - Updatecli only handles patch version update
 	//      `minor` - Updatecli handles patch AND minor version update
 	//      `minoronly` - Updatecli handles minor version only
@@ -37,28 +37,37 @@ type Spec struct {
 	//
 	//  example:
 	//  ```
-	//  	versionfilter:
-	//  		kind: semver
-	//  		pattern: minor
+	//    versionfilter:
+	//      kind: semver
+	//      pattern: minor
 	//  ```
 	//
-	//	and its type like regex, semver, or just latest.
-	VersionFilter version.Filter `yaml:",omitempty"`
-	// Auths holds a map of string to string where the key is the registry URL and the value the token used for authentication
+	//  and its type like regex, semver, or just latest.
 	//
-	// Please be aware that only the host part of the URL is used to lookup for authentication token.
+	//  More examples can be found at https://www.updatecli.io/docs/core/versionfilter/
+
+	VersionFilter version.Filter `yaml:",omitempty"`
+	// Auths holds a map of registry credentials where the key is the registry host (domain[:port]) without scheme.
+	//
+	// Please be aware that only the host part of the URL is used to lookup for authentication credentials.
 	//
 	// Example:
 	//
-	// ```yaml
+	// ```
 	// auths:
-	//   "my-helm-repo.com": "my-secret-token"
+	//   "my-helm-repo.com":
+	//     token: "my-secret-token"
+	//   "my-second-helm-repo.com":
+	//     username: "username"
+	//     password: "my-secret-password"
 	// ```
 	Auths map[string]auth `yaml:",omitempty"`
 }
 
 type auth struct {
-	Token string `yaml:",omitempty"`
+	Username string `yaml:",omitempty"`
+	Password string `yaml:",omitempty"`
+	Token    string `yaml:",omitempty"`
 }
 
 // ArgoCD holds all information needed to generate argocd pipelines.
