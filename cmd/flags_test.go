@@ -47,6 +47,64 @@ func TestAddDisableChangelogFlagRegistration(t *testing.T) {
 	}
 }
 
+func TestAddExportReportToYAMLFlagRegistration(t *testing.T) {
+	cmd := &cobra.Command{
+		Use: "test",
+	}
+
+	var exportReportToYAML bool
+	addExportReportToYAMLFlag(cmd, &exportReportToYAML)
+
+	// Check that flag exists
+	flag := cmd.Flags().Lookup("export-report-to-yaml")
+	if flag == nil {
+		t.Fatal("flag not registered")
+	}
+
+	// Check flag has help text
+	if flag.Usage == "" {
+		t.Error("flag help text is empty")
+	}
+
+	// Exporting writes files to disk, so it must be opt-in
+	if flag.DefValue != "false" {
+		t.Errorf(
+			"flag default value: got %q, expected %q",
+			flag.DefValue,
+			"false",
+		)
+	}
+}
+
+func TestAddDisableUdashReportFlagRegistration(t *testing.T) {
+	cmd := &cobra.Command{
+		Use: "test",
+	}
+
+	var disableUdashReport bool
+	addDisableUdashReportFlag(cmd, &disableUdashReport)
+
+	// Check that flag exists
+	flag := cmd.Flags().Lookup("disable-udash-report")
+	if flag == nil {
+		t.Fatal("flag not registered")
+	}
+
+	// Check flag has help text
+	if flag.Usage == "" {
+		t.Error("flag help text is empty")
+	}
+
+	// Publishing only happens when a Udash endpoint is configured, so it is opt-out
+	if flag.DefValue != "false" {
+		t.Errorf(
+			"flag default value: got %q, expected %q",
+			flag.DefValue,
+			"false",
+		)
+	}
+}
+
 func TestAddDisableChangelogFlagUsesEnvDefault(t *testing.T) {
 	tests := []struct {
 		name        string

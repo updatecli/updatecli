@@ -14,7 +14,7 @@ import (
 
 // ExportToYAML exports the report to a YAML file in the temporary report directory.
 // The filename is based on the report ID and the current timestamp.
-func (r *Report) ExportToYAML(reportDir string, hideTimestamp bool) (string, error) {
+func (r *Report) ExportToYAML(reportDir string) (string, error) {
 	var err error
 
 	if r == nil {
