@@ -10,8 +10,6 @@ import (
 )
 
 var (
-	pipelinePrepareClean bool
-
 	pipelinePrepareCmd = &cobra.Command{
 		Args:  cobra.MatchAll(cobra.MaximumNArgs(1)),
 		Use:   "prepare NAME[:TAG|@DIGEST]",
@@ -31,7 +29,7 @@ var (
 				Secrets:      secretsFiles,
 			})
 
-			e.Options.Pipeline.Target.Clean = pipelinePrepareClean
+			e.Options.Pipeline.Target.Clean = prepareClean
 
 			err = run("pipeline/prepare")
 			if err != nil {
@@ -47,7 +45,7 @@ func init() {
 	pipelinePrepareCmd.Flags().StringArrayVarP(&valuesFiles, "values", "v", []string{}, "Sets values file uses for templating")
 	pipelinePrepareCmd.Flags().StringArrayVarP(&valuesInline, "values-inline", "i", []string{}, "Sets inline values uses for templating, accepted valid json/yaml string")
 	pipelinePrepareCmd.Flags().StringArrayVar(&secretsFiles, "secrets", []string{}, "Sets Sops secrets file uses for templating")
-	pipelinePrepareCmd.Flags().BoolVar(&pipelinePrepareClean, "clean", false, "Remove updatecli working directory like '--clean=true")
+	pipelinePrepareCmd.Flags().BoolVar(&prepareClean, "clean", false, "Remove updatecli working directory like '--clean=true")
 	pipelinePrepareCmd.Flags().BoolVar(&disableTLS, "disable-tls", false, "Disable TLS verification like '--disable-tls=true'")
 	pipelinePrepareCmd.Flags().StringArrayVar(&pipelineIds, "pipeline-ids", []string{}, "Filter pipelines to apply by their pipeline IDs, accepted a comma separated list")
 	pipelinePrepareCmd.Flags().StringArrayVar(&labels, "labels", []string{}, "Filter pipelines to apply by their labels, accepted as a comma separated list (key:value)")
