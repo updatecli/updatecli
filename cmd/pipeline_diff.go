@@ -58,6 +58,8 @@ func init() {
 
 	addDisableChangelogFlag(pipelineDiffCmd, &disableChangelog)
 	addValidateSchemaFlag(pipelineDiffCmd, &validateSchema)
+	addExportReportToYAMLFlag(pipelineDiffCmd, &exportReportToYAML)
+	addDisableUdashReportFlag(pipelineDiffCmd, &disableUdashReport)
 
 	pipelineCmd.AddCommand(pipelineDiffCmd)
 }

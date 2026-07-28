@@ -79,4 +79,6 @@ func init() {
 
 	addDisableChangelogFlag(applyCmd, &disableChangelog)
 	addValidateSchemaFlag(applyCmd, &validateSchema)
+	addExportReportToYAMLFlag(applyCmd, &exportReportToYAML)
+	addDisableUdashReportFlag(applyCmd, &disableUdashReport)
 }

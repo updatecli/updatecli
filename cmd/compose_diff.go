@@ -71,6 +71,8 @@ func init() {
 
 	addDisableChangelogFlag(composeDiffCmd, &disableChangelog)
 	addValidateSchemaFlag(composeDiffCmd, &validateSchema)
+	addExportReportToYAMLFlag(composeDiffCmd, &exportReportToYAML)
+	addDisableUdashReportFlag(composeDiffCmd, &disableUdashReport)
 
 	composeCmd.AddCommand(composeDiffCmd)
 }
