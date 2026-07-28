@@ -284,11 +284,10 @@ func (a *Action) generateActionHandler() error {
 	return nil
 }
 
-// JSONSchema implements the json schema interface to generate the "action" jsonschema
-func (Config) JSONSchema() *jschema.Schema {
-	type configAlias Config
-
-	anyOfSpec := map[string]interface{}{
+// GetActionMapping returns the mapping between an action kind and its specification.
+// Don't forget to update it when adding/updating/removing a case from New().
+func GetActionMapping() map[string]interface{} {
+	return map[string]interface{}{
 		"azuredevops/pullrequest": &azuredevops.Spec{},
 		"github/pullrequest":      &github.ActionSpec{},
 		"gitea/pullrequest":       &gitea.Spec{},
@@ -296,6 +295,11 @@ func (Config) JSONSchema() *jschema.Schema {
 		"gitlab/mergerequest":     &gitlab.Spec{},
 		"bitbucket/pullrequest":   &bitbucket.Spec{},
 	}
+}
 
-	return jsonschema.AppendOneOfToJsonSchema(configAlias{}, anyOfSpec)
+// JSONSchema implements the json schema interface to generate the "action" jsonschema
+func (Config) JSONSchema() *jschema.Schema {
+	type configAlias Config
+
+	return jsonschema.AppendOneOfToJsonSchema(configAlias{}, GetActionMapping())
 }

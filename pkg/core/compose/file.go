@@ -58,6 +58,12 @@ func LoadFile(filename string) (*Spec, error) {
 		return nil, fmt.Errorf("parsing Updatecli compose file %q: %s", filename, err)
 	}
 
+	// Reported before the spec is post-processed, so that a problem points at what the
+	// compose file actually says rather than at a value Updatecli defaulted.
+	if ValidateSchema {
+		validateSchema(filename, composeFileByte)
+	}
+
 	composeSpec.Env_files = relativePathToFile(filename, composeSpec.Env_files)
 
 	for i := range composeSpec.Policies {

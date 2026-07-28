@@ -19,7 +19,6 @@ sources:
     kind: golang/gomod
     spec:
       file: pkg/plugins/resources/go/gomod/testdata/go.mod
-      kind: golang
 
   buildkit:
     name: Get BuildKit version used in go.mod
@@ -42,7 +41,6 @@ conditions:
     sourceid: golang
     kind: golang/gomod
     spec:
-      kind: golang
       file: pkg/plugins/resources/go/gomod/testdata/go.mod
 
 targets:

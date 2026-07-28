@@ -39,6 +39,7 @@ var (
 	experimental        bool
 	disableTLS          bool
 	disableChangelog    bool
+	validateSchema      bool
 	uniqueTmpDir        bool
 	disableVersionCheck bool
 
@@ -236,6 +237,13 @@ func run(command string) error {
 
 	case "manifest/upgrade":
 		err := e.ManifestUpgrade(manifestUpgradeInPlace)
+		if err != nil {
+			logrus.Errorf("%s %s", result.FAILURE, err)
+			return err
+		}
+
+	case "manifest/validate":
+		err := e.ValidateManifests(manifestValidateStrict)
 		if err != nil {
 			logrus.Errorf("%s %s", result.FAILURE, err)
 			return err

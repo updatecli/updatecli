@@ -54,6 +54,8 @@ var (
 			e.Options.Pipeline.Target.CleanGitBranches = composeApplyCleanGitBranches
 			e.Options.Pipeline.Target.ExistingOnly = composeApplyExistingOnly
 			e.Options.Pipeline.DisableChangelog = disableChangelog
+			e.Options.Config.ValidateSchema = validateSchema
+			compose.ValidateSchema = validateSchema
 
 			err = run("compose/apply")
 			if err != nil {
@@ -79,6 +81,7 @@ func init() {
 	composeApplyCmd.Flags().StringArrayVar(&composeApplyIgnoredPolicyIDs, "ignored-policy-ids", []string{}, "Filter policies to ignore by their policy IDs, accepted as a comma separated list")
 
 	addDisableChangelogFlag(composeApplyCmd, &disableChangelog)
+	addValidateSchemaFlag(composeApplyCmd, &validateSchema)
 
 	composeCmd.AddCommand(composeApplyCmd)
 }

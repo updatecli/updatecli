@@ -36,6 +36,7 @@ var (
 			e.Options.Pipeline.Target.Clean = diffClean
 			e.Options.Pipeline.Target.DryRun = true
 			e.Options.Pipeline.DisableChangelog = disableChangelog
+			e.Options.Config.ValidateSchema = validateSchema
 
 			logrus.Warningln("Deprecated command, please instead use `updatecli pipeline diff`")
 
@@ -60,4 +61,5 @@ func init() {
 	diffCmd.Flags().StringArrayVar(&labels, "labels", []string{}, "Filter pipelines to apply by their labels, accepted as a comma separated list (key:value)")
 
 	addDisableChangelogFlag(diffCmd, &disableChangelog)
+	addValidateSchemaFlag(diffCmd, &validateSchema)
 }

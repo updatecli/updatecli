@@ -13,3 +13,15 @@ func addDisableChangelogFlag(cmd *cobra.Command, dest *bool) {
 		"Disable changelog retrieval to avoid unnecessary requests (env: "+DisableChangelogEnvVar+")",
 	)
 }
+
+// addValidateSchemaFlag registers the shared --validate-schema flag on the provided
+// command, using the value from UPDATECLI_VALIDATE_SCHEMA as the default when the flag is
+// not explicitly passed.
+func addValidateSchemaFlag(cmd *cobra.Command, dest *bool) {
+	cmd.Flags().BoolVar(
+		dest,
+		"validate-schema",
+		getEnvBoolOrDefault(ValidateSchemaEnvVar, false),
+		"Report manifest keys not matching the Updatecli schema as warnings (env: "+ValidateSchemaEnvVar+")",
+	)
+}

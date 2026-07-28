@@ -52,11 +52,16 @@ var GetDefaultCrawlerSpecs = sync.OnceValue(func() Config {
 	return ret
 })
 
-// GetAutodiscoverySpecs return a map of all Autodiscovery specification
+// GetAutodiscoverySpecs return a map of all Autodiscovery specification.
+// Aliases are included as crawlerFuncMap accepts them, so that a manifest using an
+// alias is neither rejected by the jsonschema nor reported as an unknown crawler.
 var GetAutodiscoverySpecsMapping = sync.OnceValue(func() CrawlersConfig {
 	ret := make(CrawlersConfig, len(crawlerMap))
 	for k, v := range crawlerMap {
 		ret[k] = v.spec
+		for _, alias := range v.alias {
+			ret[alias] = v.spec
+		}
 	}
 	return ret
 })

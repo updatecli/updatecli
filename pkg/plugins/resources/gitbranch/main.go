@@ -65,7 +65,8 @@ type Spec struct {
 	//
 	// remark:
 	//  * sourcebranch is required when the scmid is not defined.
-	URL string `yaml:",omitempty" jsonschema:"required"`
+	//  * "url" is not needed when the repository is provided by "path" or by a "scmid".
+	URL string `yaml:",omitempty"`
 	//	"username" specifies the username when using the HTTP protocol
 	//
 	//	compatible

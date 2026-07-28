@@ -62,7 +62,10 @@ type Spec struct {
 	//
 	//    it's possible to specify git tags without cloning the repository by using the `lsremote` option,
 	//    in that case the URL is required and the tags will be retrieved from the remote repository directly without cloning it.
-	URL string `yaml:",omitempty" jsonschema:"required"`
+	//
+	//    remark:
+	//      * "url" is not needed when the repository is provided by "path" or by a "scmid".
+	URL string `yaml:",omitempty"`
 	//	"username" specifies the username when using the HTTP protocol
 	//
 	//	compatible

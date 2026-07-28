@@ -43,6 +43,7 @@ var (
 			e.Options.Pipeline.Target.CleanGitBranches = applyCleanGitBranches
 			e.Options.Pipeline.Target.ExistingOnly = applyExistingOnly
 			e.Options.Pipeline.DisableChangelog = disableChangelog
+			e.Options.Config.ValidateSchema = validateSchema
 
 			err = run("pipeline/apply")
 			if err != nil {
@@ -69,6 +70,7 @@ func init() {
 	pipelineApplyCmd.Flags().StringArrayVar(&labels, "labels", []string{}, "Filter pipelines to apply by their labels, accepted as a comma separated list (key:value)")
 
 	addDisableChangelogFlag(pipelineApplyCmd, &disableChangelog)
+	addValidateSchemaFlag(pipelineApplyCmd, &validateSchema)
 
 	pipelineCmd.AddCommand(pipelineApplyCmd)
 }
