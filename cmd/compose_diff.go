@@ -68,6 +68,8 @@ func init() {
 	composeDiffCmd.Flags().StringArrayVar(&composeDiffIgnoredPolicyIDs, "ignored-policy-ids", []string{}, "Filter policies to ignore by their policy IDs, accepted as a comma separated list")
 
 	addDisableChangelogFlag(composeDiffCmd, &disableChangelog)
+	addExportReportToYAMLFlag(composeDiffCmd, &exportReportToYAML)
+	addDisableUdashReportFlag(composeDiffCmd, &disableUdashReport)
 
 	composeCmd.AddCommand(composeDiffCmd)
 }

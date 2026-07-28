@@ -22,4 +22,8 @@ type Options struct {
 	PipelineIDs []string
 	// Labels holds a map of labels to filter on
 	Labels map[string]string
+	// ExportToYAML defines whether to export the pipeline reports to YAML files
+	ExportToYAML bool
+	// DisableUdashReport defines whether to skip publishing pipeline reports to Udash
+	DisableUdashReport bool
 }
