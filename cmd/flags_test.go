@@ -7,8 +7,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const (
+	valueFalse = "false"
+)
+
 func TestAddDisableChangelogFlagRegistration(t *testing.T) {
-	t.Setenv(DisableChangelogEnvVar, "false")
+	t.Setenv(DisableChangelogEnvVar, valueFalse)
 
 	cmd := &cobra.Command{
 		Use: "test",
@@ -38,11 +42,11 @@ func TestAddDisableChangelogFlagRegistration(t *testing.T) {
 	}
 
 	// Check default value is "false" when env var not set
-	if flag.DefValue != "false" {
+	if flag.DefValue != valueFalse {
 		t.Errorf(
 			"flag default value when no env var: got %q, expected %q",
 			flag.DefValue,
-			"false",
+			valueFalse,
 		)
 	}
 }
@@ -67,11 +71,11 @@ func TestAddExportReportToYAMLFlagRegistration(t *testing.T) {
 	}
 
 	// Exporting writes files to disk, so it must be opt-in
-	if flag.DefValue != "false" {
+	if flag.DefValue != valueFalse {
 		t.Errorf(
 			"flag default value: got %q, expected %q",
 			flag.DefValue,
-			"false",
+			valueFalse,
 		)
 	}
 }
@@ -96,11 +100,11 @@ func TestAddDisableUdashReportFlagRegistration(t *testing.T) {
 	}
 
 	// Publishing only happens when a Udash endpoint is configured, so it is opt-out
-	if flag.DefValue != "false" {
+	if flag.DefValue != valueFalse {
 		t.Errorf(
 			"flag default value: got %q, expected %q",
 			flag.DefValue,
-			"false",
+			valueFalse,
 		)
 	}
 }
@@ -118,8 +122,8 @@ func TestAddDisableChangelogFlagUsesEnvDefault(t *testing.T) {
 		},
 		{
 			name:        "env_var_false",
-			envValue:    "false",
-			expectedDef: "false",
+			envValue:    valueFalse,
+			expectedDef: valueFalse,
 		},
 		{
 			name:        "env_var_1",
@@ -129,7 +133,7 @@ func TestAddDisableChangelogFlagUsesEnvDefault(t *testing.T) {
 		{
 			name:        "env_var_0",
 			envValue:    "0",
-			expectedDef: "false",
+			expectedDef: valueFalse,
 		},
 	}
 
@@ -173,7 +177,7 @@ func TestDisableChangelogFlagOverridesEnv(t *testing.T) {
 	var disableChangelog bool
 	addDisableChangelogFlag(cmd, &disableChangelog)
 
-	cmd.SetArgs([]string{"--disable-changelog=false"})
+	cmd.SetArgs([]string{"--disable-changelog=" + valueFalse})
 
 	err := cmd.Execute()
 	if err != nil {
