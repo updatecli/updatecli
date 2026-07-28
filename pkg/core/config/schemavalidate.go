@@ -41,7 +41,6 @@ func DefaultSchemaValidationOptions() SchemaValidationOptions {
 // A manifest problem is reported through the returned report, an error is only returned
 // when the manifest cannot be read at all.
 func ValidateSchema(filename string, content []byte, options SchemaValidationOptions) (SchemaReport, error) {
-
 	report := SchemaReport{File: filename}
 
 	registry, err := getSchemaRegistry()
@@ -87,7 +86,6 @@ func ValidateSchema(filename string, content []byte, options SchemaValidationOpt
 // It never fails a manifest: the schema has only ever been used to assist editors, so a
 // manifest Updatecli runs today must keep running even when the schema disagrees.
 func reportSchemaProblems(filename string, content []byte, onProblem func(SchemaProblem)) {
-
 	report, err := ValidateSchema(filename, content, DefaultSchemaValidationOptions())
 	if err != nil {
 		logrus.Debugf("skipping the schema validation of %q: %s", filename, err)
@@ -114,7 +112,6 @@ type schemaValidator struct {
 }
 
 func (v *schemaValidator) validateDocument(raw interface{}) {
-
 	document, ok := raw.(map[string]interface{})
 	if !ok {
 		v.report(SeverityError, "", "expected a mapping, got %s", typeOf(raw))
@@ -132,7 +129,6 @@ func (v *schemaValidator) validateDocument(raw interface{}) {
 // declares, which yields a precise problem instead of reporting that the entry matched
 // none of the supported kinds.
 func (v *schemaValidator) validateResources(document map[string]interface{}, s section) {
-
 	raw, ok := document[string(s)]
 	if !ok || raw == nil {
 		return
@@ -158,7 +154,6 @@ func (v *schemaValidator) validateResources(document map[string]interface{}, s s
 }
 
 func (v *schemaValidator) validateResource(entry map[string]interface{}, s section, path string) {
-
 	// Everything but the specification is checked against the section schema, the
 	// specification itself depends on the kind and is checked further down.
 	v.check(v.registry.resources[s], withoutKey(entry, "spec"), path, string(s))
@@ -213,7 +208,6 @@ func (v *schemaValidator) validateResource(entry map[string]interface{}, s secti
 
 // check validates one node and turns each failure into a problem rooted at path.
 func (v *schemaValidator) check(schema *validator.Schema, instance interface{}, path string, node string) {
-
 	err := schema.Validate(instance)
 	if err == nil {
 		return
@@ -231,7 +225,6 @@ func (v *schemaValidator) check(schema *validator.Schema, instance interface{}, 
 // flatten walks down to the leaf causes, which are the ones carrying both a precise
 // location and a typed reason.
 func (v *schemaValidator) flatten(err *validator.ValidationError, path string, node string, schema *validator.Schema) {
-
 	if len(err.Causes) > 0 {
 		for _, cause := range err.Causes {
 			v.flatten(cause, path, node, schema)
@@ -249,10 +242,9 @@ func (v *schemaValidator) flatten(err *validator.ValidationError, path string, n
 	v.report(severity, location, "%s", message)
 }
 
-// describe turns a validation failure into an Updatecli flavoured message, and drops the
+// describe turns a validation failure into an Updatecli flavored message, and drops the
 // ones Updatecli cannot check reliably.
 func (v *schemaValidator) describe(err *validator.ValidationError, location string, node string, schema *validator.Schema) (Severity, string) {
-
 	switch errorKind := err.ErrorKind.(type) {
 
 	case *kind.AdditionalProperties:
@@ -301,7 +293,6 @@ func (v *schemaValidator) describe(err *validator.ValidationError, location stri
 }
 
 func (v *schemaValidator) deprecationSeverity() Severity {
-
 	if v.options.Strict {
 		return SeverityError
 	}
@@ -318,7 +309,6 @@ func (v *schemaValidator) deprecationSeverity() Severity {
 // therefore only reported as a warning, unless asked to be strict, while the manifest
 // structure itself remains an error.
 func (v *schemaValidator) requiredSeverity(node string) Severity {
-
 	if v.options.Strict || !strings.Contains(node, "/") {
 		return SeverityError
 	}
@@ -329,7 +319,6 @@ func (v *schemaValidator) requiredSeverity(node string) Severity {
 // propertyNames returns the keys accepted at the location an unknown one was found, so
 // that a replacement can be suggested.
 func propertyNames(schema *validator.Schema, location []string) []string {
-
 	schema = resolveSchema(schema, location)
 	if schema == nil {
 		return nil
@@ -345,7 +334,6 @@ func propertyNames(schema *validator.Schema, location []string) []string {
 
 // resolveSchema walks a schema down to the one describing an instance location.
 func resolveSchema(schema *validator.Schema, location []string) *validator.Schema {
-
 	for _, element := range location {
 		if schema == nil {
 			return nil
@@ -374,7 +362,6 @@ func resolveSchema(schema *validator.Schema, location []string) *validator.Schem
 
 // remove returns the values but the excluded one.
 func remove(values []string, excluded string) []string {
-
 	kept := make([]string, 0, len(values))
 
 	for _, value := range values {
@@ -389,7 +376,6 @@ func remove(values []string, excluded string) []string {
 
 // withoutKey returns a copy of a mapping with one key removed.
 func withoutKey(values map[string]interface{}, key string) map[string]interface{} {
-
 	filtered := make(map[string]interface{}, len(values))
 
 	for name, value := range values {
@@ -411,8 +397,10 @@ func (v *schemaValidator) skipTemplatedString(value string) bool {
 	return v.options.SkipTemplatedValues && !v.options.Strict && IsTemplatedString(value)
 }
 
+// report adds a problem to the report, with the file and document already set.
+//
+//nolint:goprintffuncname
 func (v *schemaValidator) report(severity Severity, path string, format string, args ...interface{}) {
-
 	v.problems = append(v.problems, SchemaProblem{
 		File:     v.file,
 		Document: v.document,
@@ -426,7 +414,6 @@ func (v *schemaValidator) report(severity Severity, path string, format string, 
 // only reports problems on the manifest top level. Each resource is checked separately
 // against the schema of the kind it declares.
 func opaqueSections(document map[string]interface{}) map[string]interface{} {
-
 	opaque := make(map[string]interface{}, len(document))
 
 	for key, value := range document {
@@ -444,7 +431,6 @@ func opaqueSections(document map[string]interface{}) map[string]interface{} {
 }
 
 func joinPath(path string, location []string) string {
-
 	for _, element := range location {
 		path = joinKey(path, element)
 	}
@@ -453,7 +439,6 @@ func joinPath(path string, location []string) string {
 }
 
 func joinKey(path string, key string) string {
-
 	if path == "" {
 		return key
 	}
@@ -462,7 +447,6 @@ func joinKey(path string, key string) string {
 }
 
 func sortedKeys(values map[string]interface{}) []string {
-
 	keys := make([]string, 0, len(values))
 	for key := range values {
 		keys = append(keys, key)
@@ -474,7 +458,6 @@ func sortedKeys(values map[string]interface{}) []string {
 }
 
 func quoteAll(values []string) string {
-
 	quoted := make([]string, len(values))
 	for i, value := range values {
 		quoted[i] = fmt.Sprintf("%q", value)
@@ -484,7 +467,6 @@ func quoteAll(values []string) string {
 }
 
 func typeOf(value interface{}) string {
-
 	switch value.(type) {
 	case nil:
 		return "null"

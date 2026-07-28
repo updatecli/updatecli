@@ -38,6 +38,18 @@ import (
 const (
 	// LOCALSCMIDENTIFIER defines the scm id used to configure the local scm directory
 	LOCALSCMIDENTIFIER string = "local"
+	// EXTENSIONYAML defines the file extension for yaml files
+	EXTENSIONYAML string = ".yaml"
+	// EXTENSIONYML defines the file extension for yml files
+	EXTENSIONYML string = ".yml"
+	// EXTENSIONJSON defines the file extension for json files
+	EXTENSIONJSON string = ".json"
+	// EXTENSIONCUE defines the file extension for cue files
+	EXTENSIONCUE string = ".cue"
+	// EXTENSIONTPL defines the file extension for golang template files
+	EXTENSIONTPL string = ".tpl"
+	// EXTENSIONTMPL defines the file extension for golang template files
+	EXTENSIONTMPL string = ".tmpl"
 )
 
 // Config contains cli configuration
@@ -268,6 +280,8 @@ func (config *Config) SetManifestID(seed string) {
 }
 
 // New reads an updatecli configuration file
+//
+//nolint:funlen
 func New(option Option, pipelineIDFilters []string, pipelineLabels map[string]string) (configs []Config, err error) {
 	_, basename := filepath.Split(option.ManifestFile)
 
@@ -322,9 +336,9 @@ func New(option Option, pipelineIDFilters []string, pipelineLabels map[string]st
 	isCue := false
 
 	switch extension := filepath.Ext(basename); extension {
-	case ".tpl", ".tmpl", ".yaml", ".yml", ".json":
+	case EXTENSIONTPL, EXTENSIONTMPL, EXTENSIONYAML, EXTENSIONYML, EXTENSIONJSON:
 		//
-	case ".cue":
+	case EXTENSIONCUE:
 		if !cmdoptions.Experimental {
 			return nil, fmt.Errorf("cuelang support is experimental, please use '--experimental' flag to enable it")
 		}

@@ -39,7 +39,7 @@ func corpusManifests(t *testing.T) []string {
 			}
 
 			switch filepath.Ext(path) {
-			case ".yaml", ".yml":
+			case EXTENSIONYAML, EXTENSIONYML:
 			default:
 				return nil
 			}

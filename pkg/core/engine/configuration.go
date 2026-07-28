@@ -25,7 +25,6 @@ import (
 
 // ReadConfigurations read every strategies configuration.
 //
-//nolint:funlen
 // detectManifests fills in the default manifest locations for a manifest source that
 // does not name any, and reports whether at least one manifest is available.
 //
@@ -33,8 +32,9 @@ import (
 // If updatecli.yaml doesn't exists then Updatecli parses the directory updatecli.d for
 // any manifests. If there is no manifests in the directory updatecli.d then Updatecli
 // returns no manifest files.
+//
+//nolint:funlen
 func (e *Engine) detectManifests(i int) bool {
-
 	if len(e.Options.Manifests[i].Manifests) > 0 {
 		return true
 	}
@@ -64,6 +64,9 @@ func (e *Engine) detectManifests(i int) bool {
 	return len(e.Options.Manifests[i].Manifests) > 0
 }
 
+// LoadConfigurations loads every configuration files and initialize the pipelines
+//
+//nolint:funlen
 func (e *Engine) LoadConfigurations() error {
 	// Read every strategy files
 	errs := []error{}
