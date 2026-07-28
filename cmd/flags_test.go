@@ -7,8 +7,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const (
+	valueFalse = "false"
+)
+
 func TestAddDisableChangelogFlagRegistration(t *testing.T) {
-	t.Setenv(DisableChangelogEnvVar, "false")
+	t.Setenv(DisableChangelogEnvVar, valueFalse)
 
 	cmd := &cobra.Command{
 		Use: "test",
@@ -38,11 +42,69 @@ func TestAddDisableChangelogFlagRegistration(t *testing.T) {
 	}
 
 	// Check default value is "false" when env var not set
-	if flag.DefValue != "false" {
+	if flag.DefValue != valueFalse {
 		t.Errorf(
 			"flag default value when no env var: got %q, expected %q",
 			flag.DefValue,
-			"false",
+			valueFalse,
+		)
+	}
+}
+
+func TestAddExportReportToYAMLFlagRegistration(t *testing.T) {
+	cmd := &cobra.Command{
+		Use: "test",
+	}
+
+	var exportReportToYAML bool
+	addExportReportToYAMLFlag(cmd, &exportReportToYAML)
+
+	// Check that flag exists
+	flag := cmd.Flags().Lookup("export-report-to-yaml")
+	if flag == nil {
+		t.Fatal("flag not registered")
+	}
+
+	// Check flag has help text
+	if flag.Usage == "" {
+		t.Error("flag help text is empty")
+	}
+
+	// Exporting writes files to disk, so it must be opt-in
+	if flag.DefValue != valueFalse {
+		t.Errorf(
+			"flag default value: got %q, expected %q",
+			flag.DefValue,
+			valueFalse,
+		)
+	}
+}
+
+func TestAddDisableUdashReportFlagRegistration(t *testing.T) {
+	cmd := &cobra.Command{
+		Use: "test",
+	}
+
+	var disableUdashReport bool
+	addDisableUdashReportFlag(cmd, &disableUdashReport)
+
+	// Check that flag exists
+	flag := cmd.Flags().Lookup("disable-udash-report")
+	if flag == nil {
+		t.Fatal("flag not registered")
+	}
+
+	// Check flag has help text
+	if flag.Usage == "" {
+		t.Error("flag help text is empty")
+	}
+
+	// Publishing only happens when a Udash endpoint is configured, so it is opt-out
+	if flag.DefValue != valueFalse {
+		t.Errorf(
+			"flag default value: got %q, expected %q",
+			flag.DefValue,
+			valueFalse,
 		)
 	}
 }
@@ -60,8 +122,8 @@ func TestAddDisableChangelogFlagUsesEnvDefault(t *testing.T) {
 		},
 		{
 			name:        "env_var_false",
-			envValue:    "false",
-			expectedDef: "false",
+			envValue:    valueFalse,
+			expectedDef: valueFalse,
 		},
 		{
 			name:        "env_var_1",
@@ -71,7 +133,7 @@ func TestAddDisableChangelogFlagUsesEnvDefault(t *testing.T) {
 		{
 			name:        "env_var_0",
 			envValue:    "0",
-			expectedDef: "false",
+			expectedDef: valueFalse,
 		},
 	}
 
@@ -115,7 +177,7 @@ func TestDisableChangelogFlagOverridesEnv(t *testing.T) {
 	var disableChangelog bool
 	addDisableChangelogFlag(cmd, &disableChangelog)
 
-	cmd.SetArgs([]string{"--disable-changelog=false"})
+	cmd.SetArgs([]string{"--disable-changelog=" + valueFalse})
 
 	err := cmd.Execute()
 	if err != nil {
