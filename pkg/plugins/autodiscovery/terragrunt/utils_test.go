@@ -22,6 +22,8 @@ func TestSearchTerragruntFiles(t *testing.T) {
 			rootDir: "testdata",
 			expectedFoundFiles: []string{
 				"testdata/complex_localized.hcl",
+				"testdata/git_ssh.hcl",
+				"testdata/git_ssh_username.hcl",
 				"testdata/inlined.hcl",
 				"testdata/more_complex_localized.hcl",
 				"testdata/non_tfr.hcl",
@@ -152,6 +154,36 @@ func TestGetTerragruntModules(t *testing.T) {
 					baseUrl:         "github.com/Azure/terraform-azurerm-avm-res-network-virtualnetwork.git",
 					rawSource:       "\"git::https://github.com/Azure/terraform-azurerm-avm-res-network-virtualnetwork.git?ref=v0.3.0\"",
 					evaluatedSource: "git::https://github.com/Azure/terraform-azurerm-avm-res-network-virtualnetwork.git?ref=v0.3.0",
+					version:         "0.3.0",
+					sourceType:      SourceTypeGit,
+				},
+			},
+		},
+		{
+			name: "Git SSH without username scenario",
+			file: "testdata/git_ssh.hcl",
+			expectedModule: &terragruntModule{
+				registryModule: nil,
+				source: terragruntModuleSource{
+					protocol:        "git::ssh",
+					baseUrl:         "github.com/Azure/terraform-azurerm-avm-res-network-virtualnetwork.git",
+					rawSource:       "\"git::ssh://github.com/Azure/terraform-azurerm-avm-res-network-virtualnetwork.git?ref=v0.3.0\"",
+					evaluatedSource: "git::ssh://github.com/Azure/terraform-azurerm-avm-res-network-virtualnetwork.git?ref=v0.3.0",
+					version:         "0.3.0",
+					sourceType:      SourceTypeGit,
+				},
+			},
+		},
+		{
+			name: "Git SSH Username scenario",
+			file: "testdata/git_ssh_username.hcl",
+			expectedModule: &terragruntModule{
+				registryModule: nil,
+				source: terragruntModuleSource{
+					protocol:        "git::ssh",
+					baseUrl:         "git@github.com/Azure/terraform-azurerm-avm-res-network-virtualnetwork.git",
+					rawSource:       "\"git::ssh://git@github.com/Azure/terraform-azurerm-avm-res-network-virtualnetwork.git?ref=v0.3.0\"",
+					evaluatedSource: "git::ssh://git@github.com/Azure/terraform-azurerm-avm-res-network-virtualnetwork.git?ref=v0.3.0",
 					version:         "0.3.0",
 					sourceType:      SourceTypeGit,
 				},
