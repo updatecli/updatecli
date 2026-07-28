@@ -32,8 +32,6 @@ import (
 // If updatecli.yaml doesn't exists then Updatecli parses the directory updatecli.d for
 // any manifests. If there is no manifests in the directory updatecli.d then Updatecli
 // returns no manifest files.
-//
-//nolint:funlen
 func (e *Engine) detectManifests(i int) bool {
 	if len(e.Options.Manifests[i].Manifests) > 0 {
 		return true
