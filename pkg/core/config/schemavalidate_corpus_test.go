@@ -22,6 +22,10 @@ var corpusRoots = []string{
 	filepath.Join("..", "..", "..", "updatecli", "updatecli.d"),
 }
 
+// invalidManifestDir is the directory holding the manifests that are expected to be
+// rejected, so it is left out of the corpus.
+const invalidManifestDir = "invalid.d"
+
 func corpusManifests(t *testing.T) []string {
 	t.Helper()
 
@@ -34,7 +38,12 @@ func corpusManifests(t *testing.T) []string {
 				return err
 			}
 
+			// The manifests under "invalid.d" deliberately break the schema, they are the
+			// fixtures checking that 'updatecli manifest validate' rejects a bad manifest.
 			if entry.IsDir() {
+				if entry.Name() == invalidManifestDir {
+					return filepath.SkipDir
+				}
 				return nil
 			}
 
@@ -125,7 +134,7 @@ func TestCorpusValidatesWithoutError(t *testing.T) {
 	}
 
 	if len(failures) > 0 {
-		t.Errorf("%d manifest(s) rejected by the schema:\n%s",
+		t.Errorf("%d error(s) reported by the schema on the manifest corpus:\n%s",
 			len(failures), strings.Join(failures, "\n"))
 	}
 }

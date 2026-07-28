@@ -72,15 +72,15 @@ type ResourceConfig struct {
 	//  * The parameters "sourceid" and "conditionsids" affect the order of resource execution.
 	//  * To avoid circular dependencies, the depended resource may need to remove any conditionids or set "disablesourceinput to true".
 	DependsOn []string `yaml:",omitempty"`
-	//name specifies the resource name
-	Name string `yaml:",omitempty" jsonschema:"required"`
-	//kind specifies the resource kind which defines accepted spec value
+	// name specifies the resource name
+	Name string `yaml:",omitempty"`
+	// kind specifies the resource kind which defines accepted spec value
 	Kind string `yaml:",omitempty" jsonschema:"required"`
-	//transformers defines how the default input value need to be transformed
+	// transformers defines how the default input value need to be transformed
 	Transformers transformer.Transformers `yaml:",omitempty"`
-	//spec specifies parameters for a specific resource kind
+	// spec specifies parameters for a specific resource kind
 	Spec interface{} `yaml:",omitempty"`
-	//scmid specifies the scm configuration key associated to the current resource
+	// scmid specifies the scm configuration key associated to the current resource
 	SCMID string `yaml:",omitempty"` // SCMID references a uniq scm configuration
 	//!deprecated, please use scmid
 	//DeprecatedSCMID is kept for backward compatibility
