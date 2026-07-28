@@ -60,4 +60,6 @@ func init() {
 	diffCmd.Flags().StringArrayVar(&labels, "labels", []string{}, "Filter pipelines to apply by their labels, accepted as a comma separated list (key:value)")
 
 	addDisableChangelogFlag(diffCmd, &disableChangelog)
+	addExportReportToYAMLFlag(diffCmd, &exportReportToYAML)
+	addDisableUdashReportFlag(diffCmd, &disableUdashReport)
 }

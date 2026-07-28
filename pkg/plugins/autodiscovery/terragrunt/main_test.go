@@ -136,6 +136,59 @@ targets:
       path: 'terraform.source'
 `
 
+	expectedGitSSH := `name: 'Bump Terragrunt module github.com/Azure/terraform-azurerm-avm-res-network-virtualnetwork.git version'
+scms:
+  module:
+    kind: 'git'
+    spec:
+      url: 'ssh://github.com/Azure/terraform-azurerm-avm-res-network-virtualnetwork.git'
+sources:
+  latestVersion:
+    name: 'Get latest version of the github.com/Azure/terraform-azurerm-avm-res-network-virtualnetwork.git module'
+    kind: 'gittag'
+    transformers:
+      - addprefix: 'git::ssh://github.com/Azure/terraform-azurerm-avm-res-network-virtualnetwork.git?ref='
+    spec:
+      versionfilter:
+        kind: 'semver'
+        pattern: '>=0.3.0'
+    scmid: 'module'
+targets:
+  terragruntModuleFile:
+    name: 'deps: bump github.com/Azure/terraform-azurerm-avm-res-network-virtualnetwork.git to {{ source "latestVersion" }}'
+    kind: 'hcl'
+    sourceid: 'latestVersion'
+    spec:
+      file: 'git_ssh.hcl'
+      path: 'terraform.source'
+`
+	expectedGitSSHUsername := `name: 'Bump Terragrunt module git@github.com/Azure/terraform-azurerm-avm-res-network-virtualnetwork.git version'
+scms:
+  module:
+    kind: 'git'
+    spec:
+      url: 'ssh://git@github.com/Azure/terraform-azurerm-avm-res-network-virtualnetwork.git'
+sources:
+  latestVersion:
+    name: 'Get latest version of the git@github.com/Azure/terraform-azurerm-avm-res-network-virtualnetwork.git module'
+    kind: 'gittag'
+    transformers:
+      - addprefix: 'git::ssh://git@github.com/Azure/terraform-azurerm-avm-res-network-virtualnetwork.git?ref='
+    spec:
+      versionfilter:
+        kind: 'semver'
+        pattern: '>=0.3.0'
+    scmid: 'module'
+targets:
+  terragruntModuleFile:
+    name: 'deps: bump git@github.com/Azure/terraform-azurerm-avm-res-network-virtualnetwork.git to {{ source "latestVersion" }}'
+    kind: 'hcl'
+    sourceid: 'latestVersion'
+    spec:
+      file: 'git_ssh_username.hcl'
+      path: 'terraform.source'
+`
+
 	testdata := []struct {
 		name              string
 		rootDir           string
@@ -145,7 +198,9 @@ targets:
 			name:    "Terraform Version",
 			rootDir: "testdata",
 			expectedPipelines: []string{
+				expectedGitSSHUsername,
 				expectedNonTfr,
+				expectedGitSSH,
 				expectedSimpleLocalized,
 				expectedSuperComplexLocalized,
 				expectedInlined,

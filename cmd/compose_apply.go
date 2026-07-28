@@ -79,6 +79,8 @@ func init() {
 	composeApplyCmd.Flags().StringArrayVar(&composeApplyIgnoredPolicyIDs, "ignored-policy-ids", []string{}, "Filter policies to ignore by their policy IDs, accepted as a comma separated list")
 
 	addDisableChangelogFlag(composeApplyCmd, &disableChangelog)
+	addExportReportToYAMLFlag(composeApplyCmd, &exportReportToYAML)
+	addDisableUdashReportFlag(composeApplyCmd, &disableUdashReport)
 
 	composeCmd.AddCommand(composeApplyCmd)
 }

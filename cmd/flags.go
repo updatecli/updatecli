@@ -13,3 +13,26 @@ func addDisableChangelogFlag(cmd *cobra.Command, dest *bool) {
 		"Disable changelog retrieval to avoid unnecessary requests (env: "+DisableChangelogEnvVar+")",
 	)
 }
+
+// addExportReportToYAMLFlag registers the shared --export-report-to-yaml flag on
+// the provided command. Exporting is opt-in as it writes files to disk.
+func addExportReportToYAMLFlag(cmd *cobra.Command, dest *bool) {
+	cmd.Flags().BoolVar(
+		dest,
+		"export-report-to-yaml",
+		false,
+		"Export pipeline reports to YAML files",
+	)
+}
+
+// addDisableUdashReportFlag registers the shared --disable-udash-report flag on
+// the provided command. Publishing is opt-out as it only happens when a Udash
+// endpoint is already configured.
+func addDisableUdashReportFlag(cmd *cobra.Command, dest *bool) {
+	cmd.Flags().BoolVar(
+		dest,
+		"disable-udash-report",
+		false,
+		"Disable publishing pipeline reports to Udash",
+	)
+}

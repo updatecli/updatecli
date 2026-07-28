@@ -41,6 +41,8 @@ var (
 	disableChangelog    bool
 	uniqueTmpDir        bool
 	disableVersionCheck bool
+	exportReportToYAML  bool
+	disableUdashReport  bool
 
 	rootCmd = &cobra.Command{
 		Use:   "updatecli",
@@ -167,6 +169,9 @@ func run(command string) error {
 	if parsed := parseLabels(labels); parsed != nil {
 		e.Options.Labels = parsed
 	}
+
+	e.Options.ExportToYAML = exportReportToYAML
+	e.Options.DisableUdashReport = disableUdashReport
 
 	switch command {
 	case "apply", "compose/apply", "pipeline/apply":
