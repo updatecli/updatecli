@@ -78,6 +78,7 @@ sources:
     spec:
       image: '{{ .OCIName }}'
       tag: '{{ "{{" }} source "oci" {{ "}}" }}'
+      hidetag: true
       {{- if .RegistryUsername }}
       username: '{{ .RegistryUsername }}'
       {{- end }}
@@ -87,11 +88,13 @@ sources:
       {{- if .RegistryToken }}
       token: '{{ .RegistryToken }}'
       {{- end }}
+    transformers:
+      - trimprefix: '@'
     dependson:
       - 'oci'
 targets:
-  oci:
-    name: 'deps(flux): bump OCI repository "{{ .OCIName }}"'
+  oci-tag:
+    name: 'deps(flux): bump OCI repository "{{ .OCIName }}" tag'
     kind: 'yaml'
 {{- if .ScmID }}
     scmid: {{ .ScmID }}
@@ -99,6 +102,17 @@ targets:
     spec:
       file: '{{ .File }}'
       key: '$.spec.ref.tag'
+      documentindex: {{ .TargetYAMLDocument }}
+    sourceid: 'oci'
+  oci-digest:
+    name: 'deps(flux): bump OCI repository "{{ .OCIName }}" digest'
+    kind: 'yaml'
+{{- if .ScmID }}
+    scmid: {{ .ScmID }}
+{{- end }}
+    spec:
+      file: '{{ .File }}'
+      key: '$.spec.ref.digest'
       documentindex: {{ .TargetYAMLDocument }}
     sourceid: 'oci-digest'
 `
@@ -116,6 +130,7 @@ sources:
     spec:
       image: '{{ .OCIName }}'
       tag: '{{ .OCIVersion }}'
+      hidetag: true
       {{- if .RegistryUsername }}
       username: '{{ .RegistryUsername }}'
       {{- end }}
@@ -125,16 +140,18 @@ sources:
       {{- if .RegistryToken }}
       token: '{{ .RegistryToken }}'
       {{- end }}
+    transformers:
+      - trimprefix: '@'
 targets:
-  oci:
-    name: 'deps(flux): bump OCI repository "{{ .OCIName }}"'
+  oci-digest:
+    name: 'deps(flux): bump OCI repository "{{ .OCIName }}" digest'
     kind: 'yaml'
 {{- if .ScmID }}
     scmid: {{ .ScmID }}
 {{- end }}
     spec:
       file: '{{ .File }}'
-      key: '$.spec.ref.tag'
+      key: '$.spec.ref.digest'
       documentindex: {{ .TargetYAMLDocument }}
     sourceid: 'oci-digest'
 `
