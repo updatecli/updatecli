@@ -38,7 +38,9 @@ type Spec struct {
 	// ```
 	//
 	Auths map[string]docker.InlineKeyChain `yaml:",omitempty"`
-	// FileMatch allows to override default Dockerfile file matching. Default `["Dockerfile"]`
+	// FileMatch allows to override default Dockerfile file matching.
+	// The pattern is matched against the file name only, not against its path.
+	// Default `["Dockerfile", "Dockerfile.*"]`
 	FileMatch []string `yaml:",omitempty"`
 	//  `versionfilter` provides parameters to specify the version pattern used when generating manifest.
 	//

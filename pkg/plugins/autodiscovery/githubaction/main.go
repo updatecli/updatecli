@@ -30,17 +30,21 @@ var (
 type Spec struct {
 	// files allows to specify the accepted Action workflow file name
 	//
+	// The pattern is matched against the file name only, not against its path, so a
+	// pattern such as ".github/workflows/*.yaml" never matches. The directory is
+	// constrained separately: a workflow file must sit directly inside a "workflows"
+	// directory whose parent is ".github", ".gitea", or ".forgejo".
+	//
 	// default:
 	// ```
-	//   - ".github/workflows/*.yaml",
-	//   - ".github/workflows/*.yml",
-	//   - ".gitea/workflows/*.yaml",
-	//   - ".gitea/workflows/*.yml",
-	//   - ".forgejo/workflows/*.yaml",
-	//   - ".forgejo/workflows/*.yml",
+	//   - "*.yaml",
+	//   - "*.yml",
 	// ```
 	Files []string `yaml:",omitempty"`
 	// actions allows to specify the accepted Composite Action names
+	//
+	// A Composite Action is identified by an "action.yaml" or "action.yml" file, and the
+	// pattern is matched against the name of the directory containing it.
 	//
 	// default:
 	// ```

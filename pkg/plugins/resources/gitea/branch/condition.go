@@ -10,7 +10,7 @@ import (
 
 func (g *Gitea) Condition(_ context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 	if scm != nil {
-		logrus.Warningf("Condition not supported for the plugin GitHub Release")
+		logrus.Warningf("scm is not supported for the Gitea branch condition, ignoring")
 	}
 
 	branch := source
