@@ -182,7 +182,7 @@ func (s *Spec) Validate() error {
 
 	if s.Type == TypeModule {
 		if len(s.RawString) == 0 && (len(s.TargetSystem) == 0) {
-			errs = append(errs, ErrSpecProviderTargetSystemDefined)
+			errs = append(errs, ErrSpecTargetSystemUndefined)
 		}
 	}
 

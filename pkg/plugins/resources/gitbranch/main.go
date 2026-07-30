@@ -43,7 +43,15 @@ type Spec struct {
 	// remark:
 	//  * Updatecli won't be able to find branches that are not included in the fetched commits.
 	Depth *int `yaml:",omitempty"`
-	//	"url" specifies the git url to use for fetching Git Tags.
+	// sourcebranch defines the branch name used as a source to create the new Git branch.
+	//
+	// compatible:
+	//  * target
+	//
+	// remark:
+	//  * sourcebranch is required when the scmid is not defined.
+	SourceBranch string `yaml:",omitempty"`
+	//	url specifies the git url to use for fetching Git Branches.
 	//
 	//	compatible:
 	//	  * source
@@ -57,31 +65,22 @@ type Spec struct {
 	//	remarks:
 	//		when using the ssh protocol, the user must have the right to clone the repository
 	//		based on its local ssh configuration
-	SourceBranch string `yaml:",omitempty"`
-	// "sourcebranch" defines the branch name used as a source to create the new Git branch.
-	//
-	// compatible:
-	//  * target
-	//
-	// remark:
-	//  * sourcebranch is required when the scmid is not defined.
-	//  * "url" is not needed when the repository is provided by "path" or by a "scmid".
-	URL string `yaml:",omitempty"`
-	//	"username" specifies the username when using the HTTP protocol
+	URL string `yaml:",omitempty" jsonschema:"required"`
+	//	username specifies the username when using the HTTP protocol
 	//
 	//	compatible
 	//	  * source
 	//	  * condition
 	// 	  * target
 	Username string `yaml:",omitempty"`
-	//	"password" specifies the password when using the HTTP protocol
+	//	password specifies the password when using the HTTP protocol
 	//
 	//	compatible:
 	//	  * source
 	// 	  * condition
 	// 	  * target
 	Password string `yaml:",omitempty"`
-	//  "key" of the tag object to retrieve.
+	//  key of the tag object to retrieve.
 	//
 	//  Accepted values: ['name','hash'].
 	//
@@ -154,7 +153,6 @@ func (gb *GitBranch) clone() (string, error) {
 		Password: gb.spec.Password,
 		Depth:    gb.spec.Depth,
 	}, "")
-
 	if err != nil {
 		return "", err
 	}
