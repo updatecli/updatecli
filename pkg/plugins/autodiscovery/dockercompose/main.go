@@ -41,7 +41,9 @@ type Spec struct {
 	// ```
 	//
 	Auths map[string]docker.InlineKeyChain `yaml:",omitempty"`
-	// FileMatch allows to override default docker-compose.yaml file matching. Default `["compose.yaml", "compose.yml", "compose.*.yaml", "compose.*.yml", "docker-compose.yaml","docker-compose.yml","docker-compose.*.yaml","docker-compose.*.yml"]`
+	// FileMatch allows to override default Docker Compose file matching.
+	// The pattern is matched against the file name only, not against its path.
+	// Default `["docker-compose*.y*ml", "compose*.y*ml"]`
 	FileMatch []string `yaml:",omitempty"`
 	//  `versionfilter` provides parameters to specify the version pattern used when generating manifest.
 	//
