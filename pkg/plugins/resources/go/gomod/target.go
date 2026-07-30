@@ -9,7 +9,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
-// Target is not supported for the Golang resource
+// Target updates a module version in a go.mod file
 func (g *GoMod) Target(_ context.Context, source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) (err error) {
 
 	version := source
