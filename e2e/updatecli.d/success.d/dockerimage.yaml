@@ -69,15 +69,15 @@ sources:
     spec:
       image: "quay.io/calico/node"
 
-  quayio-semver-strict:
-    name: "Get latest calico image using strict semantic versioning"
+  jenkins-semver-strict:
+    name: "Get latest jenkins image using strict semantic versioning"
     kind: dockerimage
     spec:
-      image: "quay.io/calico/node"
+      image: "ghcr.io/jenkinsci/helm-charts/jenkins"
       versionfilter:
         kind: semver
         strict: true
-  
+
 conditions:
   ## GitHub action is not configured with DockerHub credentials
   #dockerhub-private:
@@ -138,12 +138,12 @@ conditions:
     spec:
       image: "quay.io/calico/node"
 
-  quayio-semver-strict:
-    name: "Get latest calico image"
+  jenkins-semver-strict:
+    name: "Get latest ghcr.io/jenkinsci/jenkins image"
     kind: dockerimage
-    sourceid: quayio-semver-strict
+    sourceid: jenkins-semver-strict
     spec:
-      image: "quay.io/calico/node"
+      image: "ghcr.io/jenkinsci/helm-charts/jenkins"
       versionfilter:
         kind: semver
         strict: true
@@ -161,4 +161,3 @@ conditions:
     kind: dockerimage
     spec:
       image: "quay.io/calico/node"
-
