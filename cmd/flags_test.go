@@ -25,6 +25,7 @@ func TestAddDisableChangelogFlagRegistration(t *testing.T) {
 	flag := cmd.Flags().Lookup("disable-changelog")
 	if flag == nil {
 		t.Fatal("flag not registered")
+		return
 	}
 
 	// Check flag has help text
@@ -63,6 +64,7 @@ func TestAddExportReportToYAMLFlagRegistration(t *testing.T) {
 	flag := cmd.Flags().Lookup("export-report-to-yaml")
 	if flag == nil {
 		t.Fatal("flag not registered")
+		return
 	}
 
 	// Check flag has help text
@@ -92,6 +94,7 @@ func TestAddDisableUdashReportFlagRegistration(t *testing.T) {
 	flag := cmd.Flags().Lookup("disable-udash-report")
 	if flag == nil {
 		t.Fatal("flag not registered")
+		return
 	}
 
 	// Check flag has help text
@@ -151,6 +154,7 @@ func TestAddDisableChangelogFlagUsesEnvDefault(t *testing.T) {
 			flag := cmd.Flags().Lookup("disable-changelog")
 			if flag == nil {
 				t.Fatal("flag not registered")
+				return
 			}
 
 			if flag.DefValue != tt.expectedDef {

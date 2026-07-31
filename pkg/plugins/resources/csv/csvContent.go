@@ -10,6 +10,7 @@ import (
 	das "github.com/tomwright/dasel"
 
 	"github.com/tomwright/dasel/storage"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/dasel"
 )
 
@@ -23,7 +24,11 @@ type csvContent struct {
 
 func (c *csvContent) Read(rootDir string) error {
 
-	c.FilePath = dasel.JoinPathWithWorkingDirectoryPath(c.FilePath, rootDir)
+	securePath, err := utils.SanitizeFilePathWithWorkingDirectory(c.FilePath, rootDir)
+	if err != nil {
+		return err
+	}
+	c.FilePath = securePath
 
 	// Test at runtime if a file exist
 	if !c.ContentRetriever.FileExists(c.FilePath) {

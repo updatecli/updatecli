@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
 )
 
 /*
@@ -51,8 +52,8 @@ func (h *Http) Condition(_ context.Context, source string, scm scm.ScmHandler) (
 	}
 
 	if !conditionResult {
-		return false, fmt.Sprintf("[http] condition with URL: %q did NOT pass with the following errors: %s", h.spec.Url, strings.Join(failureMessages, "\n")), nil
+		return false, fmt.Sprintf("[http] condition with URL: %q did NOT pass with the following errors: %s", redact.URL(h.spec.Url), strings.Join(failureMessages, "\n")), nil
 	}
 
-	return true, fmt.Sprintf("[http] condition with URL: %q passed", h.spec.Url), nil
+	return true, fmt.Sprintf("[http] condition with URL: %q passed", redact.URL(h.spec.Url)), nil
 }

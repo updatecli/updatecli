@@ -192,7 +192,7 @@ func (e *Engine) pushSCMCommits() error {
 			if err != nil {
 				errs = append(errs, fmt.Sprintf("pushing commits to %q on branch %q: %s", redact.URL(url), branch, err.Error()))
 			}
-			logrus.Debugf("Pushed changes to %q on branch %q: %t\n", url, branch, isPushed)
+			logrus.Debugf("Pushed changes to %q on branch %q: %t\n", redact.URL(url), branch, isPushed)
 		}
 	}
 

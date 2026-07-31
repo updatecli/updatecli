@@ -1,0 +1,24 @@
+---
+name: 'Updatecli Manifest Validate TestSuite'
+vars:
+  message:
+    warning: 'WARNING:'
+    error: 'ERROR:'
+testcases:
+  - name: "Test updatecli reporting a deprecated keyword without failing"
+    steps:
+      - script: '../scripts/test_manifest_validate.bash'
+        type: 'exec'
+        assertions:
+          - 'result.code ShouldEqual 0'
+          - 'result.systemout ShouldContainSubstring "is deprecated in favor of"'
+
+  - name: "Test updatecli rejecting a manifest that does not match the schema"
+    steps:
+      - script: '../scripts/test_manifest_validate_invalid.bash'
+        type: 'exec'
+        assertions:
+          - 'result.code ShouldEqual 0'
+          - 'result.systemout ShouldContainSubstring "versionfliter"'
+          - 'result.systemout ShouldContainSubstring "did you mean"'
+          - 'result.systemout ShouldContainSubstring "The invalid manifest was rejected as expected"'

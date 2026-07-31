@@ -18,6 +18,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git/commit"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git/sign"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
 )
 
 const (
@@ -288,7 +289,7 @@ func (a *AzureDevOps) Clone() (string, error) {
 		a.Spec.SingleBranch != nil && *a.Spec.SingleBranch,
 	)
 	if err != nil {
-		logrus.Errorf("failed cloning Azure DevOps repository %q", a.GetURL())
+		logrus.Errorf("failed cloning Azure DevOps repository %q", redact.URL(a.GetURL()))
 		return "", err
 	}
 
@@ -354,7 +355,7 @@ func (a *AzureDevOps) CleanWorkingBranch() (bool, error) {
 	_, workingBranch, targetBranch := a.GetBranches()
 
 	if workingBranch == targetBranch {
-		logrus.Infof("Skipping cleaning working branch %q on %q (same as target branch)\n", workingBranch, a.GetURL())
+		logrus.Infof("Skipping cleaning working branch %q on %q (same as target branch)\n", workingBranch, redact.URL(a.GetURL()))
 		return false, nil
 	}
 

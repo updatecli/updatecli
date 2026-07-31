@@ -231,7 +231,11 @@ func (f *File) initFiles(workDir string) error {
 	for filePath := range f.files {
 		if workDir != "" {
 			file := f.files[filePath]
-			file.path = joinPathWithWorkingDirectoryPath(file.originalPath, workDir)
+			securePath, err := utils.SanitizeFilePathWithWorkingDirectory(file.originalPath, workDir)
+			if err != nil {
+				return err
+			}
+			file.path = securePath
 
 			logrus.Debugf("Relative path detected: changing from %q to absolute path from SCM: %q", file.originalPath, file.path)
 			f.files[filePath] = file
@@ -241,16 +245,22 @@ func (f *File) initFiles(workDir string) error {
 	return nil
 }
 
-func (f *File) UpdateAbsoluteFilePath(workDir string) {
+func (f *File) UpdateAbsoluteFilePath(workDir string) error {
 	for filePath := range f.files {
 		if workDir != "" {
 			file := f.files[filePath]
-			file.path = joinPathWithWorkingDirectoryPath(file.originalPath, workDir)
+			securePath, err := utils.SanitizeFilePathWithWorkingDirectory(file.originalPath, workDir)
+			if err != nil {
+				return err
+			}
+			file.path = securePath
 
 			logrus.Debugf("Relative path detected: changing from %q to absolute path from SCM: %q", file.originalPath, file.path)
 			f.files[filePath] = file
 		}
 	}
+
+	return nil
 }
 
 // Validate validates the object and returns an error (with all the failed validation messages) if not valid
