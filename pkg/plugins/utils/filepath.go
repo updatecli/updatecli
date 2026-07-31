@@ -15,11 +15,11 @@ import (
 // containment primitive shared by every file based resource (file, yaml, xml,
 // toml, toolversions, json, csv) so the invariant cannot drift between them.
 //
-// Behaviour:
+// Behavior:
 //   - http:// and https:// URLs are returned unchanged (remote reads).
 //   - When workingDir is empty there is no containment boundary — updatecli is
 //     running without an SCM checkout — so the path is returned unchanged to
-//     preserve the historical local run behaviour.
+//     preserve the historical local run behavior.
 //   - When workingDir is set, an absolute filePath is rejected and any relative
 //     filePath that would escape workingDir through ".." traversal is rejected.
 //
