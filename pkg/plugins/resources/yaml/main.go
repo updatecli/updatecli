@@ -361,7 +361,11 @@ func (y *Yaml) initFiles(workDir string) error {
 	for filePath := range y.files {
 		if workDir != "" {
 			file := y.files[filePath]
-			file.filePath = joinPathWithWorkingDirectoryPath(file.originalFilePath, workDir)
+			securePath, err := utils.SanitizeFilePathWithWorkingDirectory(file.originalFilePath, workDir)
+			if err != nil {
+				return err
+			}
+			file.filePath = securePath
 
 			logrus.Debugf("Relative path detected: changing from %q to absolute path from SCM: %q", file.originalFilePath, file.filePath)
 			y.files[filePath] = file
@@ -371,16 +375,22 @@ func (y *Yaml) initFiles(workDir string) error {
 	return nil
 }
 
-func (y *Yaml) UpdateAbsoluteFilePath(workDir string) {
+func (y *Yaml) UpdateAbsoluteFilePath(workDir string) error {
 	for filePath := range y.files {
 		if workDir != "" {
 			file := y.files[filePath]
-			file.filePath = joinPathWithWorkingDirectoryPath(file.originalFilePath, workDir)
+			securePath, err := utils.SanitizeFilePathWithWorkingDirectory(file.originalFilePath, workDir)
+			if err != nil {
+				return err
+			}
+			file.filePath = securePath
 
 			logrus.Debugf("Relative path detected: changing from %q to absolute path from SCM: %q", file.originalFilePath, file.filePath)
 			y.files[filePath] = file
 		}
 	}
+
+	return nil
 }
 
 // ReportConfig returns a new configuration object with only the necessary fields

@@ -150,11 +150,17 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 		}
 
 		r := p.Sources[id].Result
+		r.Name = config.Spec.Sources[id].Name
 
 		if scmPointer != nil {
 			scm := *scmPointer
 			r.Scm.URL = scm.GetURL()
 			r.Scm.Branch.Source, r.Scm.Branch.Working, r.Scm.Branch.Target = scm.GetBranches()
+		}
+
+		reportConfig, err := resource.GetReportConfig(p.Config.Spec.Sources[id].ResourceConfig)
+		if err == nil {
+			r.Config = reportConfig
 		}
 
 		p.Report.Sources[id] = r
@@ -184,14 +190,20 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 
 		r := p.Conditions[id].Result
 
+		r.Name = config.Spec.Conditions[id].Name
+
 		if scmPointer != nil {
 			scm := *scmPointer
 			r.Scm.URL = scm.GetURL()
 			r.Scm.Branch.Source, r.Scm.Branch.Working, r.Scm.Branch.Target = scm.GetBranches()
 		}
 
-		p.Report.Conditions[id] = r
+		reportConfig, err := resource.GetReportConfig(p.Config.Spec.Conditions[id].ResourceConfig)
+		if err == nil {
+			r.Config = reportConfig
+		}
 
+		p.Report.Conditions[id] = r
 	}
 
 	// Init target report
@@ -216,6 +228,8 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 		}
 
 		r := p.Targets[id].Result
+		r.Name = config.Spec.Targets[id].Name
+		r.DryRun = p.Options.Target.DryRun
 
 		if scmPointer != nil {
 			scm := *scmPointer
@@ -223,9 +237,12 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 			r.Scm.Branch.Source, r.Scm.Branch.Working, r.Scm.Branch.Target = scm.GetBranches()
 		}
 
-		p.Report.Targets[id] = r
+		reportConfig, err := resource.GetReportConfig(p.Config.Spec.Targets[id].ResourceConfig)
+		if err == nil {
+			r.Config = reportConfig
+		}
 
-		p.Report.Targets[id].DryRun = r.DryRun
+		p.Report.Targets[id] = r
 	}
 
 	p.tracer = telemetry.Tracer("updatecli")

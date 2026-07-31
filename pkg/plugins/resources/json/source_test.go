@@ -128,6 +128,84 @@ func TestSource(t *testing.T) {
 			},
 			expectedResult: "Trevor",
 		},
+		{
+			name: "Default successful workflow with Dasel v3",
+			spec: Spec{
+				File:   "testdata/data.json",
+				Key:    "firstName",
+				Engine: strPtr(ENGINEDASEL_V3),
+			},
+			expectedResult: "Jack",
+		},
+		{
+			name: "Nested key with Dasel v3",
+			spec: Spec{
+				File:   "testdata/data.json",
+				Key:    "address.city",
+				Engine: strPtr(ENGINEDASEL_V3),
+			},
+			expectedResult: "New York",
+		},
+		{
+			name: "Array item with Dasel v3",
+			spec: Spec{
+				File:   "testdata/data.json",
+				Key:    "children[1]",
+				Engine: strPtr(ENGINEDASEL_V3),
+			},
+			expectedResult: "Thomas",
+		},
+		{
+			name: "Nested array of objects with Dasel v3",
+			spec: Spec{
+				File:   "testdata/data.json",
+				Key:    "phoneNumbers[1].type",
+				Engine: strPtr(ENGINEDASEL_V3),
+			},
+			expectedResult: "office",
+		},
+		{
+			name: "Default successful workflow with empty result using Dasel v3",
+			spec: Spec{
+				File:   "testdata/data.json",
+				Key:    "surname",
+				Engine: strPtr(ENGINEDASEL_V3),
+			},
+			expectedResult: "",
+		},
+		{
+			name: "Test key do not exist with Dasel v3",
+			spec: Spec{
+				File:   "testdata/data.json",
+				Key:    "doNotExist",
+				Value:  "",
+				Engine: strPtr(ENGINEDASEL_V3),
+			},
+			wantErr:          true,
+			expectedErrorMsg: errors.New("✗ cannot find value for path \"doNotExist\" from file \"testdata/data.json\""),
+			expectedResult:   "",
+		},
+		{
+			name: "Version filter with Dasel v3",
+			spec: Spec{
+				File:   "testdata/data.json",
+				Key:    "children...",
+				Engine: strPtr(ENGINEDASEL_V3),
+				VersionFilter: version.Filter{
+					Kind: "latest",
+				},
+			},
+			expectedResult: "Trevor",
+		},
+		{
+			name: "Bare dasel alias resolves to latest engine (v3)",
+			spec: Spec{
+				File:   "testdata/data.json",
+				Key:    "firstName",
+				Engine: strPtr(ENGINEDASEL_LATEST),
+			},
+			expectedResult: "Jack",
+		},
 	}
 
 	for _, tt := range testData {

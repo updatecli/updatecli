@@ -21,6 +21,11 @@ func TestDiscoverManifests(t *testing.T) {
 		expectedPipelines []string
 	}{
 		{
+			name:    "no manifest",
+			rootDir: "testdata/empty",
+			flavor:  FlavorKubernetes,
+		},
+		{
 			name:    "multiple documents",
 			rootDir: "testdata/multipleDocuments",
 			digest:  false,
@@ -312,10 +317,6 @@ targets:
 			var pipelines []string
 			rawPipelines, err := pod.DiscoverManifests()
 			require.NoError(t, err)
-
-			if len(rawPipelines) == 0 {
-				t.Errorf("No pipelines found for %s", tt.name)
-			}
 
 			assert.Equal(t, len(tt.expectedPipelines), len(rawPipelines))
 

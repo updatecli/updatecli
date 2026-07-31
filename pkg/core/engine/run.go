@@ -78,6 +78,10 @@ func (e *Engine) Run(ctx context.Context) (err error) {
 
 	for i := range e.Pipelines {
 		pipeline := e.Pipelines[i]
+		err = pipeline.Report.UpdateCIJob()
+		if err != nil {
+			logrus.Debugf("updating CI job information: %s", err)
+		}
 		err = pipeline.Report.UpdateID()
 		if err != nil {
 			errs = append(errs, fmt.Errorf("updating report ID failed: %w", err))
@@ -85,12 +89,16 @@ func (e *Engine) Run(ctx context.Context) (err error) {
 		e.Reports = append(e.Reports, pipeline.Report)
 	}
 
-	if err = e.publishToUdash(); err != nil {
-		errs = append(errs, fmt.Errorf("publishing to Udash failed: %w", err))
+	if !e.Options.DisableUdashReport {
+		if err = e.publishToUdash(); err != nil {
+			errs = append(errs, fmt.Errorf("publishing to Udash failed: %w", err))
+		}
 	}
 
-	if err = e.exportReportToYAML(false); err != nil {
-		errs = append(errs, fmt.Errorf("exporting report to YAML failed: %w", err))
+	if e.Options.ExportToYAML {
+		if err = e.exportReportToYAML(); err != nil {
+			errs = append(errs, fmt.Errorf("exporting report to YAML failed: %w", err))
+		}
 	}
 
 	if err = e.showReports(); err != nil {

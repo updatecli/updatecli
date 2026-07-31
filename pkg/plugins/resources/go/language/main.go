@@ -45,5 +45,6 @@ func (l *Language) ReportConfig() interface{} {
 	return Spec{
 		Version:       l.Spec.Version,
 		VersionFilter: l.Spec.VersionFilter,
+		Age:           l.Spec.Age,
 	}
 }

@@ -38,6 +38,18 @@ import (
 const (
 	// LOCALSCMIDENTIFIER defines the scm id used to configure the local scm directory
 	LOCALSCMIDENTIFIER string = "local"
+	// EXTENSIONYAML defines the file extension for yaml files
+	EXTENSIONYAML string = ".yaml"
+	// EXTENSIONYML defines the file extension for yml files
+	EXTENSIONYML string = ".yml"
+	// EXTENSIONJSON defines the file extension for json files
+	EXTENSIONJSON string = ".json"
+	// EXTENSIONCUE defines the file extension for cue files
+	EXTENSIONCUE string = ".cue"
+	// EXTENSIONTPL defines the file extension for golang template files
+	EXTENSIONTPL string = ".tpl"
+	// EXTENSIONTMPL defines the file extension for golang template files
+	EXTENSIONTMPL string = ".tmpl"
 )
 
 // Config contains cli configuration
@@ -64,7 +76,8 @@ type Spec struct {
 	// 	* using conventional commits convention is a good way to name your pipeline.
 	// 	* "name" is often used a default values for other configuration such as pullrequest title.
 	// 	* "name" shouldn't contain any dynamic information such as source output.
-	Name string `yaml:",omitempty" jsonschema:"required"`
+	// 	* "name" defaults to the manifest filename when not specified.
+	Name string `yaml:",omitempty"`
 	// "id" defines a manifest dependency identifier that can be referenced by other manifests.
 	//
 	// example:
@@ -229,6 +242,14 @@ type Option struct {
 	SecretsFiles []string
 	// DisableTemplating specifies if needs to be done
 	DisableTemplating bool
+	// ValidateSchema reports the manifest keys not matching the Updatecli schema, such as
+	// a misspelled one, which would otherwise be silently ignored.
+	// Loading a manifest never fails because of it, a caller wanting to act on the
+	// problems collects them through OnSchemaProblem.
+	ValidateSchema bool
+	// OnSchemaProblem receives every schema problem found while loading the manifest.
+	// Problems are logged as warnings when it is not set.
+	OnSchemaProblem func(SchemaProblem)
 }
 
 // Reset reset configuration
@@ -259,6 +280,8 @@ func (config *Config) SetManifestID(seed string) {
 }
 
 // New reads an updatecli configuration file
+//
+//nolint:funlen
 func New(option Option, pipelineIDFilters []string, pipelineLabels map[string]string) (configs []Config, err error) {
 	_, basename := filepath.Split(option.ManifestFile)
 
@@ -313,9 +336,9 @@ func New(option Option, pipelineIDFilters []string, pipelineLabels map[string]st
 	isCue := false
 
 	switch extension := filepath.Ext(basename); extension {
-	case ".tpl", ".tmpl", ".yaml", ".yml", ".json":
+	case EXTENSIONTPL, EXTENSIONTMPL, EXTENSIONYAML, EXTENSIONYML, EXTENSIONJSON:
 		//
-	case ".cue":
+	case EXTENSIONCUE:
 		if !cmdoptions.Experimental {
 			return nil, fmt.Errorf("cuelang support is experimental, please use '--experimental' flag to enable it")
 		}
@@ -396,6 +419,13 @@ func New(option Option, pipelineIDFilters []string, pipelineLabels map[string]st
 		err := unmarshalConfigSpec(templatedManifestContent, &specs)
 		if err != nil {
 			return configs, err
+		}
+
+		// Reported before the specs are post-processed, so that a problem points at what
+		// the manifest actually says rather than at a value Updatecli defaulted.
+		// A cue manifest is skipped as it is not parsed from YAML.
+		if option.ValidateSchema {
+			reportSchemaProblems(option.ManifestFile, templatedManifestContent, option.OnSchemaProblem)
 		}
 	}
 

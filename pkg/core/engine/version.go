@@ -6,20 +6,18 @@ import (
 	"io"
 	"time"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
 	"github.com/updatecli/updatecli/pkg/core/version"
 )
 
-var (
-	// versionHTTPEndpoint is the URL to check for the latest version of updatecli
-	versionHTTPEndpoint string = "https://www.updatecli.io/changelogs/updatecli/_index.json"
-)
+// versionHTTPEndpoint is the URL to check for the latest version of updatecli
+var versionHTTPEndpoint string = "https://www.updatecli.io/changelogs/updatecli/_index.json"
 
 // CheckLatestPublishedVersion check if the currently used version is the latest version
 // available
 func CheckLatestPublishedVersion() error {
-
 	client := httpclient.NewThrottledRetryClient(1*time.Second, 1)
 
 	type versionData struct {
@@ -54,14 +52,29 @@ func CheckLatestPublishedVersion() error {
 		return fmt.Errorf("unable to parse the latest version of updatecli: %v", err)
 	}
 
-	if data.Latest.Tag == version.Version {
+	// Mean that we are using a development version of updatecli, so we can't compare it with the latest version available
+	if version.Version == "" {
 		return nil
 	}
 
-	logrus.Infof("\n---")
-	logrus.Infof("A new version of updatecli is available: %s (current: %q)", data.Latest.Tag, version.Version)
-	logrus.Infof("Changelog available at: www.updatecli.io/changelogs/updatecli/changelogs/%s/", data.Latest.Tag)
-	logrus.Infof("---")
+	currentVersion, err := semver.NewVersion(version.Version)
+	if err != nil {
+		logrus.Warnf("unable to parse the current version of updatecli: %v", err)
+		return nil
+	}
+
+	latestVersion, err := semver.NewVersion(data.Latest.Tag)
+	if err != nil {
+		logrus.Warnf("unable to parse the latest version of updatecli: %v", err)
+		return nil
+	}
+
+	if currentVersion.GreaterThanEqual(latestVersion) {
+		return nil
+	}
+
+	logrus.Infof("| A new release is available: %q -> %q", currentVersion.String(), latestVersion.String())
+	logrus.Infof("| More information on https://www.updatecli.io/changelogs/updatecli/changelogs/%s/", data.Latest.Tag)
 
 	return nil
 }

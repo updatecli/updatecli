@@ -6,6 +6,7 @@ import (
 
 	"github.com/beevik/etree"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 // Condition checks that a specific xml path contains the correct value at the specified path
@@ -13,7 +14,10 @@ func (x *XML) Condition(_ context.Context, source string, scm scm.ScmHandler) (p
 
 	resourceFile := x.spec.File
 	if scm != nil {
-		resourceFile = joinPathWithWorkingDirectoryPath(x.spec.File, scm.GetDirectory())
+		resourceFile, err = utils.SanitizeFilePathWithWorkingDirectory(x.spec.File, scm.GetDirectory())
+		if err != nil {
+			return false, "", fmt.Errorf("invalid file path %q: %w", x.spec.File, err)
+		}
 	}
 
 	value := source

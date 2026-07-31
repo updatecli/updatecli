@@ -27,18 +27,23 @@ import (
 )
 
 var (
-	pipelineIds      []string
-	labels           []string
-	manifestFiles    []string
-	valuesFiles      []string
-	valuesInline     []string
-	secretsFiles     []string
-	policyReferences []string
-	e                engine.Engine
-	verbose          bool
-	experimental     bool
-	disableTLS       bool
-	uniqueTmpDir     bool
+	pipelineIds         []string
+	labels              []string
+	manifestFiles       []string
+	valuesFiles         []string
+	valuesInline        []string
+	secretsFiles        []string
+	policyReferences    []string
+	e                   engine.Engine
+	verbose             bool
+	experimental        bool
+	disableTLS          bool
+	disableChangelog    bool
+	validateSchema      bool
+	uniqueTmpDir        bool
+	disableVersionCheck bool
+	exportReportToYAML  bool
+	disableUdashReport  bool
 
 	rootCmd = &cobra.Command{
 		Use:   "updatecli",
@@ -65,11 +70,31 @@ func Execute() {
 	}
 }
 
+// skipVersionCheckCommands lists commands where the version check is skipped
+// to avoid unnecessary network requests and prevent banner output from
+// corrupting generated content.
+var skipVersionCheckCommands = []string{
+	"completion",
+	"__complete",
+	"__completeNoDesc",
+	"docs",
+	"man",
+	"jsonschema",
+}
+
 func init() {
 
 	logrus.SetOutput(os.Stdout)
 
 	rootCmd.PersistentPostRun = func(cmd *cobra.Command, args []string) {
+		if disableVersionCheck {
+			return
+		}
+		for c := cmd; c != nil; c = c.Parent() {
+			if slices.Contains(skipVersionCheckCommands, c.Name()) {
+				return
+			}
+		}
 		err := engine.CheckLatestPublishedVersion()
 		if err != nil {
 			logrus.Debugf("Unable to check for the latest version of updatecli: %v", err)
@@ -79,6 +104,7 @@ func init() {
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "debug", "", false, "Debug Output")
 	rootCmd.PersistentFlags().BoolVarP(&experimental, "experimental", "", false, "Enable Experimental mode")
 	rootCmd.PersistentFlags().BoolVar(&uniqueTmpDir, "unique-tmp-dir", false, "Use a unique temporary directory to allow running multiple Updatecli instances in parallel")
+	rootCmd.PersistentFlags().BoolVar(&disableVersionCheck, "disable-version-check", getEnvBoolOrDefault(DisableVersionCheckEnvVar, false), "Disable version check (env: "+DisableVersionCheckEnvVar+")")
 	rootCmd.PersistentPreRun = func(cmd *cobra.Command, args []string) {
 		if verbose {
 			logrus.SetLevel(logrus.DebugLevel)
@@ -144,6 +170,9 @@ func run(command string) error {
 	if parsed := parseLabels(labels); parsed != nil {
 		e.Options.Labels = parsed
 	}
+
+	e.Options.ExportToYAML = exportReportToYAML
+	e.Options.DisableUdashReport = disableUdashReport
 
 	switch command {
 	case "apply", "compose/apply", "pipeline/apply":
@@ -213,6 +242,13 @@ func run(command string) error {
 
 	case "manifest/upgrade":
 		err := e.ManifestUpgrade(manifestUpgradeInPlace)
+		if err != nil {
+			logrus.Errorf("%s %s", result.FAILURE, err)
+			return err
+		}
+
+	case "manifest/validate":
+		err := e.ValidateManifests(manifestValidateStrict)
 		if err != nil {
 			logrus.Errorf("%s %s", result.FAILURE, err)
 			return err

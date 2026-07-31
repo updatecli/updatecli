@@ -42,6 +42,8 @@ var (
 			e.Options.Pipeline.Target.DryRun = false
 			e.Options.Pipeline.Target.CleanGitBranches = applyCleanGitBranches
 			e.Options.Pipeline.Target.ExistingOnly = applyExistingOnly
+			e.Options.Pipeline.DisableChangelog = disableChangelog
+			e.Options.Config.ValidateSchema = validateSchema
 
 			err = run("pipeline/apply")
 			if err != nil {
@@ -66,6 +68,11 @@ func init() {
 	pipelineApplyCmd.Flags().BoolVar(&applyCleanGitBranches, "clean-git-branches", false, "Remove updatecli working git branches like '--clean-git-branches=true'")
 	pipelineApplyCmd.Flags().StringArrayVar(&pipelineIds, "pipeline-ids", []string{}, "Filter pipelines to apply by their IDs, accepted as a comma separated list")
 	pipelineApplyCmd.Flags().StringArrayVar(&labels, "labels", []string{}, "Filter pipelines to apply by their labels, accepted as a comma separated list (key:value)")
+
+	addDisableChangelogFlag(pipelineApplyCmd, &disableChangelog)
+	addValidateSchemaFlag(pipelineApplyCmd, &validateSchema)
+	addExportReportToYAMLFlag(pipelineApplyCmd, &exportReportToYAML)
+	addDisableUdashReportFlag(pipelineApplyCmd, &disableUdashReport)
 
 	pipelineCmd.AddCommand(pipelineApplyCmd)
 }

@@ -20,6 +20,10 @@ func (k Kubernetes) discoverKubernetesManifest(file, relativeFile string) [][]by
 
 	for yamlDocument, data := range kubernetesManifestData {
 
+		if data == nil {
+			continue
+		}
+
 		list := []struct {
 			cs  []containerSpec
 			key string

@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
@@ -58,6 +59,58 @@ func TestSource(t *testing.T) {
 				},
 			},
 			expectedResult: "v1.0.0",
+		},
+		{
+			spec: Spec{
+				Module: "github.com/MakeNowJust/heredoc",
+				VersionFilter: version.Filter{
+					Kind:    "semver",
+					Pattern: "1.0.0",
+				},
+				Age: age.Spec{
+					Minimum: "1y",
+				},
+			},
+			expectedResult: "v1.0.0",
+		},
+		{
+			spec: Spec{
+				Module: "github.com/MakeNowJust/heredoc",
+				VersionFilter: version.Filter{
+					Kind:    "semver",
+					Pattern: "1.0.0",
+				},
+				Age: age.Spec{
+					Minimum: "100y",
+				},
+			},
+			expectedError: true,
+		},
+		{
+			spec: Spec{
+				Module: "github.com/MakeNowJust/heredoc",
+				VersionFilter: version.Filter{
+					Kind:    "semver",
+					Pattern: "1.0.0",
+				},
+				Age: age.Spec{
+					Maximum: "100y",
+				},
+			},
+			expectedResult: "v1.0.0",
+		},
+		{
+			spec: Spec{
+				Module: "github.com/MakeNowJust/heredoc",
+				VersionFilter: version.Filter{
+					Kind:    "semver",
+					Pattern: "1.0.0",
+				},
+				Age: age.Spec{
+					Maximum: "1s",
+				},
+			},
+			expectedError: true,
 		},
 	}
 	for _, tt := range tests {

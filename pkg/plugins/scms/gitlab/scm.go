@@ -9,6 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/gitlab/client"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
 )
 
 // GetBranches returns the source, working and target branches.
@@ -31,7 +32,7 @@ func (g *Gitlab) CleanWorkingBranch() (bool, error) {
 	_, workingBranch, targetBranch := g.GetBranches()
 
 	if workingBranch == targetBranch {
-		logrus.Infof("Skipping cleaning working branch %q on %q (same as target branch)\n", workingBranch, g.GetURL())
+		logrus.Infof("Skipping cleaning working branch %q on %q (same as target branch)\n", workingBranch, redact.URL(g.GetURL()))
 		return false, nil
 	}
 
@@ -87,9 +88,11 @@ func (g *Gitlab) Clone() (string, error) {
 		g.GetDirectory(),
 		g.Spec.Submodules,
 		g.Spec.Depth,
+		g.Spec.Branch,
+		g.Spec.SingleBranch != nil && *g.Spec.SingleBranch,
 	)
 	if err != nil {
-		logrus.Errorf("failed cloning GitLab repository %q", g.GetURL())
+		logrus.Errorf("failed cloning GitLab repository %q", redact.URL(g.GetURL()))
 		return "", err
 	}
 

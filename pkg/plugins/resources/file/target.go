@@ -15,6 +15,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/text"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 // Target creates or updates a file from a source control management system.
@@ -63,8 +64,15 @@ func (f *File) Target(_ context.Context, source string, scm scm.ScmHandler, dryR
 
 	// If a template is specified, render it with the source value
 	if len(f.spec.Template) > 0 {
+		// Contain the template path within the working directory so a source
+		// templated spec.template cannot be used to read arbitrary files.
+		templatePath, err := utils.SanitizeFilePathWithWorkingDirectory(f.spec.Template, workDir)
+		if err != nil {
+			return fmt.Errorf("invalid template path %q: %w", f.spec.Template, err)
+		}
+
 		// Read the template from file
-		templateContent, err := f.contentRetriever.ReadAll(f.spec.Template)
+		templateContent, err := f.contentRetriever.ReadAll(templatePath)
 		if err != nil {
 			return fmt.Errorf("failed to read template file %q: %w", f.spec.Template, err)
 		}

@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 )
 
 func TestCondition(t *testing.T) {
@@ -29,6 +30,50 @@ func TestCondition(t *testing.T) {
 			spec: Spec{
 				Module:  "github.com/MakeNowJust/heredoc",
 				Version: "v1.0.0",
+			},
+			expectedResult: true,
+		},
+		{
+			name: "Test go module with minimum age",
+			spec: Spec{
+				Module:  "github.com/MakeNowJust/heredoc",
+				Version: "v1.0.0",
+				Age: age.Spec{
+					Minimum: "1y",
+				},
+			},
+			expectedResult: true,
+		},
+		{
+			name: "Test go module with unrealistic minimum age",
+			spec: Spec{
+				Module:  "github.com/MakeNowJust/heredoc",
+				Version: "v1.0.0",
+				Age: age.Spec{
+					Minimum: "100y",
+				},
+			},
+			expectedResult: false,
+		},
+		{
+			name: "Test go module with maximum age",
+			spec: Spec{
+				Module:  "github.com/MakeNowJust/heredoc",
+				Version: "v1.0.0",
+				Age: age.Spec{
+					Maximum: "1y",
+				},
+			},
+			expectedResult: false,
+		},
+		{
+			name: "Test go module with unrealistic maximum age",
+			spec: Spec{
+				Module:  "github.com/MakeNowJust/heredoc",
+				Version: "v1.0.0",
+				Age: age.Spec{
+					Maximum: "100y",
+				},
 			},
 			expectedResult: true,
 		},

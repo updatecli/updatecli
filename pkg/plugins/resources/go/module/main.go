@@ -1,6 +1,8 @@
 package gomodule
 
 import (
+	"fmt"
+
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
@@ -43,6 +45,10 @@ func New(spec interface{}) (*GoModule, error) {
 		newFilter.Pattern = "*"
 	}
 
+	if err = newSpec.Age.Validate(); err != nil {
+		return nil, fmt.Errorf("wrong age spec %v", err)
+	}
+
 	return &GoModule{
 		Spec:          newSpec,
 		versionFilter: newFilter,
@@ -57,5 +63,6 @@ func (g *GoModule) ReportConfig() interface{} {
 		Module:        g.Spec.Module,
 		Version:       g.Spec.Version,
 		VersionFilter: g.Spec.VersionFilter,
+		Age:           g.Spec.Age,
 	}
 }

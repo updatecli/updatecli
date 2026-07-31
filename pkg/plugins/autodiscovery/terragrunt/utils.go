@@ -151,7 +151,7 @@ func parseSourceUrl(evaluatedSource string, rawSource string, allowNoVersion boo
 	}
 	source.sourceType = sourceType
 	if sourceType == SourceTypeRegistry || sourceType == SourceTypeGit || sourceType == SourceTypeGithub {
-		if sourceType == SourceTypeGit && strings.HasPrefix(evaluatedSource, "git") {
+		if sourceType == SourceTypeGit && strings.HasPrefix(evaluatedSource, "git@") {
 			evaluatedSource = strings.Replace(evaluatedSource, "git@", "git::ssh://", 1)
 		}
 		u, err := url.Parse(evaluatedSource)

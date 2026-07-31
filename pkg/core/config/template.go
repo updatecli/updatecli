@@ -131,9 +131,9 @@ func (t *Template) readFile(filename string, values *map[string]interface{}, enc
 	extension := filepath.Ext(baseFilename)
 
 	// Check if the file extension is either yaml or yml
-	if strings.Compare(extension, ".yml") != 0 &&
-		strings.Compare(extension, ".yaml") != 0 &&
-		strings.Compare(extension, ".json") != 0 {
+	if strings.Compare(extension, EXTENSIONYML) != 0 &&
+		strings.Compare(extension, EXTENSIONYAML) != 0 &&
+		strings.Compare(extension, EXTENSIONJSON) != 0 {
 		err = fmt.Errorf("wrong file extension %q for file %q", extension, baseFilename)
 		logrus.Errorln(err)
 		return err
@@ -165,12 +165,12 @@ func (t *Template) readFile(filename string, values *map[string]interface{}, enc
 
 	if encrypted {
 		switch extension {
-		case ".yaml", ".yml":
+		case EXTENSIONYAML, EXTENSIONYML:
 			content, err = decrypt.Data(content, "yaml")
 			if err != nil {
 				return err
 			}
-		case ".json":
+		case EXTENSIONJSON:
 			content, err = decrypt.Data(content, "json")
 			if err != nil {
 				return err

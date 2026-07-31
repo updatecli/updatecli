@@ -18,6 +18,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/resources/dockerimage"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/file"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/gitbranch"
+	"github.com/updatecli/updatecli/pkg/plugins/resources/gitcommit"
 	giteaBranch "github.com/updatecli/updatecli/pkg/plugins/resources/gitea/branch"
 	giteaRelease "github.com/updatecli/updatecli/pkg/plugins/resources/gitea/release"
 	giteaTag "github.com/updatecli/updatecli/pkg/plugins/resources/gitea/tag"
@@ -39,6 +40,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/resources/shell"
 	stashBranch "github.com/updatecli/updatecli/pkg/plugins/resources/stash/branch"
 	stashTag "github.com/updatecli/updatecli/pkg/plugins/resources/stash/tag"
+	"github.com/updatecli/updatecli/pkg/plugins/resources/systemd"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/temurin"
 	terraformLock "github.com/updatecli/updatecli/pkg/plugins/resources/terraform/lock"
 	terraformProvider "github.com/updatecli/updatecli/pkg/plugins/resources/terraform/provider"
@@ -70,15 +72,15 @@ type ResourceConfig struct {
 	//  * The parameters "sourceid" and "conditionsids" affect the order of resource execution.
 	//  * To avoid circular dependencies, the depended resource may need to remove any conditionids or set "disablesourceinput to true".
 	DependsOn []string `yaml:",omitempty"`
-	//name specifies the resource name
-	Name string `yaml:",omitempty" jsonschema:"required"`
-	//kind specifies the resource kind which defines accepted spec value
+	// name specifies the resource name
+	Name string `yaml:",omitempty"`
+	// kind specifies the resource kind which defines accepted spec value
 	Kind string `yaml:",omitempty" jsonschema:"required"`
-	//transformers defines how the default input value need to be transformed
+	// transformers defines how the default input value need to be transformed
 	Transformers transformer.Transformers `yaml:",omitempty"`
-	//spec specifies parameters for a specific resource kind
+	// spec specifies parameters for a specific resource kind
 	Spec interface{} `yaml:",omitempty"`
-	//scmid specifies the scm configuration key associated to the current resource
+	// scmid specifies the scm configuration key associated to the current resource
 	SCMID string `yaml:",omitempty"` // SCMID references a uniq scm configuration
 	//!deprecated, please use scmid
 	//DeprecatedSCMID is kept for backward compatibility
@@ -132,6 +134,10 @@ func New(rs ResourceConfig) (resource Resource, err error) {
 	case "gitbranch":
 
 		return gitbranch.New(rs.Spec)
+
+	case "gitcommit":
+
+		return gitcommit.New(rs.Spec)
 
 	case "gitea/branch":
 
@@ -225,6 +231,10 @@ func New(rs ResourceConfig) (resource Resource, err error) {
 
 		return stashTag.New(rs.Spec)
 
+	case "systemd":
+
+		return systemd.New(rs.Spec)
+
 	case "terraform/file":
 
 		return hcl.New(rs.Spec)
@@ -297,6 +307,7 @@ func GetResourceMapping() map[string]interface{} {
 		"file":               &file.Spec{},
 		"gittag":             &gittag.Spec{},
 		"gitbranch":          &gitbranch.Spec{},
+		"gitcommit":          &gitcommit.Spec{},
 		"gitea/branch":       &giteaBranch.Spec{},
 		"gitea/release":      &giteaRelease.Spec{},
 		"gitea/tag":          &giteaTag.Spec{},
@@ -318,6 +329,7 @@ func GetResourceMapping() map[string]interface{} {
 		"shell":              &shell.Spec{},
 		"stash/branch":       &stashBranch.Spec{},
 		"stash/tag":          &stashTag.Spec{},
+		"systemd":            &systemd.Spec{},
 		"temurin":            &temurin.Spec{},
 		"terraform/file":     &hcl.Spec{},
 		"terraform/lock":     &terraformLock.Spec{},

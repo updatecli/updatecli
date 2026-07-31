@@ -1,23 +1,12 @@
 package yaml
 
 import (
-	"path/filepath"
 	"strings"
 
+	goyaml "github.com/goccy/go-yaml"
+	"github.com/goccy/go-yaml/ast"
 	"github.com/sirupsen/logrus"
 )
-
-// joinPathwithworkingDirectoryPath To merge File path with current workingDir, unless file is an HTTP URL
-func joinPathWithWorkingDirectoryPath(filePath, workingDir string) string {
-	if workingDir == "" ||
-		filepath.IsAbs(filePath) ||
-		strings.HasPrefix(filePath, "https://") ||
-		strings.HasPrefix(filePath, "http://") {
-		return filePath
-	}
-
-	return filepath.Join(workingDir, filePath)
-}
 
 /*
 sanitizeYamlPathKey is a helper function to migrate the deprecated yaml key
@@ -61,4 +50,14 @@ func sanitizeYamlPathKey(key string) string {
 
 	return sanitizedKey
 
+}
+
+func nodeValue(node ast.Node) string {
+	var value string
+
+	if err := goyaml.NodeToValue(node, &value); err == nil {
+		return value
+	}
+
+	return node.String()
 }

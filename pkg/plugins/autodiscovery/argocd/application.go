@@ -26,7 +26,8 @@ type ArgoCDApplicationSpec struct {
 		Sources  []ApplicationSourceSpec
 		Template struct {
 			Spec struct {
-				Source ApplicationSourceSpec
+				Source  ApplicationSourceSpec
+				Sources []ApplicationSourceSpec
 			}
 		}
 	}
@@ -151,6 +152,27 @@ func (f ArgoCD) discoverArgoCDManifests() ([][]byte, error) {
 					manifests = append(manifests, manifest)
 				}
 			}
+
+			for i, source := range data.Spec.Template.Spec.Sources {
+				if source.IsZero() {
+					continue
+				}
+
+				manifest, err := f.generateManifestBySource(
+					source,
+					relativeFilepath,
+					fmt.Sprintf("$.spec.template.spec.sources[%d]", i),
+					documentIndex,
+				)
+				if err != nil {
+					logrus.Errorf("error discovering application source: %s", err)
+					continue
+				}
+
+				if manifest != nil {
+					manifests = append(manifests, manifest)
+				}
+			}
 		}
 	}
 
@@ -194,13 +216,17 @@ func (f ArgoCD) generateManifestBySource(data ApplicationSourceSpec, file string
 		}
 	}
 
+	username := ""
+	password := ""
 	token := ""
 	repoURL, err := url.Parse(data.RepoURL) // to validate URL format
 	switch err {
 	case nil:
 		if _, ok := f.spec.Auths[repoURL.Host]; ok {
+			username = f.spec.Auths[repoURL.Host].Username
+			password = f.spec.Auths[repoURL.Host].Password
 			token = f.spec.Auths[repoURL.Host].Token
-			logrus.Debugf("found token for repository %q", data.RepoURL)
+			logrus.Debugf("found credentials for repository %q", data.RepoURL)
 		}
 	default:
 		logrus.Debugf("Ignoring auth configuration due to invalid Helm repository URL: %s", err)
@@ -236,6 +262,8 @@ func (f ArgoCD) generateManifestBySource(data ApplicationSourceSpec, file string
 		TargetID                   string
 		TargetKey                  string
 		TargetYamlDocument         int
+		Username                   string
+		Password                   string
 		Token                      string
 		File                       string
 		ScmID                      string
@@ -258,6 +286,8 @@ func (f ArgoCD) generateManifestBySource(data ApplicationSourceSpec, file string
 		TargetYamlDocument:         yamlDocument,
 		File:                       file,
 		ScmID:                      f.scmID,
+		Username:                   username,
+		Password:                   password,
 		Token:                      token,
 	}
 

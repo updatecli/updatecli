@@ -9,6 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/bitbucket/client"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
 )
 
 func (b *Bitbucket) GetBranches() (sourceBranch, workingBranch, targetBranch string) {
@@ -30,7 +31,7 @@ func (b *Bitbucket) CleanWorkingBranch() (bool, error) {
 	_, workingBranch, targetBranch := b.GetBranches()
 
 	if workingBranch == targetBranch {
-		logrus.Infof("Skipping cleaning working branch %q on %q (same as target branch)\n", workingBranch, b.GetURL())
+		logrus.Infof("Skipping cleaning working branch %q on %q (same as target branch)\n", workingBranch, redact.URL(b.GetURL()))
 		return false, nil
 	}
 
@@ -100,9 +101,11 @@ func (b *Bitbucket) Clone() (string, error) {
 		b.GetDirectory(),
 		b.Spec.Submodules,
 		b.Spec.Depth,
+		b.Spec.Branch,
+		b.Spec.SingleBranch != nil && *b.Spec.SingleBranch,
 	)
 	if err != nil {
-		logrus.Errorf("failed cloning Bitbucket Cloud repository %q", b.GetURL())
+		logrus.Errorf("failed cloning Bitbucket Cloud repository %q", redact.URL(b.GetURL()))
 		return "", err
 	}
 

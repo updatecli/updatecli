@@ -15,6 +15,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/ci"
 )
 
 const (
@@ -74,6 +75,12 @@ Report available on {{ .reportURL -}}{{"\n"}}
 `
 )
 
+// CIData contains information about the CI pipeline where the report is generated
+type CIData struct {
+	URL  string `json:",omitempty"`
+	Name string `json:",omitempty"`
+}
+
 // Report contains the result of the execution of a pipeline
 type Report struct {
 	Name   string
@@ -90,6 +97,7 @@ type Report struct {
 	Conditions map[string]*result.Condition
 	Targets    map[string]*result.Target
 	ReportURL  string
+	CI         *CIData
 }
 
 // String returns a report as a string
@@ -122,6 +130,25 @@ func (r *Report) String(mode string) (report string, err error) {
 	return report, nil
 }
 
+// UpdateCIJob updates the report with CI job information if available
+func (r *Report) UpdateCIJob() error {
+	detectedCi, err := ci.New()
+	if err != nil {
+		return err
+	}
+
+	if detectedCi == nil {
+		// No CI pipeline detected
+		return nil
+	}
+
+	r.CI = &CIData{
+		Name: detectedCi.Name(),
+		URL:  detectedCi.URL(),
+	}
+	return nil
+}
+
 // UpdateID generates a unique ID for the report based on the content of the report
 // Ideally the report ID should be the same regardless of the result of the pipeline.
 // The goal is to be able to identify what report corresponds to what pipeline manifest.
@@ -139,19 +166,6 @@ func (r *Report) UpdateID() error {
 
 	if r.Name != "" {
 		reportHash = append(reportHash, r.Name)
-	}
-
-	// We need to sort the actions by their ID to make sure that the hash is always the same
-	for _, i := range slices.Sorted(maps.Keys(r.Actions)) {
-		action := r.Actions[i]
-		action.ID, err = getSha256HashFromStruct(action)
-		if err != nil {
-			return err
-		}
-
-		reportHash = append(reportHash, action.ID)
-
-		r.Actions[i] = action
 	}
 
 	// We need to sort the conditions by their ID to make sure that the hash is always the same

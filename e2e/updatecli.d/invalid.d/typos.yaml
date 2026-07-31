@@ -1,0 +1,19 @@
+## This manifest deliberately holds keys that do not match the Updatecli schema, so that
+## 'updatecli manifest validate' is checked to report them.
+## It is not meant to run, only to be validated.
+name: A manifest holding keys Updatecli would silently ignore
+sourcs:
+  typo-at-the-root: {}
+sources:
+  latest:
+    kind: dockerimage
+    spec:
+      image: ghcr.io/updatecli/updatecli
+      versionfliter:
+        kind: semver
+targets:
+  update:
+    kind: dockerimag
+    sourceid: latest
+    spec:
+      file: /tmp/updatecli-e2e-invalid
