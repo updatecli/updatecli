@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
 )
 
 // cachedResponse stores the essential parts of an HTTP response for replay.
@@ -44,7 +45,7 @@ func (c *cachingTransport) RoundTrip(req *http.Request) (*http.Response, error) 
 	c.mu.RUnlock()
 
 	if ok {
-		logrus.Debugf("http cache hit: %s", key)
+		logrus.Debugf("http cache hit: %s", redact.URL(key))
 		return &http.Response{
 			StatusCode:    entry.StatusCode,
 			Status:        entry.Status,
@@ -80,7 +81,7 @@ func (c *cachingTransport) RoundTrip(req *http.Request) (*http.Response, error) 
 		}
 		c.mu.Unlock()
 
-		logrus.Debugf("http cache store: %s", key)
+		logrus.Debugf("http cache store: %s", redact.URL(key))
 	}
 
 	return resp, nil
