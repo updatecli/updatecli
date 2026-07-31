@@ -9,6 +9,7 @@ import (
 
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 // Target updates a scm repository based on the modified yaml file.
@@ -28,7 +29,10 @@ func (x *XML) Target(_ context.Context, source string, scm scm.ScmHandler, dryRu
 
 	resourceFile := x.spec.File
 	if scm != nil {
-		resourceFile = joinPathWithWorkingDirectoryPath(x.spec.File, scm.GetDirectory())
+		resourceFile, err = utils.SanitizeFilePathWithWorkingDirectory(x.spec.File, scm.GetDirectory())
+		if err != nil {
+			return fmt.Errorf("invalid file path %q: %w", x.spec.File, err)
+		}
 	}
 
 	// Test at runtime if a file exist

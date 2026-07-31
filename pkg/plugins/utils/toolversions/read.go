@@ -4,12 +4,18 @@ import (
 	"bufio"
 	"fmt"
 	"strings"
+
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 // Read reads the content of a file after runtime validation
 func (f *FileContent) Read(rootDir string) error {
 
-	f.FilePath = JoinPathWithWorkingDirectoryPath(f.FilePath, rootDir)
+	securePath, err := utils.SanitizeFilePathWithWorkingDirectory(f.FilePath, rootDir)
+	if err != nil {
+		return err
+	}
+	f.FilePath = securePath
 
 	if !f.ContentRetriever.FileExists(f.FilePath) {
 		return fmt.Errorf("file %q does not exist", f.FilePath)

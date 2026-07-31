@@ -67,7 +67,9 @@ func (y *Yaml) Source(_ context.Context, workingDir string, resultSource *result
 
 		// Ideally currentWorkingDirectory should be empty
 		if workingDir != currentWorkingDirectory {
-			y.UpdateAbsoluteFilePath(workingDir)
+			if err := y.UpdateAbsoluteFilePath(workingDir); err != nil {
+				return err
+			}
 		}
 	}
 
