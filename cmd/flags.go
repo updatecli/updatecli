@@ -14,6 +14,18 @@ func addDisableChangelogFlag(cmd *cobra.Command, dest *bool) {
 	)
 }
 
+// addValidateSchemaFlag registers the shared --validate-schema flag on the provided
+// command, using the value from UPDATECLI_VALIDATE_SCHEMA as the default when the flag is
+// not explicitly passed.
+func addValidateSchemaFlag(cmd *cobra.Command, dest *bool) {
+	cmd.Flags().BoolVar(
+		dest,
+		"validate-schema",
+		getEnvBoolOrDefault(ValidateSchemaEnvVar, false),
+		"Report manifest keys not matching the Updatecli schema as warnings (env: "+ValidateSchemaEnvVar+")",
+	)
+}
+
 // addExportReportToYAMLFlag registers the shared --export-report-to-yaml flag on
 // the provided command. Exporting is opt-in as it writes files to disk.
 func addExportReportToYAMLFlag(cmd *cobra.Command, dest *bool) {

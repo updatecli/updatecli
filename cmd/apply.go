@@ -49,6 +49,7 @@ var (
 			e.Options.Pipeline.Target.CleanGitBranches = applyCleanGitBranches
 			e.Options.Pipeline.Target.ExistingOnly = applyExistingOnly
 			e.Options.Pipeline.DisableChangelog = disableChangelog
+			e.Options.Config.ValidateSchema = validateSchema
 
 			logrus.Warningln("Deprecated command, please instead use `updatecli pipeline apply`")
 
@@ -77,6 +78,7 @@ func init() {
 	applyCmd.Flags().StringArrayVar(&labels, "labels", []string{}, "Filter pipelines by their labels, accepted as a comma separated list (key:value)")
 
 	addDisableChangelogFlag(applyCmd, &disableChangelog)
+	addValidateSchemaFlag(applyCmd, &validateSchema)
 	addExportReportToYAMLFlag(applyCmd, &exportReportToYAML)
 	addDisableUdashReportFlag(applyCmd, &disableUdashReport)
 }

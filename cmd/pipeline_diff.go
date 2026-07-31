@@ -34,6 +34,7 @@ var (
 			e.Options.Pipeline.Target.Clean = diffClean
 			e.Options.Pipeline.Target.DryRun = true
 			e.Options.Pipeline.DisableChangelog = disableChangelog
+			e.Options.Config.ValidateSchema = validateSchema
 
 			err = run("pipeline/diff")
 			if err != nil {
@@ -56,6 +57,7 @@ func init() {
 	pipelineDiffCmd.Flags().StringArrayVar(&labels, "labels", []string{}, "Filter pipelines to apply by their labels, accepted as a comma separated list (key:value)")
 
 	addDisableChangelogFlag(pipelineDiffCmd, &disableChangelog)
+	addValidateSchemaFlag(pipelineDiffCmd, &validateSchema)
 	addExportReportToYAMLFlag(pipelineDiffCmd, &exportReportToYAML)
 	addDisableUdashReportFlag(pipelineDiffCmd, &disableUdashReport)
 
