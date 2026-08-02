@@ -2,7 +2,7 @@ services:
   # A tag Masterminds semver cannot parse at all makes GreaterThanPattern fail and
   # NewDockerImageSpecFromImage return a nil spec. This service must be skipped
   # without crashing, and without discarding the manifest found for a-pinned.
-  z-unparseable-tag:
+  z-unparsable-tag:
     image: jenkinsci/jenkins:latest
   a-pinned:
     image: jenkinsci/jenkins:2.150.1

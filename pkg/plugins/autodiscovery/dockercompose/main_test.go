@@ -10,7 +10,6 @@ import (
 )
 
 func TestDiscoverManifests(t *testing.T) {
-
 	testdata := []struct {
 		name              string
 		rootDir           string
@@ -23,7 +22,8 @@ func TestDiscoverManifests(t *testing.T) {
 			name:    "Scenario 1 - digest",
 			rootDir: "testdata",
 			digest:  true,
-			expectedPipelines: []string{`name: 'deps(dockercompose): bump "jenkinsci/jenkins" digest'
+			expectedPipelines: []string{
+				`name: 'deps(dockercompose): bump "jenkinsci/jenkins" digest'
 sources:
   jenkins-lts:
     name: 'get latest image tag for "jenkinsci/jenkins"'
@@ -94,7 +94,8 @@ targets:
 					Token: "mysecretToken",
 				},
 			},
-			expectedPipelines: []string{`name: 'deps(dockercompose): bump "jenkinsci/jenkins" tag'
+			expectedPipelines: []string{
+				`name: 'deps(dockercompose): bump "jenkinsci/jenkins" tag'
 sources:
   jenkins-lts:
     name: 'get latest image tag for "jenkinsci/jenkins"'
@@ -148,10 +149,11 @@ targets:
 			// skipped without crashing, and without discarding the manifest already
 			// found for the service listed before it.
 			name:          "Scenario 3 - no digest, tag not parseable as a version",
-			rootDir:       "testdata-unparseable-tag",
+			rootDir:       "testdata-unparsable-tag",
 			digest:        false,
 			versionFilter: version.Filter{Kind: "semver", Pattern: "patch"},
-			expectedPipelines: []string{`name: 'deps(dockercompose): bump "jenkinsci/jenkins" tag'
+			expectedPipelines: []string{
+				`name: 'deps(dockercompose): bump "jenkinsci/jenkins" tag'
 sources:
   a-pinned:
     name: 'get latest image tag for "jenkinsci/jenkins"'
@@ -205,8 +207,6 @@ targets:
 				pipelines = append(pipelines, string(rawPipelines[i]))
 				assert.Equal(t, tt.expectedPipelines[i], pipelines[i])
 			}
-
 		})
 	}
-
 }
