@@ -38,7 +38,14 @@ func TestFile_TargetPathContainment(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			workingDir := t.TempDir()
+			// The working directory is nested two levels below the temporary
+			// directory so that a "../.." traversal still lands inside it: the
+			// test must never write to (nor assert on) a shared location such
+			// as /tmp, which another run could have polluted.
+			baseDir := t.TempDir()
+			workingDir := filepath.Join(baseDir, "checkout", "nested")
+			require.NoError(t, os.MkdirAll(workingDir, 0o700))
+
 			targetPath := tt.targetPath(workingDir)
 
 			f, err := New(Spec{
@@ -61,6 +68,61 @@ func TestFile_TargetPathContainment(t *testing.T) {
 			_, statErr := os.Stat(escapePath)
 			assert.Truef(t, os.IsNotExist(statErr),
 				"payload must not be written outside the working directory: %q", escapePath)
+		})
+	}
+}
+
+// TestFile_SourcePathContainment is the source side counterpart of
+// TestFile_TargetPathContainment: a source path escaping the SCM working
+// directory must be rejected instead of reading an arbitrary file on the host.
+func TestFile_SourcePathContainment(t *testing.T) {
+	const secretContent = "TOP SECRET"
+
+	tests := []struct {
+		name string
+		// sourcePath returns the spec.file value to read, given the directory
+		// holding the secret and the working directory.
+		sourcePath func(secretPath, workingDir string) string
+	}{
+		{
+			name: "absolute path escape is rejected",
+			sourcePath: func(secretPath, _ string) string {
+				return secretPath
+			},
+		},
+		{
+			name: "dot dot traversal escape is rejected",
+			sourcePath: func(secretPath, workingDir string) string {
+				relPath, err := filepath.Rel(workingDir, secretPath)
+				require.NoError(t, err)
+				return relPath
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// The secret sits outside the checkout, two levels above the
+			// working directory, so a "../.." traversal would reach it.
+			baseDir := t.TempDir()
+			workingDir := filepath.Join(baseDir, "checkout", "nested")
+			require.NoError(t, os.MkdirAll(workingDir, 0o700))
+
+			secretPath := filepath.Join(baseDir, "secret.txt")
+			require.NoError(t, os.WriteFile(secretPath, []byte(secretContent), 0o600))
+
+			f, err := New(Spec{
+				File: tt.sourcePath(secretPath, workingDir),
+			})
+			require.NoError(t, err)
+
+			// The secret is readable, so only the containment check can prevent
+			// the source from returning it.
+			gotResult := result.Source{}
+			gotErr := f.Source(context.Background(), workingDir, &gotResult)
+			assert.Error(t, gotErr, "a path escaping the working directory must be rejected")
+			assert.NotContains(t, gotResult.Information, secretContent,
+				"content outside the working directory must not be exposed as a source value")
 		})
 	}
 }
