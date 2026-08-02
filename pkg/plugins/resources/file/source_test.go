@@ -279,16 +279,19 @@ func TestFile_Source(t *testing.T) {
 				contentRetriever: &mockedText,
 				files:            tt.files,
 			}
-			// Looping on the only filePath in 'files'
-			for filePath := range f.files {
-				gotResult := result.Source{}
-				gotErr := f.Source(context.Background(), filePath, &gotResult)
-				if tt.wantedErr {
-					assert.Error(t, gotErr)
-					return
-				}
+			// No working directory: the resource is run locally, without an SCM
+			// checkout, so the file paths of the specification are used as is.
+			gotResult := result.Source{}
+			gotErr := f.Source(context.Background(), "", &gotResult)
+			if tt.wantedErr {
+				assert.Error(t, gotErr)
+				return
+			}
 
-				require.NoError(t, gotErr)
+			require.NoError(t, gotErr)
+
+			// Looping on the only filePath in 'files'
+			for filePath := range tt.files {
 				assert.Equal(t, tt.wantedContents[filePath], gotResult.Information)
 			}
 		})
