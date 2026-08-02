@@ -43,6 +43,7 @@ func (u Updatecli) discoverUpdatecliPolicyManifests() ([][]byte, error) {
 		logrus.Debugf("parsing file %q", foundUpdateComposeFile)
 
 		relativeUpdateComposeFile, err := filepath.Rel(u.rootDir, foundUpdateComposeFile)
+
 		if err != nil {
 			// Jump to the next Update compose file if current failed
 			logrus.Debugln(err)
@@ -149,7 +150,7 @@ func (u Updatecli) discoverUpdatecliPolicyManifests() ([][]byte, error) {
 				SourceVersionFilterRegex:   sourceVersionFilterRegex,
 				TargetName:                 fmt.Sprintf("deps(updatecli): bump %q policy to {{ source %q}}", policyName, "version"),
 				TargetKey:                  fmt.Sprintf("$.policies[%d].policy", i),
-				File:                       foundUpdateComposeFile,
+				File:                       relativeUpdateComposeFile,
 				ScmID:                      u.scmID,
 			}
 

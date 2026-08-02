@@ -39,7 +39,7 @@ targets:
     name: 'deps(updatecli): bump "ghcr.io/updatecli/policies/policies/hugo/netlify" policy to {{ source "version"}}'
     kind: 'yaml'
     spec:
-      file: 'testdata/website/updatecli-compose.yaml'
+      file: 'website/updatecli-compose.yaml'
       key: '$.policies[3].policy'
     transformers:
       - addprefix: 'ghcr.io/updatecli/policies/policies/hugo/netlify:'
@@ -67,7 +67,7 @@ targets:
     name: 'deps(updatecli): bump "ghcr.io/updatecli/policies/policies/nodejs/githubaction" policy to {{ source "version"}}'
     kind: 'yaml'
     spec:
-      file: 'testdata/website/updatecli-compose.yaml'
+      file: 'website/updatecli-compose.yaml'
       key: '$.policies[1].policy'
     transformers:
       - addprefix: 'ghcr.io/updatecli/policies/policies/nodejs/githubaction:'
@@ -95,7 +95,7 @@ targets:
     name: 'deps(updatecli): bump "ghcr.io/updatecli/policies/policies/nodejs/netlify" policy to {{ source "version"}}'
     kind: 'yaml'
     spec:
-      file: 'testdata/website/updatecli-compose.yaml'
+      file: 'website/updatecli-compose.yaml'
       key: '$.policies[2].policy'
     transformers:
       - addprefix: 'ghcr.io/updatecli/policies/policies/nodejs/netlify:'
