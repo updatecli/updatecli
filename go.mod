@@ -53,7 +53,7 @@ require (
 	github.com/google/go-github/v69 v69.2.0
 	github.com/goware/urlx v0.3.2
 	github.com/hashicorp/hcl/v2 v2.24.0
-	github.com/hashicorp/terraform-registry-address v0.4.0
+	github.com/hashicorp/terraform-registry-address v0.5.0
 	github.com/invopop/jsonschema v0.14.0
 	github.com/jferrl/go-githubauth v1.7.0
 	github.com/joho/godotenv v1.5.1
