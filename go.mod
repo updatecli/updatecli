@@ -9,7 +9,7 @@ require (
 	github.com/Masterminds/semver/v3 v3.5.0
 	github.com/Masterminds/sprig/v3 v3.3.0
 	github.com/fatih/color v1.19.0
-	github.com/getsops/sops/v3 v3.13.2
+	github.com/getsops/sops/v3 v3.13.3
 	github.com/go-git/go-git/v5 v5.19.1
 	github.com/heimdalr/dag v1.5.1
 	github.com/hexops/gotextdiff v1.0.3
