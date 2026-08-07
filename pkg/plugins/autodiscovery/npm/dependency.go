@@ -43,7 +43,7 @@ func detectLockFileSupport(dir string) (lockFileSupport, bool) {
 		case true:
 			support.pnpm = true
 		case false:
-			logrus.Warning("skipping, Pnpm lockk file detected but Updatecli couldn't detect the pnpm command to update it in case of a package.json update")
+			logrus.Warning("skipping, Pnpm lock file detected but Updatecli couldn't detect the pnpm command to update it in case of a package.json update")
 			return support, true
 		}
 	}

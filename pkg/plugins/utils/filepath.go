@@ -10,6 +10,60 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
+// SanitizeFilePathWithWorkingDirectory resolves filePath against workingDir and
+// guarantees that the returned path stays within workingDir. It is the single
+// containment primitive shared by every file based resource (file, yaml, xml,
+// toml, toolversions, json, csv) so the invariant cannot drift between them.
+//
+// Behavior:
+//   - http:// and https:// URLs are returned unchanged (remote reads).
+//   - When workingDir is empty there is no containment boundary — updatecli is
+//     running without an SCM checkout — so the path is returned unchanged to
+//     preserve the historical local run behavior.
+//   - When workingDir is set, an absolute filePath is rejected and any relative
+//     filePath that would escape workingDir through ".." traversal is rejected.
+//
+// Rejecting instead of silently clamping is deliberate: a path that resolves
+// outside the working directory almost always means an upstream value (e.g. a
+// {{ source }} output) has been injected into a target/source path, and the
+// pipeline must fail rather than read from or write to an attacker chosen
+// location. See GHSA-hj4x-hm4v-7wpw.
+func SanitizeFilePathWithWorkingDirectory(filePath, workingDir string) (string, error) {
+	if strings.HasPrefix(filePath, "https://") ||
+		strings.HasPrefix(filePath, "http://") {
+		return filePath, nil
+	}
+
+	// Without a working directory there is no boundary to contain the path to,
+	// so we keep the caller provided path as is (local run, no SCM checkout).
+	if workingDir == "" {
+		return filePath, nil
+	}
+
+	if filepath.IsAbs(filePath) {
+		return "", fmt.Errorf(
+			"absolute path %q is not allowed: files must stay within the working directory %q",
+			filePath, workingDir)
+	}
+
+	joinedPath := filepath.Join(workingDir, filePath)
+
+	relPath, err := filepath.Rel(workingDir, joinedPath)
+	if err != nil {
+		return "", fmt.Errorf(
+			"unable to verify that path %q stays within the working directory %q: %w",
+			filePath, workingDir, err)
+	}
+
+	if relPath == ".." || strings.HasPrefix(relPath, ".."+string(os.PathSeparator)) {
+		return "", fmt.Errorf(
+			"path %q escapes the working directory %q",
+			filePath, workingDir)
+	}
+
+	return joinedPath, nil
+}
+
 // JoinPathwithworkingDirectoryPath To merge File path with current workingDir, unless file is an HTTP URL
 func JoinFilePathWithWorkingDirectoryPath(filePath, workingDir string) string {
 

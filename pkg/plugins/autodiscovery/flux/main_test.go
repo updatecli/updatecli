@@ -370,15 +370,26 @@ sources:
     spec:
       image: 'ghcr.io/updatecli/updatecli'
       tag: '{{ source "oci" }}'
+      hidetag: true
+    transformers:
+      - trimprefix: '@'
     dependson:
       - 'oci'
 targets:
-  oci:
-    name: 'deps(flux): bump OCI repository "ghcr.io/updatecli/updatecli"'
+  oci-tag:
+    name: 'deps(flux): bump OCI repository "ghcr.io/updatecli/updatecli" tag'
     kind: 'yaml'
     spec:
       file: 'example.yaml'
       key: '$.spec.ref.tag'
+      documentindex: 0
+    sourceid: 'oci'
+  oci-digest:
+    name: 'deps(flux): bump OCI repository "ghcr.io/updatecli/updatecli" digest'
+    kind: 'yaml'
+    spec:
+      file: 'example.yaml'
+      key: '$.spec.ref.digest'
       documentindex: 0
     sourceid: 'oci-digest'
 `},
@@ -400,14 +411,17 @@ sources:
     spec:
       image: 'ghcr.io/updatecli/updatecli'
       tag: 'latest'
+      hidetag: true
+    transformers:
+      - trimprefix: '@'
 targets:
-  oci:
-    name: 'deps(flux): bump OCI repository "ghcr.io/updatecli/updatecli"'
+  oci-digest:
+    name: 'deps(flux): bump OCI repository "ghcr.io/updatecli/updatecli" digest'
     kind: 'yaml'
     scmid: defaultscmid
     spec:
       file: 'example.yaml'
-      key: '$.spec.ref.tag'
+      key: '$.spec.ref.digest'
       documentindex: 0
     sourceid: 'oci-digest'
 `},

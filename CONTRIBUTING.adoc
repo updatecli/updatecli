@@ -4,201 +4,36 @@
 
 Thanks for your interest in this project, feel free to ask any questions you may have.
 
+This file covers what you need in a local checkout: building, testing, and getting a change reviewed.
+The full contributor guide — including how to write a new resource plugin — lives at
+link:https://www.updatecli.io/docs/help/contributing/[updatecli.io/docs/help/contributing].
+
 == Requirements
 
-To build the project, make sure that you have installed link:golang[https://go.dev/], link:https://www.gnu.org/software/make/[GNU Make] and link:https://goreleaser.com/install/[goreleaser], then execute the command `make build`, or use Docker with:
+To build the project, install link:https://go.dev/[Go], link:https://www.gnu.org/software/make/[GNU Make]
+and link:https://goreleaser.com/install/[goreleaser], then:
 
-```
+[source,bash]
+----
+make build
+----
+
+The required Go version is the one declared in `go.mod`. To build in a container instead, without
+installing Go at all:
+
+[source,bash]
+----
+GO_VERSION="$(awk '/^go /{print $2}' go.mod)"
+
 docker run --rm -v "$PWD":/usr/src/updatecli -w /usr/src/updatecli \
-  -e GOOS=windows -e GOARCH=386 golang:1.24 go build -v \
-  -buildvcs=false \
-  -o updatecli.exe
-```
+  "golang:${GO_VERSION}" go build -v -buildvcs=false -o updatecli
+----
 
-== Contribute
+`make help` lists every available target.
 
-They're multiple ways to contribute which don't necessarily involve coding, like providing feedback, financially, improving documentation and processes.
-Here I'll just highlight some of them:
+== Tests
 
-=== Feedback
-
-It's significantly harder to build a solution that could be used by different people. It involves many different skills hard to master and it's easy to get stuck in local optimum. So feel free to reach out to say what's wrong and what could be improved.
-
-=== Code
-
-The code is divided into two categories, core and plugins. The core is designed to be independent and to provide the skeleton for the application, while the plugins define how things are automated for a specific use-case. The easiest part is probably plugins as it allows you to contribute independently to the process you are looking to automate.
-
-==== CORE
-
-This section is still evolving as they're many areas that need attention.
-
-==== Financially
-
-If you're using this project and it's saving you time, consider supporting it financially. It's a great way to show appreciation and to help the project grow.
-You can sponsor the project on GitHub at link:https://github.com/sponsors/olblak[link]
-
-==== Plugins
-
-Plugins can be easily added by following this workflow:
-
-===== 1. Define package name
-
-Creating a new directory using your "packageName" under the directory `pkg/plugins` that will contain your go package similar to:
-
-```
-pkg
-├── plugins
-│   └── packageName
-│       ├── source_test.go
-│       ├── source.go
-│       ├── condition_test.go
-│       ├── condition.go
-│       ├── spec.go
-│       ├── target_test.go
-│       ├── target.go
-│       ├── main_test.go
-│       └── main.go
-└── main_test.go
-
-```
-
-===== 2. Define configuration
-
-In the `spec.go`, you need to define the `struct` that you'll use to configure your workflow where the capitalized fields will be set when unmarshalling from your future configuration.yaml
-
-```
-/*
-    One multiline comment is required
-*/
-type Spec struct {
-  /*
-    One multiline comment is required per field
-  */
-	Field1        string `yaml:",omitempty"`
-	Field2        string `yaml:",omitempty" jsonschema:"required"`
-	Field3        string `yaml:",omitempty"`
-	Field4        string `yaml:",omitempty"`
-}
-```
-
-**Tags**
-
-Fields tags are important components and can come from one of the two following modules:
-
-* https://github.com/go-yaml/yaml
-* https://github.com/invopop/jsonschema
-
-**Comments**
-
-Fields comments are critical as they are used to generate Updatecli documentation available both from www.updatecli.io and your favorite IDE.
-
-Our objective is to have `Spec` comments such as
-
-```
-A short one-line description of the parameter
-
-  compatible
-    <A list of compatible stages>
-    * source
-    * condition
-    * target
-
-  default:
-    A short explanation of the default value. It's also the place for explaining if the value is inherited from the source output.
-
-  remarks:
-    A list of information to be aware of when using the parameter such
-    * info 1
-    * info 2
-
-  example:
-    If useful, a simple example of how to use it
-
-```
-
-===== 3. Respect the contract
-
-Your 'packageName' must provide a `struct` which implements the `Resource` interface by defining the following functions:
-
-[cols="1,2a,2", options="header"]
-.Rules
-|===
-| Stage
-| Interface
-| Description
-
-| Source
-| ```
-Source(workingDir string, resultSource *result.Source) error
-```
-| Defines how a version will be retrieved then passed the following stages
-
-| Changelog
-| ```
-Changelog() string
-```
-| Retrieve the changelog for a specific source.
-
-| Condition
-| ```
-Condition(source string, scm scm.ScmHandler) (pass bool, message string, err error)
-```
-| Define a condition which has to pass in order to proceed
-
-| Target
-| ```
-Target(source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error
-```
-| Define how a target file is updated
-
-|===
-
-===== 4. Claim your name
-
-Each stage that can be configured using a yaml/go template has to bind a resource kind and a package name,
-this is done in the "Unmarshal" function
-
-```
-  import "github.com/updatecli/updatecli/pkg/plugins/packageName"
-  ...
-
-	case "packageName":
-		p := packageName.PackageName{}
-		err := mapstructure.Decode(s.Spec, &p)
-
-		if err != nil {
-			return err
-		}
-
-		spec = &p
-```
-
-Now something like this should be working:
-
-config.value
-```
-# updatecli diff --config config.value
-
-sources:
-  default:
-    kind: packageName
-    spec:
-      field1: "value"
-      field3: "value"
-targets:
-  idName:
-    name: "updatecli"
-    kind: "yaml"
-    spec:
-      file: "..."
-      key:  "..."
-    transformers:
-      - addPrefix: "olblak/polls@256:"
-```
-
-=== TEST
-
-==== Unit Tests
+=== Unit Tests
 
 Unit tests are golang test which are executed by default, even with the `-short` flag set up (e.g. executed when `testing.Short() == "true"`).
 
@@ -213,7 +48,7 @@ They usually uses mocks as they should:
 make test-short
 ----
 
-==== Integration Tests
+=== Integration Tests
 
 Integration tests are golang test which are executed by default but not with the `-short` flag set up (e.g. not executed when `testing.Short() == "true"`).
 
@@ -222,14 +57,13 @@ Integration tests are golang test which are executed by default but not with the
 make test
 ----
 
-==== End to End (e2e) Tests
+=== End to End (e2e) Tests
 
 * https://github.com/ovh/venom[OVH's Venom CLI] is required
 * A https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token[GitHub Personal Access Token (PAT)] is required with read access to public repositories
-* Define the following environment variables (otherwise the `make` command will fail with a message telling you which variable is missing):`
+* Define the following environment variables (otherwise the `make` command will fail with a message telling you which variable is missing):
 ** `$GITHUB_TOKEN` set to the GitHub PAT mentioned above
 ** `$GITHUB_ACTOR` set to the GitHub username associated to the aforementioned GitHub PAT
-
 
 [source,bash]
 ----
@@ -243,7 +77,60 @@ make test-e2e
 
 The execution log is written by Venom into `./e2e/venom.log`.
 
-=== DOCUMENTATION
+The manifests exercised by these suites live in `e2e/updatecli.d/`, grouped by expected outcome:
+`success.d` (must produce no warning and no error), `warning.d`, `deprecated.d`, and
+`skipped.targets.d`. Each group has a matching Venom suite in `e2e/venom.d/`.
+
+=== Linters
+
+[source,bash]
+----
+make lint
+----
+
+== Commits and pull requests
+
+Commits carry a `Signed-off-by:` trailer — use `git commit --signoff`. This is not enforced by CI, but
+it is the convention across the history, so please follow it.
+
+The repository provides a pull request template; filling it in is the quickest route to a review.
+
+== Contribute
+
+They're multiple ways to contribute which don't necessarily involve coding, like providing feedback,
+financially, improving documentation and processes.
+Here I'll just highlight some of them:
+
+=== Feedback
+
+It's significantly harder to build a solution that could be used by different people. It involves many different skills hard to master and it's easy to get stuck in local optimum. So feel free to reach out to say what's wrong and what could be improved.
+
+=== Code
+
+The code is divided into two categories, core and plugins. The core is designed to be independent and to provide the skeleton for the application, while the plugins define how things are automated for a specific use-case. The easiest part is probably plugins as it allows you to contribute independently to the process you are looking to automate.
+
+Adding a resource plugin means creating a package under `pkg/plugins/resources/<name>/`, implementing
+the `Resource` interface from `pkg/core/pipeline/resource/main.go`, and registering the kind in
+`GetResourceMapping()`. The step-by-step walkthrough — the interface, the `Spec` conventions that
+generate the documentation and the JSON schema, and how to test it — is on the website:
+
+* link:https://www.updatecli.io/docs/help/contributing/#_writing_a_resource_plugin[Writing a resource plugin]
+
+`pkg/plugins/resources/gitcommit` is a small, recent plugin worth reading as a model.
+
+=== Financially
+
+If you're using this project and it's saving you time, consider supporting it financially. It's a great way to show appreciation and to help the project grow.
+
+* link:https://github.com/sponsors/updatecli[GitHub Sponsors]
+* link:https://opencollective.com/updatecli[OpenCollective]
+
+=== Documentation
 
 If you spot phrasing issues or just a lack of documentation, feel free to open link:https://github.com/updatecli/updatecli/issues[an issue] and/or link:https://github.com/updatecli/updatecli/pulls[a pull request].
-https://github.com/updatecli/website[website]
+
+The documentation site is a separate repository: link:https://github.com/updatecli/website[updatecli/website].
+
+Note that a plugin's parameter documentation is *not* written there — it is generated from the Go doc
+comments on the plugin's `Spec` fields, so a wrong or missing parameter description is fixed in this
+repository.

@@ -8,6 +8,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
 )
 
 // Source returns content from the response of the specified HTTP request (defaults to the body).
@@ -25,7 +26,7 @@ func (h *Http) Source(_ context.Context, workingDir string, resultSource *result
 	}
 
 	resultSource.Result = result.SUCCESS
-	resultSource.Description = fmt.Sprintf("[http] response received from %q.", h.spec.Url)
+	resultSource.Description = fmt.Sprintf("[http] response received from %q.", redact.URL(h.spec.Url))
 
 	if h.spec.ReturnResponseHeader != "" {
 		resultSource.Information = httpRes.Header.Get(h.spec.ReturnResponseHeader)

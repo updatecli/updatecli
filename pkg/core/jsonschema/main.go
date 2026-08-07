@@ -10,6 +10,7 @@ import (
 	"slices"
 	"sort"
 	"strings"
+	"sync"
 
 	"github.com/go-git/go-git/v5"
 	jschema "github.com/invopop/jsonschema"
@@ -33,7 +34,51 @@ var (
 	commentDir string = path.Join(os.TempDir(), "updatecli", "_comments")
 	// commentURL defines the updatecli git url
 	commentURL string = "https://github.com/updatecli/updatecli.git"
+
+	// commentMapMutex guards cachedCommentMap
+	commentMapMutex sync.Mutex
+	// cachedCommentMap holds the code comments once they have been successfully retrieved
+	cachedCommentMap map[string]string
 )
+
+// getCommentMap returns the updatecli code comments used to populate the jsonschema
+// "description" fields.
+//
+// Comments are a documentation nicety: they require the updatecli git repository to be
+// cloned locally, which only makes sense when generating the published schema. When they
+// cannot be retrieved, an empty map is returned so that a schema can still be built, for
+// example to validate a manifest at runtime.
+//
+// Only a successful lookup is cached, so a call made before CloneCommentDirectory does
+// not prevent a later call from picking the comments up.
+func getCommentMap() map[string]string {
+	commentMapMutex.Lock()
+	defer commentMapMutex.Unlock()
+
+	if cachedCommentMap != nil {
+		return cachedCommentMap
+	}
+
+	commentMap, err := GetPackageComments(commentDir)
+	if err != nil {
+		logrus.Debugf("retrieve code comments: %s", err.Error())
+		return nil
+	}
+
+	cachedCommentMap = commentMap
+
+	return cachedCommentMap
+}
+
+// setCommentMap caches a comment map that was retrieved by a caller.
+func setCommentMap(commentMap map[string]string) {
+	commentMapMutex.Lock()
+	defer commentMapMutex.Unlock()
+
+	if len(commentMap) > 0 {
+		cachedCommentMap = commentMap
+	}
+}
 
 type Schema struct {
 	SchemaDir    string
@@ -95,6 +140,8 @@ func (s *Schema) GenerateSchema(object interface{}) error {
 	if err != nil {
 		return err
 	}
+
+	setCommentMap(r.CommentMap)
 
 	s.JsonSchema = *r.Reflect(object)
 
@@ -195,31 +242,27 @@ func CleanCommentDirectory() error {
 	return nil
 }
 
-// AppendOneOfToJsonschema generates a jsonschema based on a baseConfig and then append a oneOf based on the mapConfig.
-func AppendOneOfToJsonSchema(baseConfig interface{}, anyOf map[string]interface{}) *jschema.Schema {
-
-	var err error
-	var commentMap map[string]string
+// BuildKindSchemas generates one jsonschema per kind, where each schema is the base
+// resource configuration with "kind" pinned to that single value and "spec" replaced by
+// the specification of that kind. A kind mapped to a nil specification keeps the base
+// configuration without any "spec" constraint.
+//
+// Validating a resource against the schema of its declared kind gives a far more precise
+// error than validating it against the "oneOf" of every kind, which can only report that
+// the resource matched none of them.
+func BuildKindSchemas(baseConfig interface{}, kinds map[string]interface{}) map[string]*jschema.Schema {
 
 	if baseConfig == nil {
 		return nil
 	}
 
-	// Retrieve Updatecli code comments
-	commentMap, err = GetPackageComments(commentDir)
+	// Retrieve Updatecli code comments, they only populate the "description" fields so
+	// an empty map still produces a usable schema.
+	commentMap := getCommentMap()
 
-	if err != nil {
-		logrus.Errorf("retrieve code comments: %s", err.Error())
-		return nil
-	}
+	schemas := make(map[string]*jschema.Schema, len(kinds))
 
-	resourceSchema := jschema.Schema{}
-
-	keys := slices.Collect(maps.Keys(anyOf))
-
-	sort.Strings(keys)
-
-	for _, id := range keys {
+	for id := range kinds {
 		r := new(jschema.Reflector)
 
 		r.Anonymous = true
@@ -228,25 +271,40 @@ func AppendOneOfToJsonSchema(baseConfig interface{}, anyOf map[string]interface{
 		r.CommentMap = commentMap
 		r.KeyNamer = strings.ToLower
 
-		// schema we need a way to remove schema
-
 		resourceConfig := r.Reflect(baseConfig)
 
-		switch anyOf[id] == nil {
-		case false:
-			spec := r.Reflect(anyOf[id])
-			resourceConfig.Properties.Set("spec", spec)
-			resourceConfig.Properties.Set("kind", &jschema.Schema{
-				Enum: []interface{}{id}})
-			resourceSchema.OneOf = append(resourceSchema.OneOf, resourceConfig)
-
-		case true:
-			resourceConfig.Properties.Set("kind", &jschema.Schema{
-				Enum: []interface{}{id}})
-			resourceSchema.OneOf = append(resourceSchema.OneOf, resourceConfig)
-
+		if kinds[id] != nil {
+			resourceConfig.Properties.Set("spec", r.Reflect(kinds[id]))
 		}
+
+		resourceConfig.Properties.Set("kind", &jschema.Schema{
+			Enum: []interface{}{id}})
+
+		schemas[id] = resourceConfig
 	}
+
+	return schemas
+}
+
+// AppendOneOfToJsonschema generates a jsonschema based on a baseConfig and then append a oneOf based on the mapConfig.
+func AppendOneOfToJsonSchema(baseConfig interface{}, anyOf map[string]interface{}) *jschema.Schema {
+
+	kindSchemas := BuildKindSchemas(baseConfig, anyOf)
+
+	if kindSchemas == nil {
+		return nil
+	}
+
+	keys := slices.Collect(maps.Keys(kindSchemas))
+
+	sort.Strings(keys)
+
+	resourceSchema := jschema.Schema{}
+
+	for _, id := range keys {
+		resourceSchema.OneOf = append(resourceSchema.OneOf, kindSchemas[id])
+	}
+
 	return &resourceSchema
 
 }
@@ -254,20 +312,13 @@ func AppendOneOfToJsonSchema(baseConfig interface{}, anyOf map[string]interface{
 // AppendMapToJsonSchema generates a jsonschema based on a baseConfig and then append a map of properties using the mapConfig.
 func AppendMapToJsonSchema(baseConfig interface{}, mapConfig map[string]interface{}) *jschema.Schema {
 
-	var err error
-	var commentMap map[string]string
-
-	// Retrieve Updatecli code comments
-	commentMap, err = GetPackageComments(commentDir)
-
-	if err != nil {
-		logrus.Errorf("retrieve code comments: %s", err.Error())
-		return nil
-	}
-
 	if baseConfig == nil {
 		return nil
 	}
+
+	// Retrieve Updatecli code comments, they only populate the "description" fields so
+	// an empty map still produces a usable schema.
+	commentMap := getCommentMap()
 
 	r := new(jschema.Reflector)
 

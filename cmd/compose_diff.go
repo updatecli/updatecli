@@ -47,6 +47,8 @@ var (
 			e.Options.Pipeline.Target.Clean = composeCmdClean
 			e.Options.Pipeline.Target.DryRun = true
 			e.Options.Pipeline.DisableChangelog = disableChangelog
+			e.Options.Config.ValidateSchema = validateSchema
+			compose.ValidateSchema = validateSchema
 
 			err = run("compose/diff")
 			if err != nil {
@@ -68,6 +70,7 @@ func init() {
 	composeDiffCmd.Flags().StringArrayVar(&composeDiffIgnoredPolicyIDs, "ignored-policy-ids", []string{}, "Filter policies to ignore by their policy IDs, accepted as a comma separated list")
 
 	addDisableChangelogFlag(composeDiffCmd, &disableChangelog)
+	addValidateSchemaFlag(composeDiffCmd, &validateSchema)
 	addExportReportToYAMLFlag(composeDiffCmd, &exportReportToYAML)
 	addDisableUdashReportFlag(composeDiffCmd, &disableUdashReport)
 

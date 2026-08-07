@@ -152,12 +152,10 @@ func (c *Config) AutoGuess(configName, workingDir string, gitHandler gitgeneric.
 	}
 }
 
-// JSONSchema implements the json schema interface to generate the "scm" jsonschema
-func (Config) JSONSchema() *jschema.Schema {
-
-	type configAlias Config
-
-	anyOfSpec := map[string]interface{}{
+// GetScmMapping returns the mapping between an scm kind and its specification.
+// Don't forget to update it when adding/updating/removing a supported scm kind.
+func GetScmMapping() map[string]interface{} {
+	return map[string]interface{}{
 		"azuredevops":       &azuredevops.Spec{},
 		"azuredevopssearch": &azuredevopssearch.Spec{},
 		"bitbucket":         &bitbucket.Spec{},
@@ -169,6 +167,12 @@ func (Config) JSONSchema() *jschema.Schema {
 		"githubsearch":      &githubsearch.Spec{},
 		"gitlabsearch":      &gitlabsearch.Spec{},
 	}
+}
 
-	return jsonschema.AppendOneOfToJsonSchema(configAlias{}, anyOfSpec)
+// JSONSchema implements the json schema interface to generate the "scm" jsonschema
+func (Config) JSONSchema() *jschema.Schema {
+
+	type configAlias Config
+
+	return jsonschema.AppendOneOfToJsonSchema(configAlias{}, GetScmMapping())
 }

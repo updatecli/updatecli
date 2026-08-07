@@ -25,6 +25,45 @@ import (
 
 // ReadConfigurations read every strategies configuration.
 //
+// detectManifests fills in the default manifest locations for a manifest source that
+// does not name any, and reports whether at least one manifest is available.
+//
+// Updatecli tries to load the file updatecli.yaml if no manifest was specified.
+// If updatecli.yaml doesn't exists then Updatecli parses the directory updatecli.d for
+// any manifests. If there is no manifests in the directory updatecli.d then Updatecli
+// returns no manifest files.
+func (e *Engine) detectManifests(i int) bool {
+	if len(e.Options.Manifests[i].Manifests) > 0 {
+		return true
+	}
+
+	// defaultManifestFilenames defines the default updatecli configuration filenames
+	defaultManifestFilenames := []string{"updatecli.yaml"}
+	if cmdoptions.Experimental {
+		defaultManifestFilenames = append(defaultManifestFilenames, "updatecli.cue")
+	}
+	// defaultManifestDirname defines the default updatecli manifest directory
+	defaultManifestDirname := "updatecli.d"
+
+	for _, filename := range defaultManifestFilenames {
+		if _, err := os.Stat(filename); err == nil {
+			logrus.Debugf("Default Updatecli manifest detected %q", filename)
+			e.Options.Manifests[i].Manifests = append(e.Options.Manifests[i].Manifests, filename)
+		}
+	}
+
+	if fs, err := os.Stat(defaultManifestDirname); err == nil {
+		if fs.IsDir() {
+			logrus.Debugf("Default Updatecli manifest directory detected %q", defaultManifestDirname)
+			e.Options.Manifests[i].Manifests = append(e.Options.Manifests[i].Manifests, defaultManifestDirname)
+		}
+	}
+
+	return len(e.Options.Manifests[i].Manifests) > 0
+}
+
+// LoadConfigurations loads every configuration files and initialize the pipelines
+//
 //nolint:funlen
 func (e *Engine) LoadConfigurations() error {
 	// Read every strategy files
@@ -33,39 +72,9 @@ func (e *Engine) LoadConfigurations() error {
 	ErrNoManifestDetectedCounter := 0
 
 	for i := range e.Options.Manifests {
-		// If no manifest file is specified, we try to detect one
-		if len(e.Options.Manifests[i].Manifests) == 0 {
-			// Updatecli tries to load the file updatecli.yaml if no manifest was specified
-			// If updatecli.yaml doesn't exists then Updatecli parses the directory updatecli.d for any manifests.
-			// if there is no manifests in the directory updatecli.d then Updatecli returns no manifest files.
-
-			// defaultManifestFilenames defines the default updatecli configuration filenames
-			defaultManifestFilenames := []string{"updatecli.yaml"}
-			if cmdoptions.Experimental {
-				defaultManifestFilenames = append(defaultManifestFilenames, "updatecli.cue")
-			}
-			// defaultManifestDirname defines the default updatecli manifest directory
-			defaultManifestDirname := "updatecli.d"
-
-			// If no manifest file is specified, we try to detect one
-			for _, filename := range defaultManifestFilenames {
-				if _, err := os.Stat(filename); err == nil {
-					logrus.Debugf("Default Updatecli manifest detected %q", filename)
-					e.Options.Manifests[i].Manifests = append(e.Options.Manifests[i].Manifests, filename)
-				}
-			}
-
-			if fs, err := os.Stat(defaultManifestDirname); err == nil {
-				if fs.IsDir() {
-					logrus.Debugf("Default Updatecli manifest directory detected %q", defaultManifestDirname)
-					e.Options.Manifests[i].Manifests = append(e.Options.Manifests[i].Manifests, defaultManifestDirname)
-				}
-			}
-
-			if len(e.Options.Manifests[i].Manifests) == 0 {
-				ErrNoManifestDetectedCounter++
-				continue
-			}
+		if !e.detectManifests(i) {
+			ErrNoManifestDetectedCounter++
+			continue
 		}
 
 		manifestFiles, manifestPartials := sanitizeUpdatecliManifestFilePath(e.Options.Manifests[i].Manifests)
@@ -93,6 +102,7 @@ func (e *Engine) LoadConfigurations() error {
 					ValuesFiles:       e.Options.Manifests[i].Values,
 					ValuesInline:      e.Options.Manifests[i].ValuesInline,
 					DisableTemplating: e.Options.Config.DisableTemplating,
+					ValidateSchema:    e.Options.Config.ValidateSchema,
 				},
 				e.Options.PipelineIDs,
 				e.Options.Labels,
