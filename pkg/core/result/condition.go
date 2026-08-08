@@ -14,6 +14,12 @@ type Condition struct {
 			* "SKIPPED"
 	*/
 	Result string
+	// IsRun reports whether the pipeline has finalized this condition, meaning it
+	// either executed or was explicitly skipped through a dependsOn condition.
+	// It distinguishes a condition still pending execution (Result defaults to
+	// SKIPPED while IsRun is false) from one that actually ran or was
+	// deliberately skipped (IsRun is true).
+	IsRun bool
 	// Pass stores the information detected by the condition execution.
 	Pass bool
 	// Description stores the condition execution description.
