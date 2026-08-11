@@ -16,6 +16,7 @@ go test
 ### Checklist
 
 - [ ] <!-- If applicable,--> I have updated the documentation via pull request in [website](https://github.com/updatecli/website) repository.
+- [ ] <!-- If applicable,--> I have tested this pull request manually with a custom Updatecli build and it works as expected.
 
 ### Tradeoff
 
