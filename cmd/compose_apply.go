@@ -6,6 +6,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/updatecli/updatecli/pkg/core/compose"
+	"github.com/updatecli/updatecli/pkg/core/engine/manifest"
 )
 
 var (
@@ -14,25 +15,37 @@ var (
 	composeApplyPush             bool
 	composeApplyCleanGitBranches bool
 	composeApplyExistingOnly     bool
+	composeApplyOnlyPolicyIDs    []string
+	composeApplyIgnoredPolicyIDs []string
 
 	composeApplyCmd = &cobra.Command{
 		Use:   "apply",
 		Short: "apply checks and apply changes defined by the compose file",
 		Run: func(cmd *cobra.Command, args []string) {
 
-			c, err := compose.New(composeCmdFile)
+			composeFiles, err := compose.New(composeCmdFile, map[string]bool{})
 			if err != nil {
 				logrus.Errorf("command failed: %s", err)
 				os.Exit(1)
 			}
 
-			policies, err := c.GetPolicies(disableTLS)
-			if err != nil {
-				logrus.Errorf("command failed: %s", err)
-				os.Exit(1)
+			manifests := []manifest.Manifest{}
+			for i := range composeFiles {
+				c := composeFiles[i]
+				policies, err := c.GetPolicies(
+					disableTLS,
+					parseParametersList(composeApplyOnlyPolicyIDs),
+					parseParametersList(composeApplyIgnoredPolicyIDs),
+				)
+				if err != nil {
+					logrus.Errorf("command failed: %s", err)
+					os.Exit(1)
+				}
+
+				manifests = append(manifests, policies...)
 			}
 
-			e.Options.Manifests = append(e.Options.Manifests, policies...)
+			e.Options.Manifests = append(e.Options.Manifests, manifests...)
 
 			e.Options.Pipeline.Target.Commit = composeApplyCommit
 			e.Options.Pipeline.Target.Push = composeApplyPush
@@ -40,6 +53,9 @@ var (
 			e.Options.Pipeline.Target.DryRun = false
 			e.Options.Pipeline.Target.CleanGitBranches = composeApplyCleanGitBranches
 			e.Options.Pipeline.Target.ExistingOnly = composeApplyExistingOnly
+			e.Options.Pipeline.DisableChangelog = disableChangelog
+			e.Options.Config.ValidateSchema = validateSchema
+			compose.ValidateSchema = validateSchema
 
 			err = run("compose/apply")
 			if err != nil {
@@ -61,6 +77,13 @@ func init() {
 	composeApplyCmd.Flags().BoolVar(&composeApplyCleanGitBranches, "clean-git-branches", false, "Remove git branches created by updatecli like '--clean-git-branches=true'")
 	composeApplyCmd.Flags().StringArrayVar(&pipelineIds, "pipeline-ids", []string{}, "Filter pipelines to apply by their pipeline IDs, accepted as a comma separated list")
 	composeApplyCmd.Flags().StringArrayVar(&labels, "labels", []string{}, "Filter pipelines to apply by their labels, accepted as a comma separated list (key:value)")
+	composeApplyCmd.Flags().StringArrayVar(&composeApplyOnlyPolicyIDs, "only-policy-ids", []string{}, "Filter policies to apply by their policy IDs, accepted as a comma separated list")
+	composeApplyCmd.Flags().StringArrayVar(&composeApplyIgnoredPolicyIDs, "ignored-policy-ids", []string{}, "Filter policies to ignore by their policy IDs, accepted as a comma separated list")
+
+	addDisableChangelogFlag(composeApplyCmd, &disableChangelog)
+	addValidateSchemaFlag(composeApplyCmd, &validateSchema)
+	addExportReportToYAMLFlag(composeApplyCmd, &exportReportToYAML)
+	addDisableUdashReportFlag(composeApplyCmd, &disableUdashReport)
 
 	composeCmd.AddCommand(composeApplyCmd)
 }

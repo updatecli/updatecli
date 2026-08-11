@@ -4,18 +4,16 @@ extend-exclude = [
   "go.sum",
   "go.1.mod",
   "vale",
-  "_typos.toml"
+  "_typos.toml",
+  "e2e/updatecli.d/invalid.d/typos.yaml",
+  "pkg/core/config/schemavalidate_test.go",
+  "pkg/core/jsonschema/validate.go",
+  "pkg/core/jsonschema/compile_test.go",
+  "pkg/core/compose/schemavalidate_test.go",
 ]
 
 [default]
-extend-ignore-re = [
-    "lQOs.*",
-    "lIYEY.*",
-    "mDMEYi.*",
-    "WRONLY",
-    "nce",
-    "Gti"
-]
+extend-ignore-re = ["lQOs.*", "lIYEY.*", "mDMEYi.*", "WRONLY", "nce", "Gti"]
 
 [default.extend-words]
 # Don't correct the surname "Teh"

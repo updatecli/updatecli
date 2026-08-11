@@ -5,23 +5,18 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/core/cmdoptions"
 )
 
 // exportReportToYAML is a function that exports the report of the pipeline to a specified format and location.
-func (e *Engine) exportReportToYAML(filenameTimestamp bool) error {
+func (e *Engine) exportReportToYAML() error {
 	errs := []string{}
 
-	if !cmdoptions.Experimental {
-		return nil
-	}
-
-	logrus.Infof("\n\n%s\n", strings.ToTitle("Report - Experimental"))
-	logrus.Infof("%s\n\n", strings.Repeat("=", len("Report - Experimental")+1))
+	logrus.Infof("\n\n%s\n", strings.ToTitle("Report"))
+	logrus.Infof("%s\n\n", strings.Repeat("=", len("Report")+1))
 
 	for id := range e.Pipelines {
 		pipeline := e.Pipelines[id]
-		reportFilepath, err := pipeline.Report.ExportToYAML("", filenameTimestamp)
+		reportFilepath, err := pipeline.Report.ExportToYAML("")
 		if err != nil {
 			errs = append(errs, pipeline.Name+err.Error())
 		}

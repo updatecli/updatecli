@@ -1,14 +1,15 @@
 package release
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
-func (g *Gitea) Source(workingDir string, resultSource *result.Source) error {
-	versions, err := g.SearchReleases()
+func (g *Gitea) Source(ctx context.Context, workingDir string, resultSource *result.Source) error {
+	versions, err := g.SearchReleases(ctx)
 
 	if err != nil {
 		return fmt.Errorf("search gitea release: %w", err)

@@ -1,6 +1,7 @@
 package cargopackage
 
 import (
+	"context"
 	"os"
 	"testing"
 
@@ -171,7 +172,7 @@ func TestCondition(t *testing.T) {
 				got.webClient = GetMockClient(tt.mockedUrl, tt.mockedToken, tt.mockedBody, tt.mockedHTTPStatusCode, tt.mockedHeaderFormat)
 			}
 
-			gotPass, _, gotErr := got.Condition("", nil)
+			gotPass, _, gotErr := got.Condition(context.Background(), "", nil)
 			if tt.expectedError {
 				assert.Error(t, gotErr)
 				return

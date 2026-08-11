@@ -2,11 +2,11 @@ package gomodule
 
 import (
 	"io"
-	"net/http"
 	"net/url"
 	"strings"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/httpclient"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	githubChangelog "github.com/updatecli/updatecli/pkg/plugins/changelog/github/v3"
 	"golang.org/x/net/html"
@@ -60,7 +60,7 @@ func getChangelogFromProxy(module, from, to string) *result.Changelogs {
 	query.Set("go-get", "1")
 	URL.RawQuery = query.Encode()
 
-	httpClient := &http.Client{}
+	httpClient := httpclient.NewRetryClient()
 
 	res, err := httpClient.Get(URL.String())
 	if err != nil {

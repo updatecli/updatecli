@@ -1,13 +1,14 @@
 package gittag
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 // Source returns the latest git tag based on create time
-func (gt *GitTag) Source(workingDir string, resultSource *result.Source) error {
+func (gt *GitTag) Source(_ context.Context, workingDir string, resultSource *result.Source) error {
 	var err error
 
 	gt.directory = workingDir

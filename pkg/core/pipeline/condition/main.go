@@ -2,6 +2,7 @@ package condition
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"io"
 	"os"
@@ -45,7 +46,7 @@ type Config struct {
 }
 
 // Run tests if a specific condition is true
-func (c *Condition) Run(source string) (err error) {
+func (c *Condition) Run(ctx context.Context, source string) (err error) {
 
 	var consoleOutput bytes.Buffer
 	// By default logrus logs to stderr, so I guess we want to keep this behavior...
@@ -87,7 +88,7 @@ func (c *Condition) Run(source string) (err error) {
 		}
 	}
 
-	ok, message, err := condition.Condition(source, s)
+	ok, message, err := condition.Condition(ctx, source, s)
 	if ok {
 		c.Result.Result = result.SUCCESS
 		c.Result.Pass = true

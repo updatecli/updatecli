@@ -4,6 +4,7 @@ import (
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
+	"github.com/updatecli/updatecli/pkg/core/httpclient"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/docker"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
@@ -202,6 +203,7 @@ func New(spec interface{}) (*Chart, error) {
 	keychains = append(keychains, authn.DefaultKeychain)
 
 	newResource.options = append(newResource.options, remote.WithAuthFromKeychain(authn.NewMultiKeychain(keychains...)))
+	newResource.options = append(newResource.options, remote.WithTransport(httpclient.ProxyOnlyTransport()))
 
 	return newResource, nil
 }

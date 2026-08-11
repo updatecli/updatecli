@@ -1,6 +1,7 @@
 package helm
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -80,7 +81,7 @@ func TestSource(t *testing.T) {
 			require.NoError(t, err)
 
 			gotResult := result.Source{}
-			err = got.Source("", &gotResult)
+			err = got.Source(context.Background(), "", &gotResult)
 
 			switch tt.expectedError {
 			case true:

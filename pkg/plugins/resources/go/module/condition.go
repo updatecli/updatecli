@@ -1,13 +1,18 @@
 package gomodule
 
 import (
+	"context"
 	"fmt"
+	"os"
+	"strings"
+	"time"
 
+	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 )
 
 // Condition checks if a go module with a specific version is published
-func (g *GoModule) Condition(source string, scm scm.ScmHandler) (pass bool, message string, err error) {
+func (g *GoModule) Condition(ctx context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 	versionToCheck := g.Spec.Version
 	if versionToCheck == "" {
 		versionToCheck = source
@@ -16,13 +21,47 @@ func (g *GoModule) Condition(source string, scm scm.ScmHandler) (pass bool, mess
 		return false, "", fmt.Errorf("no version defined")
 	}
 
-	_, versions, err := g.versions()
-	if err != nil {
-		return false, "", fmt.Errorf("searching version: %w", err)
+	var GOPROXY string
+	if g.Spec.Proxy != "" {
+		GOPROXY = g.Spec.Proxy
+	} else if os.Getenv("GOPROXY") != "" {
+		GOPROXY = os.Getenv("GOPROXY")
+	} else {
+		GOPROXY = goModuleDefaultProxy
 	}
 
-	for _, v := range versions {
-		if v == versionToCheck {
+	for _, proxy := range strings.Split(GOPROXY, ",") {
+		proxy = strings.TrimSpace(proxy)
+		if !isSupportedGoProxy(proxy) {
+			continue
+		}
+		versionInfo, err := getVersionInfoFromProxy(ctx, g.webClient, proxy, g.Spec.Module, versionToCheck)
+		if err != nil {
+			logrus.Debugf("skipping proxy %q due to %q\n", proxy, err)
+			continue
+		}
+
+		switch g.Spec.Age.IsZero() {
+		case true:
+			if versionInfo.Version != "" {
+				return true, fmt.Sprintf("version %q available", versionToCheck), nil
+			}
+		case false:
+			releaseDate, err := time.Parse(time.RFC3339, versionInfo.Time)
+			if err != nil {
+				logrus.Debugf("failed to parse release date for version %q from proxy %q: %v\n", versionToCheck, proxy, err)
+				continue
+			}
+			if g.Spec.Age.Minimum != "" && g.Spec.Age.IsOlderThan(releaseDate, nil) {
+				logrus.Debugf("ignoring	version %q from proxy %q because its age is below %q (released on %s)\n", versionToCheck, proxy, g.Spec.Age.Minimum, releaseDate)
+				continue
+			}
+
+			if g.Spec.Age.Maximum != "" && g.Spec.Age.IsNewerThan(releaseDate, nil) {
+				logrus.Debugf("ignoring version %q from proxy %q because its age is above %q (released on %s)\n", versionToCheck, proxy, g.Spec.Age.Maximum, releaseDate)
+				continue
+			}
+
 			return true, fmt.Sprintf("version %q available", versionToCheck), nil
 		}
 	}

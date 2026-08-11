@@ -2,6 +2,7 @@ package helm
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"path/filepath"
 
@@ -13,7 +14,7 @@ import (
 
 // Target updates helm chart, it receives the default source value and a "dry-run" flag
 // then return if it changed something or failed
-func (c *Chart) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
+func (c *Chart) Target(ctx context.Context, source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
 	var out bytes.Buffer
 	err := c.ValidateTarget()
 	if err != nil {
@@ -34,7 +35,7 @@ func (c *Chart) Target(source string, scm scm.ScmHandler, dryRun bool, resultTar
 		return err
 	}
 
-	err = yamlResource.Target(source, scm, dryRun, resultTarget)
+	err = yamlResource.Target(ctx, source, scm, dryRun, resultTarget)
 
 	if err != nil {
 		return fmt.Errorf("unable to update chart %s: %s", c.spec.Name, err)
@@ -45,7 +46,7 @@ func (c *Chart) Target(source string, scm scm.ScmHandler, dryRun bool, resultTar
 		chartPath = filepath.Join(scm.GetDirectory(), c.spec.Name)
 	}
 
-	err = c.MetadataUpdate(resultTarget.NewInformation, scm, dryRun, resultTarget)
+	err = c.MetadataUpdate(ctx, resultTarget.NewInformation, scm, dryRun, resultTarget)
 	if err != nil {
 		return fmt.Errorf("unable to update chart metadata: %s", err)
 	}

@@ -1,6 +1,7 @@
 package yaml
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -142,6 +143,26 @@ annotations:
 github:
   owner: olblak
   repository: charts
+`,
+			},
+			isResultWanted: true,
+		},
+		{
+			name: "Passing Case with quoted version string",
+			spec: Spec{
+				File: "test.yaml",
+				Key:  "$.version",
+			},
+			files: map[string]file{
+				"test.yaml": {
+					originalFilePath: "test.yaml",
+					filePath:         "test.yaml",
+				},
+			},
+			inputSourceValue: "4.3.1",
+			mockedContents: map[string]string{
+				"test.yaml": `---
+version: "4.3.1"
 `,
 			},
 			isResultWanted: true,
@@ -622,7 +643,7 @@ repos:
 
 			assert.NoError(t, err)
 
-			gotResult, _, gotErr := y.Condition(tt.inputSourceValue, nil)
+			gotResult, _, gotErr := y.Condition(context.Background(), tt.inputSourceValue, nil)
 			if tt.isErrorWanted {
 				assert.Error(t, gotErr)
 				return

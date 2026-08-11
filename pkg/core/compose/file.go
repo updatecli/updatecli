@@ -58,16 +58,13 @@ func LoadFile(filename string) (*Spec, error) {
 		return nil, fmt.Errorf("parsing Updatecli compose file %q: %s", filename, err)
 	}
 
-	// Ensure that any relative file path is relative to the compose file
-	sanitizePath := func(path []string) {
-		for i := range path {
-			if !filepath.IsAbs(path[i]) {
-				path[i] = filepath.Join(filepath.Dir(filename), path[i])
-			}
-		}
+	// Reported before the spec is post-processed, so that a problem points at what the
+	// compose file actually says rather than at a value Updatecli defaulted.
+	if ValidateSchema {
+		validateSchema(filename, composeFileByte)
 	}
 
-	sanitizePath(composeSpec.Env_files)
+	composeSpec.Env_files = relativePathToFile(filename, composeSpec.Env_files)
 
 	for i := range composeSpec.Policies {
 		if composeSpec.Policies[i].Name == "" {
@@ -76,10 +73,21 @@ func LoadFile(filename string) (*Spec, error) {
 				composeSpec.Policies[i].Name = fmt.Sprintf("policy-%d- %s", i, composeSpec.Policies[i].Policy)
 			}
 		}
-		sanitizePath(composeSpec.Policies[i].Config)
-		sanitizePath(composeSpec.Policies[i].Values)
-		sanitizePath(composeSpec.Policies[i].Secrets)
+		composeSpec.Policies[i].Config = relativePathToFile(filename, composeSpec.Policies[i].Config)
+		composeSpec.Policies[i].Values = relativePathToFile(filename, composeSpec.Policies[i].Values)
+		composeSpec.Policies[i].Secrets = relativePathToFile(filename, composeSpec.Policies[i].Secrets)
 	}
 
 	return &composeSpec, nil
+}
+
+func relativePathToFile(configFileName string, paths []string) []string {
+	for i := range paths {
+		if filepath.IsAbs(paths[i]) {
+			continue
+		}
+		paths[i] = filepath.Join(filepath.Dir(configFileName), paths[i])
+	}
+
+	return paths
 }

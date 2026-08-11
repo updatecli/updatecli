@@ -82,7 +82,9 @@ func getManifestData[T any](filename, logPrefix string) (map[int]*T, error) {
 			return nil, fmt.Errorf("parsing yaml file %q: %w", filename, err)
 		}
 
-		result[docNum-1] = data
+		if data != nil {
+			result[docNum-1] = data
+		}
 		docNum++
 	}
 

@@ -1,6 +1,7 @@
 package registry
 
 import (
+	"context"
 	"io"
 	"net/http"
 	"strings"
@@ -106,7 +107,7 @@ func TestRegistryAddressAPI(t *testing.T) {
 				},
 			}
 
-			got, err := newRegistryAddress(webClient, tt.spec)
+			got, err := newRegistryAddress(context.Background(), webClient, tt.spec)
 			require.NoError(t, err)
 
 			assert.Equal(t, tt.expectedResult, got.API())

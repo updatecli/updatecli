@@ -12,7 +12,7 @@ import (
 )
 
 // Target ensure that a specific release exist on GitLab, otherwise creates it
-func (g Gitlab) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
+func (g Gitlab) Target(ctx context.Context, source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
 	if len(g.spec.Tag) == 0 {
 		g.spec.Tag = source
 	}
@@ -30,7 +30,6 @@ func (g Gitlab) Target(source string, scm scm.ScmHandler, dryRun bool, resultTar
 
 	// Ensure that a release doesn't exist yet
 
-	ctx := context.Background()
 	// Timeout api query after 30 second
 	ctx, cancelListQuery := context.WithTimeout(ctx, 30*time.Second)
 	defer cancelListQuery()

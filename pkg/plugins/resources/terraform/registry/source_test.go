@@ -1,6 +1,7 @@
 package registry
 
 import (
+	"context"
 	"io"
 	"net/http"
 	"strings"
@@ -60,7 +61,7 @@ func TestSource(t *testing.T) {
 			}
 
 			gotResult := result.Source{}
-			err = got.Source("", &gotResult)
+			err = got.Source(context.Background(), "", &gotResult)
 
 			if tt.expectedError {
 				assert.Error(t, err)

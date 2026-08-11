@@ -24,10 +24,6 @@ func (c *Chart) ValidateTarget() error {
 		c.spec.File = "values.yaml"
 	}
 
-	if len(c.spec.Name) == 0 {
-		errs = append(errs, errors.New("parameter name required"))
-	}
-
 	if len(c.spec.Key) == 0 {
 		errs = append(errs, errors.New("parameter key required"))
 	}

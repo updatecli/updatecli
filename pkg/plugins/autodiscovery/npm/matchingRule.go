@@ -1,6 +1,7 @@
 package npm
 
 import (
+	"fmt"
 	"path/filepath"
 
 	"github.com/Masterminds/semver/v3"
@@ -18,6 +19,17 @@ type MatchingRule struct {
 }
 
 type MatchingRules []MatchingRule
+
+// Validate checks that each matching rule has at least one non-empty field.
+// Returns an error if any rule has no valid fields specified.
+func (m MatchingRules) Validate() error {
+	for i, rule := range m {
+		if rule.Path == "" && len(rule.Packages) == 0 && rule.HasVersionConstraint == nil {
+			return fmt.Errorf("rule %d has no valid fields (path, packages, or hasVersionConstraint must be specified)", i+1)
+		}
+	}
+	return nil
+}
 
 // isMatchingRules checks if a specific file content matches the "only" rule
 func (m MatchingRules) isMatchingRules(rootDir, filePath, packageName, packageVersion string) bool {

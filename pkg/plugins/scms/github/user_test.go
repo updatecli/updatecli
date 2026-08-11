@@ -1,6 +1,7 @@
 package github
 
 import (
+	"context"
 	"os"
 	"testing"
 
@@ -45,7 +46,7 @@ func TestGetUserInfo(t *testing.T) {
 		require.NoError(t, err)
 
 		// Call the GetUser function with a specific username
-		gotUserInfo, err := getUserInfo(g.client, tt.user, 0)
+		gotUserInfo, err := getUserInfo(context.Background(), g.client, tt.user, 0)
 
 		if tt.expectedError {
 			assert.Equal(t, tt.expectedErrorMessage, err.Error())

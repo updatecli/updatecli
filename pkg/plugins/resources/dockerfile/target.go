@@ -1,6 +1,7 @@
 package dockerfile
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 	"sort"
@@ -12,7 +13,7 @@ import (
 )
 
 // Target updates a targeted Dockerfile from source control management system
-func (d *Dockerfile) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) (err error) {
+func (d *Dockerfile) Target(_ context.Context, source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) (err error) {
 	// At the moment, this plugin does not return the currently used value
 	// This could be a useful improvement for the source
 	resultTarget.Information = "unknown"

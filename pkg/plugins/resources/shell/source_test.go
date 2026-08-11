@@ -1,6 +1,7 @@
 package shell
 
 import (
+	"context"
 	"crypto/sha256"
 	"fmt"
 	"io"
@@ -102,7 +103,7 @@ func TestShell_Source(t *testing.T) {
 			require.NoError(t, gotErr)
 
 			gotResult := result.Source{}
-			err := s.Source(tt.workingDir, &gotResult)
+			err := s.Source(context.Background(), tt.workingDir, &gotResult)
 
 			if tt.wantErr {
 				assert.Error(t, err)

@@ -10,8 +10,6 @@ import (
 )
 
 var (
-	pipelinePrepareClean bool
-
 	pipelinePrepareCmd = &cobra.Command{
 		Args:  cobra.MatchAll(cobra.MaximumNArgs(1)),
 		Use:   "prepare NAME[:TAG|@DIGEST]",
@@ -25,12 +23,13 @@ var (
 			}
 
 			e.Options.Manifests = append(e.Options.Manifests, manifest.Manifest{
-				Manifests: manifestFiles,
-				Values:    valuesFiles,
-				Secrets:   secretsFiles,
+				Manifests:    manifestFiles,
+				Values:       valuesFiles,
+				ValuesInline: valuesInline,
+				Secrets:      secretsFiles,
 			})
 
-			e.Options.Pipeline.Target.Clean = pipelinePrepareClean
+			e.Options.Pipeline.Target.Clean = prepareClean
 
 			err = run("pipeline/prepare")
 			if err != nil {
@@ -44,8 +43,9 @@ var (
 func init() {
 	pipelinePrepareCmd.Flags().StringArrayVarP(&manifestFiles, "config", "c", []string{}, "Sets config file or directory. By default, Updatecli looks for a file named 'updatecli.yaml' or a directory named 'updatecli.d'")
 	pipelinePrepareCmd.Flags().StringArrayVarP(&valuesFiles, "values", "v", []string{}, "Sets values file uses for templating")
+	pipelinePrepareCmd.Flags().StringArrayVarP(&valuesInline, "values-inline", "i", []string{}, "Sets inline values uses for templating, accepted valid json/yaml string")
 	pipelinePrepareCmd.Flags().StringArrayVar(&secretsFiles, "secrets", []string{}, "Sets Sops secrets file uses for templating")
-	pipelinePrepareCmd.Flags().BoolVar(&pipelinePrepareClean, "clean", false, "Remove updatecli working directory like '--clean=true")
+	pipelinePrepareCmd.Flags().BoolVar(&prepareClean, "clean", false, "Remove updatecli working directory like '--clean=true")
 	pipelinePrepareCmd.Flags().BoolVar(&disableTLS, "disable-tls", false, "Disable TLS verification like '--disable-tls=true'")
 	pipelinePrepareCmd.Flags().StringArrayVar(&pipelineIds, "pipeline-ids", []string{}, "Filter pipelines to apply by their pipeline IDs, accepted a comma separated list")
 	pipelinePrepareCmd.Flags().StringArrayVar(&labels, "labels", []string{}, "Filter pipelines to apply by their labels, accepted as a comma separated list (key:value)")

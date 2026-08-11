@@ -42,7 +42,8 @@ sources:
     kind: 'toml'
     spec:
       file: 'Cargo.toml'
-      Key: 'dependencies.anyhow'
+      key: 'get("dependencies").get("anyhow")'
+      engine: 'dasel'
 conditions:
   anyhow:
     name: 'Test if version of "anyhow" {{ source "anyhow-current-version" }} differs from {{ source "anyhow" }}'
@@ -56,7 +57,8 @@ targets:
     kind: 'toml'
     spec:
       file: 'Cargo.toml'
-      key: 'dependencies.anyhow'
+      key: 'get("dependencies").get("anyhow")'
+      engine: 'dasel'
     sourceid: 'anyhow'
 `, `name: 'deps(cargo): bump dependency "rand" for "test-crate" crate'
 sources:
@@ -73,7 +75,8 @@ sources:
     kind: 'toml'
     spec:
       file: 'Cargo.toml'
-      Key: 'dependencies.rand.version'
+      key: 'get("dependencies").get("rand").version'
+      engine: 'dasel'
 conditions:
   rand:
     name: 'Test if version of "rand" {{ source "rand-current-version" }} differs from {{ source "rand" }}'
@@ -87,7 +90,8 @@ targets:
     kind: 'toml'
     spec:
       file: 'Cargo.toml'
-      key: 'dependencies.rand.version'
+      key: 'get("dependencies").get("rand").version'
+      engine: 'dasel'
     sourceid: 'rand'
 `, `name: 'deps(cargo): bump build dependency "built" for "test-crate" crate'
 sources:
@@ -104,7 +108,8 @@ sources:
     kind: 'toml'
     spec:
       file: 'Cargo.toml'
-      Key: 'build-dependencies.built'
+      key: 'get("build-dependencies").get("built")'
+      engine: 'dasel'
 conditions:
   built:
     name: 'Test if version of "built" {{ source "built-current-version" }} differs from {{ source "built" }}'
@@ -118,7 +123,8 @@ targets:
     kind: 'toml'
     spec:
       file: 'Cargo.toml'
-      key: 'build-dependencies.built'
+      key: 'get("build-dependencies").get("built")'
+      engine: 'dasel'
     sourceid: 'built'
 `, `name: 'deps(cargo): bump dev dependency "futures" for "test-crate" crate'
 sources:
@@ -135,7 +141,8 @@ sources:
     kind: 'toml'
     spec:
       file: 'Cargo.toml'
-      Key: 'dev-dependencies.futures.version'
+      key: 'get("dev-dependencies").get("futures").version'
+      engine: 'dasel'
 conditions:
   futures:
     name: 'Test if version of "futures" {{ source "futures-current-version" }} differs from {{ source "futures" }}'
@@ -149,7 +156,8 @@ targets:
     kind: 'toml'
     spec:
       file: 'Cargo.toml'
-      key: 'dev-dependencies.futures.version'
+      key: 'get("dev-dependencies").get("futures").version'
+      engine: 'dasel'
     sourceid: 'futures'
 `},
 		},
@@ -173,7 +181,8 @@ sources:
     kind: 'toml'
     spec:
       file: 'Cargo.toml'
-      Key: 'dependencies.anyhow'
+      key: 'get("dependencies").get("anyhow")'
+      engine: 'dasel'
 conditions:
   anyhow:
     name: 'Test if version of "anyhow" {{ source "anyhow-current-version" }} differs from {{ source "anyhow" }}'
@@ -187,7 +196,8 @@ targets:
     kind: 'toml'
     spec:
       file: 'Cargo.toml'
-      key: 'dependencies.anyhow'
+      key: 'get("dependencies").get("anyhow")'
+      engine: 'dasel'
     sourceid: 'anyhow'
 `, `name: 'deps(cargo): bump dependency "rand" for "test-crate" crate'
 sources:
@@ -204,7 +214,8 @@ sources:
     kind: 'toml'
     spec:
       file: 'Cargo.toml'
-      Key: 'dependencies.rand.version'
+      key: 'get("dependencies").get("rand").version'
+      engine: 'dasel'
 conditions:
   rand:
     name: 'Test if version of "rand" {{ source "rand-current-version" }} differs from {{ source "rand" }}'
@@ -218,7 +229,8 @@ targets:
     kind: 'toml'
     spec:
       file: 'Cargo.toml'
-      key: 'dependencies.rand.version'
+      key: 'get("dependencies").get("rand").version'
+      engine: 'dasel'
     sourceid: 'rand'
 `, `name: 'deps(cargo): bump build dependency "built" for "test-crate" crate'
 sources:
@@ -235,7 +247,8 @@ sources:
     kind: 'toml'
     spec:
       file: 'Cargo.toml'
-      Key: 'build-dependencies.built'
+      key: 'get("build-dependencies").get("built")'
+      engine: 'dasel'
 conditions:
   built:
     name: 'Test if version of "built" {{ source "built-current-version" }} differs from {{ source "built" }}'
@@ -249,7 +262,8 @@ targets:
     kind: 'toml'
     spec:
       file: 'Cargo.toml'
-      key: 'build-dependencies.built'
+      key: 'get("build-dependencies").get("built")'
+      engine: 'dasel'
     sourceid: 'built'
 `, `name: 'deps(cargo): bump dev dependency "futures" for "test-crate" crate'
 sources:
@@ -266,7 +280,8 @@ sources:
     kind: 'toml'
     spec:
       file: 'Cargo.toml'
-      Key: 'dev-dependencies.futures.version'
+      key: 'get("dev-dependencies").get("futures").version'
+      engine: 'dasel'
 conditions:
   futures:
     name: 'Test if version of "futures" {{ source "futures-current-version" }} differs from {{ source "futures" }}'
@@ -280,7 +295,8 @@ targets:
     kind: 'toml'
     spec:
       file: 'Cargo.toml'
-      key: 'dev-dependencies.futures.version'
+      key: 'get("dev-dependencies").get("futures").version'
+      engine: 'dasel'
     sourceid: 'futures'
 `},
 		},
@@ -304,7 +320,8 @@ sources:
     kind: 'toml'
     spec:
       file: 'Cargo.toml'
-      Key: 'dependencies.anyhow'
+      key: 'get("dependencies").get("anyhow")'
+      engine: 'dasel'
 conditions:
   anyhow:
     name: 'Test if version of "anyhow" {{ source "anyhow-current-version" }} differs from {{ source "anyhow" }}'
@@ -344,7 +361,8 @@ sources:
     kind: 'toml'
     spec:
       file: 'Cargo.toml'
-      Key: 'dependencies.rand.version'
+      key: 'get("dependencies").get("rand").version'
+      engine: 'dasel'
 conditions:
   rand:
     name: 'Test if version of "rand" {{ source "rand-current-version" }} differs from {{ source "rand" }}'
@@ -384,7 +402,8 @@ sources:
     kind: 'toml'
     spec:
       file: 'Cargo.toml'
-      Key: 'build-dependencies.built'
+      key: 'get("build-dependencies").get("built")'
+      engine: 'dasel'
 conditions:
   built:
     name: 'Test if version of "built" {{ source "built-current-version" }} differs from {{ source "built" }}'
@@ -424,7 +443,8 @@ sources:
     kind: 'toml'
     spec:
       file: 'Cargo.toml'
-      Key: 'dev-dependencies.futures.version'
+      key: 'get("dev-dependencies").get("futures").version'
+      engine: 'dasel'
 conditions:
   futures:
     name: 'Test if version of "futures" {{ source "futures-current-version" }} differs from {{ source "futures" }}'
@@ -478,7 +498,8 @@ sources:
     kind: 'toml'
     spec:
       file: 'Cargo.toml'
-      Key: 'dependencies.anyhow'
+      key: 'get("dependencies").get("anyhow")'
+      engine: 'dasel'
 conditions:
   anyhow:
     name: 'Test if version of "anyhow" {{ source "anyhow-current-version" }} differs from {{ source "anyhow" }}'
@@ -492,7 +513,8 @@ targets:
     kind: 'toml'
     spec:
       file: 'Cargo.toml'
-      key: 'dependencies.anyhow'
+      key: 'get("dependencies").get("anyhow")'
+      engine: 'dasel'
     sourceid: 'anyhow'
   lockfile:
     name: 'deps(cargo): update Cargo.lock following bump crate dependency "anyhow" to {{ source "anyhow" }}'
@@ -527,7 +549,8 @@ sources:
     kind: 'toml'
     spec:
       file: 'Cargo.toml'
-      Key: 'dependencies.rand.version'
+      key: 'get("dependencies").get("rand").version'
+      engine: 'dasel'
 conditions:
   rand:
     name: 'Test if version of "rand" {{ source "rand-current-version" }} differs from {{ source "rand" }}'
@@ -541,7 +564,8 @@ targets:
     kind: 'toml'
     spec:
       file: 'Cargo.toml'
-      key: 'dependencies.rand.version'
+      key: 'get("dependencies").get("rand").version'
+      engine: 'dasel'
     sourceid: 'rand'
   lockfile:
     name: 'deps(cargo): update Cargo.lock following bump crate dependency "rand" to {{ source "rand" }}'
@@ -576,7 +600,8 @@ sources:
     kind: 'toml'
     spec:
       file: 'Cargo.toml'
-      Key: 'dev-dependencies.futures.version'
+      key: 'get("dev-dependencies").get("futures").version'
+      engine: 'dasel'
 conditions:
   futures:
     name: 'Test if version of "futures" {{ source "futures-current-version" }} differs from {{ source "futures" }}'
@@ -590,7 +615,8 @@ targets:
     kind: 'toml'
     spec:
       file: 'Cargo.toml'
-      key: 'dev-dependencies.futures.version'
+      key: 'get("dev-dependencies").get("futures").version'
+      engine: 'dasel'
     sourceid: 'futures'
   lockfile:
     name: 'deps(cargo): update Cargo.lock following bump crate dev dependency "futures" to {{ source "futures" }}'
@@ -632,7 +658,8 @@ sources:
     kind: 'toml'
     spec:
       file: 'Cargo.toml'
-      Key: 'dependencies.anyhow'
+      key: 'get("dependencies").get("anyhow")'
+      engine: 'dasel'
 conditions:
   anyhow:
     name: 'Test if version of "anyhow" {{ source "anyhow-current-version" }} differs from {{ source "anyhow" }}'
@@ -674,7 +701,8 @@ sources:
     kind: 'toml'
     spec:
       file: 'Cargo.toml'
-      Key: 'dependencies.rand.version'
+      key: 'get("dependencies").get("rand").version'
+      engine: 'dasel'
 conditions:
   rand:
     name: 'Test if version of "rand" {{ source "rand-current-version" }} differs from {{ source "rand" }}'
@@ -716,7 +744,8 @@ sources:
     kind: 'toml'
     spec:
       file: 'Cargo.toml'
-      Key: 'dev-dependencies.futures.version'
+      key: 'get("dev-dependencies").get("futures").version'
+      engine: 'dasel'
 conditions:
   futures:
     name: 'Test if version of "futures" {{ source "futures-current-version" }} differs from {{ source "futures" }}'
@@ -765,7 +794,8 @@ sources:
     kind: 'toml'
     spec:
       file: 'Cargo.toml'
-      Key: 'workspace.dependencies.anyhow'
+      key: 'get("workspace.dependencies").get("anyhow")'
+      engine: 'dasel'
 conditions:
   anyhow:
     name: 'Test if version of "anyhow" {{ source "anyhow-current-version" }} differs from {{ source "anyhow" }}'
@@ -779,7 +809,8 @@ targets:
     kind: 'toml'
     spec:
       file: 'Cargo.toml'
-      key: 'workspace.dependencies.anyhow'
+      key: 'get("workspace.dependencies").get("anyhow")'
+      engine: 'dasel'
     sourceid: 'anyhow'
 `, `name: 'deps(cargo): bump workspace build dependency "built"'
 sources:
@@ -796,7 +827,8 @@ sources:
     kind: 'toml'
     spec:
       file: 'Cargo.toml'
-      Key: 'workspace.build-dependencies.built'
+      key: 'get("workspace.build-dependencies").get("built")'
+      engine: 'dasel'
 conditions:
   built:
     name: 'Test if version of "built" {{ source "built-current-version" }} differs from {{ source "built" }}'
@@ -810,7 +842,8 @@ targets:
     kind: 'toml'
     spec:
       file: 'Cargo.toml'
-      key: 'workspace.build-dependencies.built'
+      key: 'get("workspace.build-dependencies").get("built")'
+      engine: 'dasel'
     sourceid: 'built'
 `,
 				`name: 'deps(cargo): bump dependency "rand" for "simple_crate" crate'
@@ -828,7 +861,8 @@ sources:
     kind: 'toml'
     spec:
       file: 'crates/simple_crate/Cargo.toml'
-      Key: 'dependencies.rand.version'
+      key: 'get("dependencies").get("rand").version'
+      engine: 'dasel'
 conditions:
   rand:
     name: 'Test if version of "rand" {{ source "rand-current-version" }} differs from {{ source "rand" }}'
@@ -842,7 +876,8 @@ targets:
     kind: 'toml'
     spec:
       file: 'crates/simple_crate/Cargo.toml'
-      key: 'dependencies.rand.version'
+      key: 'get("dependencies").get("rand").version'
+      engine: 'dasel'
     sourceid: 'rand'
 `, `name: 'deps(cargo): bump dev dependency "futures" for "simple_crate" crate'
 sources:
@@ -859,7 +894,8 @@ sources:
     kind: 'toml'
     spec:
       file: 'crates/simple_crate/Cargo.toml'
-      Key: 'dev-dependencies.futures.version'
+      key: 'get("dev-dependencies").get("futures").version'
+      engine: 'dasel'
 conditions:
   futures:
     name: 'Test if version of "futures" {{ source "futures-current-version" }} differs from {{ source "futures" }}'
@@ -873,7 +909,8 @@ targets:
     kind: 'toml'
     spec:
       file: 'crates/simple_crate/Cargo.toml'
-      key: 'dev-dependencies.futures.version'
+      key: 'get("dev-dependencies").get("futures").version'
+      engine: 'dasel'
     sourceid: 'futures'
 `},
 		}, {
@@ -897,7 +934,8 @@ sources:
     kind: 'toml'
     spec:
       file: 'Cargo.toml'
-      Key: 'workspace.dependencies.anyhow'
+      key: 'get("workspace.dependencies").get("anyhow")'
+      engine: 'dasel'
 conditions:
   anyhow:
     name: 'Test if version of "anyhow" {{ source "anyhow-current-version" }} differs from {{ source "anyhow" }}'
@@ -911,7 +949,8 @@ targets:
     kind: 'toml'
     spec:
       file: 'Cargo.toml'
-      key: 'workspace.dependencies.anyhow'
+      key: 'get("workspace.dependencies").get("anyhow")'
+      engine: 'dasel'
     sourceid: 'anyhow'
 `, `name: 'deps(cargo): bump workspace build dependency "built"'
 sources:
@@ -928,7 +967,8 @@ sources:
     kind: 'toml'
     spec:
       file: 'Cargo.toml'
-      Key: 'workspace.build-dependencies.built'
+      key: 'get("workspace.build-dependencies").get("built")'
+      engine: 'dasel'
 conditions:
   built:
     name: 'Test if version of "built" {{ source "built-current-version" }} differs from {{ source "built" }}'
@@ -942,7 +982,8 @@ targets:
     kind: 'toml'
     spec:
       file: 'Cargo.toml'
-      key: 'workspace.build-dependencies.built'
+      key: 'get("workspace.build-dependencies").get("built")'
+      engine: 'dasel'
     sourceid: 'built'
 `,
 				`name: 'deps(cargo): bump dependency "rand" for "simple_crate" crate'
@@ -960,7 +1001,8 @@ sources:
     kind: 'toml'
     spec:
       file: 'crates/simple_crate/Cargo.toml'
-      Key: 'dependencies.rand.version'
+      key: 'get("dependencies").get("rand").version'
+      engine: 'dasel'
 conditions:
   rand:
     name: 'Test if version of "rand" {{ source "rand-current-version" }} differs from {{ source "rand" }}'
@@ -974,7 +1016,8 @@ targets:
     kind: 'toml'
     spec:
       file: 'crates/simple_crate/Cargo.toml'
-      key: 'dependencies.rand.version'
+      key: 'get("dependencies").get("rand").version'
+      engine: 'dasel'
     sourceid: 'rand'
 `, `name: 'deps(cargo): bump dev dependency "futures" for "simple_crate" crate'
 sources:
@@ -991,7 +1034,8 @@ sources:
     kind: 'toml'
     spec:
       file: 'crates/simple_crate/Cargo.toml'
-      Key: 'dev-dependencies.futures.version'
+      key: 'get("dev-dependencies").get("futures").version'
+      engine: 'dasel'
 conditions:
   futures:
     name: 'Test if version of "futures" {{ source "futures-current-version" }} differs from {{ source "futures" }}'
@@ -1005,7 +1049,8 @@ targets:
     kind: 'toml'
     spec:
       file: 'crates/simple_crate/Cargo.toml'
-      key: 'dev-dependencies.futures.version'
+      key: 'get("dev-dependencies").get("futures").version'
+      engine: 'dasel'
     sourceid: 'futures'
 `},
 		}, {
@@ -1028,7 +1073,8 @@ sources:
     kind: 'toml'
     spec:
       file: 'Cargo.toml'
-      Key: 'workspace.dependencies.anyhow'
+      key: 'get("workspace.dependencies").get("anyhow")'
+      engine: 'dasel'
 conditions:
   anyhow:
     name: 'Test if version of "anyhow" {{ source "anyhow-current-version" }} differs from {{ source "anyhow" }}'
@@ -1068,7 +1114,8 @@ sources:
     kind: 'toml'
     spec:
       file: 'Cargo.toml'
-      Key: 'workspace.build-dependencies.built'
+      key: 'get("workspace.build-dependencies").get("built")'
+      engine: 'dasel'
 conditions:
   built:
     name: 'Test if version of "built" {{ source "built-current-version" }} differs from {{ source "built" }}'
@@ -1108,7 +1155,8 @@ sources:
     kind: 'toml'
     spec:
       file: 'crates/simple_crate/Cargo.toml'
-      Key: 'dependencies.rand.version'
+      key: 'get("dependencies").get("rand").version'
+      engine: 'dasel'
 conditions:
   rand:
     name: 'Test if version of "rand" {{ source "rand-current-version" }} differs from {{ source "rand" }}'
@@ -1148,7 +1196,8 @@ sources:
     kind: 'toml'
     spec:
       file: 'crates/simple_crate/Cargo.toml'
-      Key: 'dev-dependencies.futures.version'
+      key: 'get("dev-dependencies").get("futures").version'
+      engine: 'dasel'
 conditions:
   futures:
     name: 'Test if version of "futures" {{ source "futures-current-version" }} differs from {{ source "futures" }}'
@@ -1202,7 +1251,8 @@ sources:
     kind: 'toml'
     spec:
       file: 'Cargo.toml'
-      Key: 'workspace.dependencies.anyhow'
+      key: 'get("workspace.dependencies").get("anyhow")'
+      engine: 'dasel'
 conditions:
   anyhow:
     name: 'Test if version of "anyhow" {{ source "anyhow-current-version" }} differs from {{ source "anyhow" }}'
@@ -1216,7 +1266,8 @@ targets:
     kind: 'toml'
     spec:
       file: 'Cargo.toml'
-      key: 'workspace.dependencies.anyhow'
+      key: 'get("workspace.dependencies").get("anyhow")'
+      engine: 'dasel'
     sourceid: 'anyhow'
   lockfile:
     name: 'deps(cargo): update Cargo.lock following bump workspace dependency "anyhow" to {{ source "anyhow" }}'
@@ -1252,7 +1303,8 @@ sources:
     kind: 'toml'
     spec:
       file: 'crates/simple_crate/Cargo.toml'
-      Key: 'dependencies.rand.version'
+      key: 'get("dependencies").get("rand").version'
+      engine: 'dasel'
 conditions:
   rand:
     name: 'Test if version of "rand" {{ source "rand-current-version" }} differs from {{ source "rand" }}'
@@ -1266,7 +1318,8 @@ targets:
     kind: 'toml'
     spec:
       file: 'crates/simple_crate/Cargo.toml'
-      key: 'dependencies.rand.version'
+      key: 'get("dependencies").get("rand").version'
+      engine: 'dasel'
     sourceid: 'rand'
   lockfile:
     name: 'deps(cargo): update Cargo.lock following bump crate dependency "rand" to {{ source "rand" }}'
@@ -1301,7 +1354,8 @@ sources:
     kind: 'toml'
     spec:
       file: 'crates/simple_crate/Cargo.toml'
-      Key: 'dev-dependencies.futures.version'
+      key: 'get("dev-dependencies").get("futures").version'
+      engine: 'dasel'
 conditions:
   futures:
     name: 'Test if version of "futures" {{ source "futures-current-version" }} differs from {{ source "futures" }}'
@@ -1315,7 +1369,8 @@ targets:
     kind: 'toml'
     spec:
       file: 'crates/simple_crate/Cargo.toml'
-      key: 'dev-dependencies.futures.version'
+      key: 'get("dev-dependencies").get("futures").version'
+      engine: 'dasel'
     sourceid: 'futures'
   lockfile:
     name: 'deps(cargo): update Cargo.lock following bump crate dev dependency "futures" to {{ source "futures" }}'
@@ -1363,7 +1418,8 @@ sources:
     scmid: 'git'
     spec:
       file: 'Cargo.toml'
-      Key: 'workspace.dependencies.anyhow'
+      key: 'get("workspace.dependencies").get("anyhow")'
+      engine: 'dasel'
 conditions:
   anyhow:
     name: 'Test if version of "anyhow" {{ source "anyhow-current-version" }} differs from {{ source "anyhow" }}'
@@ -1411,7 +1467,8 @@ sources:
     scmid: 'git'
     spec:
       file: 'crates/simple_crate/Cargo.toml'
-      Key: 'dependencies.rand.version'
+      key: 'get("dependencies").get("rand").version'
+      engine: 'dasel'
 conditions:
   rand:
     name: 'Test if version of "rand" {{ source "rand-current-version" }} differs from {{ source "rand" }}'
@@ -1459,7 +1516,8 @@ sources:
     scmid: 'git'
     spec:
       file: 'crates/simple_crate/Cargo.toml'
-      Key: 'dev-dependencies.futures.version'
+      key: 'get("dev-dependencies").get("futures").version'
+      engine: 'dasel'
 conditions:
   futures:
     name: 'Test if version of "futures" {{ source "futures-current-version" }} differs from {{ source "futures" }}'

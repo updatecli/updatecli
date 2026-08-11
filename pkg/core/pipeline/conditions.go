@@ -1,17 +1,19 @@
 package pipeline
 
+import "context"
+
 func (p *Pipeline) updateCondition(id, result string) {
 	condition := p.Conditions[id]
 	condition.Result.Result = result
 	p.Conditions[id] = condition
 }
 
-func (p *Pipeline) RunCondition(id string) (r string, err error) {
+func (p *Pipeline) RunCondition(ctx context.Context, id string) (r string, err error) {
 	condition := p.Conditions[id]
 	condition.Config = p.Config.Spec.Conditions[id]
 	condition.Result.Name = condition.Config.Name
 
-	err = condition.Run(p.Sources[condition.Config.SourceID].Output)
+	err = condition.Run(ctx, p.Sources[condition.Config.SourceID].Output)
 
 	p.Conditions[id] = condition
 

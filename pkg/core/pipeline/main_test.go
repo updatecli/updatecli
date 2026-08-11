@@ -1,6 +1,7 @@
 package pipeline
 
 import (
+	"context"
 	"testing"
 
 	"github.com/sirupsen/logrus"
@@ -63,7 +64,7 @@ func TestRun(t *testing.T) {
 			},
 		})
 		t.Run(p.Config.Spec.Name, func(t *testing.T) {
-			err := p.Run()
+			err := p.Run(context.Background())
 			if err != nil {
 				logrus.Errorf("Got error running test: %s", err)
 			}

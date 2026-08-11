@@ -1,6 +1,7 @@
 package condition
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -91,7 +92,7 @@ func TestRun(t *testing.T) {
 			// Normally the result is initialized by the pipeline, we do it here for testing purpose
 			tt.condition.Result = &result.Condition{}
 
-			gotErr := tt.condition.Run("")
+			gotErr := tt.condition.Run(context.Background(), "")
 			require.NoError(t, gotErr)
 
 			assert.Equal(t, tt.expectedResult, tt.condition.Result.Pass)

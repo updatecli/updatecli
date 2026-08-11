@@ -17,6 +17,10 @@ var (
 // GetAccessToken retrieves a valid access token from a TokenSource
 func GetAccessToken(tokenSource oauth2.TokenSource) (string, error) {
 
+	if tokenSource == nil {
+		return "", fmt.Errorf("no access token found")
+	}
+
 	token, err := tokenSource.Token()
 	if err != nil {
 		return "", fmt.Errorf("failed to get access token: %w", err)

@@ -2,7 +2,6 @@ package client
 
 import (
 	"fmt"
-	"net/http"
 	"strings"
 
 	"github.com/drone/go-scm/scm"
@@ -58,10 +57,10 @@ func New(s Spec) (Client, error) {
 		return nil, err
 	}
 
-	client.Client = httpclient.NewRetryClient().(*http.Client)
+	client.Client = httpclient.NewRetryClient()
 
-	if len(s.Token) >= 0 {
-		if len(s.Username) >= 0 {
+	if s.Token != "" {
+		if s.Username != "" {
 			client.Client.Transport = &transport.BasicAuth{
 				Username: s.Username,
 				Password: s.Token,

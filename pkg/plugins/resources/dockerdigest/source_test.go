@@ -1,6 +1,7 @@
 package dockerdigest
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -89,7 +90,7 @@ func TestSource(t *testing.T) {
 
 			gotResult := result.Source{}
 
-			err = DockerDigest.Source("", &gotResult)
+			err = DockerDigest.Source(context.Background(), "", &gotResult)
 
 			if TestCases[i].expectedError {
 				assert.Error(t, err)

@@ -1,6 +1,7 @@
 package jenkins
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -94,7 +95,7 @@ func TestJenkins_Condition(t *testing.T) {
 				mavenMetaHandler: tt.mockedMetadataHandler,
 			}
 
-			got, _, gotErr := sut.Condition(tt.source, nil)
+			got, _, gotErr := sut.Condition(context.Background(), tt.source, nil)
 			if tt.wantErr {
 				require.Error(t, gotErr)
 				return

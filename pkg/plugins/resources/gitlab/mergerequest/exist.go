@@ -1,12 +1,14 @@
 package mergerequest
 
 import (
+	"context"
+
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/reports"
 )
 
 // CheckActionExist verifies if an existing GitLab merge request is already opened.
-func (g *Gitlab) CheckActionExist(report *reports.Action) error {
+func (g *Gitlab) CheckActionExist(ctx context.Context, report *reports.Action) error {
 
 	mr, err := g.findExistingMR()
 	if err != nil {

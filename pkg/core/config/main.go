@@ -38,12 +38,26 @@ import (
 const (
 	// LOCALSCMIDENTIFIER defines the scm id used to configure the local scm directory
 	LOCALSCMIDENTIFIER string = "local"
+	// EXTENSIONYAML defines the file extension for yaml files
+	EXTENSIONYAML string = ".yaml"
+	// EXTENSIONYML defines the file extension for yml files
+	EXTENSIONYML string = ".yml"
+	// EXTENSIONJSON defines the file extension for json files
+	EXTENSIONJSON string = ".json"
+	// EXTENSIONCUE defines the file extension for cue files
+	EXTENSIONCUE string = ".cue"
+	// EXTENSIONTPL defines the file extension for golang template files
+	EXTENSIONTPL string = ".tpl"
+	// EXTENSIONTMPL defines the file extension for golang template files
+	EXTENSIONTMPL string = ".tmpl"
 )
 
 // Config contains cli configuration
 type Config struct {
 	// filename contains the updatecli manifest filename
 	filename string
+	// manifestID contains the effective manifest identifier used by the engine.
+	manifestID string
 	// Spec describe an updatecli manifest
 	Spec Spec
 	// gitHandler holds a git client implementation to manipulate git SCMs
@@ -62,7 +76,34 @@ type Spec struct {
 	// 	* using conventional commits convention is a good way to name your pipeline.
 	// 	* "name" is often used a default values for other configuration such as pullrequest title.
 	// 	* "name" shouldn't contain any dynamic information such as source output.
-	Name string `yaml:",omitempty" jsonschema:"required"`
+	// 	* "name" defaults to the manifest filename when not specified.
+	Name string `yaml:",omitempty"`
+	// "id" defines a manifest dependency identifier that can be referenced by other manifests.
+	//
+	// example:
+	// 	* "id: nodejs"
+	// 	* "id: docker/alpine"
+	//
+	// remark:
+	// 	* "id" only affects manifest execution ordering.
+	// 	* "id" is used by the root manifest "dependson" keyword.
+	// 	* multiple manifests may intentionally share the same "id".
+	// 	* unlike "pipelineid", "id" does not affect branch naming or workflow grouping.
+	ID string `yaml:",omitempty"`
+	// "dependson" defines which manifest IDs must run before the current manifest.
+	//
+	// example:
+	// ---
+	// dependson:
+	//   - base-images
+	//   - shared-policies
+	// ---
+	//
+	// remark:
+	// 	* entries reference root manifest "id" values.
+	// 	* if multiple manifests share the same "id" then all of them must run first.
+	// 	* "dependson" only affects manifest execution ordering.
+	DependsOn []string `yaml:",omitempty"`
 	// "pipelineid" allows to identify a full pipeline run.
 	//
 	// example:
@@ -195,10 +236,20 @@ type Option struct {
 	PartialFiles []string
 	// ValuesFiles contains the list of updatecli values full file path
 	ValuesFiles []string
+	// ValuesInline contains the list of inline values for templating, accepted valid json/yaml string
+	ValuesInline []string
 	// SecretsFiles contains the list of updatecli sops secrets full file path
 	SecretsFiles []string
 	// DisableTemplating specifies if needs to be done
 	DisableTemplating bool
+	// ValidateSchema reports the manifest keys not matching the Updatecli schema, such as
+	// a misspelled one, which would otherwise be silently ignored.
+	// Loading a manifest never fails because of it, a caller wanting to act on the
+	// problems collects them through OnSchemaProblem.
+	ValidateSchema bool
+	// OnSchemaProblem receives every schema problem found while loading the manifest.
+	// Problems are logged as warnings when it is not set.
+	OnSchemaProblem func(SchemaProblem)
 }
 
 // Reset reset configuration
@@ -208,7 +259,29 @@ func (config *Config) Reset() {
 	}
 }
 
+// ManifestID returns the internal manifest identifier used by the engine.
+func (config *Config) ManifestID() string {
+	return config.manifestID
+}
+
+// DependencyID returns the manifest identifier exposed to dependson resolution.
+func (config *Config) DependencyID() string {
+	return config.Spec.ID
+}
+
+// SetManifestID configures the effective manifest identifier.
+//
+// The provided seed is hashed so each manifest has a deterministic internal
+// identifier even when user-facing dependency IDs are shared across manifests.
+func (config *Config) SetManifestID(seed string) {
+	hash := sha256.New()
+	hash.Write([]byte(seed))
+	config.manifestID = fmt.Sprintf("%x", hash.Sum(nil))
+}
+
 // New reads an updatecli configuration file
+//
+//nolint:funlen
 func New(option Option, pipelineIDFilters []string, pipelineLabels map[string]string) (configs []Config, err error) {
 	_, basename := filepath.Split(option.ManifestFile)
 
@@ -263,9 +336,9 @@ func New(option Option, pipelineIDFilters []string, pipelineLabels map[string]st
 	isCue := false
 
 	switch extension := filepath.Ext(basename); extension {
-	case ".tpl", ".tmpl", ".yaml", ".yml", ".json":
+	case EXTENSIONTPL, EXTENSIONTMPL, EXTENSIONYAML, EXTENSIONYML, EXTENSIONJSON:
 		//
-	case ".cue":
+	case EXTENSIONCUE:
 		if !cmdoptions.Experimental {
 			return nil, fmt.Errorf("cuelang support is experimental, please use '--experimental' flag to enable it")
 		}
@@ -290,6 +363,7 @@ func New(option Option, pipelineIDFilters []string, pipelineLabels map[string]st
 		t := Template{
 			CfgFile:      option.ManifestFile,
 			ValuesFiles:  option.ValuesFiles,
+			ValuesInline: option.ValuesInline,
 			SecretsFiles: option.SecretsFiles,
 			fs:           fs,
 		}
@@ -346,6 +420,13 @@ func New(option Option, pipelineIDFilters []string, pipelineLabels map[string]st
 		if err != nil {
 			return configs, err
 		}
+
+		// Reported before the specs are post-processed, so that a problem points at what
+		// the manifest actually says rather than at a value Updatecli defaulted.
+		// A cue manifest is skipped as it is not parsed from YAML.
+		if option.ValidateSchema {
+			reportSchemaProblems(option.ManifestFile, templatedManifestContent, option.OnSchemaProblem)
+		}
 	}
 
 	for id := range specs {
@@ -354,6 +435,7 @@ func New(option Option, pipelineIDFilters []string, pipelineLabels map[string]st
 
 		config.filename = option.ManifestFile
 		config.Spec = specs[id]
+		config.SetManifestID(fmt.Sprintf("%s#%d", option.ManifestFile, id))
 		// config.PipelineID is required for config.Validate()
 		if len(config.Spec.PipelineID) == 0 {
 			logrus.Debugln("pipelineid undefined, we'll try to generate one")

@@ -26,6 +26,8 @@ const (
 	TIMEVERSIONKIND string = "time"
 	// LEXSORTVERSIONKIND uses the go sort package to find the latest version
 	LEXVERSIONKIND string = "lex"
+	// PEP440VERSIONKIND represents versions as a [pep440](https://peps.python.org/pep-0440/) versioning kind
+	PEP440VERSIONKIND string = "pep440"
 )
 
 // SupportedKind holds a list of supported version kind
@@ -37,6 +39,7 @@ var SupportedKind []string = []string{
 	REGEXTIMEVERSIONKIND,
 	TIMEVERSIONKIND,
 	LEXVERSIONKIND,
+	PEP440VERSIONKIND,
 }
 
 // ReplaceAll defines a regex replacement that is applied to version strings before filtering.
@@ -82,7 +85,7 @@ func (f Filter) Init() (Filter, error) {
 			f.Pattern = "2006-01-02"
 		case REGEXVERSIONKIND:
 			f.Pattern = ".*"
-		case SEMVERVERSIONKIND:
+		case SEMVERVERSIONKIND, PEP440VERSIONKIND:
 			f.Pattern = "*"
 		case LATESTVERSIONKIND:
 			f.Pattern = LATESTVERSIONKIND
@@ -288,6 +291,18 @@ func (f *Filter) Search(versions []string) (Version, error) {
 		foundVersion.OriginalVersion = foundVersion.ParsedVersion
 		return foundVersion, nil
 
+	case PEP440VERSIONKIND:
+		p := Pep440{
+			Constraint: f.Pattern,
+		}
+
+		err := p.Search(versions)
+		if err != nil {
+			return foundVersion, err
+		}
+
+		return p.FoundVersion, nil
+
 	default:
 		return foundVersion, &ErrUnsupportedVersionKindPattern{Pattern: f.Pattern, Kind: f.Kind}
 	}
@@ -446,6 +461,9 @@ func (f *Filter) GreaterThanPattern(version string) (string, error) {
 		default:
 			return f.Pattern, nil
 		}
+
+	case PEP440VERSIONKIND:
+		return f.Pattern, nil
 	}
 	return "", &ErrUnsupportedVersionKind{Kind: f.Kind}
 }

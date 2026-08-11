@@ -16,6 +16,12 @@ sources:
     spec:
       name: '{{ .DependencyName }}'
       url: '{{ .DependencyRepository }}'
+      {{- if .Username }}
+      username: '{{ .Username }}'
+      {{- end }}
+      {{- if .Password }}
+      password: '{{ .Password }}'
+      {{- end }}
       {{- if .Token }}
       token: '{{ .Token }}'
       {{- end }}

@@ -130,11 +130,14 @@ func getParser(spec Spec) (types.DockerfileParser, error) {
 		// Then a new map with the correct type has to be constructed by copy
 		parsedInstruction := make(map[string]string)
 		for k, v := range i {
-			stringValue, ok := v.(string)
-			if !ok {
+			switch val := v.(type) {
+			case string:
+				parsedInstruction[k] = val
+			case bool:
+				parsedInstruction[k] = fmt.Sprintf("%t", val)
+			default:
 				return nil, fmt.Errorf("parsing error: cannot determine instruction: %v", i)
 			}
-			parsedInstruction[k] = stringValue
 		}
 		return simpletextparser.NewSimpleTextDockerfileParser(parsedInstruction)
 	}

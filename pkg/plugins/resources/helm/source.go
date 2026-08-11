@@ -1,6 +1,7 @@
 package helm
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -9,7 +10,7 @@ import (
 )
 
 // Source return the latest version
-func (c *Chart) Source(workingDir string, resultSource *result.Source) error {
+func (c *Chart) Source(ctx context.Context, workingDir string, resultSource *result.Source) error {
 
 	if strings.HasPrefix(c.spec.URL, "oci://") {
 		return c.OCISource(workingDir, resultSource)
@@ -19,7 +20,7 @@ func (c *Chart) Source(workingDir string, resultSource *result.Source) error {
 	var err error
 
 	if strings.HasPrefix(c.spec.URL, "https://") || strings.HasPrefix(c.spec.URL, "http://") {
-		index, err = c.GetRepoIndexFromURL()
+		index, err = c.GetRepoIndexFromURL(ctx)
 		if err != nil {
 			return fmt.Errorf("getting repo index from url: %w", err)
 		}

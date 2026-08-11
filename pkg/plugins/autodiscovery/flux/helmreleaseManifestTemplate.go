@@ -36,6 +36,7 @@ conditions:
       file: '{{ .File }}'
       key: '$.spec.chart.spec.chart'
       value: '{{ .ChartName }}'
+      documentindex: {{ .TargetYAMLDocument }}
 targets:
   helmrelease:
     name: 'deps(flux): bump Helmrelease "{{ .ChartName }}"'
@@ -46,6 +47,7 @@ targets:
     spec:
       file: '{{ .File }}'
       key: '$.spec.chart.spec.version'
+      documentindex: {{ .TargetYAMLDocument }}
     sourceid: 'helmrelease'
 `
 )

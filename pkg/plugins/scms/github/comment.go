@@ -12,20 +12,20 @@ import (
 )
 
 // addComment is mutation to add a comment to a GitHub pullrequest
-func (p *PullRequest) addComment(body string, retry int) error {
+func (p *PullRequest) addComment(ctx context.Context, body string, retry int) error {
 
 	if p.remotePullRequest.ID == "" {
 		return nil
 	}
 
-	rateLimit, err := queryRateLimit(p.gh.client, context.Background())
+	rateLimit, err := queryRateLimit(p.gh.client, ctx)
 	if err != nil {
 		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
 			logrus.Debugln(rateLimit)
 			if retry < client.MaxRetry {
 				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
 				rateLimit.Pause()
-				return p.addComment(body, retry+1)
+				return p.addComment(ctx, body, retry+1)
 			}
 			return errors.New(ErrAPIRateLimitExceededFinalAttempt)
 		}
@@ -60,11 +60,11 @@ func (p *PullRequest) addComment(body string, retry int) error {
 		Body:      githubv4.String(body),
 	}
 
-	err = p.gh.client.Mutate(context.Background(), &mutation, input, nil)
+	err = p.gh.client.Mutate(ctx, &mutation, input, nil)
 	if err != nil {
 		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
 			if retry < client.MaxRetry {
-				return p.addComment(body, retry+1)
+				return p.addComment(ctx, body, retry+1)
 			}
 		}
 		return fmt.Errorf("adding comment to pull request %q: %w", p.remotePullRequest.Url, err)

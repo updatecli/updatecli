@@ -41,6 +41,12 @@ func TestChangelog(t *testing.T) {
 			version:           "0.2.0",
 			expectedChangelog: nil,
 		},
+		{
+			name:              "Get changelog from invalid reference",
+			image:             "ghcr.ioooo/xxx",
+			version:           "",
+			expectedChangelog: nil,
+		},
 		//{
 		//	name:    "Get changelog from an Updatecli policy with the right label defined",
 		//	image:   "ghcr.io/olblak/policies/updatecli/autodiscovery",

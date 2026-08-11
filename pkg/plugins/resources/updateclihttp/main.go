@@ -47,8 +47,7 @@ func New(spec interface{}) (*Http, error) {
 		}
 	}
 
-	httpClient := &http.Client{}
-	httpClient.Transport = httpclient.NewThrottledTransport(1*time.Second, 1, http.DefaultTransport)
+	httpClient := httpclient.NewThrottledRetryClient(1*time.Second, 1)
 
 	// Do not follow redirect as per https://pkg.go.dev/net/http when we want to get a header from original request
 	httpClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
@@ -103,13 +102,13 @@ func (h *Http) Changelog(from, to string) *result.Changelogs {
 }
 
 func (h *Http) performHttpRequest() (*http.Response, error) {
-	logrus.Debugf("[http] Request to execute: %v", h.httpReq)
+	logrus.Debugf("[http] Request to execute: %s %s", h.httpReq.Method, redact.URL(h.httpReq.URL.String()))
 	httpRes, err := h.httpClient.Do(h.httpReq)
 	if err != nil {
 		return nil, err
 	}
 
-	logrus.Debugf("[http] Response received: %v", httpRes)
+	logrus.Debugf("[http] Response received: %s", httpRes.Status)
 
 	return httpRes, nil
 }

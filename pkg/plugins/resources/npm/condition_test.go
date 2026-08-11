@@ -1,6 +1,7 @@
 package npm
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -119,7 +120,7 @@ func TestCondition(t *testing.T) {
 				assert.Error(t, err)
 				return
 			}
-			gotResult, _, gotErr := got.Condition("", nil)
+			gotResult, _, gotErr := got.Condition(context.Background(), "", nil)
 			require.NoError(t, gotErr)
 			assert.Equal(t, tt.expectedResult, gotResult)
 		})

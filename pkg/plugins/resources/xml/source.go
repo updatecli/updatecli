@@ -1,16 +1,18 @@
 package xml
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
 
 	"github.com/beevik/etree"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 // Source returns a value from a xml file
-func (x *XML) Source(workingDir string, resultSource *result.Source) error {
+func (x *XML) Source(_ context.Context, workingDir string, resultSource *result.Source) error {
 
 	// By the default workingdir is set to the current working directory
 	// it would be better to have it empty by default but it must be changed in the
@@ -23,7 +25,10 @@ func (x *XML) Source(workingDir string, resultSource *result.Source) error {
 	resourceFile := x.spec.File
 	// To merge File path with current working dire, unless file is an http url
 	if workingDir != currentWorkingDirectory {
-		resourceFile = joinPathWithWorkingDirectoryPath(x.spec.File, workingDir)
+		resourceFile, err = utils.SanitizeFilePathWithWorkingDirectory(x.spec.File, workingDir)
+		if err != nil {
+			return fmt.Errorf("invalid file path %q: %w", x.spec.File, err)
+		}
 	}
 
 	// Test at runtime if a file exist

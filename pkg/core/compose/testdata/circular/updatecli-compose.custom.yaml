@@ -1,0 +1,17 @@
+name: "Policies with environment variables"
+
+include:
+  - updatecli-compose.yaml
+
+environments:
+  UPDATECLI_TEST_GITHUB_ACTOR: 'me'
+
+env_files:
+  - credentials.yaml
+
+valuesinline:
+  scm:
+    enabled: false
+
+policies: 
+  - policy: ghcr.io/updatecli-test/policies/autodiscovery:0.0.1-alpha

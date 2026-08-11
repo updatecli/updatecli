@@ -1,6 +1,7 @@
 package dockerfile
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -210,7 +211,7 @@ LABEL org.opencontainers.image.version=1.0.0
 				files:            tt.files,
 			}
 			gotResult := result.Source{}
-			gotErr = d.Source("", &gotResult)
+			gotErr = d.Source(context.Background(), "", &gotResult)
 
 			if tt.wantErr != nil {
 				assert.Error(t, gotErr)

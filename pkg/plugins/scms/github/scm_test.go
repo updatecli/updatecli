@@ -1,6 +1,7 @@
 package github
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -49,7 +50,7 @@ func TestCommit(t *testing.T) {
 				mockedErr:   tt.mockedError,
 			}
 
-			_, err = sut.CreateCommit(tt.spec.Directory, tt.commitMsg, 0)
+			_, err = sut.CreateCommit(context.Background(), tt.spec.Directory, tt.commitMsg, 0)
 
 			if tt.wantErr {
 				assert.Error(t, err)

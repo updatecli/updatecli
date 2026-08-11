@@ -1,6 +1,7 @@
 package file
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -246,6 +247,26 @@ func TestFile_Source(t *testing.T) {
 			},
 			wantedErr: true,
 		},
+		{
+			name: "Passing case with binary file content",
+			spec: Spec{
+				File: "/home/ucli/foo.bin",
+			},
+			files: map[string]fileMetadata{
+				"/home/ucli/foo.bin": {
+					originalPath: "/home/ucli/foo.bin",
+					path:         "/home/ucli/foo.bin",
+				},
+			},
+			mockedContents: map[string]string{
+				// null bytes make DetectContentType return "application/octet-stream"
+				"/home/ucli/foo.bin": "\x00\x01\x02\x03binary content",
+			},
+			wantedContents: map[string]string{
+				"/home/ucli/foo.bin": "\x00\x01\x02\x03binary content",
+			},
+			wantedResult: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -258,16 +279,19 @@ func TestFile_Source(t *testing.T) {
 				contentRetriever: &mockedText,
 				files:            tt.files,
 			}
-			// Looping on the only filePath in 'files'
-			for filePath := range f.files {
-				gotResult := result.Source{}
-				gotErr := f.Source(filePath, &gotResult)
-				if tt.wantedErr {
-					assert.Error(t, gotErr)
-					return
-				}
+			// No working directory: the resource is run locally, without an SCM
+			// checkout, so the file paths of the specification are used as is.
+			gotResult := result.Source{}
+			gotErr := f.Source(context.Background(), "", &gotResult)
+			if tt.wantedErr {
+				assert.Error(t, gotErr)
+				return
+			}
 
-				require.NoError(t, gotErr)
+			require.NoError(t, gotErr)
+
+			// Looping on the only filePath in 'files'
+			for filePath := range tt.files {
 				assert.Equal(t, tt.wantedContents[filePath], gotResult.Information)
 			}
 		})

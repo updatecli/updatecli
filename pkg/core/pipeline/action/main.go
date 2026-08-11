@@ -1,6 +1,7 @@
 package action
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
@@ -11,10 +12,12 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/jsonschema"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/reports"
+	azuredevops "github.com/updatecli/updatecli/pkg/plugins/resources/azuredevops/pullrequest"
 	bitbucket "github.com/updatecli/updatecli/pkg/plugins/resources/bitbucket/pullrequest"
 	gitea "github.com/updatecli/updatecli/pkg/plugins/resources/gitea/pullrequest"
 	gitlab "github.com/updatecli/updatecli/pkg/plugins/resources/gitlab/mergerequest"
 	stash "github.com/updatecli/updatecli/pkg/plugins/resources/stash/pullrequest"
+	azuredevopsscm "github.com/updatecli/updatecli/pkg/plugins/scms/azuredevops"
 	bitbucketscm "github.com/updatecli/updatecli/pkg/plugins/scms/bitbucket"
 	giteascm "github.com/updatecli/updatecli/pkg/plugins/scms/gitea"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
@@ -23,11 +26,12 @@ import (
 )
 
 const (
-	gitlabIdentifier    = "gitlab"
-	githubIdentifier    = "github"
-	giteaIdentifier     = "gitea"
-	stashIdentifier     = "stash"
-	bitbucketIdentifier = "bitbucket"
+	azuredevopsIdentifier = "azuredevops"
+	gitlabIdentifier      = "gitlab"
+	githubIdentifier      = "github"
+	giteaIdentifier       = "gitea"
+	stashIdentifier       = "stash"
+	bitbucketIdentifier   = "bitbucket"
 )
 
 // ErrWrongConfig is returned when an action has missing mandatory attributes.
@@ -35,9 +39,9 @@ var ErrWrongConfig = errors.New("wrong action configuration")
 
 // ActionHandler interface defines required functions to be an action
 type ActionHandler interface {
-	CreateAction(report *reports.Action, resetDescription bool) error
-	CleanAction(report *reports.Action) error
-	CheckActionExist(report *reports.Action) error
+	CreateAction(ctx context.Context, report *reports.Action, resetDescription bool) error
+	CleanAction(ctx context.Context, report *reports.Action) error
+	CheckActionExist(ctx context.Context, report *reports.Action) error
 }
 
 // Config define action provided via an updatecli configuration
@@ -147,6 +151,25 @@ func (a *Action) Update() error {
 func (a *Action) generateActionHandler() error {
 	// Don't forget to update the JSONSchema() method when adding/updating/removing a case
 	switch a.Config.Kind {
+	case "azuredevops/pullrequest":
+		if a.Scm.Config.Kind != azuredevopsIdentifier {
+			return fmt.Errorf("scm of kind %q is not compatible with action of kind %q",
+				a.Scm.Config.Kind,
+				a.Config.Kind)
+		}
+
+		ge, ok := a.Scm.Handler.(*azuredevopsscm.AzureDevOps)
+		if !ok {
+			return fmt.Errorf("scm is not of kind 'azuredevops'")
+		}
+
+		g, err := azuredevops.New(a.Config.Spec, ge)
+		if err != nil {
+			return err
+		}
+
+		a.Handler = &g
+
 	case "bitbucket/pullrequest", bitbucketIdentifier:
 		if a.Scm.Config.Kind != bitbucketIdentifier {
 			return fmt.Errorf("scm of kind %q is not compatible with action of kind %q",
@@ -261,17 +284,22 @@ func (a *Action) generateActionHandler() error {
 	return nil
 }
 
+// GetActionMapping returns the mapping between an action kind and its specification.
+// Don't forget to update it when adding/updating/removing a case from New().
+func GetActionMapping() map[string]interface{} {
+	return map[string]interface{}{
+		"azuredevops/pullrequest": &azuredevops.Spec{},
+		"github/pullrequest":      &github.ActionSpec{},
+		"gitea/pullrequest":       &gitea.Spec{},
+		"stash/pullrequest":       &stash.Spec{},
+		"gitlab/mergerequest":     &gitlab.Spec{},
+		"bitbucket/pullrequest":   &bitbucket.Spec{},
+	}
+}
+
 // JSONSchema implements the json schema interface to generate the "action" jsonschema
 func (Config) JSONSchema() *jschema.Schema {
 	type configAlias Config
 
-	anyOfSpec := map[string]interface{}{
-		"github/pullrequest":    &github.ActionSpec{},
-		"gitea/pullrequest":     &gitea.Spec{},
-		"stash/pullrequest":     &stash.Spec{},
-		"gitlab/mergerequest":   &gitlab.Spec{},
-		"bitbucket/pullrequest": &bitbucket.Spec{},
-	}
-
-	return jsonschema.AppendOneOfToJsonSchema(configAlias{}, anyOfSpec)
+	return jsonschema.AppendOneOfToJsonSchema(configAlias{}, GetActionMapping())
 }

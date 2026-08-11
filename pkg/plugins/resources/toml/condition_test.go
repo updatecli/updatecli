@@ -1,6 +1,7 @@
 package toml
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -69,6 +70,46 @@ func TestCondition(t *testing.T) {
 			expectedResult: true,
 		},
 		{
+			name: "Default scenario with Dasel v2",
+			spec: Spec{
+				File:   "testdata/data.toml",
+				Key:    ".owner.firstName",
+				Value:  "Jack",
+				Engine: strPtr(ENGINEDASEL_V2),
+			},
+			expectedResult: true,
+		},
+		{
+			name: "Default scenario with Dasel v3",
+			spec: Spec{
+				File:   "testdata/data.toml",
+				Key:    "owner.firstName",
+				Value:  "Jack",
+				Engine: strPtr(ENGINEDASEL_V3),
+			},
+			expectedResult: true,
+		},
+		{
+			name: "Nested array item with Dasel v3",
+			spec: Spec{
+				File:   "testdata/data.toml",
+				Key:    "servers.beta.role",
+				Value:  "backend",
+				Engine: strPtr(ENGINEDASEL_V3),
+			},
+			expectedResult: true,
+		},
+		{
+			name: "Mismatching value with Dasel v3",
+			spec: Spec{
+				File:   "testdata/data.toml",
+				Key:    "owner.firstName",
+				Value:  "NotJack",
+				Engine: strPtr(ENGINEDASEL_V3),
+			},
+			expectedResult: false,
+		},
+		{
 			name: "Test key do not exist",
 			spec: Spec{
 				File:  "testdata/data.toml",
@@ -99,7 +140,7 @@ func TestCondition(t *testing.T) {
 
 			require.NoError(t, err)
 
-			gotResult, _, gotErr := toml.Condition("", nil)
+			gotResult, _, gotErr := toml.Condition(context.Background(), "", nil)
 
 			if tt.wantErr {
 				assert.Equal(t, tt.expectedErrorMsg.Error(), gotErr.Error())

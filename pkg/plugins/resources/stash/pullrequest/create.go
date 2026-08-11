@@ -12,7 +12,7 @@ import (
 )
 
 // CreateAction opens a Pull Request on the Bitbucket server
-func (s *Stash) CreateAction(report *reports.Action, resetDescription bool) error {
+func (s *Stash) CreateAction(ctx context.Context, report *reports.Action, resetDescription bool) error {
 
 	title := report.Title
 	if len(s.spec.Title) > 0 {
@@ -80,7 +80,6 @@ func (s *Stash) CreateAction(report *reports.Action, resetDescription bool) erro
 		s.TargetBranch)
 
 	// Timeout api query after 30sec
-	ctx := context.Background()
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 

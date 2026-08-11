@@ -20,6 +20,7 @@ func TestSearchGoModFiles(t *testing.T) {
 			expectedFoundFiles: []string{
 				"testdata/noModule/go.mod",
 				"testdata/noSumFile/go.mod",
+				"testdata/pseudoVersion/go.mod",
 				"testdata/replace/go.mod",
 			},
 		},
@@ -85,6 +86,62 @@ func TestGetGoModContent(t *testing.T) {
 			assert.Equal(t, d.expectedModules, foundGoModules)
 			assert.Equal(t, d.expectedReplaceModules, foundReplaceGoModules)
 			assert.Equal(t, d.expectedGoVersion, foundGoVersion)
+		})
+	}
+}
+
+func TestPseudoVersion(t *testing.T) {
+	dataset := []struct {
+		name           string
+		version        string
+		expectedResult bool
+	}{
+		{
+			name:           "Valid pseudo-version",
+			version:        "v0.0.0-20230215024106-420ad0987b9b",
+			expectedResult: true,
+		},
+		{
+			name:           "Invalid pseudo-version",
+			version:        "v1.2.3",
+			expectedResult: false,
+		},
+		{
+			name:           "Valid pseudo-version with zero patch increment form",
+			version:        "v0.0.0-0.20230215024106-420ad0987b9b",
+			expectedResult: true,
+		},
+		{
+			name:           "Valid pseudo-version with prerelease form",
+			version:        "v0.0.0-beta.0.20230215024106-420ad0987b9b",
+			expectedResult: true,
+		},
+		{
+			name:           "Valid pseudo-version with incompatible suffix",
+			version:        "v0.0.0-20230215024106-420ad0987b9b+incompatible",
+			expectedResult: true,
+		},
+		{
+			name:           "Valid zero patch increment pseudo-version with incompatible suffix",
+			version:        "v1.2.4-0.20230215024106-420ad0987b9b+incompatible",
+			expectedResult: true,
+		},
+		{
+			name:           "Invalid pseudo-version with short timestamp",
+			version:        "v1.2.3-2023021502410-420ad0987b9b",
+			expectedResult: false,
+		},
+		{
+			name:           "Invalid pseudo-version with short hash",
+			version:        "v1.2.3-20230215024106-420ad0987b9",
+			expectedResult: false,
+		},
+	}
+
+	for _, d := range dataset {
+		t.Run(d.name, func(t *testing.T) {
+			result := isPseudoVersion(d.version)
+			assert.Equal(t, d.expectedResult, result)
 		})
 	}
 }

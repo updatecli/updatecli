@@ -1,0 +1,9 @@
+repos:
+  - repo: https://github.com/example/tool
+    rev: 1111111111111111111111111111111111111111 # v1.2.3
+    hooks:
+      - id: first
+  - repo: https://github.com/example/tool
+    rev: 2222222222222222222222222222222222222222 # v2.0.0
+    hooks:
+      - id: second

@@ -2,6 +2,7 @@ package helm
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"html/template"
 	"maps"
@@ -49,7 +50,8 @@ URL:
 
 // Changelog returns a rendered template with this chart version information
 func (c Chart) Changelog(from, to string) *result.Changelogs {
-	index, err := c.GetRepoIndexFromURL()
+	// TODO: propagate ctx when Changelog interface gains context.Context
+	index, err := c.GetRepoIndexFromURL(context.TODO())
 
 	if err != nil {
 		logrus.Debugf("failed to get helm repository index: %s", err)

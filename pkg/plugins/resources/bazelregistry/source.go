@@ -1,6 +1,7 @@
 package bazelregistry
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/updatecli/updatecli/pkg/core/result"
@@ -8,11 +9,11 @@ import (
 )
 
 // Source queries the Bazel Central Registry and returns the appropriate version
-func (b *Bazelregistry) Source(workingDir string, resultSource *result.Source) error {
+func (b *Bazelregistry) Source(ctx context.Context, workingDir string, resultSource *result.Source) error {
 	resultSource.Result = result.FAILURE
 
 	// Fetch metadata from registry
-	metadata, err := b.fetchModuleMetadata(b.spec.Module)
+	metadata, err := b.fetchModuleMetadata(ctx, b.spec.Module)
 	if err != nil {
 		return fmt.Errorf("fetching module metadata: %w", err)
 	}

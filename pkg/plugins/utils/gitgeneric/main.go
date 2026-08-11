@@ -2,6 +2,7 @@ package gitgeneric
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"path/filepath"
 	"sort"
@@ -33,7 +34,7 @@ const (
 type GitHandler interface {
 	Add(files []string, workingDir string) error
 	Checkout(username, password, branch, remoteBranch, workingDir string, forceReset bool, depth *int) error
-	Clone(username, password, URL, workingDir string, withSubmodules *bool, depth *int) error
+	Clone(username, password, URL, workingDir string, withSubmodules *bool, depth *int, branch string, singleBranch bool) error
 	Commit(user, email, message, workingDir string, signingKey string, passphrase string) error
 	DeleteBranch(branch, gitRepositoryPath, username, password string) error
 	GetChangedFiles(workingDir string) ([]string, error)
@@ -333,19 +334,69 @@ func (g GoGit) GetChangedFiles(workingDir string) ([]string, error) {
 	return filesChanged, nil
 }
 
-// GetLatestCommitHash returns the latest commit hash from the working directory
-func (g GoGit) GetLatestCommitHash(workingDir string) (string, error) {
+// GetCommitHash returns the commit hash referenced by a local or remote branch.
+func (g GoGit) GetCommitHash(workingDir, branch string) (string, error) {
 	gitRepository, err := git.PlainOpen(workingDir)
 	if err != nil {
 		return "", fmt.Errorf("opening %q git directory: %s", workingDir, err)
 	}
 
-	head, err := gitRepository.Head()
-	if err != nil {
-		return "", fmt.Errorf("getting HEAD: %s", err)
+	if branch == "" {
+		head, err := gitRepository.Head()
+		if err != nil {
+			return "", fmt.Errorf("getting HEAD: %s", err)
+		}
+		return head.Hash().String(), nil
 	}
 
-	return head.Hash().String(), nil
+	references := []plumbing.ReferenceName{
+		plumbing.NewBranchReferenceName(branch),
+		plumbing.NewRemoteReferenceName(DefaultRemoteReferenceName, branch),
+	}
+	for _, referenceName := range references {
+		reference, err := gitRepository.Reference(referenceName, true)
+		if err == nil {
+			return reference.Hash().String(), nil
+		}
+		if err != plumbing.ErrReferenceNotFound {
+			return "", fmt.Errorf("getting branch %q: %s", branch, err)
+		}
+	}
+
+	return "", fmt.Errorf("branch %q not found", branch)
+}
+
+// GetLatestCommitHash returns the latest commit hash from the working directory
+func (g GoGit) GetLatestCommitHash(workingDir string) (string, error) {
+	return g.GetCommitHash(workingDir, "")
+}
+
+// IsCommitExist checks whether a commit exists in the repository.
+// The commit is resolved with the Git revision syntax so abbreviated hashes are supported.
+func (g GoGit) IsCommitExist(workingDir, commit string) (bool, error) {
+	gitRepository, err := git.PlainOpen(workingDir)
+	if err != nil {
+		return false, fmt.Errorf("opening %q git directory: %s", workingDir, err)
+	}
+
+	hash, err := gitRepository.ResolveRevision(plumbing.Revision(commit))
+	if err != nil {
+		if errors.Is(err, plumbing.ErrReferenceNotFound) || errors.Is(err, plumbing.ErrObjectNotFound) {
+			return false, nil
+		}
+		return false, fmt.Errorf("resolving revision %q: %s", commit, err)
+	}
+
+	// ResolveRevision does not guarantee that the returned hash points to an
+	// existing commit object, for example when a full hash is provided.
+	if _, err := gitRepository.CommitObject(*hash); err != nil {
+		if errors.Is(err, plumbing.ErrObjectNotFound) {
+			return false, nil
+		}
+		return false, fmt.Errorf("getting commit %q: %s", commit, err)
+	}
+
+	return true, nil
 }
 
 // Add run `git add`.
@@ -572,7 +623,7 @@ func (g GoGit) Commit(user, email, message, workingDir string, signingKey string
 }
 
 // Clone run `git clone`.
-func (g GoGit) Clone(username, password, URL, workingDir string, withSubmodules *bool, depth *int) error {
+func (g GoGit) Clone(username, password, URL, workingDir string, withSubmodules *bool, depth *int, branch string, singleBranch bool) error {
 	var repo *git.Repository
 
 	auth := transportHttp.BasicAuth{
@@ -590,6 +641,11 @@ func (g GoGit) Clone(username, password, URL, workingDir string, withSubmodules 
 		URL:               URL,
 		Progress:          &b,
 		RecurseSubmodules: submodule,
+	}
+
+	if singleBranch && branch != "" {
+		cloneOptions.SingleBranch = true
+		cloneOptions.ReferenceName = plumbing.NewBranchReferenceName(branch)
 	}
 
 	if depth != nil {
@@ -671,6 +727,14 @@ func (g GoGit) Clone(username, password, URL, workingDir string, withSubmodules 
 			return fmt.Errorf("cloning: %w\n\tIt appears that a password has been specified without a username, could it be related?", err)
 		}
 		return fmt.Errorf("cloning: %w", err)
+	}
+
+	// Skip the full ref reconciliation fetch below when singleBranch is enabled: it
+	// intentionally mirrors every ref from the remote (branches, tags, pull request refs,
+	// etc.), which defeats the purpose of only cloning/fetching the configured branch and
+	// can be very expensive on repositories with a large number of refs.
+	if singleBranch {
+		return nil
 	}
 
 	remotes, err := repo.Remotes()

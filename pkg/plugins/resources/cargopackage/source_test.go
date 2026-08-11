@@ -1,6 +1,7 @@
 package cargopackage
 
 import (
+	"context"
 	"os"
 	"testing"
 
@@ -177,7 +178,7 @@ func TestSource(t *testing.T) {
 				got.webClient = GetMockClient(tt.mockedUrl, tt.mockedToken, tt.mockedBody, tt.mockedHTTPStatusCode, tt.mockedHeaderFormat)
 			}
 			gotResult := result.Source{}
-			err = got.Source("", &gotResult)
+			err = got.Source(context.Background(), "", &gotResult)
 			if tt.expectedError {
 				assert.Error(t, err)
 				return

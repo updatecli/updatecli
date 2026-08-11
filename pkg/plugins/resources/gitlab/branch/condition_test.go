@@ -1,6 +1,7 @@
 package branch
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -84,7 +85,7 @@ func TestCondition(t *testing.T) {
 			g, gotErr := New(tt.manifest)
 			require.NoError(t, gotErr)
 
-			gotResult, _, gotErr := g.Condition("", nil)
+			gotResult, _, gotErr := g.Condition(context.Background(), "", nil)
 
 			if tt.wantErr {
 				require.Error(t, gotErr)

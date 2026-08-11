@@ -6,12 +6,17 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/tomwright/dasel"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 // Read reads the content of a file after runtime validation
 func (f *FileContent) Read(rootDir string) error {
 
-	f.FilePath = JoinPathWithWorkingDirectoryPath(f.FilePath, rootDir)
+	securePath, err := utils.SanitizeFilePathWithWorkingDirectory(f.FilePath, rootDir)
+	if err != nil {
+		return err
+	}
+	f.FilePath = securePath
 
 	if !f.ContentRetriever.FileExists(f.FilePath) {
 		return fmt.Errorf("file %q does not exist", f.FilePath)
@@ -27,13 +32,13 @@ func (f *FileContent) Read(rootDir string) error {
 	var data any
 	switch f.DataType {
 
-	case "json":
+	case TYPEJSON:
 		err = json.Unmarshal([]byte(textContent), &data)
 		if err != nil {
 			return fmt.Errorf("failed to unmarshal json content: %w", err)
 		}
 
-	case "toml":
+	case TYPETOML:
 		err := toml.Unmarshal([]byte(textContent), &data)
 
 		if err != nil {
@@ -48,6 +53,8 @@ func (f *FileContent) Read(rootDir string) error {
 	f.DaselNode = daselNode
 
 	f.DaselV2Node = data
+
+	f.DaselV3Data = data
 
 	if f.DaselNode == nil || f.DaselV2Node == nil {
 		return ErrDaselFailedParsingByteFormat

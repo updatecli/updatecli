@@ -2,6 +2,7 @@ package file
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"regexp"
 	"sort"
@@ -14,11 +15,12 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/text"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 // Target creates or updates a file from a source control management system.
 // The default content is the value retrieved from source
-func (f *File) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
+func (f *File) Target(_ context.Context, source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
 
 	workDir := ""
 	if scm != nil {
@@ -62,8 +64,15 @@ func (f *File) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 
 	// If a template is specified, render it with the source value
 	if len(f.spec.Template) > 0 {
+		// Contain the template path within the working directory so a source
+		// templated spec.template cannot be used to read arbitrary files.
+		templatePath, err := utils.SanitizeFilePathWithWorkingDirectory(f.spec.Template, workDir)
+		if err != nil {
+			return fmt.Errorf("invalid template path %q: %w", f.spec.Template, err)
+		}
+
 		// Read the template from file
-		templateContent, err := f.contentRetriever.ReadAll(f.spec.Template)
+		templateContent, err := f.contentRetriever.ReadAll(templatePath)
 		if err != nil {
 			return fmt.Errorf("failed to read template file %q: %w", f.spec.Template, err)
 		}
@@ -210,9 +219,15 @@ func (f *File) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 			contentType,
 			inputContent)
 
+		var targetDiff string
+		if isBinaryContent(originalContents[filePath]) || isBinaryContent(file.content) {
+			targetDiff = fmt.Sprintf("binary content differs (%d bytes original, %d bytes new)", len(originalContents[filePath]), len(file.content))
+		} else {
+			targetDiff = text.Diff(filePath, filePath, originalContents[filePath], file.content)
+		}
 		logrus.Infof("%s\n\n```\n%s\n```\n\n",
 			description,
-			text.Diff(filePath, filePath, originalContents[filePath], file.content),
+			targetDiff,
 		)
 
 		descriptions = append(descriptions, description)

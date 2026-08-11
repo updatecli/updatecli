@@ -1,6 +1,7 @@
 package json
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
@@ -13,13 +14,13 @@ var (
 	ErrSpecVersionFilterRequireMultiple = errors.New("in the context of a source, parameter \"versionfilter\" and \"query\" must be used together")
 )
 
-func (j *Json) Source(workingDir string, resultSource *result.Source) error {
+func (j *Json) Source(_ context.Context, workingDir string, resultSource *result.Source) error {
 
 	if len(j.contents) > 1 {
 		return errors.New("source only supports one file")
 	}
 
-	if j.engine != ENGINEDASEL_V2 &&
+	if j.engine != ENGINEDASEL_V2 && j.engine != ENGINEDASEL_V3 &&
 		((len(j.spec.Query) > 0 && j.spec.VersionFilter.IsZero()) ||
 			(len(j.spec.Query) == 0 && !j.spec.VersionFilter.IsZero())) {
 		return ErrSpecVersionFilterRequireMultiple
@@ -77,6 +78,27 @@ func (j *Json) Source(workingDir string, resultSource *result.Source) error {
 
 		if err != nil {
 			if strings.Contains(err.Error(), "property not found") {
+				err := fmt.Errorf("%s cannot find value for path %q from file %q",
+					result.FAILURE,
+					j.spec.Key,
+					content.FilePath)
+				return err
+			}
+			return fmt.Errorf("running query %q: %w", j.spec.Key, err)
+		}
+
+		j.foundVersion, err = j.versionFilter.Search(queryResults)
+		if err != nil {
+			return fmt.Errorf("filtering information: %w", err)
+		}
+		sourceOutput = j.foundVersion.GetVersion()
+
+	case ENGINEDASEL_V3:
+		logrus.Debugf("Using engine %q", j.engine)
+		queryResults, err := content.QueryV3(j.spec.Key)
+
+		if err != nil {
+			if strings.Contains(err.Error(), "map key not found") {
 				err := fmt.Errorf("%s cannot find value for path %q from file %q",
 					result.FAILURE,
 					j.spec.Key,

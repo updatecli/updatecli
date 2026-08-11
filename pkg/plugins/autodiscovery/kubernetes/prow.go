@@ -20,6 +20,11 @@ func (k Kubernetes) discoverProwManifest(file, relativeFile string) [][]byte {
 	}
 	// Prow Presubmit
 	for document, data := range prowManifestData {
+
+		if data == nil {
+			continue
+		}
+
 		for repo, tests := range data.ProwPreSubmitJobs {
 			for i, test := range tests {
 				for j, container := range test.Spec.Containers {
@@ -40,7 +45,6 @@ func (k Kubernetes) discoverProwManifest(file, relativeFile string) [][]byte {
 						fmt.Sprintf(" for repo %q and presubmit test %q", repo, test.Name),
 						document,
 					)
-
 					if err != nil {
 						logrus.Debugln(err)
 						continue
@@ -58,6 +62,11 @@ func (k Kubernetes) discoverProwManifest(file, relativeFile string) [][]byte {
 
 	// Prow Postsubmit
 	for document, d := range prowManifestData {
+
+		if d == nil {
+			continue
+		}
+
 		for repo, tests := range d.ProwPostSubmitJobs {
 			for i, test := range tests {
 				for j, container := range test.Spec.Containers {
@@ -78,7 +87,6 @@ func (k Kubernetes) discoverProwManifest(file, relativeFile string) [][]byte {
 						fmt.Sprintf(" for repo %q and postsubmit test %q", repo, test.Name),
 						document,
 					)
-
 					if err != nil {
 						logrus.Debugln(err)
 						continue
@@ -96,6 +104,11 @@ func (k Kubernetes) discoverProwManifest(file, relativeFile string) [][]byte {
 
 	// Prow Periodics
 	for document, d := range prowManifestData {
+
+		if d == nil {
+			continue
+		}
+
 		for i, test := range d.ProwPeriodicJobs {
 			for j, container := range test.Spec.Containers {
 				containerName := container.Name
@@ -116,7 +129,6 @@ func (k Kubernetes) discoverProwManifest(file, relativeFile string) [][]byte {
 					fmt.Sprintf(" for periodic test %q", test.Name),
 					document,
 				)
-
 				if err != nil {
 					logrus.Debugln(err)
 					continue

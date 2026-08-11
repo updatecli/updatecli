@@ -1,6 +1,7 @@
 package golang
 
 import (
+	"fmt"
 	"path/filepath"
 	"regexp"
 
@@ -53,6 +54,17 @@ type MatchingRule struct {
 }
 
 type MatchingRules []MatchingRule
+
+// Validate checks that each matching rule has at least one non-empty field.
+// Returns an error if any rule has no valid fields specified.
+func (m MatchingRules) Validate() error {
+	for i, rule := range m {
+		if rule.Path == "" && len(rule.Modules) == 0 && rule.GoVersion == "" && rule.Replace == nil {
+			return fmt.Errorf("rule %d has no valid fields (path, modules, goversion, or replace must be specified)", i+1)
+		}
+	}
+	return nil
+}
 
 // isMatchingRules checks for each matchingRule if parameters are matching rules and then return true or false.
 func (m MatchingRules) isMatchingRules(rootDir, filePath, goVersion, moduleName, moduleVersion string, isReplaced bool) bool {

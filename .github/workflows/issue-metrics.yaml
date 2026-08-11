@@ -1,0 +1,40 @@
+name: Monthly issue metrics
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "3 2 1 * *"
+permissions:
+  contents: read
+jobs:
+  build:
+    name: issue metrics
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: read
+    steps:
+      - name: Get dates for last month
+        shell: bash
+        run: |
+          # Calculate the first day of the previous month
+          first_day=$(date -d "last month" +%Y-%m-01)
+
+          # Calculate the last day of the previous month
+          last_day=$(date -d "$first_day +1 month -1 day" +%Y-%m-%d)
+
+          #Set an environment variable with the date range
+          echo "$first_day..$last_day"
+          echo "last_month=$first_day..$last_day" >> "$GITHUB_ENV"
+      - name: Run issue-metrics tool
+        uses: github-community-projects/issue-metrics@df8c49d20958f9345281fa2124858bd0ad227e1f # v5.0.0
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SEARCH_QUERY: 'repo:updatecli/updatecli is:issue created:${{ env.last_month }} -reason:"not planned"'
+      - name: Create issue
+        run: |
+          gh issue create \
+            --title "Monthly issue metrics report" \
+            --body-file "issue_metrics.md" \
+            --repo "updatecli/updatecli"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -7,6 +7,7 @@ import (
 	"github.com/google/go-containerregistry/pkg/authn"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
+	"github.com/updatecli/updatecli/pkg/core/httpclient"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/docker"
 )
@@ -96,6 +97,7 @@ func New(spec interface{}) (*DockerDigest, error) {
 
 	newResource.options = append(newResource.options, remote.WithPlatform(platform))
 	newResource.options = append(newResource.options, remote.WithAuthFromKeychain(authn.NewMultiKeychain(keychains...)))
+	newResource.options = append(newResource.options, remote.WithTransport(httpclient.ProxyOnlyTransport()))
 	return newResource, nil
 
 }
@@ -137,5 +139,6 @@ func (d *DockerDigest) ReportConfig() interface{} {
 		Tag:          d.spec.Tag,
 		Digest:       d.spec.Digest,
 		Architecture: d.spec.Architecture,
+		HideTag:      d.spec.HideTag,
 	}
 }

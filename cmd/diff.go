@@ -25,15 +25,18 @@ var (
 			}
 
 			e.Options.Manifests = append(e.Options.Manifests, manifest.Manifest{
-				Manifests: manifestFiles,
-				Values:    valuesFiles,
-				Secrets:   secretsFiles,
+				Manifests:    manifestFiles,
+				Secrets:      secretsFiles,
+				Values:       valuesFiles,
+				ValuesInline: valuesInline,
 			})
 
 			e.Options.Pipeline.Target.Commit = false
 			e.Options.Pipeline.Target.Push = false
 			e.Options.Pipeline.Target.Clean = diffClean
 			e.Options.Pipeline.Target.DryRun = true
+			e.Options.Pipeline.DisableChangelog = disableChangelog
+			e.Options.Config.ValidateSchema = validateSchema
 
 			logrus.Warningln("Deprecated command, please instead use `updatecli pipeline diff`")
 
@@ -50,9 +53,15 @@ func init() {
 	diffCmd.Flags().StringArrayVarP(&manifestFiles, "config", "c", []string{}, "Sets config file or directory. By default, Updatecli looks for a file named 'updatecli.yaml' or a directory named 'updatecli.d'")
 	diffCmd.Flags().StringVar(&udashOAuthAudience, "reportAPI", "", "Set the report API URL where to publish pipeline reports")
 	diffCmd.Flags().StringArrayVarP(&valuesFiles, "values", "v", []string{}, "Sets values file uses for templating")
+	diffCmd.Flags().StringArrayVarP(&valuesInline, "values-inline", "i", []string{}, "Sets inline values uses for templating, accepted valid json/yaml string")
 	diffCmd.Flags().StringArrayVar(&secretsFiles, "secrets", []string{}, "Sets Sops secrets file uses for templating")
 	diffCmd.Flags().BoolVar(&diffClean, "clean", false, "Remove updatecli working directory like '--clean=true'")
 	diffCmd.Flags().BoolVar(&disableTLS, "disable-tls", false, "Disable TLS verification like '--disable-tls=true'")
 	diffCmd.Flags().StringArrayVar(&pipelineIds, "pipeline-ids", []string{}, "Filter pipelines to apply by their pipeline IDs, accepted a comma separated list")
 	diffCmd.Flags().StringArrayVar(&labels, "labels", []string{}, "Filter pipelines to apply by their labels, accepted as a comma separated list (key:value)")
+
+	addDisableChangelogFlag(diffCmd, &disableChangelog)
+	addValidateSchemaFlag(diffCmd, &validateSchema)
+	addExportReportToYAMLFlag(diffCmd, &exportReportToYAML)
+	addDisableUdashReportFlag(diffCmd, &disableUdashReport)
 }

@@ -1,6 +1,7 @@
 package cargopackage
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -10,7 +11,7 @@ import (
 
 // Condition checks if a cargo package with a specific version is published
 // We assume that if we can't find the package version in the index, then it means it doesn't exist.
-func (cp *CargoPackage) Condition(source string, scm scm.ScmHandler) (pass bool, message string, err error) {
+func (cp *CargoPackage) Condition(ctx context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 	if scm != nil {
 		path := scm.GetDirectory()
 		if cp.spec.Registry.RootDir != "" {
@@ -34,7 +35,7 @@ func (cp *CargoPackage) Condition(source string, scm scm.ScmHandler) (pass bool,
 		return false, "", errors.New("no version defined")
 	}
 
-	_, versions, err := cp.getVersions()
+	_, versions, err := cp.getVersions(ctx)
 	if err != nil {
 		return false, "", fmt.Errorf("getting cargo package version: %w", err)
 	}

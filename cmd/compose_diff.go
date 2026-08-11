@@ -6,32 +6,49 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/updatecli/updatecli/pkg/core/compose"
+	"github.com/updatecli/updatecli/pkg/core/engine/manifest"
 )
 
 var (
+	composeDiffOnlyPolicyIDs    []string
+	composeDiffIgnoredPolicyIDs []string
+
 	composeDiffCmd = &cobra.Command{
 		Use:   "diff",
 		Short: "diff show changes defined by the compose file",
 		Run: func(cmd *cobra.Command, args []string) {
 
-			c, err := compose.New(composeCmdFile)
+			composeFiles, err := compose.New(composeCmdFile, map[string]bool{})
 			if err != nil {
 				logrus.Errorf("command failed: %s", err)
 				os.Exit(1)
 			}
 
-			policies, err := c.GetPolicies(disableTLS)
-			if err != nil {
-				logrus.Errorf("command failed: %s", err)
-				os.Exit(1)
+			manifests := []manifest.Manifest{}
+			for i := range composeFiles {
+				c := composeFiles[i]
+				policies, err := c.GetPolicies(
+					disableTLS,
+					parseParametersList(composeDiffOnlyPolicyIDs),
+					parseParametersList(composeDiffIgnoredPolicyIDs),
+				)
+				if err != nil {
+					logrus.Errorf("command failed: %s", err)
+					os.Exit(1)
+				}
+
+				manifests = append(manifests, policies...)
 			}
 
-			e.Options.Manifests = append(e.Options.Manifests, policies...)
+			e.Options.Manifests = append(e.Options.Manifests, manifests...)
 
 			e.Options.Pipeline.Target.Commit = false
 			e.Options.Pipeline.Target.Push = false
 			e.Options.Pipeline.Target.Clean = composeCmdClean
 			e.Options.Pipeline.Target.DryRun = true
+			e.Options.Pipeline.DisableChangelog = disableChangelog
+			e.Options.Config.ValidateSchema = validateSchema
+			compose.ValidateSchema = validateSchema
 
 			err = run("compose/diff")
 			if err != nil {
@@ -49,6 +66,13 @@ func init() {
 	composeDiffCmd.Flags().BoolVar(&disableTLS, "disable-tls", false, "Disable TLS verification like '--disable-tls=true'")
 	composeDiffCmd.Flags().StringArrayVar(&pipelineIds, "pipeline-ids", []string{}, "Filter pipelines to apply by their IDs, accepted a comma separated list")
 	composeDiffCmd.Flags().StringArrayVar(&labels, "labels", []string{}, "Filter pipelines to apply by their labels, accepted as a comma separated list (key:value)")
+	composeDiffCmd.Flags().StringArrayVar(&composeDiffOnlyPolicyIDs, "only-policy-ids", []string{}, "Filter policies to apply by their policy IDs, accepted as a comma separated list")
+	composeDiffCmd.Flags().StringArrayVar(&composeDiffIgnoredPolicyIDs, "ignored-policy-ids", []string{}, "Filter policies to ignore by their policy IDs, accepted as a comma separated list")
+
+	addDisableChangelogFlag(composeDiffCmd, &disableChangelog)
+	addValidateSchemaFlag(composeDiffCmd, &validateSchema)
+	addExportReportToYAMLFlag(composeDiffCmd, &exportReportToYAML)
+	addDisableUdashReportFlag(composeDiffCmd, &disableUdashReport)
 
 	composeCmd.AddCommand(composeDiffCmd)
 }

@@ -1,33 +1,50 @@
 package compose
 
 import (
+	"errors"
 	"fmt"
+	"slices"
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/engine/manifest"
 	"github.com/updatecli/updatecli/pkg/core/registry"
+	"go.yaml.in/yaml/v3"
 )
 
 // Compose is a struct that contains a compose object
 type Compose struct {
 	// spec contains the compose spec
-	spec Spec
+	spec     Spec
+	filename string
+	name     string
 }
 
 // New creates a new Compose object
-func New(filename string) (Compose, error) {
-	var c Compose
+func New(filename string, visitedComposeFiles map[string]bool) ([]Compose, error) {
 
-	logrus.Infof("\nLoading Updatecli compose file: %q", filename)
+	composeFiles := []Compose{}
+
+	if _, ok := visitedComposeFiles[filename]; ok {
+		logrus.Debugf("Compose file %q already loaded, skipping to avoid circular reference", filename)
+		return nil, nil
+	}
+
+	visitedComposeFiles[filename] = true
+
+	logrus.Infof("Loading compose file: %q", filename)
 
 	spec, err := LoadFile(filename)
 	if err != nil {
-		return c, err
+		return nil, err
+	}
+
+	if len(spec.Name) != 0 {
+		logrus.Infof("\tName: %q", spec.Name)
 	}
 
 	switch len(spec.Policies) {
 	case 0:
-		logrus.Warningf("No policy defined in the compose file %q", filename)
+		//
 	case 1:
 		logrus.Infof("One policy detected:\n\t* Policy: %s", spec.Policies[0].Name)
 	default:
@@ -37,14 +54,36 @@ func New(filename string) (Compose, error) {
 		}
 	}
 
-	c.spec = *spec
+	composeFile := Compose{
+		spec:     *spec,
+		filename: filename,
+		name:     spec.Name,
+	}
 
-	return c, nil
+	composeFiles = append(composeFiles, composeFile)
+	errs := []error{}
+	for i := range spec.Include {
+		composeFile := relativePathToFile(filename, []string{spec.Include[i]})[0]
+		includedCompose, err := New(composeFile, visitedComposeFiles)
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
+
+		composeFiles = append(composeFiles, includedCompose...)
+	}
+
+	if len(errs) > 0 {
+		return nil, fmt.Errorf("included compose files errors: %s", errors.Join(errs...))
+	}
+
+	return composeFiles, nil
 }
 
 // GetPolicies returns a list of policies defined in the compose file
-func (c *Compose) GetPolicies(disableTLS bool) ([]manifest.Manifest, error) {
-	var manifests []manifest.Manifest
+func (c *Compose) GetPolicies(disableTLS bool, onlyPolicyIDs, ignoredPolicyIDs []string) ([]manifest.Manifest, error) {
+
+	manifests := []manifest.Manifest{}
 	var errs []error
 
 	if err := c.spec.Environments.SetEnv(); err != nil {
@@ -55,7 +94,51 @@ func (c *Compose) GetPolicies(disableTLS bool) ([]manifest.Manifest, error) {
 		errs = append(errs, err)
 	}
 
+	var globalInlineValues string
+	if c.spec.ValuesInline != nil {
+		var err error
+		globalInlineValues, err = parseValuesInline(*c.spec.ValuesInline)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("parsing global inline values: %s", err))
+		}
+	}
+
+	var globalValues []string
+	if len(c.spec.Values) > 0 {
+		globalValues = relativePathToFile(c.filename, c.spec.Values)
+	}
+
+	var secretFiles []string
+	if len(c.spec.Secrets) > 0 {
+		secretFiles = relativePathToFile(c.filename, c.spec.Secrets)
+	}
+
+	// Fail fast if there is an error with the compose file before processing policies
+	if len(errs) > 0 {
+		return nil, fmt.Errorf("compose file %q errors: %s", c.name, errors.Join(errs...))
+	}
+
 	for i := range c.spec.Policies {
+		if len(ignoredPolicyIDs) > 0 && c.spec.Policies[i].ID != "" {
+			if slices.Contains(ignoredPolicyIDs, c.spec.Policies[i].ID) {
+				logrus.Debugf("Policy %q is ignored, skipping", c.spec.Policies[i].Name)
+				continue
+			}
+		}
+
+		if len(onlyPolicyIDs) > 0 {
+
+			if c.spec.Policies[i].ID == "" {
+				logrus.Debugf("Policy %q does not have an ID, skipping because only policies with IDs can be executed when the list of policies to execute is not empty", c.spec.Policies[i].Name)
+				continue
+			}
+
+			if !slices.Contains(onlyPolicyIDs, c.spec.Policies[i].ID) {
+				logrus.Debugf("Policy %q is not in the list of policies to execute, skipping", c.spec.Policies[i].Name)
+				continue
+			}
+		}
+
 		if c.spec.Policies[i].IsZero() {
 			continue
 		}
@@ -74,7 +157,15 @@ func (c *Compose) GetPolicies(disableTLS bool) ([]manifest.Manifest, error) {
 		}
 
 		policyManifest = append(policyManifest, c.spec.Policies[i].Config...)
+
+		if len(globalValues) > 0 {
+			policyValues = append(policyValues, globalValues...)
+		}
 		policyValues = append(policyValues, c.spec.Policies[i].Values...)
+
+		if len(secretFiles) > 0 {
+			policySecrets = append(policySecrets, secretFiles...)
+		}
 		policySecrets = append(policySecrets, c.spec.Policies[i].Secrets...)
 
 		showDetectedFiles := func(files []string, fileType string) {
@@ -95,16 +186,43 @@ func (c *Compose) GetPolicies(disableTLS bool) ([]manifest.Manifest, error) {
 		showDetectedFiles(policyValues, "value")
 		showDetectedFiles(policySecrets, "secret")
 
-		manifests = append(manifests, manifest.Manifest{
+		manifest := manifest.Manifest{
 			Manifests: policyManifest,
 			Values:    policyValues,
 			Secrets:   policySecrets,
-		})
+		}
+
+		if len(globalInlineValues) > 0 {
+			manifest.ValuesInline = append(manifest.ValuesInline, globalInlineValues)
+		}
+
+		if c.spec.Policies[i].ValuesInline != nil {
+			policyInlineValues, err := parseValuesInline(*c.spec.Policies[i].ValuesInline)
+			if err != nil {
+				errs = append(errs, fmt.Errorf("parsing inline values for policy %q: %s", c.spec.Policies[i].Name, err))
+				continue
+			}
+
+			manifest.ValuesInline = append(manifest.ValuesInline, policyInlineValues)
+		}
+
+		manifests = append(manifests, manifest)
 	}
 
 	if len(errs) > 0 {
-		return manifests, fmt.Errorf("policies errors: %s", errs)
+		return nil, fmt.Errorf("policies errors: %s", errors.Join(errs...))
 	}
 
 	return manifests, nil
+}
+
+// parseValuesInline returns a list of inline values defined in the compose file
+func parseValuesInline(data map[string]any) (string, error) {
+
+	valuesInline, err := yaml.Marshal(data)
+	if err != nil {
+		return "", fmt.Errorf("marshaling inline values: %s", err)
+	}
+
+	return string(valuesInline), nil
 }

@@ -36,9 +36,10 @@ var (
 			}
 
 			e.Options.Manifests = append(e.Options.Manifests, manifest.Manifest{
-				Manifests: manifestFiles,
-				Values:    valuesFiles,
-				Secrets:   secretsFiles,
+				Manifests:    manifestFiles,
+				Values:       valuesFiles,
+				ValuesInline: valuesInline,
+				Secrets:      secretsFiles,
 			})
 
 			e.Options.Pipeline.Target.Commit = applyCommit
@@ -47,6 +48,8 @@ var (
 			e.Options.Pipeline.Target.DryRun = false
 			e.Options.Pipeline.Target.CleanGitBranches = applyCleanGitBranches
 			e.Options.Pipeline.Target.ExistingOnly = applyExistingOnly
+			e.Options.Pipeline.DisableChangelog = disableChangelog
+			e.Options.Config.ValidateSchema = validateSchema
 
 			logrus.Warningln("Deprecated command, please instead use `updatecli pipeline apply`")
 
@@ -63,6 +66,7 @@ func init() {
 	applyCmd.Flags().StringArrayVarP(&manifestFiles, "config", "c", []string{}, "Sets config file or directory. By default, Updatecli looks for a file named 'updatecli.yaml' or a directory named 'updatecli.d'")
 	applyCmd.Flags().StringVar(&udashOAuthAudience, "reportAPI", "", "Set the report API URL where to publish pipeline reports")
 	applyCmd.Flags().StringArrayVarP(&valuesFiles, "values", "v", []string{}, "Sets values file uses for templating")
+	applyCmd.Flags().StringArrayVarP(&valuesInline, "values-inline", "i", []string{}, "Sets inline values uses for templating, accepted valid json/yaml string")
 	applyCmd.Flags().StringArrayVar(&secretsFiles, "secrets", []string{}, "Sets Sops secrets file uses for templating")
 	applyCmd.Flags().BoolVar(&applyExistingOnly, "existing-only", false, "Skip targets when pipeline has no existing remote branch '--existing-only=true'")
 	applyCmd.Flags().BoolVarP(&applyCommit, "commit", "", true, "Record changes to the repository, '--commit=false'")
@@ -72,4 +76,9 @@ func init() {
 	applyCmd.Flags().BoolVar(&applyCleanGitBranches, "clean-git-branches", false, "Remove updatecli working git branches like '--clean-git-branches=true'")
 	applyCmd.Flags().StringArrayVar(&pipelineIds, "pipeline-ids", []string{}, "Filter pipelines to apply by their pipeline IDs, accepted as comma separated list")
 	applyCmd.Flags().StringArrayVar(&labels, "labels", []string{}, "Filter pipelines by their labels, accepted as a comma separated list (key:value)")
+
+	addDisableChangelogFlag(applyCmd, &disableChangelog)
+	addValidateSchemaFlag(applyCmd, &validateSchema)
+	addExportReportToYAMLFlag(applyCmd, &exportReportToYAML)
+	addDisableUdashReportFlag(applyCmd, &disableUdashReport)
 }

@@ -1,29 +1,28 @@
+---
 name: Updatecli
 on:
   release:
   workflow_dispatch:
   schedule:
-    # Run at 12:00 every Saterday every 14 days
     - cron: 0 12 */14 * *
-
+permissions: {}
 jobs:
   updatecli:
     runs-on: ubuntu-latest
     steps:
       - name: "Checkout"
-        uses: "actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3" # v6.0.0
-
-      - name: "Setup updatecli"
-        uses: "updatecli/updatecli-action@5ca36367fadc6ad94d590984fd9c696e783ec635" # v2.96.0
+        uses: "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0" # v7.0.0
         with:
-          version: "v0.113.0-rc.1"
-
+          persist-credentials: false
+      - name: "Setup updatecli"
+        uses: "updatecli/updatecli-action@d422ba543720d01a96d4c3e3ab8544cc188cd711" # v3.5.0
+        with:
+          version: "v0.120.0"
       - name: "Set up Go"
-        uses: "actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c" # v6.1.0
+        uses: "actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16" # v6.5.0
         with:
           go-version-file: "go.mod"
         id: go
-
       - name: "Run updatecli"
         run: updatecli compose apply --clean-git-branches=true --experimental
         env:

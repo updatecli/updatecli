@@ -1,17 +1,23 @@
 package cmd
 
 import (
+	"context"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/exp/slices"
 
 	"github.com/updatecli/updatecli/pkg/core/cmdoptions"
 	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/registry"
+	"github.com/updatecli/updatecli/pkg/core/telemetry"
 	"github.com/updatecli/updatecli/pkg/core/tmp"
 	"github.com/updatecli/updatecli/pkg/core/udash"
+	"github.com/updatecli/updatecli/pkg/core/version"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/ci"
 
 	"github.com/updatecli/updatecli/pkg/core/engine"
@@ -21,17 +27,23 @@ import (
 )
 
 var (
-	pipelineIds      []string
-	labels           []string
-	manifestFiles    []string
-	valuesFiles      []string
-	secretsFiles     []string
-	policyReferences []string
-	e                engine.Engine
-	verbose          bool
-	experimental     bool
-	disableTLS       bool
-	uniqueTmpDir     bool
+	pipelineIds         []string
+	labels              []string
+	manifestFiles       []string
+	valuesFiles         []string
+	valuesInline        []string
+	secretsFiles        []string
+	policyReferences    []string
+	e                   engine.Engine
+	verbose             bool
+	experimental        bool
+	disableTLS          bool
+	disableChangelog    bool
+	validateSchema      bool
+	uniqueTmpDir        bool
+	disableVersionCheck bool
+	exportReportToYAML  bool
+	disableUdashReport  bool
 
 	rootCmd = &cobra.Command{
 		Use:   "updatecli",
@@ -58,13 +70,41 @@ func Execute() {
 	}
 }
 
+// skipVersionCheckCommands lists commands where the version check is skipped
+// to avoid unnecessary network requests and prevent banner output from
+// corrupting generated content.
+var skipVersionCheckCommands = []string{
+	"completion",
+	"__complete",
+	"__completeNoDesc",
+	"docs",
+	"man",
+	"jsonschema",
+}
+
 func init() {
 
 	logrus.SetOutput(os.Stdout)
 
+	rootCmd.PersistentPostRun = func(cmd *cobra.Command, args []string) {
+		if disableVersionCheck {
+			return
+		}
+		for c := cmd; c != nil; c = c.Parent() {
+			if slices.Contains(skipVersionCheckCommands, c.Name()) {
+				return
+			}
+		}
+		err := engine.CheckLatestPublishedVersion()
+		if err != nil {
+			logrus.Debugf("Unable to check for the latest version of updatecli: %v", err)
+		}
+	}
+
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "debug", "", false, "Debug Output")
 	rootCmd.PersistentFlags().BoolVarP(&experimental, "experimental", "", false, "Enable Experimental mode")
 	rootCmd.PersistentFlags().BoolVar(&uniqueTmpDir, "unique-tmp-dir", false, "Use a unique temporary directory to allow running multiple Updatecli instances in parallel")
+	rootCmd.PersistentFlags().BoolVar(&disableVersionCheck, "disable-version-check", getEnvBoolOrDefault(DisableVersionCheckEnvVar, false), "Disable version check (env: "+DisableVersionCheckEnvVar+")")
 	rootCmd.PersistentPreRun = func(cmd *cobra.Command, args []string) {
 		if verbose {
 			logrus.SetLevel(logrus.DebugLevel)
@@ -103,36 +143,36 @@ func init() {
 }
 
 func run(command string) error {
+	ctx := context.Background()
+	shutdown := telemetry.Init(ctx, "updatecli", version.Version)
+	defer func() {
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if err := shutdown(shutdownCtx); err != nil {
+			logrus.Warnf("telemetry shutdown: %v", err)
+		}
+	}()
+
+	tracer := telemetry.Tracer("updatecli")
+	e.SetTracer(tracer)
+	ctx, span := tracer.Start(ctx, "updatecli",
+		trace.WithAttributes(
+			attribute.String("updatecli.command", command),
+			attribute.String("updatecli.version", version.Version),
+		),
+	)
+	defer span.End()
 
 	for _, id := range pipelineIds {
 		e.Options.PipelineIDs = append(e.Options.PipelineIDs, strings.Split(id, ",")...)
 	}
 
-	for _, label := range labels {
-		labelsArray := strings.Split(label, ",")
-
-		initLabels := func() {
-			if e.Options.Labels == nil {
-				e.Options.Labels = make(map[string]string)
-			}
-		}
-
-		for i := range labelsArray {
-			labelKeyValue := strings.SplitN(labelsArray[i], ":", 2)
-			if labelKeyValue[0] == "" {
-				logrus.Warnf("Ignoring label with empty key: %q", labelsArray[i])
-				continue
-			}
-			switch len(labelKeyValue) {
-			case 2:
-				initLabels()
-				e.Options.Labels[labelKeyValue[0]] = labelKeyValue[1]
-			case 1:
-				initLabels()
-				e.Options.Labels[labelKeyValue[0]] = ""
-			}
-		}
+	if parsed := parseLabels(labels); parsed != nil {
+		e.Options.Labels = parsed
 	}
+
+	e.Options.ExportToYAML = exportReportToYAML
+	e.Options.DisableUdashReport = disableUdashReport
 
 	switch command {
 	case "apply", "compose/apply", "pipeline/apply":
@@ -146,13 +186,13 @@ func run(command string) error {
 			}()
 		}
 
-		err := e.Prepare()
+		err := e.Prepare(ctx)
 		if err != nil {
 			logrus.Errorf("%s %s", result.FAILURE, err)
 			return err
 		}
 
-		err = e.Run()
+		err = e.Run(ctx)
 		if err != nil {
 			logrus.Errorf("%s %s", result.FAILURE, err)
 			return err
@@ -167,13 +207,13 @@ func run(command string) error {
 			}()
 		}
 
-		err := e.Prepare()
+		err := e.Prepare(ctx)
 		if err != nil {
 			logrus.Errorf("%s %s", result.FAILURE, err)
 			return err
 		}
 
-		err = e.Run()
+		err = e.Run(ctx)
 		if err != nil {
 			logrus.Errorf("%s %s", result.FAILURE, err)
 			return err
@@ -188,7 +228,7 @@ func run(command string) error {
 			}()
 		}
 
-		err := e.Prepare()
+		err := e.Prepare(ctx)
 		if err != nil {
 			logrus.Errorf("%s %s", result.FAILURE, err)
 		}
@@ -202,6 +242,13 @@ func run(command string) error {
 
 	case "manifest/upgrade":
 		err := e.ManifestUpgrade(manifestUpgradeInPlace)
+		if err != nil {
+			logrus.Errorf("%s %s", result.FAILURE, err)
+			return err
+		}
+
+	case "manifest/validate":
+		err := e.ValidateManifests(manifestValidateStrict)
 		if err != nil {
 			logrus.Errorf("%s %s", result.FAILURE, err)
 			return err
@@ -241,7 +288,7 @@ func run(command string) error {
 		}
 
 		if !showDisablePrepare {
-			err := e.Prepare()
+			err := e.Prepare(ctx)
 			if err != nil {
 				logrus.Errorf("%s %s", result.FAILURE, err)
 				return err
@@ -287,6 +334,32 @@ func run(command string) error {
 		logrus.Warnf("Wrong command")
 	}
 	return nil
+}
+
+// parseLabels converts a slice of "key:value" or "key" strings into a label map.
+// Returns nil when the input produces no valid labels.
+func parseLabels(labels []string) map[string]string {
+	var result map[string]string
+
+	for _, label := range labels {
+		for _, entry := range strings.Split(label, ",") {
+			kv := strings.SplitN(entry, ":", 2)
+			if kv[0] == "" {
+				logrus.Warnf("Ignoring label with empty key: %q", entry)
+				continue
+			}
+			if result == nil {
+				result = make(map[string]string)
+			}
+			if len(kv) == 2 {
+				result[kv[0]] = kv[1]
+			} else {
+				result[kv[0]] = ""
+			}
+		}
+	}
+
+	return result
 }
 
 func getPolicyFilesFromRegistry() error {

@@ -1,11 +1,13 @@
 package golang
 
 import (
+	"fmt"
 	"path"
 	"strings"
 
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
@@ -17,37 +19,41 @@ type Spec struct {
 	OnlyGoVersion *bool `yaml:",omitempty"`
 	// OnlyGoModule allows to specify if the autodiscovery should only handle Go module specified in go.mod
 	OnlyGoModule *bool `yaml:",omitempty"`
-	// ignore allows to specify "rule" to ignore autodiscovery a specific go.mod rule
+	// ignore allows to specify `rule` to ignore autodiscovery a specific go.mod rule
 	Ignore MatchingRules `yaml:",omitempty"`
-	/*
-		`only` allows to specify rule to "only" autodiscover manifest for a specific golang rule
-	*/
+	// `only` allows to specify rule to `only` autodiscover manifest for a specific golang rule
 	Only MatchingRules `yaml:",omitempty"`
-	/*
-		`versionfilter` provides parameters to specify the version pattern to use when generating manifest.
-
-		kind - semver
-			versionfilter of kind `semver` uses semantic versioning as version filtering
-			pattern accepts one of:
-				`patch` - patch only update patch version
-				`minor` - minor only update minor version
-				`major` - major only update major versions
-				`a version constraint` such as `>= 1.0.0`
-
-		kind - regex
-			versionfilter of kind `regex` uses regular expression as version filtering
-			pattern accepts a valid regular expression
-
-		example:
-		```
-			versionfilter:
-				kind: semver
-				pattern: minor
-		```
-
-		and its type like regex, semver, or just latest.
-	*/
+	//  `versionfilter` provides parameters to specify the version pattern used when generating manifest.
+	//
+	//  kind - semver
+	//    versionfilter of kind `semver` uses semantic versioning as version filtering
+	//    pattern accepts one of:
+	//      `prerelease` - Updatecli tries to identify the latest prerelease whatever it means
+	//      `patch` - Updatecli only handles patch version update
+	//      `minor` - Updatecli handles patch AND minor version update
+	//      `minoronly` - Updatecli handles minor version only
+	//      `major` - Updatecli handles patch, minor, AND major version update
+	//      `majoronly` - Updatecli only handles major version update
+	//      `a version constraint` such as `>= 1.0.0`
+	//
+	//  kind - regex
+	//    versionfilter of kind `regex` uses regular expression as version filtering
+	//    pattern accepts a valid regular expression
+	//
+	//  example:
+	//  ```
+	//    versionfilter:
+	//      kind: semver
+	//      pattern: minor
+	//  ```
+	//
+	//  and its type like regex, semver, or just latest.
+	//
+	//  More examples can be found at https://www.updatecli.io/docs/core/versionfilter/
 	VersionFilter version.Filter `yaml:",omitempty"`
+	// Age defines the minimum or maximum age of a release to be considered valid.
+	// It accepts a duration string (e.g., `24h`, `7d`, `1w`).
+	Age age.Spec `yaml:",omitempty"`
 }
 
 // Golang holds all information needed to generate golang manifest.
@@ -73,6 +79,16 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Golang, error) {
 	err := mapstructure.Decode(spec, &s)
 	if err != nil {
 		return Golang{}, err
+	}
+
+	// Validate ignore rules
+	if err := s.Ignore.Validate(); err != nil {
+		return Golang{}, fmt.Errorf("invalid ignore spec: %w", err)
+	}
+
+	// Validate only rules
+	if err := s.Only.Validate(); err != nil {
+		return Golang{}, fmt.Errorf("invalid only spec: %w", err)
 	}
 
 	newFilter := s.VersionFilter

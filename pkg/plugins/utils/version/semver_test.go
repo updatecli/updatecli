@@ -92,7 +92,7 @@ var (
 			Versions:                []string{"1.0.0", "2.0.0", "4.0.0", "3.0.0", "6.0.0", "5.0.0"},
 			SortedVersions:          []string{"6.0.0", "5.0.0", "4.0.0", "3.0.0", "2.0.0", "1.0.0"},
 			ExpectedInitErr:         nil,
-			ExpectedSearchErr:       fmt.Errorf("improper constraint: xyz"),
+			ExpectedSearchErr:       fmt.Errorf("improper constraint: \"xyz\""),
 			ExpectedParsedVersion:   "",
 			ExpectedOriginalVersion: "",
 		},

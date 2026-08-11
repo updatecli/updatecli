@@ -53,13 +53,13 @@ func New(spec interface{}) (*Maven, error) {
 	newSpec := Spec{}
 	err := mapstructure.Decode(spec, &newSpec)
 	if err != nil {
-		return &Maven{}, nil
+		return &Maven{}, err
 	}
 
 	err = newSpec.Sanitize()
 
 	if err != nil {
-		return &Maven{}, nil
+		return &Maven{}, err
 	}
 
 	newResource := &Maven{

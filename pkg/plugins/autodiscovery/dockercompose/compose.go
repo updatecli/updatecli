@@ -161,7 +161,7 @@ func (d DockerCompose) discoverDockerComposeImageManifests() ([][]byte, error) {
 				tagFilter = ""
 				if err != nil {
 					logrus.Debugf("building version filter pattern: %s", err)
-					sourceSpec.VersionFilter.Pattern = "*"
+					versionFilterPattern = "*"
 				}
 			}
 
@@ -187,7 +187,7 @@ func (d DockerCompose) discoverDockerComposeImageManifests() ([][]byte, error) {
 				}
 			} else {
 				logrus.Infoln("No source spec detected")
-				return nil, nil
+				continue
 			}
 
 			params := struct {

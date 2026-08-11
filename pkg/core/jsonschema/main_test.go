@@ -265,3 +265,52 @@ func TestGenerateSpecToMapJsonSchema(t *testing.T) {
 		assert.Equal(t, data.expectedJsonSchema, string(gotJsonSchema))
 	}
 }
+
+// TestSchemaWithoutComments ensures a schema can still be generated when the code
+// comments are not available, which is the case everywhere but the "updatecli
+// jsonschema" command as retrieving them requires cloning the updatecli repository.
+// Comments only populate the "description" fields, so their absence must degrade the
+// schema rather than reduce it to nil.
+func TestSchemaWithoutComments(t *testing.T) {
+	require.NoError(t, CleanCommentDirectory())
+
+	// The comment map is cached once successfully retrieved, so a previous test may
+	// have populated it.
+	commentMapMutex.Lock()
+	previousCommentMap := cachedCommentMap
+	cachedCommentMap = nil
+	commentMapMutex.Unlock()
+
+	defer func() {
+		commentMapMutex.Lock()
+		cachedCommentMap = previousCommentMap
+		commentMapMutex.Unlock()
+	}()
+
+	require.Empty(t, getCommentMap(), "no comment is expected without the comment directory")
+
+	anyOfSpec := map[string]interface{}{
+		"jenkins": mockJenkinsSpec{},
+	}
+
+	oneOfSchema := AppendOneOfToJsonSchema(mockConditionConfig{}, anyOfSpec)
+	require.NotNil(t, oneOfSchema)
+	require.Len(t, oneOfSchema.OneOf, 1)
+	assert.NotNil(t, oneOfSchema.OneOf[0])
+
+	mapSchema := AppendMapToJsonSchema(mockConditionConfig{}, anyOfSpec)
+	require.NotNil(t, mapSchema)
+
+	kindSchemas := BuildKindSchemas(mockConditionConfig{}, anyOfSpec)
+	require.Len(t, kindSchemas, 1)
+
+	jenkinsSchema := kindSchemas["jenkins"]
+	require.NotNil(t, jenkinsSchema)
+
+	kindProperty, ok := jenkinsSchema.Properties.Get("kind")
+	require.True(t, ok, "the kind property must be pinned to the kind name")
+	assert.Equal(t, []interface{}{"jenkins"}, kindProperty.Enum)
+
+	_, ok = jenkinsSchema.Properties.Get("spec")
+	assert.True(t, ok, "the spec property must be replaced by the kind specification")
+}

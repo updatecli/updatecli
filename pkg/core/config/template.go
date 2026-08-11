@@ -27,6 +27,8 @@ type Template struct {
 	CfgFile string
 	// ValuesFiles contains one or multiple yaml files containing key/values
 	ValuesFiles []string
+	// ValuesInline contains the list of inline values for templating, accepted valid json/yaml string
+	ValuesInline []string
 	// SecretsFiles contains one or multiple sops files containing secrets
 	SecretsFiles []string
 	// Values contains key/value extracted from a values file
@@ -91,8 +93,13 @@ func (t *Template) readAllValues() (map[string]any, error) {
 		return nil, err
 	}
 
-	// Merge yaml configuration and sops secrets into one configuration
-	return mergeValueFile(t.Values, t.Secrets), nil
+	inlineValues, err := readValuesInline(t.ValuesInline)
+	if err != nil {
+		return nil, err
+	}
+
+	// Merge yaml configuration, sops secrets, and inline values into one configuration
+	return mergeValueFile(t.Values, t.Secrets, inlineValues), nil
 }
 
 // readValuesFiles reads one or multiple updatecli values files and merge them into one
@@ -124,9 +131,9 @@ func (t *Template) readFile(filename string, values *map[string]interface{}, enc
 	extension := filepath.Ext(baseFilename)
 
 	// Check if the file extension is either yaml or yml
-	if strings.Compare(extension, ".yml") != 0 &&
-		strings.Compare(extension, ".yaml") != 0 &&
-		strings.Compare(extension, ".json") != 0 {
+	if strings.Compare(extension, EXTENSIONYML) != 0 &&
+		strings.Compare(extension, EXTENSIONYAML) != 0 &&
+		strings.Compare(extension, EXTENSIONJSON) != 0 {
 		err = fmt.Errorf("wrong file extension %q for file %q", extension, baseFilename)
 		logrus.Errorln(err)
 		return err
@@ -158,12 +165,12 @@ func (t *Template) readFile(filename string, values *map[string]interface{}, enc
 
 	if encrypted {
 		switch extension {
-		case ".yaml", ".yml":
+		case EXTENSIONYAML, EXTENSIONYML:
 			content, err = decrypt.Data(content, "yaml")
 			if err != nil {
 				return err
 			}
-		case ".json":
+		case EXTENSIONJSON:
 			content, err = decrypt.Data(content, "json")
 			if err != nil {
 				return err
@@ -176,6 +183,22 @@ func (t *Template) readFile(filename string, values *map[string]interface{}, enc
 	err = yaml.Unmarshal(content, &values)
 
 	return err
+}
+
+// readValuesInline reads and merges all the inline values into one map
+func readValuesInline(valuesInline []string) (map[string]interface{}, error) {
+	values := make(map[string]interface{})
+
+	for _, value := range valuesInline {
+		var v map[string]interface{}
+		err := yaml.Unmarshal([]byte(value), &v)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse inline value: %w", err)
+		}
+		values = mergeValueFile(values, v)
+	}
+
+	return values, nil
 }
 
 // mergeValueFile merges one or multiple updatecli value files content into one

@@ -99,7 +99,11 @@ func (y Yaml) goYamlTarget(valueToWrite string, resultTarget *result.Target, dry
 				}
 
 				oldVersion = node.String()
-				if node.String() != nodeToWrite.String() && node.String() != valueToWrite {
+
+				// Compare decoded value so folded/literal scalars (>-, |) aren't
+				// flagged as changed by their formatting markers. See issue #8295.
+				var decoded string
+				if err := goyaml.NodeToValue(node, &decoded); err != nil || decoded != valueToWrite {
 					contentChanged = true
 				}
 			}

@@ -1,6 +1,7 @@
 package temurin
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"slices"
@@ -19,6 +20,8 @@ type Temurin struct {
 	apiWebClient            httpclient.HTTPClient
 	apiWebRedirectionClient httpclient.HTTPClient
 	foundVersion            string
+	// apiURL overrides the default temurinApiUrl. Used in tests to point at a mock server.
+	apiURL string
 }
 
 /*
@@ -66,23 +69,20 @@ func New(spec interface{}) (*Temurin, error) {
 		return nil, fmt.Errorf("[temurin] resource with both 'specificversion' and 'featureversion' specified which are mutually exclusive")
 	}
 
-	httpClient := httpclient.NewRetryClient().(*http.Client)
+	noRedirectClient := httpclient.NewRetryClient()
+	noRedirectClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+		return http.ErrUseLastResponse
+	}
 
 	newResource := &Temurin{
-		spec: newSpec,
-		apiWebClient: &http.Client{
-			Transport: httpClient.Transport,
-		},
-		apiWebRedirectionClient: &http.Client{
-			CheckRedirect: func(req *http.Request, via []*http.Request) error {
-				return http.ErrUseLastResponse
-			},
-			Transport: httpClient.Transport,
-		},
+		spec:                    newSpec,
+		apiWebClient:            httpclient.NewRetryClient(),
+		apiWebRedirectionClient: noRedirectClient,
 	}
 
 	/** Validations **/
-	architectures, err := newResource.apiGetArchitectures()
+	// context.Background() is appropriate here: New() is a constructor with no caller context.
+	architectures, err := newResource.apiGetArchitectures(context.Background())
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +90,7 @@ func New(spec interface{}) (*Temurin, error) {
 		return nil, fmt.Errorf("[temurin] Specified architecture %q is not a valid Temurin architecture (check https://api.adoptium.net/q/swagger-ui/#/Types for valid list)", newResource.spec.Architecture)
 	}
 
-	operatingSystems, err := newResource.apiGetOperatingSystems()
+	operatingSystems, err := newResource.apiGetOperatingSystems(context.Background())
 	if err != nil {
 		return nil, err
 	}
@@ -143,6 +143,7 @@ func (t *Temurin) ReportConfig() interface{} {
 		ReleaseType:     t.spec.ReleaseType,
 		ImageType:       t.spec.ImageType,
 		FeatureVersion:  t.spec.FeatureVersion,
+		SpecificVersion: t.spec.SpecificVersion,
 		ReleaseLine:     t.spec.ReleaseLine,
 		Architecture:    t.spec.Architecture,
 		OperatingSystem: t.spec.OperatingSystem,

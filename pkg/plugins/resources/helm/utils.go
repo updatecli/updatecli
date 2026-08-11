@@ -2,6 +2,7 @@ package helm
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"fmt"
 	"io"
@@ -14,6 +15,7 @@ import (
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/httpclient"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/yaml"
@@ -103,7 +105,7 @@ func (c *Chart) GetRepoIndexFromFile(rootDir string) (repo.IndexFile, error) {
 
 // GetRepoIndexFromUrl loads an index file and does minimal validity checking.
 // It fails if API Version isn't set (ErrNoAPIVersion) or if the "unmarshal" operation fails.
-func (c *Chart) GetRepoIndexFromURL() (repo.IndexFile, error) {
+func (c *Chart) GetRepoIndexFromURL(ctx context.Context) (repo.IndexFile, error) {
 	var err error
 
 	URL := c.spec.URL
@@ -115,7 +117,7 @@ func (c *Chart) GetRepoIndexFromURL() (repo.IndexFile, error) {
 		}
 	}
 
-	req, err := http.NewRequest("GET", URL, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", URL, nil)
 	if err != nil {
 		return repo.IndexFile{}, err
 	}
@@ -125,7 +127,8 @@ func (c *Chart) GetRepoIndexFromURL() (repo.IndexFile, error) {
 		req.Header.Add("Authorization", fmt.Sprintf("Basic %s", base64.StdEncoding.EncodeToString(userPass)))
 	}
 
-	res, err := http.DefaultClient.Do(req)
+	client := httpclient.NewRetryClient()
+	res, err := client.Do(req)
 	if err != nil {
 		return repo.IndexFile{}, err
 	}
@@ -163,7 +166,7 @@ func (c *Chart) GetRepoIndexFromURL() (repo.IndexFile, error) {
 }
 
 // MetadataUpdate updates a metadata if necessary and it bump the ChartVersion
-func (c *Chart) MetadataUpdate(source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
+func (c *Chart) MetadataUpdate(ctx context.Context, source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
 	var err error
 
 	/*
@@ -215,7 +218,7 @@ func (c *Chart) MetadataUpdate(source string, scm scm.ScmHandler, dryRun bool, r
 	}
 
 	if len(currentChartMetadata.AppVersion) > 0 && c.spec.AppVersion {
-		if err := c.metadataYamlPathUpdate("$.appVersion", source, scm, dryRun, resultTarget); err != nil {
+		if err := c.metadataYamlPathUpdate(ctx, "$.appVersion", source, scm, dryRun, resultTarget); err != nil {
 			return err
 		}
 	}
@@ -324,7 +327,7 @@ forLoop:
 		logrus.Debugf("Updating chart version from %q to %q", currentChartMetadata.Version, computedVersion)
 	}
 
-	if err := c.metadataYamlPathUpdate("$.version", computedVersion, scm, dryRun, resultTarget); err != nil {
+	if err := c.metadataYamlPathUpdate(ctx, "$.version", computedVersion, scm, dryRun, resultTarget); err != nil {
 		return err
 	}
 
@@ -332,7 +335,7 @@ forLoop:
 }
 
 // metadataYamlPathUpdate updates the Chart.yaml
-func (c *Chart) metadataYamlPathUpdate(key string, value string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
+func (c *Chart) metadataYamlPathUpdate(ctx context.Context, key string, value string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
 	yamlSpec := yaml.Spec{
 		File: filepath.Join(c.spec.Name, "Chart.yaml"),
 		Key:  key,
@@ -344,7 +347,7 @@ func (c *Chart) metadataYamlPathUpdate(key string, value string, scm scm.ScmHand
 	}
 
 	metadataResultTarget := result.Target{}
-	if err := yamlResource.Target(value, scm, dryRun, &metadataResultTarget); err != nil {
+	if err := yamlResource.Target(ctx, value, scm, dryRun, &metadataResultTarget); err != nil {
 		return err
 	}
 

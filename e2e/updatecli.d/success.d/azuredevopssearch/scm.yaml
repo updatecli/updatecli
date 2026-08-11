@@ -1,0 +1,33 @@
+## Disabling this test as it requires an AZURE DevOps PAT
+## which is not available in the CI
+## export UPDATECLI_AZURE_DEVOPS_USERNAME=xxx
+## export UPDATECLI_AZURE_DEVOPS_TOKEN=yyy
+#
+# name: Test Azure Devops scm
+# pipelineid: azuredevops/scm
+#
+# scms:
+#   azuredevops:
+#     kind: azuredevopssearch
+#     spec:
+#       organization: updatecli
+#       #project: "^updatecli-test$"
+#       #repository: "^updatecli-test$"
+#       branch: "^main$"
+#
+# targets:
+#   readme:
+#     name: Test update
+#     kind: yaml
+#     disablesourceinput: true
+#     scmid: azuredevops
+#     spec:
+#       file: .github/workflows/updatecli.yaml
+#       key: "$.permissions.contents"
+#       value: read
+#
+# actions:
+#   default:
+#     title: Change readme title
+#     kind: azuredevops/pullrequest
+#     scmid: azuredevops

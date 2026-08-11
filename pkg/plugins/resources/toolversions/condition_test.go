@@ -1,6 +1,7 @@
 package toolversions
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -57,7 +58,7 @@ func TestCondition(t *testing.T) {
 
 			require.NoError(t, err)
 
-			gotResult, _, gotErr := toml.Condition("", nil)
+			gotResult, _, gotErr := toml.Condition(context.Background(), "", nil)
 
 			if tt.wantErr {
 				assert.Equal(t, tt.expectedErrorMsg.Error(), gotErr.Error())

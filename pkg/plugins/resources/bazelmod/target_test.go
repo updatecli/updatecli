@@ -1,6 +1,7 @@
 package bazelmod
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -151,7 +152,7 @@ bazel_dep(name = "rules_go", version = "0.42.0")`,
 			require.NoError(t, err)
 
 			resultTarget := &result.Target{}
-			err = b.Target(tt.source, nil, tt.dryRun, resultTarget)
+			err = b.Target(context.Background(), tt.source, nil, tt.dryRun, resultTarget)
 
 			if tt.wantErr {
 				assert.Error(t, err)

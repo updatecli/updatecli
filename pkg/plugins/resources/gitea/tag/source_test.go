@@ -1,6 +1,7 @@
 package tag
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -92,7 +93,7 @@ func TestSource(t *testing.T) {
 			require.NoError(t, gotErr)
 
 			gotResult := result.Source{}
-			gotErr = g.Source("", &gotResult)
+			gotErr = g.Source(context.Background(), "", &gotResult)
 
 			if tt.wantErr {
 				require.Error(t, gotErr)

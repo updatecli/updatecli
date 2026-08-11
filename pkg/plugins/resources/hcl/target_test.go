@@ -1,6 +1,7 @@
 package hcl
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -93,7 +94,7 @@ func TestTarget(t *testing.T) {
 			require.NoError(t, err)
 
 			gotResult := result.Target{}
-			err = j.Target(tt.sourceInput, nil, true, &gotResult)
+			err = j.Target(context.Background(), tt.sourceInput, nil, true, &gotResult)
 
 			if tt.wantErr {
 				assert.Equal(t, tt.expectedErrorMsg.Error(), err.Error())

@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.yaml.in/yaml/v3"
 
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
@@ -56,7 +57,7 @@ targets:
             - "package-lock.json"
             - "package.json"
       environments:
-       - name: PATH
+        - name: PATH
       workdir: '.'
 
 `,
@@ -93,7 +94,7 @@ targets:
             - "package-lock.json"
             - "package.json"
       environments:
-       - name: PATH
+        - name: PATH
       workdir: '.'
 
 `,
@@ -130,7 +131,7 @@ targets:
             - "package-lock.json"
             - "package.json"
       environments:
-       - name: PATH
+        - name: PATH
       workdir: '.'
 
 `,
@@ -189,7 +190,7 @@ targets:
             - "pnpm-lock.yaml"
             - "package.json"
       environments:
-       - name: PATH
+        - name: PATH
       workdir: '.'
 
 `,
@@ -289,4 +290,29 @@ func TestDiscoverManifests_WithResourceConfig(t *testing.T) {
 	assert.Contains(t, manifestStr, "npmrcpath: '/custom/.npmrc'")
 	assert.Contains(t, manifestStr, "url: 'https://npm.example.com'")
 	assert.Contains(t, manifestStr, "registrytoken: 'test-token-123'")
+	assert.Contains(t, manifestStr, "- name: NPM_CONFIG_USERCONFIG")
+	assert.Contains(t, manifestStr, "value: '/custom/.npmrc'")
+
+	var parsedManifest struct {
+		Targets map[string]struct {
+			Spec struct {
+				Environments []struct {
+					Name  string `yaml:"name"`
+					Value string `yaml:"value"`
+				} `yaml:"environments"`
+			} `yaml:"spec"`
+		} `yaml:"targets"`
+	}
+	require.NoError(t, yaml.Unmarshal(manifests[0], &parsedManifest))
+
+	foundNpmrcEnv := false
+	for _, target := range parsedManifest.Targets {
+		for _, env := range target.Spec.Environments {
+			if env.Name == "NPM_CONFIG_USERCONFIG" {
+				assert.Equal(t, "/custom/.npmrc", env.Value)
+				foundNpmrcEnv = true
+			}
+		}
+	}
+	assert.True(t, foundNpmrcEnv, "expected NPM_CONFIG_USERCONFIG in at least one target environment")
 }

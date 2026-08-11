@@ -50,7 +50,7 @@ func New(spec interface{}) (*Stash, error) {
 
 	err = mapstructure.Decode(spec, &s)
 	if err != nil {
-		return &Stash{}, nil
+		return &Stash{}, err
 	}
 
 	err = clientSpec.Validate()

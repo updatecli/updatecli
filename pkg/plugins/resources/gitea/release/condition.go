@@ -1,19 +1,20 @@
 package release
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 )
 
-func (g *Gitea) Condition(source string, scm scm.ScmHandler) (pass bool, message string, err error) {
+func (g *Gitea) Condition(ctx context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 
 	if scm != nil {
 		logrus.Warningf("Condition not supported for the plugin Gitea Release")
 	}
 
-	releases, err := g.SearchReleases()
+	releases, err := g.SearchReleases(ctx)
 	if err != nil {
 		return false, "", fmt.Errorf("looking for Gitea release: %w", err)
 	}

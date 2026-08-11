@@ -1,6 +1,7 @@
 package yaml
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -17,7 +18,7 @@ import (
 )
 
 // Source return the latest version
-func (y *Yaml) Source(workingDir string, resultSource *result.Source) error {
+func (y *Yaml) Source(_ context.Context, workingDir string, resultSource *result.Source) error {
 	// By default workingDir is set to local directory
 	var filePath string
 
@@ -66,7 +67,9 @@ func (y *Yaml) Source(workingDir string, resultSource *result.Source) error {
 
 		// Ideally currentWorkingDirectory should be empty
 		if workingDir != currentWorkingDirectory {
-			y.UpdateAbsoluteFilePath(workingDir)
+			if err := y.UpdateAbsoluteFilePath(workingDir); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -104,7 +107,7 @@ func (y *Yaml) Source(workingDir string, resultSource *result.Source) error {
 			}
 
 			if node != nil {
-				results = append(results, node.String())
+				results = append(results, nodeValue(node))
 				break
 			}
 		}

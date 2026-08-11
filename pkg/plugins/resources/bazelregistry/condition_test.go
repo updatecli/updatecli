@@ -1,6 +1,7 @@
 package bazelregistry
 
 import (
+	"context"
 	"io"
 	"net/http"
 	"strings"
@@ -109,7 +110,7 @@ func TestCondition(t *testing.T) {
 				},
 			}
 
-			pass, message, err := b.Condition(tt.source, nil)
+			pass, message, err := b.Condition(context.Background(), tt.source, nil)
 
 			if tt.wantErr {
 				require.Error(t, err)

@@ -1,6 +1,7 @@
 package bazelregistry
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -12,7 +13,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	updatecliversion "github.com/updatecli/updatecli/pkg/core/version"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
@@ -71,16 +71,14 @@ func New(spec interface{}) (*Bazelregistry, error) {
 
 	// Create HTTP client with timeout
 	// The retry client handles retries for transient errors
-	retryClient := httpclient.NewRetryClient()
-	if httpClient, ok := retryClient.(*http.Client); ok {
-		// Set timeout to prevent hanging requests
-		httpClient.Timeout = 30 * time.Second
-	}
+	httpClient := httpclient.NewRetryClient()
+	// Set timeout to prevent hanging requests
+	httpClient.Timeout = 30 * time.Second
 
 	b := Bazelregistry{
 		spec:          newSpec,
 		versionFilter: newFilter,
-		webClient:     retryClient,
+		webClient:     httpClient,
 		baseURL:       baseURL,
 	}
 
@@ -107,31 +105,17 @@ func (b *Bazelregistry) ReportConfig() interface{} {
 	}
 }
 
-// getUserAgent returns a User-Agent string including Updatecli version
-func getUserAgent() string {
-	ua := "updatecli-bazelregistry"
-	if updatecliversion.Version != "" {
-		ua += "/" + updatecliversion.Version
-	} else {
-		ua += "/dev"
-	}
-	return ua
-}
-
 // fetchModuleMetadata fetches the metadata.json for a given module.
-func (b *Bazelregistry) fetchModuleMetadata(module string) (*Metadata, error) {
+func (b *Bazelregistry) fetchModuleMetadata(ctx context.Context, module string) (*Metadata, error) {
 	// Build URL by replacing {module} placeholder
 	url := strings.ReplaceAll(b.baseURL, "{module}", module)
 
 	logrus.Debugf("Fetching metadata for module %q from %q", module, redact.URL(url))
 
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("creating request: %w", err)
 	}
-
-	// Set User-Agent with Updatecli version
-	req.Header.Set("User-Agent", getUserAgent())
 
 	resp, err := b.webClient.Do(req)
 	if err != nil {

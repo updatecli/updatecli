@@ -13,7 +13,7 @@ import (
 )
 
 // Target ensure that a specific release exist on gitea, otherwise creates it
-func (g Gitea) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
+func (g Gitea) Target(ctx context.Context, source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
 	if len(g.spec.Tag) == 0 {
 		g.spec.Tag = source
 	}
@@ -31,7 +31,6 @@ func (g Gitea) Target(source string, scm scm.ScmHandler, dryRun bool, resultTarg
 
 	// Ensure that a release doesn't exist yet
 
-	ctx := context.Background()
 	// Timeout api query after 30 second
 	ctx, cancelListQuery := context.WithTimeout(ctx, 30*time.Second)
 	defer cancelListQuery()

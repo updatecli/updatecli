@@ -13,6 +13,15 @@ sources:
     name: 'Get latest Go version'
     kind: 'golang'
     spec:
+      {{- if or .Age.Minimum .Age.Maximum }}
+      age:
+        {{- if .Age.Minimum }}
+        minimum: '{{ .Age.Minimum }}'
+        {{- end }}
+        {{- if .Age.Maximum }}
+        maximum: '{{ .Age.Maximum }}'
+        {{- end }}
+      {{- end }}
       versionfilter:
         kind: '{{ .VersionFilterKind }}'
         pattern: '{{ .VersionFilterPattern }}'
@@ -43,6 +52,15 @@ sources:
     name: 'Get latest golang module {{ .Module }} version'
     kind: 'golang/module'
     spec:
+      {{- if or .Age.Minimum .Age.Maximum }}
+      age:
+        {{- if .Age.Minimum }}
+        minimum: '{{ .Age.Minimum }}'
+        {{- end }}
+        {{- if .Age.Maximum }}
+        maximum: '{{ .Age.Maximum }}'
+        {{- end }}
+      {{- end }}
       module: '{{ .Module }}'
       versionfilter:
         kind: '{{ .VersionFilterKind }}'
@@ -99,6 +117,15 @@ sources:
     name: 'Get latest golang module {{ .NewPathModule }} version'
     kind: 'golang/module'
     spec:
+      {{- if or .Age.Minimum .Age.Maximum }}
+      age:
+        {{- if .Age.Minimum }}
+        minimum: '{{ .Age.Minimum }}'
+        {{- end }}
+        {{- if .Age.Maximum }}
+        maximum: '{{ .Age.Maximum }}'
+        {{- end }}
+      {{- end }}
       module: '{{ .NewPathModule }}'
       versionfilter:
         kind: '{{ .VersionFilterKind }}'

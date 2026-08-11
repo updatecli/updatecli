@@ -1,6 +1,7 @@
 package bazelregistry
 
 import (
+	"context"
 	"io"
 	"net/http"
 	"strings"
@@ -118,7 +119,7 @@ func TestSource(t *testing.T) {
 			}
 
 			resultSource := &result.Source{}
-			err = b.Source("", resultSource)
+			err = b.Source(context.Background(), "", resultSource)
 
 			if tt.wantErr {
 				require.Error(t, err)
@@ -150,7 +151,7 @@ func TestSource_YankedVersions(t *testing.T) {
 	}
 
 	resultSource := &result.Source{}
-	err = b.Source("", resultSource)
+	err = b.Source(context.Background(), "", resultSource)
 	require.NoError(t, err)
 
 	// Should return 0.52.0 (latest), not 0.50.0 (yanked) or 0.51.0
@@ -213,7 +214,7 @@ func TestSource_SemanticVersionSorting(t *testing.T) {
 			}
 
 			resultSource := &result.Source{}
-			err = b.Source("", resultSource)
+			err = b.Source(context.Background(), "", resultSource)
 			require.NoError(t, err)
 
 			assert.Equal(t, result.SUCCESS, resultSource.Result)

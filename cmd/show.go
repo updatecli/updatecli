@@ -26,9 +26,10 @@ var (
 			}
 
 			e.Options.Manifests = append(e.Options.Manifests, manifest.Manifest{
-				Manifests: manifestFiles,
-				Values:    valuesFiles,
-				Secrets:   secretsFiles,
+				Manifests:    manifestFiles,
+				Values:       valuesFiles,
+				ValuesInline: valuesInline,
+				Secrets:      secretsFiles,
 			})
 
 			e.Options.Config.ValuesFiles = valuesFiles
@@ -49,6 +50,7 @@ var (
 func init() {
 	showCmd.Flags().StringArrayVarP(&manifestFiles, "config", "c", []string{}, "Sets config file or directory. By default, Updatecli looks for a file named 'updatecli.yaml' or a directory named 'updatecli.d'")
 	showCmd.Flags().StringArrayVarP(&valuesFiles, "values", "v", []string{}, "Sets values file uses for templating")
+	showCmd.Flags().StringArrayVarP(&valuesInline, "values-inline", "i", []string{}, "Sets inline values uses for templating, accepted valid json/yaml string")
 	showCmd.Flags().StringArrayVar(&secretsFiles, "secrets", []string{}, "Sets secrets file uses for templating")
 	showCmd.Flags().BoolVar(&showClean, "clean", false, "Remove updatecli working directory like '--clean=true'")
 	showCmd.Flags().BoolVar(&showDisablePrepare, "disable-prepare", false, "--disable-prepare skip the Updatecli 'prepare' stage'--disable-prepare=true'")

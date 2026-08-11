@@ -1,6 +1,7 @@
 package tag
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -102,7 +103,7 @@ func TestCondition(t *testing.T) {
 			g, gotErr := New(tt.manifest)
 			require.NoError(t, gotErr)
 
-			gotPass, _, gotErr := g.Condition("", nil)
+			gotPass, _, gotErr := g.Condition(context.Background(), "", nil)
 
 			if tt.wantErr {
 				if assert.Error(t, gotErr) {

@@ -1,6 +1,7 @@
 package yaml
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -150,6 +151,28 @@ github:
 			},
 			wantedContents: map[string]string{
 				"test.yaml": "olblak",
+			},
+			isResultWanted: true,
+		},
+		{
+			name: "Passing Case with quoted version string",
+			spec: Spec{
+				File: "test.yaml",
+				Key:  "$.version",
+			},
+			files: map[string]file{
+				"test.yaml": {
+					filePath:         "test.yaml",
+					originalFilePath: "test.yaml",
+				},
+			},
+			mockedContents: map[string]string{
+				"test.yaml": `---
+version: "4.3.1"
+`,
+			},
+			wantedContents: map[string]string{
+				"test.yaml": "4.3.1",
 			},
 			isResultWanted: true,
 		},
@@ -331,7 +354,7 @@ repos:
 			for filePath := range y.files {
 				gotResult := result.Source{}
 
-				gotErr := y.Source("", &gotResult)
+				gotErr := y.Source(context.Background(), "", &gotResult)
 				if tt.isErrorWanted {
 					assert.Error(t, gotErr)
 					return

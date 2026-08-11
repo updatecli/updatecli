@@ -1,6 +1,7 @@
 package toolversions
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -58,7 +59,7 @@ func TestSource(t *testing.T) {
 			require.NoError(t, err)
 
 			gotResult := result.Source{}
-			err = j.Source("", &gotResult)
+			err = j.Source(context.Background(), "", &gotResult)
 
 			if tt.wantErr {
 				assert.Equal(t, tt.expectedErrorMsg.Error(), err.Error())

@@ -21,7 +21,7 @@ type getGroupQuery struct {
 }
 
 // getTeamID return a group information from GitHub API
-func getTeamID(c client.Client, org string, team string, retry int) (string, error) {
+func getTeamID(ctx context.Context, c client.Client, org string, team string, retry int) (string, error) {
 
 	variables := map[string]interface{}{
 		"login": githubv4.String(org),
@@ -30,13 +30,13 @@ func getTeamID(c client.Client, org string, team string, retry int) (string, err
 
 	var query getGroupQuery
 
-	err := c.Query(context.Background(), &query, variables)
+	err := c.Query(ctx, &query, variables)
 
 	if err != nil {
 		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) && retry < client.MaxRetry {
 			// If the query failed because we reached the rate limit,
 			// then we need to re-requery the rate limit to get the latest information
-			rateLimit, err := queryRateLimit(c, context.Background())
+			rateLimit, err := queryRateLimit(c, ctx)
 			if err != nil {
 				logrus.Errorf("Error querying GitHub API rate limit: %s", err)
 			}
@@ -44,7 +44,7 @@ func getTeamID(c client.Client, org string, team string, retry int) (string, err
 			if retry < client.MaxRetry {
 				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
 				rateLimit.Pause()
-				return getTeamID(c, org, team, retry+1)
+				return getTeamID(ctx, c, org, team, retry+1)
 			}
 			return "", errors.New(ErrAPIRateLimitExceededFinalAttempt)
 		}

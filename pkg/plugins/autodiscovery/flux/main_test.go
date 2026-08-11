@@ -1,6 +1,7 @@
 package flux
 
 import (
+	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -18,6 +19,79 @@ func TestDiscoverManifests(t *testing.T) {
 		actionID          string
 		expectedPipelines []string
 	}{
+		{
+			name:    "Scenario - multiple helmRelease",
+			rootDir: "testdata/helmrelease/multi-release",
+			auths: map[string]docker.InlineKeyChain{
+				"updatecli.github.io": {
+					Token: "mytoken",
+				},
+			},
+			expectedPipelines: []string{`name: 'deps(flux): bump Helmrelease "udash"'
+sources:
+  helmrelease:
+    name: 'Get latest "udash" Helm chart version'
+    kind: 'helmchart'
+    spec:
+      name: 'udash'
+      url: 'https://updatecli.github.io/charts'
+      token: 'mytoken'
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
+conditions:
+  helmrelease:
+    name: 'Ensure Helm Chart name "udash"'
+    kind: 'yaml'
+    disablesourceinput: true
+    spec:
+      file: 'multi-helmrelease.yaml'
+      key: '$.spec.chart.spec.chart'
+      value: 'udash'
+      documentindex: 0
+targets:
+  helmrelease:
+    name: 'deps(flux): bump Helmrelease "udash"'
+    kind: 'yaml'
+    spec:
+      file: 'multi-helmrelease.yaml'
+      key: '$.spec.chart.spec.version'
+      documentindex: 0
+    sourceid: 'helmrelease'
+`,
+				`name: 'deps(flux): bump Helmrelease "nginx"'
+sources:
+  helmrelease:
+    name: 'Get latest "nginx" Helm chart version'
+    kind: 'helmchart'
+    spec:
+      name: 'nginx'
+      url: 'https://updatecli.github.io/charts'
+      token: 'mytoken'
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
+conditions:
+  helmrelease:
+    name: 'Ensure Helm Chart name "nginx"'
+    kind: 'yaml'
+    disablesourceinput: true
+    spec:
+      file: 'multi-helmrelease.yaml'
+      key: '$.spec.chart.spec.chart'
+      value: 'nginx'
+      documentindex: 1
+targets:
+  helmrelease:
+    name: 'deps(flux): bump Helmrelease "nginx"'
+    kind: 'yaml'
+    spec:
+      file: 'multi-helmrelease.yaml'
+      key: '$.spec.chart.spec.version'
+      documentindex: 1
+    sourceid: 'helmrelease'
+`},
+		},
 		{
 			name:    "Scenario - helmrelease Simple with auth",
 			rootDir: "testdata/helmrelease/simple",
@@ -47,6 +121,7 @@ conditions:
       file: 'helmrelease.yaml'
       key: '$.spec.chart.spec.chart'
       value: 'udash'
+      documentindex: 0
 targets:
   helmrelease:
     name: 'deps(flux): bump Helmrelease "udash"'
@@ -54,6 +129,7 @@ targets:
     spec:
       file: 'helmrelease.yaml'
       key: '$.spec.chart.spec.version'
+      documentindex: 0
     sourceid: 'helmrelease'
 `},
 		},
@@ -80,6 +156,7 @@ conditions:
       file: 'helmrelease.yaml'
       key: '$.spec.chart.spec.chart'
       value: 'udash'
+      documentindex: 0
 targets:
   helmrelease:
     name: 'deps(flux): bump Helmrelease "udash"'
@@ -87,6 +164,7 @@ targets:
     spec:
       file: 'helmrelease.yaml'
       key: '$.spec.chart.spec.version'
+      documentindex: 0
     sourceid: 'helmrelease'
 `},
 		},
@@ -119,6 +197,7 @@ conditions:
       file: 'helmrelease.yaml'
       key: '$.spec.chart.spec.chart'
       value: 'udash'
+      documentindex: 0
 targets:
   helmrelease:
     name: 'deps(flux): bump Helmrelease "udash"'
@@ -127,6 +206,7 @@ targets:
     spec:
       file: 'helmrelease.yaml'
       key: '$.spec.chart.spec.version'
+      documentindex: 0
     sourceid: 'helmrelease'
 `},
 		},
@@ -153,6 +233,7 @@ conditions:
       file: 'helmrelease-helmrepository.yaml'
       key: '$.spec.chart.spec.chart'
       value: 'udash'
+      documentindex: 0
 targets:
   helmrelease:
     name: 'deps(flux): bump Helmrelease "udash"'
@@ -160,6 +241,7 @@ targets:
     spec:
       file: 'helmrelease-helmrepository.yaml'
       key: '$.spec.chart.spec.version'
+      documentindex: 0
     sourceid: 'helmrelease'
 `},
 		},
@@ -186,6 +268,7 @@ conditions:
       file: 'helmrelease.yaml'
       key: '$.spec.chart.spec.chart'
       value: 'upgrade-responder'
+      documentindex: 0
 targets:
   helmrelease:
     name: 'deps(flux): bump Helmrelease "upgrade-responder"'
@@ -193,6 +276,7 @@ targets:
     spec:
       file: 'helmrelease.yaml'
       key: '$.spec.chart.spec.version'
+      documentindex: 0
     sourceid: 'helmrelease'
 `},
 		},
@@ -219,6 +303,7 @@ conditions:
       file: 'helmrelease-helmrepository.yaml'
       key: '$.spec.chart.spec.chart'
       value: 'upgrade-responder'
+      documentindex: 0
 targets:
   helmrelease:
     name: 'deps(flux): bump Helmrelease "upgrade-responder"'
@@ -226,8 +311,17 @@ targets:
     spec:
       file: 'helmrelease-helmrepository.yaml'
       key: '$.spec.chart.spec.version'
+      documentindex: 0
     sourceid: 'helmrelease'
 `},
+		},
+		{
+			name:              "Scenario - helmrelease without chart template",
+			digest:            true,
+			rootDir:           "testdata/helmrelease/chartref",
+			scmID:             "defaultscmid",
+			actionID:          "defaultactionid",
+			expectedPipelines: []string{},
 		},
 		{
 			name:    "Scenario - ocirepository ",
@@ -251,6 +345,7 @@ targets:
     spec:
       file: 'example.yaml'
       key: '$.spec.ref.tag'
+      documentindex: 0
     sourceid: 'oci'
 `},
 		},
@@ -275,15 +370,27 @@ sources:
     spec:
       image: 'ghcr.io/updatecli/updatecli'
       tag: '{{ source "oci" }}'
+      hidetag: true
+    transformers:
+      - trimprefix: '@'
     dependson:
       - 'oci'
 targets:
-  oci:
-    name: 'deps(flux): bump OCI repository "ghcr.io/updatecli/updatecli"'
+  oci-tag:
+    name: 'deps(flux): bump OCI repository "ghcr.io/updatecli/updatecli" tag'
     kind: 'yaml'
     spec:
       file: 'example.yaml'
       key: '$.spec.ref.tag'
+      documentindex: 0
+    sourceid: 'oci'
+  oci-digest:
+    name: 'deps(flux): bump OCI repository "ghcr.io/updatecli/updatecli" digest'
+    kind: 'yaml'
+    spec:
+      file: 'example.yaml'
+      key: '$.spec.ref.digest'
+      documentindex: 0
     sourceid: 'oci-digest'
 `},
 		},
@@ -304,14 +411,18 @@ sources:
     spec:
       image: 'ghcr.io/updatecli/updatecli'
       tag: 'latest'
+      hidetag: true
+    transformers:
+      - trimprefix: '@'
 targets:
-  oci:
-    name: 'deps(flux): bump OCI repository "ghcr.io/updatecli/updatecli"'
+  oci-digest:
+    name: 'deps(flux): bump OCI repository "ghcr.io/updatecli/updatecli" digest'
     kind: 'yaml'
     scmid: defaultscmid
     spec:
       file: 'example.yaml'
-      key: '$.spec.ref.tag'
+      key: '$.spec.ref.digest'
+      documentindex: 0
     sourceid: 'oci-digest'
 `},
 		},
@@ -329,17 +440,20 @@ targets:
 
 			require.NoError(t, err)
 
-			var pipelines []string
 			rawPipelines, err := flux.DiscoverManifests()
 			require.NoError(t, err)
 
-			assert.Equal(t, len(tt.expectedPipelines), len(rawPipelines))
-
+			pipelines := make([]string, len(rawPipelines))
 			for i := range rawPipelines {
-				// We expect manifest generated by the autodiscovery to use the yaml syntax
-				pipelines = append(pipelines, string(rawPipelines[i]))
-				assert.Equal(t, tt.expectedPipelines[i], pipelines[i])
+				pipelines[i] = string(rawPipelines[i])
 			}
+			sort.Strings(pipelines)
+
+			expected := make([]string, len(tt.expectedPipelines))
+			copy(expected, tt.expectedPipelines)
+			sort.Strings(expected)
+
+			assert.Equal(t, expected, pipelines)
 		})
 	}
 

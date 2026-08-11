@@ -1,6 +1,7 @@
 package dockerfile
 
 import (
+	"fmt"
 	"path/filepath"
 
 	"github.com/sirupsen/logrus"
@@ -17,6 +18,17 @@ type MatchingRule struct {
 }
 
 type MatchingRules []MatchingRule
+
+// Validate checks that each matching rule has at least one non-empty field.
+// Returns an error if any rule has no valid fields specified.
+func (m MatchingRules) Validate() error {
+	for i, rule := range m {
+		if rule.Path == "" && len(rule.Archs) == 0 && len(rule.Images) == 0 {
+			return fmt.Errorf("rule %d has no valid fields (path, archs, or images must be specified)", i+1)
+		}
+	}
+	return nil
+}
 
 // isMatchingRule tests that all defined rule are matching and return true if it's the case otherwise return false
 func (m MatchingRules) isMatchingRule(rootDir, filePath, image, arch string) bool {

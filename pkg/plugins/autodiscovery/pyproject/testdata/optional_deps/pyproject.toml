@@ -1,0 +1,12 @@
+[project]
+name = "optional-project"
+requires-python = ">=3.12"
+dependencies = [
+    "requests>=2.28",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.4",
+]

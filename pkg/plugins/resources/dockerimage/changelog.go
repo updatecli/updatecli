@@ -2,13 +2,13 @@ package dockerimage
 
 import (
 	"io"
-	"net/http"
 	"net/url"
 	"strings"
 
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/sirupsen/logrus"
 
+	"github.com/updatecli/updatecli/pkg/core/httpclient"
 	"github.com/updatecli/updatecli/pkg/core/registry"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/changelog/markdown"
@@ -16,10 +16,10 @@ import (
 
 // Changelog returns the changelog for this resource, or an empty string if not supported
 func (di *DockerImage) Changelog(from, to string) *result.Changelogs {
-
 	ref, err := di.createRef(di.foundVersion.GetVersion())
 	if err != nil {
 		logrus.Debugf("invalid reference %s: %v", di.spec.Image, err)
+		return nil
 	}
 
 	manifestData, err := registry.FetchManifest(
@@ -60,7 +60,7 @@ func (di *DockerImage) Changelog(from, to string) *result.Changelogs {
 		redirectToGitHubRawContent(changelogURL)
 	}
 
-	resp, err := http.Get(changelogURL.String())
+	resp, err := httpclient.NewRetryClient().Get(changelogURL.String())
 	if err != nil {
 		logrus.Debugf("retrieving changelog from url: %v", err)
 		return nil
@@ -70,7 +70,7 @@ func (di *DockerImage) Changelog(from, to string) *result.Changelogs {
 
 	buf := new(strings.Builder)
 	// Copy data from the response to standard output
-	_, err = io.Copy(buf, resp.Body) //use package "io" and "os"
+	_, err = io.Copy(buf, resp.Body) // use package "io" and "os"
 	if err != nil {
 		logrus.Debugf("%v", err)
 		return nil
@@ -98,12 +98,10 @@ func (di *DockerImage) Changelog(from, to string) *result.Changelogs {
 			Body:  body,
 		},
 	}
-
 }
 
 // getChangeLogAnnotation returns the changelog annotation from a v1.Descriptor
 func getChangelogAnnotation(desc v1.Descriptor) string {
-
 	if changelog, ok := desc.Annotations["org.opencontainers.image.changelog"]; ok {
 		return changelog
 	}
@@ -114,8 +112,8 @@ func getChangelogAnnotation(desc v1.Descriptor) string {
 // redirectToGitHubRawContent tries to redirect a github url to its associated file raw content
 func redirectToGitHubRawContent(u *url.URL) {
 	beforePath := u.Path
-	if strings.Split(u.Path, "/")[3] == "tree" {
-		s := strings.Split(u.Path, "/")
+	s := strings.Split(u.Path, "/")
+	if len(s) > 3 && s[3] == "tree" {
 		s[3] = "blob"
 		u.Path = strings.Join(s, "/")
 	}

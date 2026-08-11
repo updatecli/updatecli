@@ -1,6 +1,7 @@
 package file
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -801,7 +802,7 @@ func TestFile_TargetMultiples(t *testing.T) {
 			}
 
 			gotResultTarget := result.Target{}
-			gotErr := f.Target(tt.inputSourceValue, mockSCM, tt.dryRun, &gotResultTarget)
+			gotErr := f.Target(context.Background(), tt.inputSourceValue, mockSCM, tt.dryRun, &gotResultTarget)
 
 			if tt.wantedErr {
 				assert.Error(t, gotErr)
@@ -976,7 +977,7 @@ func TestFile_TargetFromSCM(t *testing.T) {
 
 			gotResultTarget := result.Target{}
 
-			gotErr := f.Target(tt.inputSourceValue, tt.scm, tt.dryRun, &gotResultTarget)
+			gotErr := f.Target(context.Background(), tt.inputSourceValue, tt.scm, tt.dryRun, &gotResultTarget)
 
 			if tt.wantedErr {
 				assert.Error(t, gotErr)
@@ -1110,7 +1111,7 @@ jdk_version = "11.0.12"`,
 			}
 
 			gotResultTarget := result.Target{}
-			err := f.Target(tt.inputSourceValue, nil, true, &gotResultTarget) // dry run
+			err := f.Target(context.Background(), tt.inputSourceValue, nil, true, &gotResultTarget) // dry run
 			require.NoError(t, err, tt.description)
 
 			assert.Equal(t, tt.expectedInformation, gotResultTarget.Information,

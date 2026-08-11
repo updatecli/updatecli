@@ -7,6 +7,27 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// The source cache keys entries on ReportConfig, so every spec field that
+// changes what the API returns must be reported (issue #9821).
+func TestReportConfig(t *testing.T) {
+	spec := Spec{
+		ReleaseLine:     "lts",
+		ReleaseType:     "ga",
+		FeatureVersion:  21,
+		SpecificVersion: "21.0.5+11",
+		Result:          "installer_url",
+		Architecture:    "x64",
+		ImageType:       "jdk",
+		OperatingSystem: "windows",
+		Project:         "jdk",
+		Platforms:       []string{"windows/x64"},
+	}
+
+	got := (&Temurin{spec: spec}).ReportConfig()
+
+	assert.Equal(t, spec, got)
+}
+
 func TestNew(t *testing.T) {
 	tests := []struct {
 		name     string

@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/httpclient"
 )
 
 // getConfigFromFile return the Udash configuration from the configuration file
@@ -67,7 +68,8 @@ func getAccessToken(issuer, clientID, codeVerifier, authorizationCode, callbackU
 	// create the request and execute it
 	req, _ := http.NewRequest("POST", u.String(), payload)
 	req.Header.Add("content-type", "application/x-www-form-urlencoded")
-	res, err := http.DefaultClient.Do(req)
+	client := httpclient.NewPlainClient()
+	res, err := client.Do(req)
 	if err != nil {
 		logrus.Printf("updatecli: HTTP error: %s", err)
 		return "", err
@@ -86,6 +88,9 @@ func getAccessToken(issuer, clientID, codeVerifier, authorizationCode, callbackU
 	}
 
 	// retrieve the access token out of the map, and return to caller
-	accessToken := responseData["access_token"].(string)
+	accessToken, ok := responseData["access_token"].(string)
+	if !ok {
+		return "", fmt.Errorf("access_token missing or not a string in response")
+	}
 	return accessToken, nil
 }

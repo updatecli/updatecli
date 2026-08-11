@@ -69,7 +69,7 @@ type repositoryLabelApi struct {
 }
 
 // getRepositoryLabels queries GitHub Api to retrieve every labels configured for a repository
-func (g *Github) getRepositoryLabels(retry int) ([]repositoryLabelApi, error) {
+func (g *Github) getRepositoryLabels(ctx context.Context, retry int) ([]repositoryLabelApi, error) {
 	var repositoryLabels []repositoryLabelApi
 
 	variables := map[string]interface{}{
@@ -81,11 +81,11 @@ func (g *Github) getRepositoryLabels(retry int) ([]repositoryLabelApi, error) {
 	var query labelsQuery
 
 	for {
-		err := g.client.Query(context.Background(), &query, variables)
+		err := g.client.Query(ctx, &query, variables)
 
 		if err != nil {
 			if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
-				rateLimit, err := queryRateLimit(g.client, context.Background())
+				rateLimit, err := queryRateLimit(g.client, ctx)
 				if err != nil {
 					logrus.Errorf("Error querying GitHub API rate limit: %s", err)
 				}
@@ -94,7 +94,7 @@ func (g *Github) getRepositoryLabels(retry int) ([]repositoryLabelApi, error) {
 				if retry < client.MaxRetry {
 					logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
 					rateLimit.Pause()
-					return g.getRepositoryLabels(retry + 1)
+					return g.getRepositoryLabels(ctx, retry+1)
 				}
 				return nil, errors.New(ErrAPIRateLimitExceededFinalAttempt)
 			}

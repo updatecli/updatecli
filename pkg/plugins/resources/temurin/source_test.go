@@ -2,6 +2,7 @@ package temurin
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -226,7 +227,7 @@ func TestSource(t *testing.T) {
 			sut.apiWebRedirectionClient = mockedHttpClient
 
 			got := result.Source{}
-			gotErr := sut.Source(tt.workingDir, &got)
+			gotErr := sut.Source(context.Background(), tt.workingDir, &got)
 
 			if tt.wantErr != "" {
 				require.Error(t, gotErr)

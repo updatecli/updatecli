@@ -1,10 +1,12 @@
 package language
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 )
 
 func TestCondition(t *testing.T) {
@@ -29,13 +31,33 @@ func TestCondition(t *testing.T) {
 			},
 			expectedResult: false,
 		},
+		{
+			name: "TestSourceWithVersionFilterAndMinimumAge",
+			spec: Spec{
+				Version: "1.19.13",
+				Age: age.Spec{
+					Minimum: "1y",
+				},
+			},
+			expectedResult: true,
+		},
+		{
+			name: "TestSourceWithVersionFilterAndMaximumAge",
+			spec: Spec{
+				Version: "1.19.13",
+				Age: age.Spec{
+					Maximum: "100y",
+				},
+			},
+			expectedResult: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := New(tt.spec)
 			require.NoError(t, err)
 
-			gotResult, _, err := got.Condition("", nil)
+			gotResult, _, err := got.Condition(context.Background(), "", nil)
 			if tt.expectedError {
 				if assert.Error(t, err) {
 					assert.Equal(t, tt.expectedErrorMsg.Error(), err.Error())

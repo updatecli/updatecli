@@ -1,7 +1,7 @@
 package gomodule
 
 import (
-	"net/http"
+	"fmt"
 
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/sirupsen/logrus"
@@ -41,14 +41,18 @@ func New(spec interface{}) (*GoModule, error) {
 	if newSpec.VersionFilter.IsZero() {
 		logrus.Debugln("no versioning filtering specified, fallback to semantic versioning")
 		// By default, golang versioning uses semantic versioning
-		newFilter.Kind = "semver"
+		newFilter.Kind = version.SEMVERVERSIONKIND
 		newFilter.Pattern = "*"
+	}
+
+	if err = newSpec.Age.Validate(); err != nil {
+		return nil, fmt.Errorf("wrong age spec %v", err)
 	}
 
 	return &GoModule{
 		Spec:          newSpec,
 		versionFilter: newFilter,
-		webClient:     &http.Client{},
+		webClient:     httpclient.NewRetryClient(),
 	}, nil
 }
 
@@ -59,5 +63,6 @@ func (g *GoModule) ReportConfig() interface{} {
 		Module:        g.Spec.Module,
 		Version:       g.Spec.Version,
 		VersionFilter: g.Spec.VersionFilter,
+		Age:           g.Spec.Age,
 	}
 }

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+
+	"github.com/updatecli/updatecli/pkg/core/httpclient"
 )
 
 // getOauthInfo queries the Udash website to retrieve Oauth configuration
@@ -25,7 +27,7 @@ func getOauthInfo(endpointURL string) (issuer string, audience string, clientID 
 
 	URL = URL.JoinPath("config.json")
 
-	resp, err := http.Get(URL.String())
+	resp, err := httpclient.NewRetryClient().Get(URL.String())
 	if err != nil {
 		return "", "", "", fmt.Errorf("cannot fetch URL %q: %v", URL.String(), err)
 	}

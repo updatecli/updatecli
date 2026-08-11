@@ -1,10 +1,12 @@
 package gomodule
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 )
 
 func TestCondition(t *testing.T) {
@@ -32,6 +34,50 @@ func TestCondition(t *testing.T) {
 			expectedResult: true,
 		},
 		{
+			name: "Test go module with minimum age",
+			spec: Spec{
+				Module:  "github.com/MakeNowJust/heredoc",
+				Version: "v1.0.0",
+				Age: age.Spec{
+					Minimum: "1y",
+				},
+			},
+			expectedResult: true,
+		},
+		{
+			name: "Test go module with unrealistic minimum age",
+			spec: Spec{
+				Module:  "github.com/MakeNowJust/heredoc",
+				Version: "v1.0.0",
+				Age: age.Spec{
+					Minimum: "100y",
+				},
+			},
+			expectedResult: false,
+		},
+		{
+			name: "Test go module with maximum age",
+			spec: Spec{
+				Module:  "github.com/MakeNowJust/heredoc",
+				Version: "v1.0.0",
+				Age: age.Spec{
+					Maximum: "1y",
+				},
+			},
+			expectedResult: false,
+		},
+		{
+			name: "Test go module with unrealistic maximum age",
+			spec: Spec{
+				Module:  "github.com/MakeNowJust/heredoc",
+				Version: "v1.0.0",
+				Age: age.Spec{
+					Maximum: "100y",
+				},
+			},
+			expectedResult: true,
+		},
+		{
 			name: "Test go module version do not exist",
 			spec: Spec{
 				Module:  "github.com/MakeNowJust/heredoc",
@@ -44,7 +90,7 @@ func TestCondition(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := New(tt.spec)
 			require.NoError(t, err)
-			gotResult, _, gotErr := got.Condition("", nil)
+			gotResult, _, gotErr := got.Condition(context.Background(), "", nil)
 			if tt.expectedError {
 				if assert.Error(t, gotErr) {
 					assert.Equal(t, tt.expectedErrorMsg.Error(), gotErr.Error())

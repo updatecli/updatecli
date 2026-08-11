@@ -1,6 +1,7 @@
 package pipeline
 
 import (
+	"context"
 	"crypto/sha256"
 	"fmt"
 	"slices"
@@ -18,7 +19,7 @@ var (
 )
 
 // RunActions runs all actions defined in the configuration.
-func (p *Pipeline) RunActions() error {
+func (p *Pipeline) RunActions(ctx context.Context) error {
 
 	if len(p.Actions) == 0 {
 		logrus.Debugf("No action found for pipeline %q", p.Name)
@@ -131,7 +132,7 @@ func (p *Pipeline) RunActions() error {
 			if len(relatedTargets) > 0 {
 				if !slices.Contains(CheckedPipelines, alreadyCheckedAction) {
 
-					err = action.Handler.CheckActionExist(&action.Report)
+					err = action.Handler.CheckActionExist(ctx, &action.Report)
 					if err != nil {
 						logrus.Warningf("Action %q failed: %s", id, err.Error())
 					}
@@ -220,7 +221,7 @@ func (p *Pipeline) RunActions() error {
 			return nil
 		}
 
-		err = action.Handler.CreateAction(&action.Report, isBranchReset)
+		err = action.Handler.CreateAction(ctx, &action.Report, isBranchReset)
 		if err != nil {
 			return err
 		}
@@ -233,7 +234,7 @@ func (p *Pipeline) RunActions() error {
 }
 
 // RunCleanActions executes clean up operation which depends on the action plugin.
-func (p *Pipeline) RunCleanActions() error {
+func (p *Pipeline) RunCleanActions(ctx context.Context) error {
 	var errs []string
 
 	// Early return
@@ -245,7 +246,7 @@ func (p *Pipeline) RunCleanActions() error {
 		if !p.Options.Target.DryRun {
 			if action.Handler != nil {
 				// At least we try to clean existing pullrequest
-				err := action.Handler.CleanAction(&action.Report)
+				err := action.Handler.CleanAction(ctx, &action.Report)
 				if err != nil {
 					errs = append(errs, err.Error())
 				}

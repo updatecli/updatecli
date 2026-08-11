@@ -111,9 +111,7 @@ func New(spec interface{}) (*Gitea, error) {
 }
 
 // Retrieve git tags from a remote gitea repository
-func (g *Gitea) SearchReleases() ([]string, error) {
-
-	ctx := context.Background()
+func (g *Gitea) SearchReleases(ctx context.Context) ([]string, error) {
 
 	results := []string{}
 	page := 0

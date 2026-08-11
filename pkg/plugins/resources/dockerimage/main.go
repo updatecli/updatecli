@@ -11,6 +11,7 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/google/go-containerregistry/pkg/v1/types"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/httpclient"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
@@ -69,6 +70,7 @@ func New(spec interface{}) (*DockerImage, error) {
 	keychains = append(keychains, authn.DefaultKeychain)
 
 	newResource.options = append(newResource.options, remote.WithAuthFromKeychain(authn.NewMultiKeychain(keychains...)))
+	newResource.options = append(newResource.options, remote.WithTransport(httpclient.ProxyOnlyTransport()))
 
 	return newResource, nil
 }

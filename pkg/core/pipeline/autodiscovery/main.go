@@ -1,14 +1,18 @@
 package autodiscovery
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"sync"
 
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/updatecli/updatecli/pkg/core/cmdoptions"
+	"github.com/updatecli/updatecli/pkg/core/telemetry"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/argocd"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/bazel"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/cargo"
@@ -27,6 +31,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/npm"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/plugin"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/precommit"
+	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/pyproject"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/terraform"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/terragrunt"
 	"github.com/updatecli/updatecli/pkg/plugins/autodiscovery/updatecli"
@@ -47,11 +52,16 @@ var GetDefaultCrawlerSpecs = sync.OnceValue(func() Config {
 	return ret
 })
 
-// GetAutodiscoverySpecs return a map of all Autodiscovery specification
+// GetAutodiscoverySpecs return a map of all Autodiscovery specification.
+// Aliases are included as crawlerFuncMap accepts them, so that a manifest using an
+// alias is neither rejected by the jsonschema nor reported as an unknown crawler.
 var GetAutodiscoverySpecsMapping = sync.OnceValue(func() CrawlersConfig {
 	ret := make(CrawlersConfig, len(crawlerMap))
 	for k, v := range crawlerMap {
 		ret[k] = v.spec
+		for _, alias := range v.alias {
+			ret[alias] = v.spec
+		}
 	}
 	return ret
 })
@@ -60,9 +70,21 @@ type Crawler interface {
 	DiscoverManifests() ([][]byte, error)
 }
 
+type crawlerEntry struct {
+	kind    string
+	crawler Crawler
+}
+
+// CrawlerResult holds the output of a single crawler run.
+type CrawlerResult struct {
+	Kind      string
+	Manifests [][]byte
+}
+
 type AutoDiscovery struct {
 	spec     Config
-	crawlers []Crawler
+	crawlers []crawlerEntry
+	tracer   trace.Tracer
 }
 
 // ensure alias not conflict with existing key
@@ -218,6 +240,13 @@ var crawlerMap = map[string]struct {
 		},
 		spec: precommit.Spec{},
 	},
+	"pyproject": {
+		newFunc: func(spec any, rootDir string, scmID string, actionID, pluginName string) (Crawler, error) {
+			return pyproject.New(spec, rootDir, scmID, actionID)
+		},
+		spec:  pyproject.Spec{},
+		alias: []string{"python/uv"},
+	},
 	"prow": {
 		newFunc: func(spec any, rootDir string, scmID string, actionID, pluginName string) (Crawler, error) {
 			return kubernetes.New(spec, rootDir, scmID, actionID, kubernetes.FlavorProw)
@@ -277,7 +306,8 @@ func New(spec Config, workDir string) (*AutoDiscovery, error) {
 	}
 
 	g := AutoDiscovery{
-		spec: s,
+		spec:   s,
+		tracer: telemetry.Tracer("updatecli"),
 	}
 
 	for kind := range g.spec.Crawlers {
@@ -307,7 +337,7 @@ func New(spec Config, workDir string) (*AutoDiscovery, error) {
 				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
 				continue
 			}
-			g.crawlers = append(g.crawlers, crawler)
+			g.crawlers = append(g.crawlers, crawlerEntry{kind: pluginName, crawler: crawler})
 		} else {
 			logrus.Infof("Crawler of type %q is not supported", kind)
 		}
@@ -323,24 +353,42 @@ func New(spec Config, workDir string) (*AutoDiscovery, error) {
 	return &g, nil
 }
 
-// Run execute each Autodiscovery crawlers to generate Updatecli manifests
-func (g *AutoDiscovery) Run() ([][]byte, error) {
-	var totalDiscoveredManifests [][]byte
+// Run executes each crawler under the provided context, emitting an OTel span per crawler.
+func (g *AutoDiscovery) Run(ctx context.Context) ([]CrawlerResult, error) {
+	var results []CrawlerResult
 
-	for _, crawler := range g.crawlers {
+	for _, entry := range g.crawlers {
+		_, span := g.tracer.Start(ctx, "updatecli.crawler",
+			trace.WithAttributes(
+				attribute.String("updatecli.crawler.kind", entry.kind),
+			),
+		)
 
-		discoveredManifests, err := crawler.DiscoverManifests()
+		discoveredManifests, err := entry.crawler.DiscoverManifests()
 		if err != nil {
+			telemetry.RecordSpanError(span, err)
 			logrus.Errorln(err)
 		}
 
+		span.SetAttributes(
+			attribute.Int("updatecli.crawler.manifests_count", len(discoveredManifests)),
+		)
+
 		logrus.Printf("Manifest detected: %d\n", len(discoveredManifests))
-		if len(discoveredManifests) > 0 {
-			totalDiscoveredManifests = append(totalDiscoveredManifests, discoveredManifests...)
-		}
+
+		results = append(results, CrawlerResult{
+			Kind:      entry.kind,
+			Manifests: discoveredManifests,
+		})
+
+		span.End()
 	}
 
-	logrus.Printf("\n\n---\n\n=> Total manifest detected: %d\n\n", len(totalDiscoveredManifests))
+	total := 0
+	for _, r := range results {
+		total += len(r.Manifests)
+	}
+	logrus.Printf("\n\n---\n\n=> Total manifest detected: %d\n\n", total)
 
-	return totalDiscoveredManifests, nil
+	return results, nil
 }

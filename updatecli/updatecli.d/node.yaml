@@ -1,4 +1,9 @@
 name: "chore(node): upgrade node version"
+pipelineid: node_version
+
+labels:
+  ecosystem: javascript
+
 #{{- if .scm.enabled }}
 actions:
   default:
@@ -20,10 +25,12 @@ scms:
       owner: "{{ .scm.owner }}"
       repository: "{{ .scm.repository }}"
       user: "{{ .scm.user }}"
+      commitusingapi: true
 #{{- end }}
 
 sources:
   node_version:
+    name: Get latest node version
     kind: githubrelease
     spec:
       owner: "nodejs"

@@ -1,6 +1,7 @@
 package updateclihttp
 
 import (
+	"context"
 	"io"
 	"net/http"
 	"strings"
@@ -132,7 +133,7 @@ func TestCondition(t *testing.T) {
 				},
 			}
 
-			got, _, gotErr := sut.Condition(tt.source, tt.scm)
+			got, _, gotErr := sut.Condition(context.Background(), tt.source, tt.scm)
 
 			if tt.wantErr != nil {
 				require.Error(t, gotErr)

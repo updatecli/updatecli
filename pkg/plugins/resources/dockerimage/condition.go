@@ -1,6 +1,7 @@
 package dockerimage
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/sirupsen/logrus"
@@ -10,7 +11,7 @@ import (
 // Condition checks if a docker image with a specific tag is published
 // We assume that if we can't retrieve the docker image digest, then it means
 // it doesn't exist.
-func (di *DockerImage) Condition(source string, scm scm.ScmHandler) (pass bool, message string, err error) {
+func (di *DockerImage) Condition(_ context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
 	if scm != nil {
 		logrus.Warningf("SCM configuration is not supported for condition of type dockerimage. Remove the `scm` directive from condition to remove this warning message")
 	}
