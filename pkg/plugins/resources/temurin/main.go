@@ -143,6 +143,7 @@ func (t *Temurin) ReportConfig() interface{} {
 		ReleaseType:     t.spec.ReleaseType,
 		ImageType:       t.spec.ImageType,
 		FeatureVersion:  t.spec.FeatureVersion,
+		SpecificVersion: t.spec.SpecificVersion,
 		ReleaseLine:     t.spec.ReleaseLine,
 		Architecture:    t.spec.Architecture,
 		OperatingSystem: t.spec.OperatingSystem,
