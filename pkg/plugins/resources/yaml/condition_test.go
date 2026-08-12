@@ -3,10 +3,13 @@ package yaml
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/text"
 )
 
@@ -629,11 +632,161 @@ repos:
 			},
 			isResultWanted: true,
 		},
+		{
+			name: "Passing case with keyonly and searchpattern when at least one file contains the key (yamlpath)",
+			spec: Spec{
+				Files: []string{
+					"*.yaml",
+				},
+				Key:           "$.github.owner",
+				KeyOnly:       true,
+				Engine:        "yamlpath",
+				SearchPattern: true,
+			},
+			files: map[string]file{
+				"test.yaml": {
+					filePath:         "test.yaml",
+					originalFilePath: "test.yaml",
+				},
+				"too-much.yaml": {
+					filePath:         "too-much.yaml",
+					originalFilePath: "too-much.yaml",
+				},
+			},
+			mockedContents: map[string]string{
+				"test.yaml": `---
+github:
+  owner: olblak
+  repository: charts
+`,
+				"too-much.yaml": `---
+name: github
+`,
+			},
+			isResultWanted: true,
+		},
+		{
+			name: "Passing case with keyonly and searchpattern when at least one file contains the key (go-yaml)",
+			spec: Spec{
+				Files: []string{
+					"*.yaml",
+				},
+				Key:           "$.github.owner",
+				KeyOnly:       true,
+				SearchPattern: true,
+			},
+			files: map[string]file{
+				"test.yaml": {
+					filePath:         "test.yaml",
+					originalFilePath: "test.yaml",
+				},
+				"too-much.yaml": {
+					filePath:         "too-much.yaml",
+					originalFilePath: "too-much.yaml",
+				},
+			},
+			mockedContents: map[string]string{
+				"test.yaml": `---
+github:
+  owner: olblak
+  repository: charts
+`,
+				"too-much.yaml": `---
+name: github
+`,
+			},
+			isResultWanted: true,
+		},
+		{
+			name: "Failing case with keyonly and searchpattern when no file contains the key",
+			spec: Spec{
+				Files: []string{
+					"*.yaml",
+				},
+				Key:           "$.github.owner",
+				KeyOnly:       true,
+				Engine:        "yamlpath",
+				SearchPattern: true,
+			},
+			files: map[string]file{
+				"test.yaml": {
+					filePath:         "test.yaml",
+					originalFilePath: "test.yaml",
+				},
+				"too-much.yaml": {
+					filePath:         "too-much.yaml",
+					originalFilePath: "too-much.yaml",
+				},
+			},
+			mockedContents: map[string]string{
+				"test.yaml": `---
+name: github
+`,
+				"too-much.yaml": `---
+name: updatecli
+`,
+			},
+			isResultWanted: false,
+		},
+		{
+			name: "Failing case with keyonly and multiple files when not all files contain the key (no searchpattern)",
+			spec: Spec{
+				Files: []string{
+					"test.yaml",
+					"too-much.yaml",
+				},
+				Key:     "$.github.owner",
+				KeyOnly: true,
+				Engine:  "yamlpath",
+			},
+			files: map[string]file{
+				"test.yaml": {
+					filePath:         "test.yaml",
+					originalFilePath: "test.yaml",
+				},
+				"too-much.yaml": {
+					filePath:         "too-much.yaml",
+					originalFilePath: "too-much.yaml",
+				},
+			},
+			mockedContents: map[string]string{
+				"test.yaml": `---
+github:
+  owner: olblak
+  repository: charts
+`,
+				"too-much.yaml": `---
+name: github
+`,
+			},
+			isResultWanted: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			mockedContents := tt.mockedContents
+			var scmHandler scm.ScmHandler
+
+			// When a search pattern is used, initFiles resolves the pattern
+			// against the working directory, so we need real files on disk.
+			if tt.spec.SearchPattern {
+				tempDir := t.TempDir()
+				for fileName := range tt.files {
+					if err := os.WriteFile(filepath.Join(tempDir, fileName), []byte{}, 0600); err != nil {
+						t.Fatalf("failed to create temp file: %v", err)
+					}
+				}
+				scmHandler = &scm.MockScm{WorkingDir: tempDir}
+
+				updatedContents := make(map[string]string)
+				for fileName, content := range tt.mockedContents {
+					updatedContents[filepath.Join(tempDir, fileName)] = content
+				}
+				mockedContents = updatedContents
+			}
+
 			mockedText := text.MockTextRetriever{
-				Contents: tt.mockedContents,
+				Contents: mockedContents,
 				Err:      tt.mockedError,
 			}
 
@@ -643,7 +796,7 @@ repos:
 
 			assert.NoError(t, err)
 
-			gotResult, _, gotErr := y.Condition(context.Background(), tt.inputSourceValue, nil)
+			gotResult, _, gotErr := y.Condition(context.Background(), tt.inputSourceValue, scmHandler)
 			if tt.isErrorWanted {
 				assert.Error(t, gotErr)
 				return

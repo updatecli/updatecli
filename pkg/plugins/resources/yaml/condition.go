@@ -115,6 +115,13 @@ func (y *Yaml) Condition(_ context.Context, source string, scm scm.ScmHandler) (
 				docs = append(docs, &doc)
 			}
 
+			// Track whether the key was found in at least one document of this
+			// file. The yamlpath engine does not report an error when the key is
+			// missing: it returns an empty result set. For keyonly conditions we
+			// record a miss per file (the same way the go-yaml engine does) so the
+			// handling below can distinguish "at least one file contains the key"
+			// (searchpattern) from "no file contains it".
+			fileKeyFound := false
 			for index, doc := range docs {
 				if y.spec.DocumentIndex != nil {
 					if index != *y.spec.DocumentIndex {
@@ -138,11 +145,25 @@ func (y *Yaml) Condition(_ context.Context, source string, scm scm.ScmHandler) (
 				for i := range founds {
 					results = append(results, founds[i].Value)
 				}
+
+				if len(founds) > 0 {
+					fileKeyFound = true
+				}
+			}
+
+			if !fileKeyFound && y.spec.KeyOnly {
+				errorMessages = append(errorMessages,
+					fmt.Errorf("%q - %w", originalFilePath, ErrKeyNotFound))
 			}
 
 		default:
 			return false, "", fmt.Errorf("unsupported yaml engine %q", y.spec.Engine)
 		}
+	}
+
+	originalFilePaths := make([]string, 0, len(y.files))
+	for i := range y.files {
+		originalFilePaths = append(originalFilePaths, y.files[i].originalFilePath)
 	}
 
 	if len(errorMessages) > 0 {
@@ -153,15 +174,18 @@ func (y *Yaml) Condition(_ context.Context, source string, scm scm.ScmHandler) (
 					return false, "", errorsToError(errorMessages)
 				}
 			}
+
+			// When a search pattern is used, the condition passes as soon as at
+			// least one file contains the key, aligning with the file plugin
+			// behavior. Otherwise every specified file must contain the key.
+			if y.spec.SearchPattern && len(results) > 0 {
+				return true, fmt.Sprintf("key %q found in yaml file(s) [%q]", y.spec.Key, strings.Join(originalFilePaths, ",")), nil
+			}
+
 			return false, "key not found in yaml file(s)", nil
 		}
 
 		return false, "", errorsToError(errorMessages)
-	}
-
-	originalFilePaths := make([]string, len(y.files))
-	for i := range y.files {
-		originalFilePaths = append(originalFilePaths, y.files[i].originalFilePath)
 	}
 
 	// When user want to only check the existence of a YAML key
