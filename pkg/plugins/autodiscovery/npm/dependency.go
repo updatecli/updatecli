@@ -200,6 +200,7 @@ func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 					SourceNpmrcPath:            n.npmrcPath,
 					SourceURL:                  n.url,
 					SourceRegistryToken:        n.registryToken,
+					SourceAge:                  n.releaseAge,
 					TargetID:                   "npm",
 					TargetName:                 fmt.Sprintf("Bump %q package version to {{ source \"npm\" }}", dependencyName),
 					// NPM package allows dot in package name which has a different meaning in Dasel query
