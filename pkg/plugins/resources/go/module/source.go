@@ -2,6 +2,7 @@ package gomodule
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/updatecli/updatecli/pkg/core/result"
@@ -11,6 +12,16 @@ import (
 func (g *GoModule) Source(ctx context.Context, workingDir string, resultSource *result.Source) error {
 	version, _, err := g.versions(ctx)
 	if err != nil {
+		/*
+			Every published version is still cooling down, which is an expected state of
+			the age filter rather than a failure, so the source is skipped instead.
+		*/
+		if errors.Is(err, ErrNoVersionMatchingAge) {
+			resultSource.Result = result.SKIPPED
+			resultSource.Description = fmt.Sprintf("no version of the GO module %q matches the age filter yet", g.Spec.Module)
+			return nil
+		}
+
 		return fmt.Errorf("searching go module version: %w", err)
 	}
 
