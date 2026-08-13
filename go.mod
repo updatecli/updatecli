@@ -62,7 +62,6 @@ require (
 	github.com/minamijoyo/tfupdate v0.8.0
 	github.com/muesli/mango-cobra v1.3.0
 	github.com/muesli/roff v0.1.0
-	github.com/nirasan/go-oauth-pkce-code-verifier v0.0.0-20220510032225-4f9f17eaec4c
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
 	github.com/spf13/afero v1.15.0
@@ -338,7 +337,7 @@ require (
 	golang.org/x/net v0.57.0
 	golang.org/x/sync v0.22.0 // indirect
 	golang.org/x/sys v0.47.0 // indirect
-	golang.org/x/term v0.45.0 // indirect
+	golang.org/x/term v0.45.0
 	golang.org/x/tools v0.48.0 // indirect
 	google.golang.org/api v0.289.0 // indirect
 	google.golang.org/grpc v1.82.1 // indirect
