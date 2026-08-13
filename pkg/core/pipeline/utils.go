@@ -51,6 +51,11 @@ func (p *Pipeline) shouldSkipResource(leaf *Node, depsResults map[string]*Node) 
 				if dependencyResult.Category == conditionCategory && dependencyResult.Result != result.SUCCESS {
 					return true
 				}
+				// A skipped source doesn't provide any value, so running its dependents
+				// would have them consume an empty source input.
+				if dependencyResult.Category == sourceCategory && dependencyResult.Result == result.SKIPPED {
+					return true
+				}
 				if dependencyResult.Result == result.FAILURE {
 					// And operator but dep is failed
 					return true
