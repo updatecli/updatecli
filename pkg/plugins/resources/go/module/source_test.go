@@ -13,10 +13,11 @@ import (
 
 func TestSource(t *testing.T) {
 	tests := []struct {
-		name           string
-		spec           Spec
-		expectedResult string
-		expectedError  bool
+		name            string
+		spec            Spec
+		expectedResult  string
+		expectedError   bool
+		expectedSkipped bool
 	}{
 		{
 			spec: Spec{
@@ -84,7 +85,8 @@ func TestSource(t *testing.T) {
 					Minimum: "100y",
 				},
 			},
-			expectedError: true,
+			// Every published version is still cooling down, which is a skip and not a failure
+			expectedSkipped: true,
 		},
 		{
 			spec: Spec{
@@ -110,7 +112,8 @@ func TestSource(t *testing.T) {
 					Maximum: "1s",
 				},
 			},
-			expectedError: true,
+			// Every published version is too old, which is a skip and not a failure
+			expectedSkipped: true,
 		},
 	}
 	for _, tt := range tests {
@@ -124,6 +127,12 @@ func TestSource(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
+			if tt.expectedSkipped {
+				assert.Equal(t, result.SKIPPED, gotResult.Result)
+				assert.Empty(t, gotResult.Information)
+				return
+			}
+			assert.Equal(t, result.SUCCESS, gotResult.Result)
 			assert.Equal(t, tt.expectedResult, gotResult.Information)
 		})
 	}

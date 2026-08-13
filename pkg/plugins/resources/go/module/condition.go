@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
@@ -47,18 +46,8 @@ func (g *GoModule) Condition(ctx context.Context, source string, scm scm.ScmHand
 				return true, fmt.Sprintf("version %q available", versionToCheck), nil
 			}
 		case false:
-			releaseDate, err := time.Parse(time.RFC3339, versionInfo.Time)
-			if err != nil {
-				logrus.Debugf("failed to parse release date for version %q from proxy %q: %v\n", versionToCheck, proxy, err)
-				continue
-			}
-			if g.Spec.Age.Minimum != "" && g.Spec.Age.IsOlderThan(releaseDate, nil) {
-				logrus.Debugf("ignoring	version %q from proxy %q because its age is below %q (released on %s)\n", versionToCheck, proxy, g.Spec.Age.Minimum, releaseDate)
-				continue
-			}
-
-			if g.Spec.Age.Maximum != "" && g.Spec.Age.IsNewerThan(releaseDate, nil) {
-				logrus.Debugf("ignoring version %q from proxy %q because its age is above %q (released on %s)\n", versionToCheck, proxy, g.Spec.Age.Maximum, releaseDate)
+			if !isVersionMatchingAge(versionInfo, g.Spec.Age) {
+				logrus.Debugf("ignoring version %q from proxy %q because it doesn't match the age filter\n", versionToCheck, proxy)
 				continue
 			}
 
