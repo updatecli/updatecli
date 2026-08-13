@@ -32,7 +32,7 @@ type versionInfo struct {
 }
 
 // GetVersions fetch all versions of a Golang module
-func (g *GoModule) versions(ctx context.Context) (v string, versions []string, err error) {
+func (g *GoModule) versions(ctx context.Context) (v string, err error) {
 
 	var GOPROXY string
 	if g.Spec.Proxy != "" {
@@ -94,7 +94,7 @@ func (g *GoModule) versions(ctx context.Context) (v string, versions []string, e
 				OriginalVersion: latestVersion.Version,
 			}
 
-			return latestVersion.Version, []string{latestVersion.Version}, nil
+			return latestVersion.Version, nil
 		}
 
 		// The module publishes versions but the age filter discarded every one of them,
@@ -105,7 +105,7 @@ func (g *GoModule) versions(ctx context.Context) (v string, versions []string, e
 			continue
 		}
 
-		versions = versionNames(matchingVersions)
+		versions := versionNames(matchingVersions)
 
 		/*
 			A "latest" filter asks for the most recently published version, which the
@@ -121,25 +121,25 @@ func (g *GoModule) versions(ctx context.Context) (v string, versions []string, e
 					OriginalVersion: newestVersion,
 				}
 
-				return newestVersion, versions, nil
+				return newestVersion, nil
 			}
 		}
 
 		sort.Strings(versions)
 		g.Version, err = g.versionFilter.Search(versions)
 		if err != nil {
-			return "", nil, err
+			return "", err
 		}
 
-		return g.Version.GetVersion(), versions, nil
+		return g.Version.GetVersion(), nil
 
 	}
 
 	if heldBackByAge {
-		return "", nil, fmt.Errorf("%w for GO module %q", ErrNoVersionMatchingAge, g.Spec.Module)
+		return "", fmt.Errorf("%w for GO module %q", ErrNoVersionMatchingAge, g.Spec.Module)
 	}
 
-	return "", nil, fmt.Errorf("GO module %q not found on proxy %q", g.Spec.Module, GOPROXY)
+	return "", fmt.Errorf("GO module %q not found on proxy %q", g.Spec.Module, GOPROXY)
 }
 
 // getFromProxy queries a Go module proxy endpoint and returns its raw response body.

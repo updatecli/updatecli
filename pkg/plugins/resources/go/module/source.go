@@ -10,7 +10,7 @@ import (
 
 // Source returns the latest go module version
 func (g *GoModule) Source(ctx context.Context, workingDir string, resultSource *result.Source) error {
-	version, _, err := g.versions(ctx)
+	version, err := g.versions(ctx)
 	if err != nil {
 		/*
 			Every published version is still cooling down, which is an expected state of

@@ -222,7 +222,7 @@ func TestVersions(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got := tt.stub.start(t, tt.spec)
 
-			gotVersion, _, err := got.versions(context.Background())
+			gotVersion, err := got.versions(context.Background())
 
 			if tt.expectedHeldBackByAge {
 				require.ErrorIs(t, err, ErrNoVersionMatchingAge)
