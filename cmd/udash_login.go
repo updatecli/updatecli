@@ -9,12 +9,9 @@ import (
 )
 
 var (
-	udashOAuthAccessToken string
-	udashOAuthClientID    string
-	udashOAuthIssuer      string
-	udashOAuthAudience    string
-	udashEndpointURL      string
-	udashEndpointAPIURL   string
+	udashAccessToken    string
+	udashEndpointURL    string
+	udashEndpointAPIURL string
 
 	udashLoginCmd = &cobra.Command{
 		Use:     "login url",
@@ -49,10 +46,7 @@ var (
 )
 
 func init() {
-	udashLoginCmd.Flags().StringVar(&udashOAuthClientID, "oauth-clientId", "", "oauth-clientId defines the Oauth client ID")
-	udashLoginCmd.Flags().StringVar(&udashOAuthIssuer, "oauth-issuer", "", "oauth-issuer defines the Oauth authentication URL")
-	udashLoginCmd.Flags().StringVar(&udashOAuthAudience, "oauth-audience", "", "oauth-audience defines the Oauth audience URL")
-	udashLoginCmd.Flags().StringVar(&udashOAuthAccessToken, "oauth-access-token", "", "oauth-access-token defines the Oauth access token")
+	udashLoginCmd.Flags().StringVar(&udashAccessToken, "token", "", "token defines the Udash API token. Without it, Updatecli prompts for one")
 	udashLoginCmd.Flags().StringVar(&udashEndpointAPIURL, "api-url", "", "api-url defines the udash API URL")
 
 	udashCmd.AddCommand(udashLoginCmd)

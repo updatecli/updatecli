@@ -2,6 +2,7 @@ package udash
 
 import (
 	"sort"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 )
@@ -38,16 +39,23 @@ func Logout(url string) error {
 
 	if len(keys) == 0 {
 		data.Default = ""
-		return nil
+	} else {
+		sort.Strings(keys)
+		data.Default = keys[0]
 	}
 
-	sort.Strings(keys)
-	data.Default = keys[0]
-
+	// The write must happen even when the last credential was removed, otherwise
+	// logging out of the only configured service never persists.
 	err = writeConfigFile(updatecliConfigPath, data)
 	if err != nil {
 		return err
 	}
+
+	logrus.Printf("Logged out of %s locally. The token stays valid until you delete it from %s%s",
+		url,
+		strings.TrimSuffix(setDefaultHTTPSScheme(url), "/"),
+		TokenPagePath,
+	)
 
 	return nil
 }
