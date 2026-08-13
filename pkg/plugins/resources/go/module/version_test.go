@@ -239,30 +239,30 @@ func TestVersions(t *testing.T) {
 
 func TestNewVersionFilter(t *testing.T) {
 	tests := []struct {
-		name            string
-		versionFilter   version.Filter
-		expectedFilter  version.Filter
-		expectedNewErr  bool
-		expectedIsLatst bool
+		name             string
+		versionFilter    version.Filter
+		expectedFilter   version.Filter
+		expectedNewErr   bool
+		expectedIsLatest bool
 	}{
 		{
-			name:            "no filter falls back to semantic versioning",
-			expectedFilter:  version.Filter{Kind: version.SEMVERVERSIONKIND, Pattern: "*"},
-			expectedIsLatst: true,
+			name:             "no filter falls back to semantic versioning",
+			expectedFilter:   version.Filter{Kind: version.SEMVERVERSIONKIND, Pattern: "*"},
+			expectedIsLatest: true,
 		},
 		{
 			// A "latest" kind without any pattern used to be searched as the literal
 			// pattern "" and never matched anything.
-			name:            "latest kind without pattern gets its default pattern",
-			versionFilter:   version.Filter{Kind: version.LATESTVERSIONKIND},
-			expectedFilter:  version.Filter{Kind: version.LATESTVERSIONKIND, Pattern: version.LATESTVERSIONKIND},
-			expectedIsLatst: true,
+			name:             "latest kind without pattern gets its default pattern",
+			versionFilter:    version.Filter{Kind: version.LATESTVERSIONKIND},
+			expectedFilter:   version.Filter{Kind: version.LATESTVERSIONKIND, Pattern: version.LATESTVERSIONKIND},
+			expectedIsLatest: true,
 		},
 		{
-			name:            "semver kind without pattern gets its default pattern",
-			versionFilter:   version.Filter{Kind: version.SEMVERVERSIONKIND},
-			expectedFilter:  version.Filter{Kind: version.SEMVERVERSIONKIND, Pattern: "*"},
-			expectedIsLatst: true,
+			name:             "semver kind without pattern gets its default pattern",
+			versionFilter:    version.Filter{Kind: version.SEMVERVERSIONKIND},
+			expectedFilter:   version.Filter{Kind: version.SEMVERVERSIONKIND, Pattern: "*"},
+			expectedIsLatest: true,
 		},
 		{
 			name:           "explicit filter is left untouched",
@@ -286,7 +286,7 @@ func TestNewVersionFilter(t *testing.T) {
 
 			require.NoError(t, err)
 			assert.Equal(t, tt.expectedFilter, got.versionFilter)
-			assert.Equal(t, tt.expectedIsLatst, isLatestVersionFilter(got.versionFilter))
+			assert.Equal(t, tt.expectedIsLatest, isLatestVersionFilter(got.versionFilter))
 		})
 	}
 }
