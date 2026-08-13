@@ -45,6 +45,17 @@ func New(spec interface{}) (*GoModule, error) {
 		newFilter.Pattern = "*"
 	}
 
+	/*
+		Init must run after the fallback above, as it defaults an empty kind to "latest"
+		which would silently override the semantic versioning default of that resource.
+		It also provides the default pattern of a partially specified filter, such as
+		"latest" for a filter only setting `kind: latest`.
+	*/
+	newFilter, err = newFilter.Init()
+	if err != nil {
+		return nil, err
+	}
+
 	if err = newSpec.Age.Validate(); err != nil {
 		return nil, fmt.Errorf("wrong age spec %v", err)
 	}
