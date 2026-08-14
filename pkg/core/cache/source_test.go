@@ -9,6 +9,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/shell"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/shell/success/exitcode"
+	"go.yaml.in/yaml/v3"
 )
 
 func TestNewSourceCache(t *testing.T) {
@@ -261,6 +262,70 @@ func TestKey_NilSCMMatchesNilSCMSameSpec(t *testing.T) {
 
 	require.NotEmpty(t, key1)
 	assert.Equal(t, key1, key2)
+}
+
+// TestKey_SpecFieldOmittedFromReportConfigProducesDifferentKeys is the
+// regression for issue #9849: the key must hash the full spec, not
+// resource.ReportConfig(). shell.ReportConfig() only keeps Command and
+// ChangedIf, so two sources running the same command in different working
+// directories used to collide and the second silently received the first
+// one's cached stdout.
+func TestKey_SpecFieldOmittedFromReportConfigProducesDifferentKeys(t *testing.T) {
+	specA := shellSpec("git rev-parse HEAD")
+	specA.WorkDir = "/repo-a"
+	specB := shellSpec("git rev-parse HEAD")
+	specB.WorkDir = "/repo-b"
+
+	rcA := resource.ResourceConfig{Kind: "shell", Name: "source-a", Spec: specA}
+	rcB := resource.ResourceConfig{Kind: "shell", Name: "source-b", Spec: specB}
+
+	keyA := Key(rcA, nil)
+	keyB := Key(rcB, nil)
+
+	require.NotEmpty(t, keyA)
+	require.NotEmpty(t, keyB)
+	assert.NotEqual(t, keyA, keyB,
+		"sources differing only in a spec field omitted from ReportConfig must not share a cache key")
+
+	// Identical full specs must still share a key, so caching keeps working.
+	rcA2 := resource.ResourceConfig{Kind: "shell", Name: "source-a-copy", Spec: specA}
+	assert.Equal(t, keyA, Key(rcA2, nil))
+}
+
+// TestKey_YAMLDecodedSpecIsDeterministic exercises the real pipeline shape:
+// specs decoded from YAML arrive as map[string]interface{}, and the key must
+// be stable across decodes while still separating specs that differ only in a
+// field ReportConfig omits.
+func TestKey_YAMLDecodedSpecIsDeterministic(t *testing.T) {
+	decode := func(t *testing.T, doc string) resource.ResourceConfig {
+		t.Helper()
+		var rc resource.ResourceConfig
+		require.NoError(t, yaml.Unmarshal([]byte(doc), &rc))
+		return rc
+	}
+
+	docA := `
+kind: shell
+spec:
+  command: git rev-parse HEAD
+  workdir: /repo-a
+`
+	docB := `
+kind: shell
+spec:
+  command: git rev-parse HEAD
+  workdir: /repo-b
+`
+
+	keyA1 := Key(decode(t, docA), nil)
+	keyA2 := Key(decode(t, docA), nil)
+	keyB := Key(decode(t, docB), nil)
+
+	require.NotEmpty(t, keyA1)
+	require.NotEmpty(t, keyB)
+	assert.Equal(t, keyA1, keyA2, "same YAML document must always hash to the same key")
+	assert.NotEqual(t, keyA1, keyB,
+		"YAML specs differing only in workdir must not share a cache key")
 }
 
 // TestKey_NilVsNonNilSCMProduceDifferentKeys is the third case of the #8522
