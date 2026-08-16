@@ -18,6 +18,10 @@ import (
 const (
 	PackageJsonFile         string = "package.json"
 	latestVersionIdentifier string = "latest"
+	// defaultMinimumReleaseAge defines how long a release must have been published before
+	// Updatecli suggests it. It reduces the exposure to malicious package versions published
+	// on the registry and removed shortly after.
+	defaultMinimumReleaseAge string = "3d"
 )
 
 var (

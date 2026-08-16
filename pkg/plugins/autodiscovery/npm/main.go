@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
@@ -65,6 +66,13 @@ type Spec struct {
 	// RegistryToken defines the token to use when connecting to the registry.
 	// This will be propagated to all generated npm resource specs.
 	RegistryToken string `yaml:",omitempty"`
+	// Age defines the minimum or maximum age of a release to be considered valid.
+	// It accepts a duration string (e.g., "24h", "7d", "3w", "1y").
+	// This will be propagated to all generated npm resource specs.
+	//
+	// By default, `minimum` is set to `3d` so Updatecli doesn't suggest a package version
+	// published less than three days ago. Specifying an empty `age: {}` disables that behavior.
+	Age *age.Spec `yaml:",omitempty"`
 }
 
 // Npm holds all information needed to generate npm manifest.
@@ -87,6 +95,8 @@ type Npm struct {
 	url string
 	// registryToken holds the registry token to propagate to generated manifests
 	registryToken string
+	// releaseAge holds the release age filter to propagate to generated manifests
+	releaseAge age.Spec
 }
 
 // New return a new valid object.
@@ -106,6 +116,17 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Npm, error) {
 	// Validate only rules
 	if err := s.Only.Validate(); err != nil {
 		return Npm{}, fmt.Errorf("invalid only spec: %w", err)
+	}
+
+	// By default, wait for a release to be old enough before suggesting it
+	releaseAge := age.Spec{Minimum: defaultMinimumReleaseAge}
+	if s.Age != nil {
+		releaseAge = *s.Age
+	}
+
+	// Validate the release age filter
+	if err := releaseAge.Validate(); err != nil {
+		return Npm{}, fmt.Errorf("wrong age spec %v", err)
 	}
 
 	// By default we want to suggest the latest version available in the registry
@@ -144,6 +165,7 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Npm, error) {
 		npmrcPath:               s.NpmrcPath,
 		url:                     s.URL,
 		registryToken:           s.RegistryToken,
+		releaseAge:              releaseAge,
 	}, nil
 
 }

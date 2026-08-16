@@ -35,5 +35,9 @@ func (n Npm) Condition(ctx context.Context, source string, scm scm.ScmHandler) (
 		}
 	}
 
+	if !n.spec.Age.IsZero() {
+		return false, fmt.Sprintf("Version %q doesn't exist or doesn't match the age filter\n", versionToCheck), nil
+	}
+
 	return false, fmt.Sprintf("Version %q doesn't exist\n", versionToCheck), nil
 }

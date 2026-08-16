@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 )
 
 func TestCondition(t *testing.T) {
@@ -104,6 +105,70 @@ func TestCondition(t *testing.T) {
 			expectedError:        false,
 			mockedResponse:       true,
 			mockedBody:           existingScopedPackageData,
+			mockedHTTPStatusCode: 200,
+			mockedToken:          "mytoken",
+			mockedUrl:            "https://mycustomregistry.updatecli.io",
+		},
+		{
+			name: "Passing case of an existing axios version matching the minimum age",
+			spec: Spec{
+				Name:          "axios",
+				Version:       "0.2.0",
+				Age:           age.Spec{Minimum: "1y"},
+				URL:           "https://mycustomregistry.updatecli.io",
+				RegistryToken: "mytoken",
+			},
+			expectedResult:       true,
+			mockedResponse:       true,
+			mockedBody:           existingPackageData,
+			mockedHTTPStatusCode: 200,
+			mockedToken:          "mytoken",
+			mockedUrl:            "https://mycustomregistry.updatecli.io",
+		},
+		{
+			name: "Failing case of an existing axios version not matching the minimum age",
+			spec: Spec{
+				Name:          "axios",
+				Version:       "0.2.0",
+				Age:           age.Spec{Minimum: "100y"},
+				URL:           "https://mycustomregistry.updatecli.io",
+				RegistryToken: "mytoken",
+			},
+			expectedResult:       false,
+			mockedResponse:       true,
+			mockedBody:           existingPackageData,
+			mockedHTTPStatusCode: 200,
+			mockedToken:          "mytoken",
+			mockedUrl:            "https://mycustomregistry.updatecli.io",
+		},
+		{
+			name: "Passing case of an existing axios version matching the maximum age",
+			spec: Spec{
+				Name:          "axios",
+				Version:       "0.2.0",
+				Age:           age.Spec{Maximum: "100y"},
+				URL:           "https://mycustomregistry.updatecli.io",
+				RegistryToken: "mytoken",
+			},
+			expectedResult:       true,
+			mockedResponse:       true,
+			mockedBody:           existingPackageData,
+			mockedHTTPStatusCode: 200,
+			mockedToken:          "mytoken",
+			mockedUrl:            "https://mycustomregistry.updatecli.io",
+		},
+		{
+			name: "Failing case of an existing axios version not matching the maximum age",
+			spec: Spec{
+				Name:          "axios",
+				Version:       "0.2.0",
+				Age:           age.Spec{Maximum: "1s"},
+				URL:           "https://mycustomregistry.updatecli.io",
+				RegistryToken: "mytoken",
+			},
+			expectedResult:       false,
+			mockedResponse:       true,
+			mockedBody:           existingPackageData,
 			mockedHTTPStatusCode: 200,
 			mockedToken:          "mytoken",
 			mockedUrl:            "https://mycustomregistry.updatecli.io",

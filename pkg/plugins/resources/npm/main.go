@@ -18,6 +18,7 @@ import (
 
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
@@ -37,6 +38,22 @@ type Spec struct {
 	VersionFilter version.Filter `yaml:",omitempty"`
 	// NpmrcPath defines the path to the .npmrc file
 	NpmrcPath string `yaml:"npmrcpath,omitempty"`
+	// Age defines the minimum or maximum age of a release to be considered valid.
+	// It accepts a duration string (e.g., "24h", "7d", "3w", "1y").
+	//
+	// Compatible:
+	//   * source
+	//   * condition
+	//
+	// Remarks:
+	//   The release dates are read from the `time` object returned by the npm registry,
+	//   so no extra API call is needed. Versions for which the registry doesn't report
+	//   a release date are ignored.
+	//   When `age` is combined with a `latest` versionfilter and the `latest` dist-tag is
+	//   too recent, Updatecli falls back to the most recently published non prerelease
+	//   version matching the age window, which may not be the highest semantic version.
+	//   Combine `age` with a `semver` versionfilter to control ordering.
+	Age age.Spec `yaml:",omitempty"`
 }
 
 type distTags struct {
@@ -57,6 +74,11 @@ type Data struct {
 	Versions        map[string]versions `json:"versions,omitempty"`
 	DistTags        distTags            `json:"dist-tags,omitempty"`
 	Repository      Repository
+	// Time maps every published version to its release date, as reported by the
+	// npm registry. It also contains the non version keys "created" and "modified".
+	// Dates are kept as raw strings so that a single malformed value doesn't fail
+	// the whole packument decoding.
+	Time map[string]string `json:"time,omitempty"`
 }
 
 type Repository struct {
@@ -102,6 +124,10 @@ func New(spec interface{}) (*Npm, error) {
 	newFilter, err := newSpec.VersionFilter.Init()
 	if err != nil {
 		return &Npm{}, err
+	}
+
+	if err := newSpec.Age.Validate(); err != nil {
+		return &Npm{}, fmt.Errorf("wrong age spec %v", err)
 	}
 
 	return &Npm{
@@ -201,8 +227,15 @@ func (n *Npm) getVersions(ctx context.Context) (v string, versions []string, err
 		versions = append(versions, value.Version)
 	}
 
+	// Discard the versions published outside of the age window, if any is defined.
+	versions = filterVersionsByAge(versions, n.data.Time, n.spec.Age)
+
 	if n.versionFilter.Kind == version.LATESTVERSIONKIND {
-		return n.data.DistTags.Latest, versions, nil
+		if n.spec.Age.IsZero() {
+			return n.data.DistTags.Latest, versions, nil
+		}
+
+		return latestVersionMatchingAge(n.data.DistTags.Latest, n.data.orderedVersions, versions), versions, nil
 	}
 
 	sort.Strings(versions)
@@ -348,5 +381,6 @@ func (n *Npm) ReportConfig() interface{} {
 		URL:           redact.URL(n.spec.URL),
 		VersionFilter: n.spec.VersionFilter,
 		NpmrcPath:     n.spec.NpmrcPath,
+		Age:           n.spec.Age,
 	}
 }

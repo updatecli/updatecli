@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.yaml.in/yaml/v3"
 
+	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
@@ -39,9 +40,133 @@ sources:
     kind: 'npm'
     spec:
       name: 'axios'
+      age:
+        minimum: '3d'
       versionfilter:
         kind: 'semver'
         pattern: '1.0.0 || >1.0 < 2'
+targets:
+  package-lock.json:
+    name: 'Bump "axios" package version to {{ source "npm" }}'
+    disablesourceinput: true
+    kind: shell
+    spec:
+      command: |-
+        npm install --package-lock-only --dry-run=$DRY_RUN axios@{{ source "npm" }}
+      changedif:
+        kind: file/checksum
+        spec:
+          files:
+            - "package-lock.json"
+            - "package.json"
+      environments:
+        - name: PATH
+      workdir: '.'
+
+`,
+			},
+		},
+		{
+			name:    "Npm lockfile with a release age filter",
+			rootDir: "testdata/npmlockfile",
+			spec: Spec{
+				IgnoreVersionConstraints: boolPtr(true),
+				Age: &age.Spec{
+					Minimum: "7d",
+					Maximum: "1y",
+				},
+			},
+			expectedPipelines: []string{`name: 'Bump "axios" package version'
+sources:
+  npm:
+    name: 'Get "axios" package version'
+    kind: 'npm'
+    spec:
+      name: 'axios'
+      age:
+        minimum: '7d'
+        maximum: '1y'
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
+targets:
+  package-lock.json:
+    name: 'Bump "axios" package version to {{ source "npm" }}'
+    disablesourceinput: true
+    kind: shell
+    spec:
+      command: |-
+        npm install --package-lock-only --dry-run=$DRY_RUN axios@{{ source "npm" }}
+      changedif:
+        kind: file/checksum
+        spec:
+          files:
+            - "package-lock.json"
+            - "package.json"
+      environments:
+        - name: PATH
+      workdir: '.'
+
+`,
+			},
+		},
+		{
+			name:    "Npm lockfile with an empty release age filter disabling the default one",
+			rootDir: "testdata/npmlockfile",
+			spec: Spec{
+				IgnoreVersionConstraints: boolPtr(true),
+				Age:                      &age.Spec{},
+			},
+			expectedPipelines: []string{`name: 'Bump "axios" package version'
+sources:
+  npm:
+    name: 'Get "axios" package version'
+    kind: 'npm'
+    spec:
+      name: 'axios'
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
+targets:
+  package-lock.json:
+    name: 'Bump "axios" package version to {{ source "npm" }}'
+    disablesourceinput: true
+    kind: shell
+    spec:
+      command: |-
+        npm install --package-lock-only --dry-run=$DRY_RUN axios@{{ source "npm" }}
+      changedif:
+        kind: file/checksum
+        spec:
+          files:
+            - "package-lock.json"
+            - "package.json"
+      environments:
+        - name: PATH
+      workdir: '.'
+
+`,
+			},
+		},
+		{
+			name:    "Npm lockfile with a maximum release age only",
+			rootDir: "testdata/npmlockfile",
+			spec: Spec{
+				IgnoreVersionConstraints: boolPtr(true),
+				Age:                      &age.Spec{Maximum: "1y"},
+			},
+			expectedPipelines: []string{`name: 'Bump "axios" package version'
+sources:
+  npm:
+    name: 'Get "axios" package version'
+    kind: 'npm'
+    spec:
+      name: 'axios'
+      age:
+        maximum: '1y'
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
 targets:
   package-lock.json:
     name: 'Bump "axios" package version to {{ source "npm" }}'
@@ -76,6 +201,8 @@ sources:
     kind: 'npm'
     spec:
       name: 'axios'
+      age:
+        minimum: '3d'
       versionfilter:
         kind: 'semver'
         pattern: '*'
@@ -113,6 +240,8 @@ sources:
     kind: 'npm'
     spec:
       name: 'axios'
+      age:
+        minimum: '3d'
       versionfilter:
         kind: 'semver'
         pattern: '^1.0.0'
@@ -147,6 +276,8 @@ sources:
     kind: 'npm'
     spec:
       name: '@mdi/font'
+      age:
+        minimum: '3d'
       versionfilter:
         kind: 'semver'
         pattern: '>=5.9.55'
@@ -172,6 +303,8 @@ sources:
     kind: 'npm'
     spec:
       name: '@mdi/font'
+      age:
+        minimum: '3d'
       versionfilter:
         kind: 'semver'
         pattern: '>=5.9.55'
@@ -267,6 +400,54 @@ func TestNew_WithResourceConfig(t *testing.T) {
 			assert.Equal(t, tt.expectedNpmrcPath, npm.npmrcPath)
 			assert.Equal(t, tt.expectedURL, npm.url)
 			assert.Equal(t, tt.expectedToken, npm.registryToken)
+		})
+	}
+}
+
+func TestNewReleaseAge(t *testing.T) {
+	tests := []struct {
+		name               string
+		spec               Spec
+		expectedReleaseAge age.Spec
+		expectedError      bool
+	}{
+		{
+			name:               "No age specified fallbacks to the default minimum release age",
+			spec:               Spec{},
+			expectedReleaseAge: age.Spec{Minimum: "3d"},
+		},
+		{
+			name:               "An empty age disables the default minimum release age",
+			spec:               Spec{Age: &age.Spec{}},
+			expectedReleaseAge: age.Spec{},
+		},
+		{
+			name:               "A specified minimum age overrides the default one",
+			spec:               Spec{Age: &age.Spec{Minimum: "7d"}},
+			expectedReleaseAge: age.Spec{Minimum: "7d"},
+		},
+		{
+			name:               "A specified maximum age doesn't reintroduce the default minimum one",
+			spec:               Spec{Age: &age.Spec{Maximum: "1y"}},
+			expectedReleaseAge: age.Spec{Maximum: "1y"},
+		},
+		{
+			name:          "An invalid age is reported",
+			spec:          Spec{Age: &age.Spec{Minimum: "notaduration"}},
+			expectedError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			npm, err := New(tt.spec, ".", "", "")
+			if tt.expectedError {
+				assert.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+
+			assert.Equal(t, tt.expectedReleaseAge, npm.releaseAge)
 		})
 	}
 }
