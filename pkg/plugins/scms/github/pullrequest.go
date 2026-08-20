@@ -534,7 +534,10 @@ func (p *PullRequest) updatePullRequest(ctx context.Context, retry int) error {
 
 	title := p.Title
 
-	bodyPR, err := utils.GeneratePullRequestBody(p.spec.Description, p.Report)
+	bodyPR, err := utils.GeneratePullRequestBody(
+		p.spec.Description,
+		redirectGitHubPullRequestLinks(p.Report),
+	)
 	if err != nil {
 		return err
 	}
@@ -772,7 +775,10 @@ func (p *PullRequest) OpenPullRequest(ctx context.Context, retry int) error {
 
 
 	*/
-	bodyPR, err := utils.GeneratePullRequestBody(p.spec.Description, p.Report)
+	bodyPR, err := utils.GeneratePullRequestBody(
+		p.spec.Description,
+		redirectGitHubPullRequestLinks(p.Report),
+	)
 	if err != nil {
 		return err
 	}
