@@ -66,16 +66,25 @@ type cacheKeyInput struct {
 // the omitempty tag on cacheKeyInput.SCM keeps the hash identical to the
 // pre-SCM form in that case. Returns empty string when hashing fails; callers
 // treat that as a cache miss.
+//
+// The key hashes the full user-provided spec, not resource.ReportConfig():
+// ReportConfig exists to redact resource configuration for reports and may
+// omit result-affecting fields (issue #9849), which would let two distinct
+// sources silently share a cache entry. Secret-bearing spec fields are safe to
+// include because only the SHA256 digest is ever stored or logged. Hashing is
+// deterministic: yaml.v3 decodes specs into map[string]interface{} and
+// encoding/json marshals maps with sorted keys.
 func Key(rc resource.ResourceConfig, scm *SCMIdentity) string {
-	r, err := resource.New(rc)
-	if err != nil {
+	// Instantiating the resource validates that the kind is known and the
+	// spec is well-formed before caching anything under this config.
+	if _, err := resource.New(rc); err != nil {
 		logrus.Debugf("source cache: failed to instantiate resource for key: %v", err)
 		return ""
 	}
 
 	data, err := json.Marshal(cacheKeyInput{
 		Kind: rc.Kind,
-		Spec: r.ReportConfig(),
+		Spec: rc.Spec,
 		SCM:  scm,
 	})
 	if err != nil {
