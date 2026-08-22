@@ -69,26 +69,26 @@ func createCommitDataForSigning(commit *object.Commit) string {
 	var buf strings.Builder
 
 	// Tree line
-	buf.WriteString(fmt.Sprintf("tree %s\n", commit.TreeHash.String()))
+	fmt.Fprintf(&buf, "tree %s\n", commit.TreeHash.String())
 
 	// Parent lines
 	for _, parent := range commit.ParentHashes {
-		buf.WriteString(fmt.Sprintf("parent %s\n", parent.String()))
+		fmt.Fprintf(&buf, "parent %s\n", parent.String())
 	}
 
 	// Author line with timestamp
-	buf.WriteString(fmt.Sprintf("author %s <%s> %d %s\n",
+	fmt.Fprintf(&buf, "author %s <%s> %d %s\n",
 		commit.Author.Name,
 		commit.Author.Email,
 		commit.Author.When.Unix(),
-		commit.Author.When.Format("-0700")))
+		commit.Author.When.Format("-0700"))
 
 	// Committer line with timestamp
-	buf.WriteString(fmt.Sprintf("committer %s <%s> %d %s\n",
+	fmt.Fprintf(&buf, "committer %s <%s> %d %s\n",
 		commit.Committer.Name,
 		commit.Committer.Email,
 		commit.Committer.When.Unix(),
-		commit.Committer.When.Format("-0700")))
+		commit.Committer.When.Format("-0700"))
 
 	// Empty line before message
 	buf.WriteString("\n")

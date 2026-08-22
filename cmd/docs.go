@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -94,7 +95,15 @@ func snapshotDir(dir string) (map[string][sha256.Size]byte, error) {
 		return hashes, nil
 	}
 
-	err := filepath.WalkDir(dir, func(path string, d os.DirEntry, err error) error {
+	// Opening dir as a root scopes every file access below to it, so a symlink
+	// swapped in while walking cannot make us read a file outside of dir.
+	root, err := os.OpenRoot(dir)
+	if err != nil {
+		return hashes, err
+	}
+	defer root.Close()
+
+	err = fs.WalkDir(root.FS(), ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -102,7 +111,7 @@ func snapshotDir(dir string) (map[string][sha256.Size]byte, error) {
 			return nil
 		}
 
-		f, err := os.Open(path)
+		f, err := root.Open(path)
 		if err != nil {
 			return err
 		}
@@ -113,12 +122,7 @@ func snapshotDir(dir string) (map[string][sha256.Size]byte, error) {
 			return err
 		}
 
-		rel, err := filepath.Rel(dir, path)
-		if err != nil {
-			return err
-		}
-
-		hashes[rel] = [sha256.Size]byte(h.Sum(nil))
+		hashes[path] = [sha256.Size]byte(h.Sum(nil))
 		return nil
 	})
 

@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 
@@ -175,7 +176,7 @@ func defaultNpmConfig(defaultUrl string, defaultToken string) RcConfig {
 }
 
 func fileExists(path string) bool {
-	_, err := os.Stat(path)
+	_, err := os.Stat(filepath.Clean(path))
 	return !os.IsNotExist(err)
 }
 
