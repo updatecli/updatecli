@@ -1,5 +1,7 @@
 package npm
 
+import "github.com/updatecli/updatecli/pkg/plugins/utils/age"
+
 var (
 	// manifestTemplate is the Go template used to generate Fleet manifests
 	manifestTemplate string = `name: '{{ .ManifestName }}'
@@ -17,6 +19,15 @@ sources:
 {{- end }}
 {{- if .SourceRegistryToken }}
       registrytoken: '{{ .SourceRegistryToken }}'
+{{- end }}
+{{- if or .SourceAge.Minimum .SourceAge.Maximum }}
+      age:
+        {{- if .SourceAge.Minimum }}
+        minimum: '{{ .SourceAge.Minimum }}'
+        {{- end }}
+        {{- if .SourceAge.Maximum }}
+        maximum: '{{ .SourceAge.Maximum }}'
+        {{- end }}
 {{- end }}
       versionfilter:
         kind: '{{ .SourceVersionFilterKind }}'
@@ -139,6 +150,7 @@ type manifestTemplateParams struct {
 	SourceNpmrcPath            string
 	SourceURL                  string
 	SourceRegistryToken        string
+	SourceAge                  age.Spec
 	TargetID                   string
 	TargetName                 string
 	TargetKey                  string
