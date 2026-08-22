@@ -186,7 +186,7 @@ func getSettingsXMLPath(projectDirname string) []string {
 	}
 
 	for _, path := range defaultSettingsXMLPath {
-		if _, err := os.Stat(path); err == nil {
+		if _, err := os.Stat(filepath.Clean(path)); err == nil {
 			result = append(result, path)
 		}
 	}

@@ -253,13 +253,13 @@ func buildCommitMessage(squashMsg string, commits []CommitInfo, format string) s
 
 	switch format {
 	case "compact":
-		builder.WriteString(fmt.Sprintf("Squashed %d commits:\n", len(commits)))
+		fmt.Fprintf(&builder, "Squashed %d commits:\n", len(commits))
 		for _, commit := range commits {
 			signedIndicator := ""
 			if commit.IsSigned {
 				signedIndicator = signedIndicatorValue
 			}
-			builder.WriteString(fmt.Sprintf("- %s%s\n", commit.Title, signedIndicator))
+			fmt.Fprintf(&builder, "- %s%s\n", commit.Title, signedIndicator)
 		}
 
 	case "detailed":
@@ -269,8 +269,8 @@ func buildCommitMessage(squashMsg string, commits []CommitInfo, format string) s
 			if commit.IsSigned {
 				signedIndicator = signedIndicatorValue
 			}
-			builder.WriteString(fmt.Sprintf("* %s - %s (%s)%s\n",
-				commit.Hash, commit.Title, commit.Author, signedIndicator))
+			fmt.Fprintf(&builder, "* %s - %s (%s)%s\n",
+				commit.Hash, commit.Title, commit.Author, signedIndicator)
 		}
 
 	case "list":
@@ -280,7 +280,7 @@ func buildCommitMessage(squashMsg string, commits []CommitInfo, format string) s
 			if commit.IsSigned {
 				signedIndicator = signedIndicatorValue
 			}
-			builder.WriteString(fmt.Sprintf("* %s: %s%s\n", commit.Hash, commit.Title, signedIndicator))
+			fmt.Fprintf(&builder, "* %s: %s%s\n", commit.Hash, commit.Title, signedIndicator)
 		}
 
 	case "":
