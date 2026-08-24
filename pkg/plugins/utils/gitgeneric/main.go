@@ -659,7 +659,7 @@ func (g GoGit) Clone(username, password, URL, workingDir string, withSubmodules 
 		cloneOptions.Auth = &auth
 	}
 
-	b.WriteString(fmt.Sprintf("cloning git repository: %s in %s\n", URL, workingDir))
+	fmt.Fprintf(&b, "cloning git repository: %s in %s\n", URL, workingDir)
 	repo, err := git.PlainClone(workingDir, false, &cloneOptions)
 
 	if b.String() != "" {

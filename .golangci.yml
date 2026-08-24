@@ -78,6 +78,12 @@ linters:
           - funlen
           - mnd
         path: _test\.go
+      # Test tables are full of throwaway credentials and echo-back HTTP handlers,
+      # which gosec reports as leaked secrets and XSS sinks.
+      - linters:
+          - gosec
+        path: _test\.go
+        text: G101|G705
       - linters:
           - testpackage
         path: _expansion_test\.go
