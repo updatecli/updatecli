@@ -226,7 +226,7 @@ func (h Helmfile) discoverHelmfileReleaseManifests() ([][]byte, error) {
 				TargetID:                   release.Name,
 				TargetName:                 fmt.Sprintf("deps(helmfile): update %q Helm Chart version to {{ source %q}}", release.Name, release.Name),
 				TargetKey:                  fmt.Sprintf("$.releases[%d].version", i),
-				File:                       foundHelmfile,
+				File:                       relativeFoundChartFile,
 				ScmID:                      h.scmID,
 				Token:                      token,
 			}
