@@ -121,7 +121,7 @@ func (c *Config) AutoGuess(configName, workingDir string, gitHandler gitgeneric.
 			}
 		}
 
-		c.Kind = "github"
+		c.Kind = githubIdentifier
 		c.Spec = autoguessSpec
 		return nil
 	default:
@@ -146,7 +146,7 @@ func (c *Config) AutoGuess(configName, workingDir string, gitHandler gitgeneric.
 			}
 		}
 
-		c.Kind = "git"
+		c.Kind = gitIdentifier
 		c.Spec = autoguessSpec
 		return nil
 	}
@@ -159,9 +159,9 @@ func GetScmMapping() map[string]interface{} {
 		"azuredevops":       &azuredevops.Spec{},
 		"azuredevopssearch": &azuredevopssearch.Spec{},
 		"bitbucket":         &bitbucket.Spec{},
-		"git":               &git.Spec{},
+		gitIdentifier:       &git.Spec{},
 		"gitea":             &gitea.Spec{},
-		"github":            &github.Spec{},
+		githubIdentifier:    &github.Spec{},
 		"gitlab":            &gitlab.Spec{},
 		"stash":             &stash.Spec{},
 		"githubsearch":      &githubsearch.Spec{},

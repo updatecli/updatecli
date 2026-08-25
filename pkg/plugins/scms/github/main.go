@@ -24,6 +24,12 @@ import (
 
 const (
 	Kind = "github"
+
+	// Keys shared by the GraphQL query variables and the spec validation.
+	keyOwner      = "owner"
+	keyName       = "name"
+	keyRepository = "repository"
+	keyBefore     = "before"
 )
 
 // Spec represents the configuration input
@@ -368,11 +374,11 @@ func (s *Spec) Validate() (errs []error) {
 	}
 
 	if len(s.Owner) == 0 {
-		required = append(required, "owner")
+		required = append(required, keyOwner)
 	}
 
 	if len(s.Repository) == 0 {
-		required = append(required, "repository")
+		required = append(required, keyRepository)
 	}
 
 	if len(required) > 0 {
@@ -547,8 +553,8 @@ func (g *Github) queryRepository(ctx context.Context, sourceBranch string, worki
 	}
 
 	variables := map[string]interface{}{
-		"owner":         githubv4.String(g.Spec.Owner),
-		"name":          githubv4.String(g.Spec.Repository),
+		keyOwner:        githubv4.String(g.Spec.Owner),
+		keyName:         githubv4.String(g.Spec.Repository),
 		"qualifiedName": githubv4.String(sourceBranch),
 		"headRef":       githubv4.String(workingBranch),
 	}
@@ -636,8 +642,8 @@ func (g *Github) queryHeadOid(ctx context.Context, workingBranch string, retry i
 	}
 
 	variables := map[string]interface{}{
-		"owner":         githubv4.String(g.Spec.Owner),
-		"name":          githubv4.String(g.Spec.Repository),
+		keyOwner:        githubv4.String(g.Spec.Owner),
+		keyName:         githubv4.String(g.Spec.Repository),
 		"qualifiedName": githubv4.String(workingBranch),
 	}
 

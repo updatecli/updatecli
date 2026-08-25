@@ -842,8 +842,8 @@ func (p *PullRequest) isAutoMergedEnabledOnRepository(ctx context.Context, retry
 	}
 
 	variables := map[string]interface{}{
-		"owner": githubv4.String(p.gh.Spec.Owner),
-		"name":  githubv4.String(p.gh.Spec.Repository),
+		keyOwner: githubv4.String(p.gh.Spec.Owner),
+		keyName:  githubv4.String(p.gh.Spec.Repository),
 	}
 
 	err := p.gh.client.Query(ctx, &query, variables)
@@ -922,8 +922,8 @@ func (p *PullRequest) getRemotePullRequest(ctx context.Context, resetBody bool, 
 	_, workingBranch, targetBranch := p.gh.GetBranches()
 
 	variables := map[string]interface{}{
-		"owner":       owner,
-		"name":        name,
+		keyOwner:      owner,
+		keyName:       name,
 		"baseRefName": githubv4.String(targetBranch),
 		"headRefName": githubv4.String(workingBranch),
 	}
@@ -1016,10 +1016,10 @@ func (p *PullRequest) GetPullRequestLabelsInformation(ctx context.Context, retry
 	}
 
 	variables := map[string]interface{}{
-		"owner":      owner,
-		"repository": repo,
-		"number":     githubv4.Int(p.remotePullRequest.Number),
-		"before":     (*githubv4.String)(nil),
+		keyOwner:      owner,
+		keyRepository: repo,
+		"number":      githubv4.Int(p.remotePullRequest.Number),
+		keyBefore:     (*githubv4.String)(nil),
 	}
 
 	var query struct {
@@ -1082,7 +1082,7 @@ func (p *PullRequest) GetPullRequestLabelsInformation(ctx context.Context, retry
 			break
 		}
 
-		variables["before"] = githubv4.NewString(githubv4.String(query.Repository.PullRequest.Labels.PageInfo.StartCursor))
+		variables[keyBefore] = githubv4.NewString(githubv4.String(query.Repository.PullRequest.Labels.PageInfo.StartCursor))
 	}
 	return pullRequestLabels, nil
 }

@@ -18,6 +18,11 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/scms/stash"
 )
 
+const (
+	gitIdentifier    = "git"
+	githubIdentifier = "github"
+)
+
 type Scm struct {
 	Config     *Config
 	Handler    ScmHandler
@@ -109,7 +114,7 @@ func (s *Scm) GenerateSCM() error {
 
 		s.Handler = g
 
-	case "github":
+	case githubIdentifier:
 		githubSpec := github.Spec{}
 
 		err := mapstructure.Decode(s.Config.Spec, &githubSpec)
@@ -124,7 +129,7 @@ func (s *Scm) GenerateSCM() error {
 
 		s.Handler = g
 
-	case "git":
+	case gitIdentifier:
 		gitSpec := git.Spec{}
 
 		err := mapstructure.Decode(s.Config.Spec, &gitSpec)

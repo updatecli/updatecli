@@ -73,9 +73,9 @@ func (g *Github) getRepositoryLabels(ctx context.Context, retry int) ([]reposito
 	var repositoryLabels []repositoryLabelApi
 
 	variables := map[string]interface{}{
-		"owner":      githubv4.String(g.Spec.Owner),
-		"repository": githubv4.String(g.Spec.Repository),
-		"before":     (*githubv4.String)(nil),
+		keyOwner:      githubv4.String(g.Spec.Owner),
+		keyRepository: githubv4.String(g.Spec.Repository),
+		keyBefore:     (*githubv4.String)(nil),
 	}
 
 	var query labelsQuery
@@ -118,7 +118,7 @@ func (g *Github) getRepositoryLabels(ctx context.Context, retry int) ([]reposito
 			break
 		}
 
-		variables["before"] = githubv4.NewString(githubv4.String(query.Repository.Labels.PageInfo.StartCursor))
+		variables[keyBefore] = githubv4.NewString(githubv4.String(query.Repository.Labels.PageInfo.StartCursor))
 	}
 
 	return repositoryLabels, nil

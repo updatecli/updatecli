@@ -84,6 +84,17 @@ linters:
           - gosec
         path: _test\.go
         text: G101|G705
+      # Table-driven tests repeat fixture values (versions, URLs, testdata paths)
+      # on purpose: naming each one hurts readability more than it helps.
+      - linters:
+          - goconst
+        path: _test\.go
+      # The deprecated field is set on purpose, next to its replacement, so that
+      # older GitLab servers keep working.
+      - linters:
+          - staticcheck
+        path: pkg/plugins/resources/gitlab/mergerequest/create\.go
+        text: SA1019
       - linters:
           - testpackage
         path: _expansion_test\.go

@@ -22,6 +22,7 @@ var (
 	defaultVersionFilterKind    string   = "semver"
 	kindGitea                   string   = "gitea"
 	kindGitHub                  string   = "github"
+	latestVersionIdentifier     string   = "latest"
 	kindForgejo                 string   = "forgejo"
 	defaultGitProviderURL       string   = "https://github.com"
 )

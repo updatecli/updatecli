@@ -10,6 +10,7 @@ import (
 
 const (
 	PrecommitConfigFile string = ".pre-commit-config.yaml"
+	gittagIdentifier    string = "gittag"
 )
 
 // searchPrecommitConfigFiles looks, recursively, for every files named .pre-commit-config.yaml from a root directory.

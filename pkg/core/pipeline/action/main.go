@@ -32,6 +32,9 @@ const (
 	giteaIdentifier       = "gitea"
 	stashIdentifier       = "stash"
 	bitbucketIdentifier   = "bitbucket"
+
+	githubPullRequestIdentifier = "github/pullrequest"
+	giteaPullRequestIdentifier  = "gitea/pullrequest"
 )
 
 // ErrWrongConfig is returned when an action has missing mandatory attributes.
@@ -91,11 +94,11 @@ func (c *Config) Validate() (err error) {
 	/** Deprecated items **/
 	if c.Kind == githubIdentifier {
 		logrus.Warnf("The kind %q for actions is deprecated in favor of '%s/pullrequest'", githubIdentifier, githubIdentifier)
-		c.Kind = "github/pullrequest"
+		c.Kind = githubPullRequestIdentifier
 	}
 	if c.Kind == giteaIdentifier {
 		logrus.Warnf("The kind %q for actions is deprecated in favor of '%s/pullrequest'", giteaIdentifier, giteaIdentifier)
-		c.Kind = "gitea/pullrequest"
+		c.Kind = giteaPullRequestIdentifier
 	}
 	if c.DeprecatedScmID != "" {
 		if c.ScmID == "" {
@@ -190,7 +193,7 @@ func (a *Action) generateActionHandler() error {
 
 		a.Handler = &g
 
-	case "gitea/pullrequest", giteaIdentifier:
+	case giteaPullRequestIdentifier, giteaIdentifier:
 		if a.Scm.Config.Kind != giteaIdentifier {
 			return fmt.Errorf("scm of kind %q is not compatible with action of kind %q",
 				a.Scm.Config.Kind,
@@ -230,7 +233,7 @@ func (a *Action) generateActionHandler() error {
 
 		a.Handler = &g
 
-	case "github/pullrequest", githubIdentifier:
+	case githubPullRequestIdentifier, githubIdentifier:
 		actionSpec := github.ActionSpec{}
 
 		if a.Scm.Config.Kind != githubIdentifier {
@@ -288,12 +291,12 @@ func (a *Action) generateActionHandler() error {
 // Don't forget to update it when adding/updating/removing a case from New().
 func GetActionMapping() map[string]interface{} {
 	return map[string]interface{}{
-		"azuredevops/pullrequest": &azuredevops.Spec{},
-		"github/pullrequest":      &github.ActionSpec{},
-		"gitea/pullrequest":       &gitea.Spec{},
-		"stash/pullrequest":       &stash.Spec{},
-		"gitlab/mergerequest":     &gitlab.Spec{},
-		"bitbucket/pullrequest":   &bitbucket.Spec{},
+		"azuredevops/pullrequest":   &azuredevops.Spec{},
+		githubPullRequestIdentifier: &github.ActionSpec{},
+		giteaPullRequestIdentifier:  &gitea.Spec{},
+		"stash/pullrequest":         &stash.Spec{},
+		"gitlab/mergerequest":       &gitlab.Spec{},
+		"bitbucket/pullrequest":     &bitbucket.Spec{},
 	}
 }
 

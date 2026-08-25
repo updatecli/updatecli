@@ -18,11 +18,13 @@ import (
 	if a shell command result should be considered a success, a failure, or a warning
 */
 
+const consoleOutputIdentifier = "console/output"
+
 var (
 	MappingSpecChangedIf = map[string]interface{}{
-		"console/output": &console.Spec{},
-		"exitcode":       &exitcode.Spec{},
-		"file/checksum":  &checksum.Spec{},
+		consoleOutputIdentifier: &console.Spec{},
+		"exitcode":              &exitcode.Spec{},
+		"file/checksum":         &checksum.Spec{},
 	}
 )
 
@@ -45,11 +47,11 @@ func (s *Shell) InitChangedIf() error {
 
 	if s.spec.ChangedIf.Kind == "" {
 		logrus.Debugf("No shell success criteria defined, updatecli fallbacks to historical workflow")
-		s.spec.ChangedIf.Kind = "console/output"
+		s.spec.ChangedIf.Kind = consoleOutputIdentifier
 	}
 
 	switch s.spec.ChangedIf.Kind {
-	case "console/output":
+	case consoleOutputIdentifier:
 		o, err := console.New(&s.result.ExitCode, &s.result.Stdout)
 		if err != nil {
 			return err

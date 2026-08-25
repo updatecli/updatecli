@@ -88,9 +88,9 @@ func (g *Github) SearchReleases(ctx context.Context, releaseType ReleaseType, re
 	var query releasesQuery
 
 	variables := map[string]interface{}{
-		"owner":      githubv4.String(g.Spec.Owner),
-		"repository": githubv4.String(g.Spec.Repository),
-		"before":     (*githubv4.String)(nil),
+		keyOwner:      githubv4.String(g.Spec.Owner),
+		keyRepository: githubv4.String(g.Spec.Repository),
+		keyBefore:     (*githubv4.String)(nil),
 		"orderBy": githubv4.ReleaseOrder{
 			Field:     "CREATED_AT",
 			Direction: "DESC",
@@ -154,7 +154,7 @@ func (g *Github) SearchReleases(ctx context.Context, releaseType ReleaseType, re
 			break
 		}
 
-		variables["before"] = githubv4.NewString(githubv4.String(query.Repository.Releases.PageInfo.StartCursor))
+		variables[keyBefore] = githubv4.NewString(githubv4.String(query.Repository.Releases.PageInfo.StartCursor))
 	}
 
 	logrus.Debugf("%d releases found", len(releases))
