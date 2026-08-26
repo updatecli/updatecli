@@ -304,6 +304,9 @@ func New(option Option, pipelineIDFilters []string, pipelineLabels map[string]st
 
 	var templatedManifestContent []byte
 	var rawManifestContent []byte
+	// manifestFragments tracks which file each line of rawManifestContent comes
+	// from, so that a templating error can be reported against that file.
+	var manifestFragments []manifestFragment
 
 	for _, partialFile := range option.PartialFiles {
 		partialContent, err := readFile(partialFile)
@@ -319,6 +322,7 @@ func New(option Option, pipelineIDFilters []string, pipelineLabels map[string]st
 		}
 
 		logrus.Debugf("Partial content detected from: %q", partialFile)
+		manifestFragments, partialContent = appendFragment(manifestFragments, partialFile, partialContent)
 		rawManifestContent = append(rawManifestContent, partialContent...)
 	}
 
@@ -329,6 +333,7 @@ func New(option Option, pipelineIDFilters []string, pipelineLabels map[string]st
 		return nil, err
 	}
 
+	manifestFragments, rawManifestFileContent = appendFragment(manifestFragments, option.ManifestFile, rawManifestFileContent)
 	rawManifestContent = append(rawManifestContent, rawManifestFileContent...)
 
 	specs := []Spec{}
@@ -365,6 +370,7 @@ func New(option Option, pipelineIDFilters []string, pipelineLabels map[string]st
 			ValuesFiles:  option.ValuesFiles,
 			ValuesInline: option.ValuesInline,
 			SecretsFiles: option.SecretsFiles,
+			Fragments:    manifestFragments,
 			fs:           fs,
 		}
 
@@ -374,7 +380,9 @@ func New(option Option, pipelineIDFilters []string, pipelineLabels map[string]st
 			templatedManifestContent, err = t.NewStringTemplate(rawManifestContent)
 		}
 		if err != nil {
-			logrus.Errorf("Error while templating %q:\n---\n%s\n---\n\t%s\n", option.ManifestFile, string(rawManifestContent), err.Error())
+			// The error already names the file and line it comes from, and callers
+			// such as engine.LoadConfigurations prefix it with the manifest being
+			// loaded, so there is nothing worth logging here on top of it.
 			return nil, err
 		}
 
