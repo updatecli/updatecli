@@ -42,7 +42,7 @@ conditions:
     name: 'Ensure release "datadog" is specified for Helmfile "helmfile.d/cik8s.yaml"'
     kind: 'yaml'
     spec:
-      file: 'testdata/helmfile.d/cik8s.yaml'
+      file: 'helmfile.d/cik8s.yaml'
       key: '$.releases[0].chart'
       value: 'datadog/datadog'
     disablesourceinput: true
@@ -51,7 +51,7 @@ targets:
     name: 'deps(helmfile): update "datadog" Helm Chart version to {{ source "datadog"}}'
     kind: 'yaml'
     spec:
-      file: 'testdata/helmfile.d/cik8s.yaml'
+      file: 'helmfile.d/cik8s.yaml'
       key: '$.releases[0].version'
     sourceid: 'datadog'
 `, `name: 'Bump "docker-registry-secrets" Helm Chart version for Helmfile "helmfile.d/cik8s.yaml"'
@@ -70,7 +70,7 @@ conditions:
     name: 'Ensure release "docker-registry-secrets" is specified for Helmfile "helmfile.d/cik8s.yaml"'
     kind: 'yaml'
     spec:
-      file: 'testdata/helmfile.d/cik8s.yaml'
+      file: 'helmfile.d/cik8s.yaml'
       key: '$.releases[1].chart'
       value: 'jenkins-infra/docker-registry-secrets'
     disablesourceinput: true
@@ -79,7 +79,7 @@ targets:
     name: 'deps(helmfile): update "docker-registry-secrets" Helm Chart version to {{ source "docker-registry-secrets"}}'
     kind: 'yaml'
     spec:
-      file: 'testdata/helmfile.d/cik8s.yaml'
+      file: 'helmfile.d/cik8s.yaml'
       key: '$.releases[1].version'
     sourceid: 'docker-registry-secrets'
 `, `name: 'Bump "myOCIChart" Helm Chart version for Helmfile "helmfile.d/cik8s.yaml"'
@@ -98,7 +98,7 @@ conditions:
     name: 'Ensure release "myOCIChart" is specified for Helmfile "helmfile.d/cik8s.yaml"'
     kind: 'yaml'
     spec:
-      file: 'testdata/helmfile.d/cik8s.yaml'
+      file: 'helmfile.d/cik8s.yaml'
       key: '$.releases[3].chart'
       value: 'myOCIRegistry/myOCIChart'
     disablesourceinput: true
@@ -107,7 +107,7 @@ targets:
     name: 'deps(helmfile): update "myOCIChart" Helm Chart version to {{ source "myOCIChart"}}'
     kind: 'yaml'
     spec:
-      file: 'testdata/helmfile.d/cik8s.yaml'
+      file: 'helmfile.d/cik8s.yaml'
       key: '$.releases[3].version'
     sourceid: 'myOCIChart'
 `,
