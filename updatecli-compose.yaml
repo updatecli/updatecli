@@ -72,3 +72,25 @@ policies:
     valuesinline:
       spec:
         rootdir: ".github"
+
+  - name: Sync Updatecli workflows
+    id: updatecli
+    policy: ghcr.io/updatecli/policies/updatecli/githubaction/scaffold:0.1.0@sha256:7cf583e517ab329a41e0b15801557a60c363a3fef01d7c77f768b90af52ac583
+    valuesinline:
+      gha:
+        golang:
+          enabled: true
+        udash:
+          enabled: true
+        update:
+          cron: "0 3 * * *"
+          matrix:
+            - target_name: "existing pipelines"
+              apply_args: "--existing-only=true"
+            - target_name: "monitored pipelines"
+              apply_args: "--labels=monitor:active"
+      pipeline:
+        labels:
+          ecosystem: "updatecli"
+          policy: scaffold
+          monitor: active
