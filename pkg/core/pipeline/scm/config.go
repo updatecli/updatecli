@@ -156,16 +156,16 @@ func (c *Config) AutoGuess(configName, workingDir string, gitHandler gitgeneric.
 // Don't forget to update it when adding/updating/removing a supported scm kind.
 func GetScmMapping() map[string]interface{} {
 	return map[string]interface{}{
-		"azuredevops":       &azuredevops.Spec{},
-		"azuredevopssearch": &azuredevopssearch.Spec{},
-		"bitbucket":         &bitbucket.Spec{},
-		gitIdentifier:       &git.Spec{},
-		"gitea":             &gitea.Spec{},
-		githubIdentifier:    &github.Spec{},
-		"gitlab":            &gitlab.Spec{},
-		"stash":             &stash.Spec{},
-		"githubsearch":      &githubsearch.Spec{},
-		"gitlabsearch":      &gitlabsearch.Spec{},
+		azureDevopsIdentifier:       &azuredevops.Spec{},
+		azuredevopssearchIdentifier: &azuredevopssearch.Spec{},
+		bitbucketIdentifier:         &bitbucket.Spec{},
+		gitIdentifier:               &git.Spec{},
+		giteaIdentifier:             &gitea.Spec{},
+		githubIdentifier:            &github.Spec{},
+		gitlabIdentifier:            &gitlab.Spec{},
+		stashIdentifier:             &stash.Spec{},
+		githubsearchIdentifier:      &githubsearch.Spec{},
+		gitlabsearchIdentifier:      &gitlabsearch.Spec{},
 	}
 }
 

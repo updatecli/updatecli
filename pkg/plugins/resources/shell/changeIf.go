@@ -18,13 +18,17 @@ import (
 	if a shell command result should be considered a success, a failure, or a warning
 */
 
-const consoleOutputIdentifier = "console/output"
+const (
+	consoleOutputIdentifier = "console/output"
+	exitCodeIdentifier      = "exitcode"
+	fileChecksumIdentifier  = "file/checksum"
+)
 
 var (
 	MappingSpecChangedIf = map[string]interface{}{
 		consoleOutputIdentifier: &console.Spec{},
-		"exitcode":              &exitcode.Spec{},
-		"file/checksum":         &checksum.Spec{},
+		exitCodeIdentifier:      &exitcode.Spec{},
+		fileChecksumIdentifier:  &checksum.Spec{},
 	}
 )
 
@@ -59,7 +63,7 @@ func (s *Shell) InitChangedIf() error {
 
 		s.success = o
 
-	case "exitcode":
+	case exitCodeIdentifier:
 		o, err := exitcode.New(s.spec.ChangedIf.Spec, &s.result.ExitCode, &s.result.Stdout)
 		if err != nil {
 			return err
@@ -67,7 +71,7 @@ func (s *Shell) InitChangedIf() error {
 
 		s.success = o
 
-	case "file/checksum":
+	case fileChecksumIdentifier:
 		o, err := checksum.New(s.spec.ChangedIf.Spec, &s.result.ExitCode, &s.result.Stdout)
 		if err != nil {
 			return err

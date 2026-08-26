@@ -33,8 +33,12 @@ const (
 	stashIdentifier       = "stash"
 	bitbucketIdentifier   = "bitbucket"
 
-	githubPullRequestIdentifier = "github/pullrequest"
-	giteaPullRequestIdentifier  = "gitea/pullrequest"
+	githubPullRequestIdentifier      = "github/pullrequest"
+	giteaPullRequestIdentifier       = "gitea/pullrequest"
+	azureDevopsPullRequestIdentifier = "azuredevops/pullrequest"
+	stashPullRequestIdentifier       = "stash/pullrequest"
+	gitlabMergeRequestIdentifier     = "gitlab/mergerequest"
+	bitbucketPullRequestIdentifier   = "bitbucket/pullrequest"
 )
 
 // ErrWrongConfig is returned when an action has missing mandatory attributes.
@@ -154,7 +158,7 @@ func (a *Action) Update() error {
 func (a *Action) generateActionHandler() error {
 	// Don't forget to update the JSONSchema() method when adding/updating/removing a case
 	switch a.Config.Kind {
-	case "azuredevops/pullrequest":
+	case azureDevopsPullRequestIdentifier:
 		if a.Scm.Config.Kind != azuredevopsIdentifier {
 			return fmt.Errorf("scm of kind %q is not compatible with action of kind %q",
 				a.Scm.Config.Kind,
@@ -173,7 +177,7 @@ func (a *Action) generateActionHandler() error {
 
 		a.Handler = &g
 
-	case "bitbucket/pullrequest", bitbucketIdentifier:
+	case bitbucketPullRequestIdentifier, bitbucketIdentifier:
 		if a.Scm.Config.Kind != bitbucketIdentifier {
 			return fmt.Errorf("scm of kind %q is not compatible with action of kind %q",
 				a.Scm.Config.Kind,
@@ -213,7 +217,7 @@ func (a *Action) generateActionHandler() error {
 
 		a.Handler = &g
 
-	case "gitlab/mergerequest", gitlabIdentifier:
+	case gitlabMergeRequestIdentifier, gitlabIdentifier:
 		if a.Scm.Config.Kind != gitlabIdentifier {
 			return fmt.Errorf("scm of kind %q is not compatible with action of kind %q",
 				a.Scm.Config.Kind,
@@ -260,7 +264,7 @@ func (a *Action) generateActionHandler() error {
 
 		a.Handler = &g
 
-	case "stash/pullrequest", stashIdentifier:
+	case stashPullRequestIdentifier, stashIdentifier:
 		if a.Scm.Config.Kind != stashIdentifier {
 			return fmt.Errorf("scm of kind %q is not compatible with action of kind %q",
 				a.Scm.Config.Kind,
@@ -291,12 +295,12 @@ func (a *Action) generateActionHandler() error {
 // Don't forget to update it when adding/updating/removing a case from New().
 func GetActionMapping() map[string]interface{} {
 	return map[string]interface{}{
-		"azuredevops/pullrequest":   &azuredevops.Spec{},
-		githubPullRequestIdentifier: &github.ActionSpec{},
-		giteaPullRequestIdentifier:  &gitea.Spec{},
-		"stash/pullrequest":         &stash.Spec{},
-		"gitlab/mergerequest":       &gitlab.Spec{},
-		"bitbucket/pullrequest":     &bitbucket.Spec{},
+		azureDevopsPullRequestIdentifier: &azuredevops.Spec{},
+		githubPullRequestIdentifier:      &github.ActionSpec{},
+		giteaPullRequestIdentifier:       &gitea.Spec{},
+		stashPullRequestIdentifier:       &stash.Spec{},
+		gitlabMergeRequestIdentifier:     &gitlab.Spec{},
+		bitbucketPullRequestIdentifier:   &bitbucket.Spec{},
 	}
 }
 
