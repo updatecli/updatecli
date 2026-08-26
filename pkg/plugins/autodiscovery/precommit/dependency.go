@@ -103,7 +103,7 @@ func (p Precommit) discoverDependencyManifests() ([][]byte, error) {
 				continue
 			}
 
-			targetSource := "gittag"
+			targetSource := gittagIdentifier
 			if p.digest {
 				targetSource = fmt.Sprintf("%s_digest", targetSource)
 			}
@@ -131,8 +131,8 @@ func (p Precommit) discoverDependencyManifests() ([][]byte, error) {
 				SourceScmId:                repo.Repo,
 				SourceScmUrl:               repo.Repo,
 				SourceName:                 fmt.Sprintf("Get %q repo version", repo.Repo),
-				SourceID:                   "gittag",
-				SourceKind:                 "gittag",
+				SourceID:                   gittagIdentifier,
+				SourceKind:                 gittagIdentifier,
 				SourceVersionFilterKind:    p.versionFilter.Kind,
 				SourceVersionFilterPattern: versionPattern,
 				SourceVersionFilterRegex:   versionRegex,

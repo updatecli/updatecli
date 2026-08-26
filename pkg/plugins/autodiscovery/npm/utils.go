@@ -18,6 +18,7 @@ import (
 const (
 	PackageJsonFile         string = "package.json"
 	latestVersionIdentifier string = "latest"
+	npmIdentifier           string = "npm"
 	// defaultMinimumReleaseAge defines how long a release must have been published before
 	// Updatecli suggests it. It reduces the exposure to malicious package versions published
 	// on the registry and removed shortly after.
@@ -170,7 +171,7 @@ func isVersionConstraintSpecified(packageName, packageVersion string) bool {
 }
 
 func isNpmInstalled() bool {
-	cmd := exec.Command("npm", "--version")
+	cmd := exec.Command(npmIdentifier, "--version")
 	err := cmd.Run()
 	return err == nil
 }
@@ -179,7 +180,7 @@ func isNpmInstalled() bool {
 // isNpmSupportYarnUpdate checks if the current npm version can update the yarn file which is the preferred approach as it supports a dryrun mode
 func isNpmSupportYarnUpdate() bool {
 	var stdout, stderr bytes.Buffer
-	cmd := exec.Command("npm", "--version")
+	cmd := exec.Command(npmIdentifier, "--version")
 
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -228,17 +229,17 @@ func getTargetCommand(cmd, dependencyName string) string {
 	}
 
 	switch cmd {
-	case "npm":
-		return fmt.Sprintf("npm install --package-lock-only --dry-run=%s %s@{{ source %q }}", dryRunVariable, dependencyName, "npm")
+	case npmIdentifier:
+		return fmt.Sprintf("npm install --package-lock-only --dry-run=%s %s@{{ source %q }}", dryRunVariable, dependencyName, npmIdentifier)
 	case "yarn":
 		if isNpmSupportYarnUpdate() {
-			return fmt.Sprintf("npm install --package-lock-only --dry-run=%s %s@{{ source %q }}", dryRunVariable, dependencyName, "npm")
+			return fmt.Sprintf("npm install --package-lock-only --dry-run=%s %s@{{ source %q }}", dryRunVariable, dependencyName, npmIdentifier)
 		}
 		logrus.Infof("In the current state, yarn package update do not support dry-run mode")
-		return fmt.Sprintf("yarn add --mode update-lockfile %s@{{ source %q }}", dependencyName, "npm")
+		return fmt.Sprintf("yarn add --mode update-lockfile %s@{{ source %q }}", dependencyName, npmIdentifier)
 	case "pnpm":
 		logrus.Infof("In the current state, pnpm package update does not support dry-run mode")
-		return fmt.Sprintf("pnpm add --lockfile-only %s@{{ source %q }}", dependencyName, "npm")
+		return fmt.Sprintf("pnpm add --lockfile-only %s@{{ source %q }}", dependencyName, npmIdentifier)
 	}
 
 	return "false"

@@ -215,5 +215,5 @@ func detectVersionFilter(reference string) (string, string) {
 		return "semver", "*"
 	}
 
-	return "latest", "latest"
+	return latestVersionIdentifier, latestVersionIdentifier
 }

@@ -18,6 +18,20 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/scms/stash"
 )
 
+const (
+	gitIdentifier         = "git"
+	githubIdentifier      = "github"
+	gitlabIdentifier      = "gitlab"
+	azureDevopsIdentifier = "azuredevops"
+	giteaIdentifier       = "gitea"
+	stashIdentifier       = "stash"
+	bitbucketIdentifier   = "bitbucket"
+
+	githubsearchIdentifier      = "githubsearch"
+	azuredevopssearchIdentifier = "azuredevopssearch"
+	gitlabsearchIdentifier      = "gitlabsearch"
+)
+
 type Scm struct {
 	Config     *Config
 	Handler    ScmHandler
@@ -69,7 +83,7 @@ func (s *Scm) GenerateSCM() error {
 	}
 
 	switch s.Config.Kind {
-	case "azuredevops":
+	case azureDevopsIdentifier:
 		g, err := azuredevops.New(s.Config.Spec, s.PipelineID)
 		if err != nil {
 			return err
@@ -77,7 +91,7 @@ func (s *Scm) GenerateSCM() error {
 
 		s.Handler = g
 
-	case "bitbucket":
+	case bitbucketIdentifier:
 		g, err := bitbucket.New(s.Config.Spec, s.PipelineID)
 		if err != nil {
 			return err
@@ -85,7 +99,7 @@ func (s *Scm) GenerateSCM() error {
 
 		s.Handler = g
 
-	case "stash":
+	case stashIdentifier:
 		g, err := stash.New(s.Config.Spec, s.PipelineID)
 		if err != nil {
 			return err
@@ -93,7 +107,7 @@ func (s *Scm) GenerateSCM() error {
 
 		s.Handler = g
 
-	case "gitea":
+	case giteaIdentifier:
 		g, err := gitea.New(s.Config.Spec, s.PipelineID)
 		if err != nil {
 			return err
@@ -101,7 +115,7 @@ func (s *Scm) GenerateSCM() error {
 
 		s.Handler = g
 
-	case "gitlab":
+	case gitlabIdentifier:
 		g, err := gitlab.New(s.Config.Spec, s.PipelineID)
 		if err != nil {
 			return err
@@ -109,7 +123,7 @@ func (s *Scm) GenerateSCM() error {
 
 		s.Handler = g
 
-	case "github":
+	case githubIdentifier:
 		githubSpec := github.Spec{}
 
 		err := mapstructure.Decode(s.Config.Spec, &githubSpec)
@@ -124,7 +138,7 @@ func (s *Scm) GenerateSCM() error {
 
 		s.Handler = g
 
-	case "git":
+	case gitIdentifier:
 		gitSpec := git.Spec{}
 
 		err := mapstructure.Decode(s.Config.Spec, &gitSpec)

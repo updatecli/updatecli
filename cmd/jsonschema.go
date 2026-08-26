@@ -4,17 +4,21 @@ import (
 	"os"
 
 	"github.com/sirupsen/logrus"
-
 	"github.com/spf13/cobra"
+)
+
+const (
+	// jsonschemaCmdName is the name of the jsonschema command, also used to skip
+	// the version check so that generated content stays clean.
+	jsonschemaCmdName = "jsonschema"
 )
 
 var (
 	jsonschemaCmd = &cobra.Command{
-		Use:   "jsonschema",
+		Use:   jsonschemaCmdName,
 		Short: "**Experimental** Export JsonSchema to file",
 		Run: func(cmd *cobra.Command, args []string) {
-
-			err := run("jsonschema")
+			err := run(jsonschemaCmdName)
 			if err != nil {
 				logrus.Errorf("command failed")
 				os.Exit(1)

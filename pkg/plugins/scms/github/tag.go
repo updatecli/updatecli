@@ -63,10 +63,10 @@ func (g *Github) SearchTags(ctx context.Context, retry int) (tags []string, err 
 	var query tagsQuery
 
 	variables := map[string]interface{}{
-		"owner":      githubv4.String(g.Spec.Owner),
-		"repository": githubv4.String(g.Spec.Repository),
-		"refPrefix":  githubv4.String("refs/tags/"),
-		"before":     (*githubv4.String)(nil),
+		keyOwner:      githubv4.String(g.Spec.Owner),
+		keyRepository: githubv4.String(g.Spec.Repository),
+		"refPrefix":   githubv4.String("refs/tags/"),
+		keyBefore:     (*githubv4.String)(nil),
 		"orderBy": githubv4.RefOrder{
 			Field:     "TAG_COMMIT_DATE",
 			Direction: "DESC",
@@ -111,7 +111,7 @@ func (g *Github) SearchTags(ctx context.Context, retry int) (tags []string, err 
 		if !query.Repository.Refs.PageInfo.HasPreviousPage {
 			break
 		}
-		variables["before"] = githubv4.NewString(githubv4.String(query.Repository.Refs.PageInfo.StartCursor))
+		variables[keyBefore] = githubv4.NewString(githubv4.String(query.Repository.Refs.PageInfo.StartCursor))
 	}
 
 	if expectedFound != tagCounter {

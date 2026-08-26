@@ -190,9 +190,9 @@ func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 
 				params := manifestTemplateParams{
 					ManifestName:               fmt.Sprintf("Bump %q package version", dependencyName),
-					SourceID:                   "npm",
+					SourceID:                   npmIdentifier,
 					SourceName:                 fmt.Sprintf("Get %q package version", dependencyName),
-					SourceKind:                 "npm",
+					SourceKind:                 npmIdentifier,
 					SourceNPMName:              dependencyName,
 					SourceVersionFilterKind:    sourceVersionFilterKind,
 					SourceVersionFilterPattern: sourceVersionFilterPattern,
@@ -201,7 +201,7 @@ func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 					SourceURL:                  n.url,
 					SourceRegistryToken:        n.registryToken,
 					SourceAge:                  n.releaseAge,
-					TargetID:                   "npm",
+					TargetID:                   npmIdentifier,
 					TargetName:                 fmt.Sprintf("Bump %q package version to {{ source \"npm\" }}", dependencyName),
 					// NPM package allows dot in package name which has a different meaning in Dasel query
 					// Therefor we must escape it for Dasel query to work
@@ -211,7 +211,7 @@ func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 					TargetPnpmCleanupEnabled: lockSupport.pnpm,
 					TargetNPMCleanupEnabled:  lockSupport.npm,
 					TargetWorkdir:            filepath.Dir(relativeFoundFile),
-					TargetNPMCommand:         getTargetCommand("npm", dependencyName),
+					TargetNPMCommand:         getTargetCommand(npmIdentifier, dependencyName),
 					TargetYarnCommand:        getTargetCommand("yarn", dependencyName),
 					TargetPnpmCommand:        getTargetCommand("pnpm", dependencyName),
 					File:                     relativeFoundFile,

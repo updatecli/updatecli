@@ -18,11 +18,17 @@ import (
 	if a shell command result should be considered a success, a failure, or a warning
 */
 
+const (
+	consoleOutputIdentifier = "console/output"
+	exitCodeIdentifier      = "exitcode"
+	fileChecksumIdentifier  = "file/checksum"
+)
+
 var (
 	MappingSpecChangedIf = map[string]interface{}{
-		"console/output": &console.Spec{},
-		"exitcode":       &exitcode.Spec{},
-		"file/checksum":  &checksum.Spec{},
+		consoleOutputIdentifier: &console.Spec{},
+		exitCodeIdentifier:      &exitcode.Spec{},
+		fileChecksumIdentifier:  &checksum.Spec{},
 	}
 )
 
@@ -45,11 +51,11 @@ func (s *Shell) InitChangedIf() error {
 
 	if s.spec.ChangedIf.Kind == "" {
 		logrus.Debugf("No shell success criteria defined, updatecli fallbacks to historical workflow")
-		s.spec.ChangedIf.Kind = "console/output"
+		s.spec.ChangedIf.Kind = consoleOutputIdentifier
 	}
 
 	switch s.spec.ChangedIf.Kind {
-	case "console/output":
+	case consoleOutputIdentifier:
 		o, err := console.New(&s.result.ExitCode, &s.result.Stdout)
 		if err != nil {
 			return err
@@ -57,7 +63,7 @@ func (s *Shell) InitChangedIf() error {
 
 		s.success = o
 
-	case "exitcode":
+	case exitCodeIdentifier:
 		o, err := exitcode.New(s.spec.ChangedIf.Spec, &s.result.ExitCode, &s.result.Stdout)
 		if err != nil {
 			return err
@@ -65,7 +71,7 @@ func (s *Shell) InitChangedIf() error {
 
 		s.success = o
 
-	case "file/checksum":
+	case fileChecksumIdentifier:
 		o, err := checksum.New(s.spec.ChangedIf.Spec, &s.result.ExitCode, &s.result.Stdout)
 		if err != nil {
 			return err

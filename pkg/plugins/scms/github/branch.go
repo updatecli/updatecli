@@ -35,10 +35,10 @@ func ListBranches(c client.Client, owner, repo string, retry int, ctx context.Co
 	for {
 		var q branchesQuery
 		vars := map[string]interface{}{
-			"owner": githubv4.String(owner),
-			"name":  githubv4.String(repo),
-			"first": githubv4.Int(100),
-			"after": after,
+			keyOwner: githubv4.String(owner),
+			keyName:  githubv4.String(repo),
+			"first":  githubv4.Int(100),
+			"after":  after,
 		}
 
 		err := c.Query(ctx, &q, vars)

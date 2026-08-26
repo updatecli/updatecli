@@ -79,7 +79,7 @@ var skipVersionCheckCommands = []string{
 	"__completeNoDesc",
 	"docs",
 	"man",
-	"jsonschema",
+	jsonschemaCmdName,
 }
 
 func init() {
@@ -324,7 +324,7 @@ func run(command string) error {
 			return err
 		}
 
-	case "jsonschema":
+	case jsonschemaCmdName:
 		err := engine.GenerateSchema(jsonschemaBaseID, jsonschemaDirectory)
 		if err != nil {
 			logrus.Errorf("%s %s", result.FAILURE, err)
