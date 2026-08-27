@@ -33,7 +33,7 @@ jobs:
         uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
         with:
           cache: false
-          go-version: 1.26.6
+          go-version: 1.27.0
         id: go
       - name: Check out code into the Go module directory
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -46,7 +46,7 @@ jobs:
           # Required: the version of golangci-lint is required
           # and must be specified without patch version:
           # we always use the latest patch version.
-          version: v2.9.0
+          version: v2.13.1
           install-mode: "binary"
       - uses: "pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271" # v6.0.9
         with:
