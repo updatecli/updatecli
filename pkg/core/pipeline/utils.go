@@ -79,12 +79,42 @@ func (p *Pipeline) shouldSkipResource(leaf *Node, depsResults map[string]*Node) 
 	return shouldSkip
 }
 
-// ExtractCustomKeys parses a Go template and extracts custom keys from
-// specific template actions: {{ source "sourceId" }}, {{ condition "conditionid" }},
-// and {{ target "targetid" }}. It returns a map where the keys are the action types
-// ("source", "condition", "target") and the values are slices of strings representing
-// the IDs extracted from the corresponding actions in the template.
-func ExtractDepsFromTemplate(tmplStr string) ([]string, error) {
+// pipelineQueryDependency translates the query of a {{ pipeline "..." }} action
+// into the resource it reads from, such as `sources.foo.output` into `source#foo`.
+//
+// Unlike {{ source "foo" }}, {{ pipeline "..." }} takes a path into the pipeline
+// configuration rather than a resource id, so only queries rooted at a resource
+// map describe a dependency. Any other query, such as `name`, depends on nothing.
+// The lookup is case insensitive, as getFieldValueByQuery is.
+func pipelineQueryDependency(query string) (string, bool) {
+	parts := strings.Split(query, ".")
+	if len(parts) < 2 || parts[1] == "" {
+		return "", false
+	}
+
+	category := ""
+	switch strings.ToLower(parts[0]) {
+	case "sources":
+		category = sourceCategory
+	case "conditions":
+		category = conditionCategory
+	case "targets":
+		category = targetCategory
+	default:
+		return "", false
+	}
+
+	return fmt.Sprintf("%s#%s", category, parts[1]), true
+}
+
+// ExtractDepsFromTemplate parses a Go template and returns the dependencies its
+// actions imply: {{ source "sourceId" }}, {{ condition "conditionid" }} and
+// {{ target "targetid" }} each depend on the resource they name, and
+// {{ pipeline "sources.sourceId.output" }} on the resource its query reads from.
+//
+// Each dependency records the action it came from, so that one naming a resource
+// the pipeline does not define can be reported against what the user wrote.
+func ExtractDepsFromTemplate(tmplStr string) ([]Dependency, error) {
 	tmpl, err := template.New("dummy").
 		Funcs(template.FuncMap{
 			"pipeline":  func(id string) string { return id },
@@ -95,7 +125,7 @@ func ExtractDepsFromTemplate(tmplStr string) ([]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error parsing template: %v", err)
 	}
-	results := []string{}
+	results := []Dependency{}
 
 	// Walk through the parsed template' s tree nodes
 	for _, node := range tmpl.Root.Nodes {
@@ -104,11 +134,23 @@ func ExtractDepsFromTemplate(tmplStr string) ([]string, error) {
 				if len(command.Args) > 1 {
 					if identifierNode, ok := command.Args[0].(*parse.IdentifierNode); ok {
 						if stringNode, ok := command.Args[1].(*parse.StringNode); ok {
-							if identifierNode.Ident == sourceCategory ||
-								identifierNode.Ident == conditionCategory ||
-								identifierNode.Ident == targetCategory ||
-								identifierNode.Ident == pipelineCategory {
-								results = append(results, fmt.Sprintf("%s#%s", identifierNode.Ident, stringNode.Text))
+							from := fmt.Sprintf("the template reference {{ %s %q }}", identifierNode.Ident, stringNode.Text)
+
+							switch identifierNode.Ident {
+							case sourceCategory, conditionCategory, targetCategory:
+								results = append(results, Dependency{
+									ID:       fmt.Sprintf("%s#%s", identifierNode.Ident, stringNode.Text),
+									Operator: andBooleanOperator,
+									From:     from,
+								})
+							case pipelineCategory:
+								if id, ok := pipelineQueryDependency(stringNode.Text); ok {
+									results = append(results, Dependency{
+										ID:       id,
+										Operator: andBooleanOperator,
+										From:     from,
+									})
+								}
 							}
 						}
 					}

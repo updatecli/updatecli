@@ -30,6 +30,30 @@ func TestExtractDepsFromTemplate(t *testing.T) {
 			"target#targetid1", "target#targetid2",
 		},
 	},
+		{
+			// {{ pipeline "..." }} takes a path into the pipeline configuration, so
+			// the dependency is the resource that path reads from.
+			Name: "Pipeline queries rooted at a resource map",
+			Template: `
+{{ pipeline "sources.sourceId1.output" }}
+		{{ pipeline "Conditions.conditionid1.Result" }}
+		{{ pipeline "TARGETS.targetid1.Output" }}
+        `,
+			ExpectedResult: []string{
+				"source#sourceId1", "condition#conditionid1", "target#targetid1",
+			},
+		},
+		{
+			// Any other query depends on nothing, and used to produce an
+			// unresolvable `pipeline#...` dependency.
+			Name: "Pipeline queries not rooted at a resource map",
+			Template: `
+{{ pipeline "name" }}
+		{{ pipeline "scms.default.url" }}
+		{{ pipeline "sources." }}
+        `,
+			ExpectedResult: []string{},
+		},
 	}
 
 	for _, data := range testdata {
@@ -41,9 +65,14 @@ func TestExtractDepsFromTemplate(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 			}
+			gotIDs := []string{}
+			for _, dependency := range got {
+				gotIDs = append(gotIDs, dependency.ID)
+			}
+
 			sort.Strings(data.ExpectedResult)
-			sort.Strings(got)
-			require.Equal(t, data.ExpectedResult, got)
+			sort.Strings(gotIDs)
+			require.Equal(t, data.ExpectedResult, gotIDs)
 		})
 	}
 }

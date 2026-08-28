@@ -24,6 +24,8 @@ type TestTemplateData struct {
 	ExpectedManifest string
 	// ExpectError is used to check if the test should return an error
 	ExpectError bool
+	// ExpectedError, when set, must be contained in the returned error
+	ExpectedError string
 }
 
 var (
@@ -61,6 +63,9 @@ var (
       hello {{ .value }
       `,
 			ExpectError: true,
+			// The template is named after the manifest it came from, so that the
+			// error points at a file the user can open.
+			ExpectedError: `manifest.yaml:2: unexpected "}" in operand`,
 		},
 
 		{
@@ -80,7 +85,12 @@ func TestTemplates(t *testing.T) {
 	for _, testTemplate := range testTemplates {
 		t.Run(fmt.Sprintf("test template %s", testTemplate.ID), func(t *testing.T) {
 
+			manifest := dedent.Dedent(testTemplate.ManifestTemplate)
+			fragments, _ := appendFragment(nil, "manifest.yaml", []byte(manifest))
+
 			template := Template{
+				CfgFile:     "manifest.yaml",
+				Fragments:   fragments,
 				ValuesFiles: []string{"values1.yml", "values2.yml"},
 				fs: fstest.MapFS{
 					"values1.yml": {Data: []byte(testTemplate.Values1)},
@@ -88,9 +98,12 @@ func TestTemplates(t *testing.T) {
 				},
 			}
 			expected := dedent.Dedent(testTemplate.ExpectedManifest)
-			rendered, err := template.NewStringTemplate([]byte(dedent.Dedent(testTemplate.ManifestTemplate)))
+			rendered, err := template.NewStringTemplate([]byte(manifest))
 			if testTemplate.ExpectError {
 				require.Error(t, err)
+				if testTemplate.ExpectedError != "" {
+					require.Contains(t, err.Error(), testTemplate.ExpectedError)
+				}
 				return
 			}
 			require.NoError(t, err)
