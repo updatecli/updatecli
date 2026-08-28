@@ -15,6 +15,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 var (
@@ -34,6 +35,9 @@ type Target struct {
 	DryRun bool
 	// Scm stores scm information
 	Scm *scm.ScmHandler
+	// BaseDir is the directory the relative paths of this target resolve against
+	// when no scm is attached. Empty means the process working directory.
+	BaseDir string
 }
 
 // Config defines target parameters
@@ -130,7 +134,7 @@ func (t *Target) Run(ctx context.Context, source string, o *Options) (err error)
 
 	// If no scm configuration provided then stop early
 	if t.Scm == nil {
-		err = target.Target(ctx, source, nil, o.DryRun, t.Result)
+		err = target.Target(ctx, source, nil, utils.NewResolver(nil, t.BaseDir), o.DryRun, t.Result)
 		if err != nil {
 			failTargetRun()
 			return err
@@ -155,7 +159,7 @@ func (t *Target) Run(ctx context.Context, source string, o *Options) (err error)
 		return err
 	}
 
-	err = target.Target(ctx, source, s, o.DryRun, t.Result)
+	err = target.Target(ctx, source, s, utils.NewResolver(s, t.BaseDir), o.DryRun, t.Result)
 	if err != nil {
 		failTargetRun()
 		return err

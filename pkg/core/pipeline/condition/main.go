@@ -14,6 +14,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 var (
@@ -30,6 +31,9 @@ type Condition struct {
 	Config Config
 	// Scm stores scm information
 	Scm *scm.ScmHandler
+	// BaseDir is the directory the relative paths of this condition resolve against
+	// when no scm is attached. Empty means the process working directory.
+	BaseDir string
 }
 
 // Config defines conditions input parameters
@@ -88,7 +92,7 @@ func (c *Condition) Run(ctx context.Context, source string) (err error) {
 		}
 	}
 
-	ok, message, err := condition.Condition(ctx, source, s)
+	ok, message, err := condition.Condition(ctx, source, s, utils.NewResolver(s, c.BaseDir))
 	if ok {
 		c.Result.Result = result.SUCCESS
 		c.Result.Pass = true

@@ -48,6 +48,7 @@ func (e *Engine) ValidateManifests(strict bool) error {
 					ValidateSchema:    true,
 					OnSchemaProblem:   collect,
 				},
+				e.Options.ManifestOptions,
 				e.Options.PipelineIDs,
 				e.Options.Labels,
 			)
