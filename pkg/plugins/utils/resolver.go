@@ -111,8 +111,12 @@ func (r Resolver) ResolveAll(paths []string) ([]string, error) {
 // repository, a chart directory, the working directory of a shell command — as opposed to
 // the files it reads from or writes to, which go through Resolve. Those locations
 // legitimately sit outside of an SCM checkout.
+//
+// It follows filepath.Join semantics, which means an empty path resolves to the base
+// directory itself rather than staying empty. A caller for which an empty value means
+// "unset" rather than "here" must therefore test for it before calling Join.
 func (r Resolver) Join(path string) string {
-	if path == "" || r.BaseDir == "" || isRemoteLocation(path) || filepath.IsAbs(path) {
+	if r.BaseDir == "" || isRemoteLocation(path) || filepath.IsAbs(path) {
 		return path
 	}
 

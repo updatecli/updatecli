@@ -41,10 +41,7 @@ func (c *Chart) Target(ctx context.Context, source string, scm scm.ScmHandler, r
 		return fmt.Errorf("unable to update chart %s: %s", c.spec.Name, err)
 	}
 
-	// filepath.Clean turns an empty chart name, a chart sitting at the root of the
-	// repository, into ".", so it resolves to the base directory instead of to an
-	// empty path.
-	chartPath := resolver.Join(filepath.Clean(c.spec.Name))
+	chartPath := resolver.Join(c.spec.Name)
 
 	err = c.MetadataUpdate(ctx, resultTarget.NewInformation, scm, resolver, dryRun, resultTarget)
 	if err != nil {

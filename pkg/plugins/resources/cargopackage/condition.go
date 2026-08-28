@@ -26,7 +26,9 @@ func (cp *CargoPackage) Condition(ctx context.Context, source string, scm scm.Sc
 				path)
 		}
 		cp.registry.RootDir = path
-	} else {
+	} else if cp.registry.RootDir != "" {
+		// An empty RootDir means "no local registry checkout", so it must stay empty
+		// rather than be resolved to the base directory.
 		cp.registry.RootDir = resolver.Join(cp.registry.RootDir)
 	}
 

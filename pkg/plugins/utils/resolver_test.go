@@ -158,7 +158,11 @@ func TestResolver_Join(t *testing.T) {
 	absolutePath := absoluteTestPath()
 	workingDir := filepath.Join("tmp", "updatecli", "checkout")
 
-	assert.Equal(t, "", Resolver{BaseDir: workingDir}.Join(""))
+	// An empty path resolves to the base directory itself, like filepath.Join does.
+	// Returning "" instead would silently drop the SCM checkout directory for every
+	// caller whose path is optional.
+	assert.Equal(t, workingDir, Resolver{BaseDir: workingDir}.Join(""))
+	assert.Equal(t, "", Resolver{}.Join(""))
 	assert.Equal(t, "charts", Resolver{}.Join("charts"))
 	assert.Equal(t, filepath.Join(workingDir, "charts"), Resolver{BaseDir: workingDir}.Join("charts"))
 	assert.Equal(t, absolutePath, Resolver{BaseDir: workingDir}.Join(absolutePath))
