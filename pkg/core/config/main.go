@@ -380,9 +380,6 @@ func New(option Option, pipelineIDFilters []string, pipelineLabels map[string]st
 			templatedManifestContent, err = t.NewStringTemplate(rawManifestContent)
 		}
 		if err != nil {
-			// The error already names the file and line it comes from, and callers
-			// such as engine.LoadConfigurations prefix it with the manifest being
-			// loaded, so there is nothing worth logging here on top of it.
 			return nil, err
 		}
 
@@ -516,7 +513,6 @@ func New(option Option, pipelineIDFilters []string, pipelineLabels map[string]st
 
 // isMatchingLabel checks if a spec labels match filter labels
 func isMatchingLabel(specLabels map[string]string, filterLabels map[string]string) bool {
-
 	if len(filterLabels) == 0 {
 		return true
 	}
