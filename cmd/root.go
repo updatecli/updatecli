@@ -40,6 +40,7 @@ var (
 	disableTLS          bool
 	disableChangelog    bool
 	validateSchema      bool
+	relativePaths       string
 	uniqueTmpDir        bool
 	disableVersionCheck bool
 	exportReportToYAML  bool

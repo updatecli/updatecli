@@ -14,6 +14,8 @@ const DisableVersionCheckEnvVar = "UPDATECLI_DISABLE_VERSION_CHECK"
 
 const ValidateSchemaEnvVar = "UPDATECLI_VALIDATE_SCHEMA"
 
+const RelativePathsEnvVar = "UPDATECLI_RELATIVE_PATHS"
+
 // getEnvBoolOrDefault reads a boolean environment variable.
 // It returns defaultValue when the variable is unset or invalid.
 func getEnvBoolOrDefault(envVar string, defaultValue bool) bool {
@@ -34,4 +36,20 @@ func getEnvBoolOrDefault(envVar string, defaultValue bool) bool {
 	}
 
 	return parsed
+}
+
+// getEnvStringOrDefault reads a string environment variable.
+// It returns defaultValue when the variable is unset or empty.
+func getEnvStringOrDefault(envVar string, defaultValue string) string {
+	value, ok := os.LookupEnv(envVar)
+	if !ok {
+		return defaultValue
+	}
+
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return defaultValue
+	}
+
+	return value
 }
