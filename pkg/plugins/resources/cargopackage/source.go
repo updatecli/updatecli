@@ -17,7 +17,11 @@ func (cp CargoPackage) Source(ctx context.Context, resolver utils.Resolver, resu
 		// We are in a scm context, the base directory is holding the data
 		cp.registry.RootDir = resolver.Dir()
 	case false:
-		cp.registry.RootDir = resolver.Join(cp.registry.RootDir)
+		if cp.registry.RootDir != "" {
+			// An empty RootDir means "no local registry checkout", so it must stay
+			// empty rather than be resolved to the base directory.
+			cp.registry.RootDir = resolver.Join(cp.registry.RootDir)
+		}
 	}
 
 	version, _, err := cp.getVersions(ctx)
