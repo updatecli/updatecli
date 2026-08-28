@@ -1,0 +1,7 @@
+name: partial with a broken template
+targets:
+  jenkins:
+    kind: shell
+    sourceid: jenkins
+    spec:
+      command: echo

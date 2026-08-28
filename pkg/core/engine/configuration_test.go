@@ -83,6 +83,35 @@ func TestLoadConfigurations(t *testing.T) {
 	* updatecli.d/failure.yaml:
 		scm ID "updatecli" from source ID "adopters" doesn't exist`,
 		},
+		{
+			// A templating error must point at the partial the broken line lives in,
+			// and at its line number in that file, rather than at an offset into the
+			// concatenation of every partial and the manifest.
+			name: "Failure - Templating error inside a partial",
+			wd:   "testdata/partialBrokenTemplate",
+			engine: Engine{
+				Options: Options{
+					Manifests: []manifest.Manifest{
+						{},
+					},
+				},
+			},
+			expectedPipelines: 0,
+			expectedReports:   1,
+			wantErr:           true,
+			expectedError: `failed loading pipeline(s)
+	* updatecli.d/updatecli.yaml:
+		* Partial files:
+			* updatecli.d/_source.yaml
+		* Error:
+			updatecli.d/_source.yaml:8: unexpected "{" in command
+			
+			  5 |   broken:
+			  6 |     kind: json
+			  7 |     spec:
+			> 8 |       value: {{{ .version }}
+			  9 |       file: jenkins.json`,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

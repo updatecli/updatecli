@@ -260,7 +260,7 @@ func (p *Pipeline) UpdateGraphReport() error {
 	// Graph must be generated after all resources have been initialized !
 	graph, err := p.Graph(GraphFlavorMermaid)
 	if err != nil {
-		return fmt.Errorf("generating pipeline graph:\n%s", err)
+		return fmt.Errorf("generating pipeline graph:\n%w", err)
 	}
 
 	p.Report.Graph = graph
@@ -306,7 +306,7 @@ func (p *Pipeline) Run(ctx context.Context) error {
 		p.Report.Result = result.FAILURE
 		span.RecordError(err)
 		span.SetStatus(codes.Error, "dag creation failed")
-		return fmt.Errorf("could not create dag from spec:\t%q", err.Error())
+		return fmt.Errorf("could not create dag from spec: %w", err)
 	}
 
 	// Closure captures ctx so each DAG node callback can create a child span.

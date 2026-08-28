@@ -898,7 +898,13 @@ func TestSortedResourcesKeys(t *testing.T) {
 			// _ = p.Update()
 			gotSortedDag, err := p.SortedResources()
 
-			require.Equal(t, data.ExpectedErr, err)
+			// The error is wrapped so that it can name the resource and the
+			// dependency it could not resolve, so only the sentinel is compared.
+			if data.ExpectedErr != nil {
+				require.ErrorIs(t, err, data.ExpectedErr)
+			} else {
+				require.NoError(t, err)
+			}
 
 			if gotSortedDag == nil {
 				return
@@ -953,4 +959,121 @@ func compareDag(t *testing.T, expected [][]ResultLeaf, got []string, d *dag.DAG)
 
 	// If we've processed all 'expected' sublists and matched them correctly, return true
 	require.Equal(t, index, len(got))
+}
+
+// TestSortedResourcesUnresolvableDependency checks that a dependency naming no
+// resource of the pipeline is reported in the terms the user wrote it in, which
+// matters most for template references: they reach the graph as dependencies even
+// though the manifest declaring them holds no `dependson` field at all.
+func TestSortedResourcesUnresolvableDependency(t *testing.T) {
+	testdata := []struct {
+		Name            string
+		Target          target.Config
+		ExpectedMessage string
+	}{
+		{
+			Name: "template reference to an unknown source",
+			Target: target.Config{
+				ResourceConfig: resource.ResourceConfig{
+					Kind: "shell",
+					Spec: shell.Spec{
+						Command: `echo {{ source "typo" }}`,
+					},
+				},
+				DisableSourceInput: true,
+				DisableConditions:  true,
+			},
+			ExpectedMessage: `target "updateVersion" depends on source "typo" which is not defined in this pipeline
+	declared by the template reference {{ source "typo" }}
+	known sources: getSha, getVersion`,
+		},
+		{
+			Name: "dependson entry naming an unknown source",
+			Target: target.Config{
+				ResourceConfig: resource.ResourceConfig{
+					Kind:      "shell",
+					DependsOn: []string{"source#typo"},
+					Spec: shell.Spec{
+						Command: "echo",
+					},
+				},
+				DisableSourceInput: true,
+				DisableConditions:  true,
+			},
+			ExpectedMessage: `target "updateVersion" depends on source "typo" which is not defined in this pipeline
+	declared by the dependson entry "source#typo"
+	known sources: getSha, getVersion`,
+		},
+		{
+			Name: "dependson entry naming an unknown condition, of which none exist",
+			Target: target.Config{
+				ResourceConfig: resource.ResourceConfig{
+					Kind:      "shell",
+					DependsOn: []string{"condition#typo"},
+					Spec: shell.Spec{
+						Command: "echo",
+					},
+				},
+				DisableSourceInput: true,
+				DisableConditions:  true,
+			},
+			ExpectedMessage: `target "updateVersion" depends on condition "typo" which is not defined in this pipeline
+	declared by the dependson entry "condition#typo"
+	no condition is defined in this pipeline`,
+		},
+	}
+
+	sources := map[string]source.Config{
+		"getVersion": {ResourceConfig: resource.ResourceConfig{Kind: "shell", Spec: shell.Spec{Command: "echo 1.2.3"}}},
+		"getSha":     {ResourceConfig: resource.ResourceConfig{Kind: "shell", Spec: shell.Spec{Command: "echo abc"}}},
+	}
+
+	for _, data := range testdata {
+		t.Run(data.Name, func(t *testing.T) {
+			p := Pipeline{
+				Sources: map[string]source.Source{
+					"getVersion": {Config: sources["getVersion"]},
+					"getSha":     {Config: sources["getSha"]},
+				},
+				Targets: map[string]target.Target{
+					"updateVersion": {Config: data.Target},
+				},
+			}
+
+			_, err := p.SortedResources()
+
+			require.ErrorIs(t, err, ErrNotValidDependsOn)
+			require.EqualError(t, err, data.ExpectedMessage)
+		})
+	}
+}
+
+// TestSortedResourcesPipelineQueryDependency checks that a {{ pipeline "..." }}
+// query rooted at a resource map orders the pipeline after that resource, instead
+// of failing on a `pipeline#` dependency that never had a matching vertex.
+func TestSortedResourcesPipelineQueryDependency(t *testing.T) {
+	p := Pipeline{
+		Sources: map[string]source.Source{
+			"getVersion": {Config: source.Config{
+				ResourceConfig: resource.ResourceConfig{Kind: "shell", Spec: shell.Spec{Command: "echo 1.2.3"}},
+			}},
+		},
+		Targets: map[string]target.Target{
+			"updateVersion": {Config: target.Config{
+				ResourceConfig: resource.ResourceConfig{
+					Kind: "shell",
+					Spec: shell.Spec{Command: `echo {{ pipeline "sources.getVersion.output" }}`},
+				},
+				DisableSourceInput: true,
+				DisableConditions:  true,
+			}},
+		},
+	}
+
+	d, err := p.SortedResources()
+	require.NoError(t, err)
+
+	parents, err := d.GetParents("target#updateVersion")
+	require.NoError(t, err)
+	require.Contains(t, parents, "source#getVersion")
 }

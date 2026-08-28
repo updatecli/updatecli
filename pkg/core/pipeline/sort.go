@@ -3,6 +3,7 @@ package pipeline
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/heimdalr/dag"
@@ -36,6 +37,45 @@ var (
 type Dependency struct {
 	ID       string
 	Operator string
+	// From explains how this dependency was declared, so that an unresolvable one
+	// can be reported in the terms the user wrote it in.
+	//
+	// Only the origins that can actually name a missing resource set it: a
+	// `dependson` entry and a template reference such as {{ source "foo" }}. A
+	// `sourceid` field is checked by config validation before the graph is built,
+	// and the implicit edge every target has on the conditions is drawn from the
+	// conditions themselves, so neither can reach an unresolvable dependency.
+	From string
+}
+
+// unresolvableDependencyError reports a dependency that names no resource of the
+// graph. It carries its own message rather than prefixing ErrNotValidDependsOn,
+// whose wording says nothing the detailed message does not already say, while
+// still matching that sentinel through errors.Is.
+type unresolvableDependencyError struct {
+	msg string
+}
+
+func (e unresolvableDependencyError) Error() string { return e.msg }
+func (e unresolvableDependencyError) Unwrap() error { return ErrNotValidDependsOn }
+
+// knownResources lists the ids of every resource of the given category held by
+// the graph, so that a typo in an unresolvable dependency is easy to spot.
+func knownResources(d *dag.DAG, category string) string {
+	ids := []string{}
+	for id := range d.GetVertices() {
+		if key, found := strings.CutPrefix(id, category+"#"); found {
+			ids = append(ids, key)
+		}
+	}
+
+	if len(ids) == 0 {
+		return fmt.Sprintf("no %s is defined in this pipeline", category)
+	}
+
+	slices.Sort(ids)
+
+	return fmt.Sprintf("known %ss: %s", category, strings.Join(ids, ", "))
 }
 
 type Node struct {
@@ -47,7 +87,7 @@ type Node struct {
 	Changed         bool
 }
 
-func addResourceToDag(dag *dag.DAG, id, Category string, DependsOn []string, DependsOnChange bool, additionalDependencies []string) (err error) {
+func addResourceToDag(dag *dag.DAG, id, Category string, DependsOn []string, DependsOnChange bool, additionalDependencies []Dependency) (err error) {
 	// Add the category to the id
 	ID := fmt.Sprintf("%s#%s", Category, id)
 	// Craft the dendencies
@@ -58,11 +98,13 @@ func addResourceToDag(dag *dag.DAG, id, Category string, DependsOn []string, Dep
 			// By default dependencies should be handled inside of one's category
 			category = Category
 		}
-		deps = append(deps, Dependency{ID: fmt.Sprintf("%s#%s", category, key), Operator: booleanOperator})
+		deps = append(deps, Dependency{
+			ID:       fmt.Sprintf("%s#%s", category, key),
+			Operator: booleanOperator,
+			From:     fmt.Sprintf("the dependson entry %q", dependency),
+		})
 	}
-	for _, dependency := range additionalDependencies {
-		deps = append(deps, Dependency{ID: dependency, Operator: andBooleanOperator})
-	}
+	deps = append(deps, additionalDependencies...)
 	// Add the node to the graph
 	node := Node{ID: ID, Category: Category, DependsOn: deps, DependsOnChange: DependsOnChange}
 	err = dag.AddVertexByID(ID, node)
@@ -89,7 +131,21 @@ func handleResourceDependencies(dag *dag.DAG, ID, Category string) (err error) {
 	for _, dep := range node.DependsOn {
 		_, err = dag.GetVertex(dep.ID)
 		if err != nil {
-			return ErrNotValidDependsOn
+			depCategory, depKey, _ := strings.Cut(dep.ID, "#")
+
+			details := []string{}
+			if dep.From != "" {
+				details = append(details, "declared by "+dep.From)
+			}
+			details = append(details, knownResources(dag, depCategory))
+
+			return unresolvableDependencyError{
+				msg: fmt.Sprintf("%s %q depends on %s %q which is not defined in this pipeline\n\t%s",
+					Category, ID,
+					depCategory, depKey,
+					strings.Join(details, "\n\t"),
+				),
+			}
 		}
 		err = dag.AddEdge(dep.ID, myId)
 		if err != nil {
@@ -136,11 +192,11 @@ func (p *Pipeline) SortedResources() (result *dag.DAG, err error) {
 		if err != nil {
 			return result, err
 		}
-		additionalDepIds, err := ExtractDepsFromTemplate(string(s))
+		additionalDeps, err := ExtractDepsFromTemplate(string(s))
 		if err != nil {
 			return result, err
 		}
-		err = addResourceToDag(d, id, sourceCategory, resource.Config.DependsOn, false, additionalDepIds)
+		err = addResourceToDag(d, id, sourceCategory, resource.Config.DependsOn, false, additionalDeps)
 		if err != nil {
 			return result, err
 		}
@@ -152,14 +208,17 @@ func (p *Pipeline) SortedResources() (result *dag.DAG, err error) {
 		if err != nil {
 			return result, err
 		}
-		additionalDepIds, err := ExtractDepsFromTemplate(string(s))
+		additionalDeps, err := ExtractDepsFromTemplate(string(s))
 		if err != nil {
 			return result, err
 		}
 		if resource.Config.SourceID != "" {
-			additionalDepIds = append(additionalDepIds, fmt.Sprintf("source#%s", resource.Config.SourceID))
+			additionalDeps = append(additionalDeps, Dependency{
+				ID:       fmt.Sprintf("%s#%s", sourceCategory, resource.Config.SourceID),
+				Operator: andBooleanOperator,
+			})
 		}
-		err = addResourceToDag(d, id, conditionCategory, resource.Config.DependsOn, false, additionalDepIds)
+		err = addResourceToDag(d, id, conditionCategory, resource.Config.DependsOn, false, additionalDeps)
 		if err != nil {
 			return result, err
 		}
@@ -171,12 +230,15 @@ func (p *Pipeline) SortedResources() (result *dag.DAG, err error) {
 		if err != nil {
 			return result, err
 		}
-		additionalDepIds, err := ExtractDepsFromTemplate(string(s))
+		additionalDeps, err := ExtractDepsFromTemplate(string(s))
 		if err != nil {
 			return result, err
 		}
 		if resource.Config.SourceID != "" {
-			additionalDepIds = append(additionalDepIds, fmt.Sprintf("source#%s", resource.Config.SourceID))
+			additionalDeps = append(additionalDeps, Dependency{
+				ID:       fmt.Sprintf("%s#%s", sourceCategory, resource.Config.SourceID),
+				Operator: andBooleanOperator,
+			})
 		}
 		// For targets we need to handle the condition sorting
 		// By default, a target depends on all conditions, and they are treated as an and dependency
@@ -184,10 +246,13 @@ func (p *Pipeline) SortedResources() (result *dag.DAG, err error) {
 		if !resource.Config.DisableConditions {
 			// if no condition is defined, we evaluate all conditions
 			for conditionID := range p.Conditions {
-				additionalDepIds = append(additionalDepIds, fmt.Sprintf("condition#%s", conditionID))
+				additionalDeps = append(additionalDeps, Dependency{
+					ID:       fmt.Sprintf("%s#%s", conditionCategory, conditionID),
+					Operator: andBooleanOperator,
+				})
 			}
 		}
-		err = addResourceToDag(d, id, targetCategory, resource.Config.DependsOn, resource.Config.DependsOnChange, additionalDepIds)
+		err = addResourceToDag(d, id, targetCategory, resource.Config.DependsOn, resource.Config.DependsOnChange, additionalDeps)
 		if err != nil {
 			return result, err
 		}

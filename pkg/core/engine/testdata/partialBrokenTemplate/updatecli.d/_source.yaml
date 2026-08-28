@@ -1,0 +1,9 @@
+sources:
+  jenkins:
+    name: Get Jenkins version
+    kind: jenkins
+  broken:
+    kind: json
+    spec:
+      value: {{{ .version }}
+      file: jenkins.json

@@ -35,8 +35,23 @@ type Template struct {
 	Values map[string]interface{} `yaml:"-,inline"`
 	// Secrets contains key/value extracted from a sops file
 	Secrets map[string]interface{} `yaml:"-,inline"`
+	// Fragments describes which file each line of the content handed to
+	// NewStringTemplate comes from, so that templating errors can be reported
+	// against the file the user wrote rather than against the concatenation of
+	// every partial and the manifest.
+	Fragments []manifestFragment
 	// fs is a file system abstraction used to read files
 	fs fs.FS
+}
+
+// templateName returns the name given to the golang template, which text/template
+// uses to prefix the location of parse and execution errors.
+func (t *Template) templateName() string {
+	if t.CfgFile == "" {
+		return "cfg"
+	}
+
+	return t.CfgFile
 }
 
 // NewStringTemplate parses a golang template then return an updatecli configuration as a struct
@@ -46,22 +61,36 @@ func (t *Template) NewStringTemplate(content []byte) ([]byte, error) {
 		return []byte{}, err
 	}
 
-	tmpl, err := template.New("cfg").
+	tmpl, err := template.New(t.templateName()).
 		Funcs(sprig.FuncMap()).
 		Funcs(helmFuncMap()).      // add helm funcMap
 		Funcs(updatecliFuncMap()). // add custom funcMap last so that it takes precedence
 		Parse(string(content))
 	if err != nil {
-		return []byte{}, err
+		return []byte{}, t.locateError(err, content)
 	}
 
 	b := bytes.Buffer{}
 
 	if err := tmpl.Execute(&b, templateValues); err != nil {
-		return []byte{}, err
+		return []byte{}, t.locateError(err, content)
 	}
 
 	return b.Bytes(), nil
+}
+
+// locateError points a templating error at the file and line it came from, and
+// appends an excerpt of the offending lines. It returns the error unchanged when
+// the location cannot be resolved.
+func (t *Template) locateError(err error, content []byte) error {
+	location, located := locateTemplateError(err, t.templateName(), t.Fragments)
+
+	excerpt := renderExcerpt(content, location, excerptContextLines)
+	if excerpt == "" {
+		return located
+	}
+
+	return fmt.Errorf("%w\n\n%s", located, strings.TrimRight(excerpt, "\n"))
 }
 
 // NewCueTemplate parses a Cue template then return an updatecli configuration as a struct
