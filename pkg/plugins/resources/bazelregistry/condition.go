@@ -6,10 +6,11 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 // Condition checks if a specific version exists in the Bazel Central Registry
-func (b *Bazelregistry) Condition(ctx context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
+func (b *Bazelregistry) Condition(ctx context.Context, source string, scm scm.ScmHandler, resolver utils.Resolver) (pass bool, message string, err error) {
 	if scm != nil {
 		logrus.Warningf("SCM configuration is not supported for condition of type bazelregistry. Remove the `scm` directive from condition to remove this warning message")
 	}

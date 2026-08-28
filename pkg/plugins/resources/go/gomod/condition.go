@@ -9,15 +9,15 @@ import (
 )
 
 // Condition checks if a specific stable Golang version is published
-func (g *GoMod) Condition(_ context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
+func (g *GoMod) Condition(_ context.Context, source string, scm scm.ScmHandler, resolver utils.Resolver) (pass bool, message string, err error) {
 	versionToCheck := g.spec.Version
 	if versionToCheck == "" {
 		versionToCheck = source
 	}
 
-	filename := g.filename
-	if scm != nil {
-		filename = utils.JoinFilePathWithWorkingDirectoryPath(filename, scm.GetDirectory())
+	filename, err := resolver.Resolve(g.filename)
+	if err != nil {
+		return false, "", fmt.Errorf("invalid file path %q: %w", g.filename, err)
 	}
 
 	g.foundVersion, err = g.version(filename)

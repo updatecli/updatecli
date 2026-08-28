@@ -3,11 +3,13 @@ package gitcommit
 import (
 	"context"
 	"errors"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 type mockGitHandler struct {
@@ -29,6 +31,16 @@ func (m *mockGitHandler) IsCommitExist(workingDir, commit string) (bool, error) 
 	m.gotDirectory = workingDir
 	m.gotCommit = commit
 	return m.exists, m.err
+}
+
+// processWorkingDirectory is where a git resource looks for a repository when the
+// manifest names neither an scm, a url nor a path.
+func processWorkingDirectory() string {
+	workingDirectory, err := os.Getwd()
+	if err != nil {
+		return "."
+	}
+	return workingDirectory
 }
 
 func TestSource(t *testing.T) {
@@ -62,9 +74,16 @@ func TestSource(t *testing.T) {
 			wantDesc:   `Git commit "def456" found for branch "release"`,
 		},
 		{
-			name:    "missing working directory",
-			handler: &mockGitHandler{},
-			wantErr: "unknown Git working directory",
+			// Without an scm, a url or a spec.path, the repository is the one holding
+			// the process working directory: that is what "a relative path resolves
+			// from where updatecli was started" means for a git resource.
+			name:     "no working directory falls back to the process directory",
+			handler:  &mockGitHandler{hash: "abc123"},
+			wantHash: "abc123",
+			wantDir:  processWorkingDirectory(),
+			// spec.branch is empty, "HEAD" is only how the description spells it.
+			wantBranch: "",
+			wantDesc:   `Git commit "abc123" found for branch "HEAD"`,
 		},
 		{
 			name:       "Git lookup error",
@@ -81,7 +100,7 @@ func TestSource(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			resource := &GitCommit{spec: tt.spec, nativeGitHandler: tt.handler}
 			got := result.Source{}
-			err := resource.Source(context.Background(), tt.workingDir, &got)
+			err := resource.Source(context.Background(), utils.Resolver{BaseDir: tt.workingDir, Boundary: tt.workingDir}, &got)
 			if tt.wantErr != "" {
 				require.Error(t, err)
 				assert.Contains(t, err.Error(), tt.wantErr)

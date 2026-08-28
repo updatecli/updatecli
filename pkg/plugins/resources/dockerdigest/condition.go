@@ -9,10 +9,11 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 // Condition checks if a Docker image tag digest exists in a registry
-func (ds *DockerDigest) Condition(_ context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
+func (ds *DockerDigest) Condition(_ context.Context, source string, scm scm.ScmHandler, resolver utils.Resolver) (pass bool, message string, err error) {
 	if scm != nil {
 		logrus.Warningln("scm is not supported, ignoring")
 	}

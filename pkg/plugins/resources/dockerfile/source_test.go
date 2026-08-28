@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/text"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 func TestDockerfile_Source(t *testing.T) {
@@ -211,7 +212,7 @@ LABEL org.opencontainers.image.version=1.0.0
 				files:            tt.files,
 			}
 			gotResult := result.Source{}
-			gotErr = d.Source(context.Background(), "", &gotResult)
+			gotErr = d.Source(context.Background(), utils.Resolver{}, &gotResult)
 
 			if tt.wantErr != nil {
 				assert.Error(t, gotErr)

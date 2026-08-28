@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/text"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 func TestDockerfile_Condition(t *testing.T) {
@@ -118,7 +119,7 @@ func TestDockerfile_Condition(t *testing.T) {
 				files:            tt.files,
 			}
 
-			got, _, gotErr := d.Condition(context.Background(), tt.inputSourceValue, tt.scm)
+			got, _, gotErr := d.Condition(context.Background(), tt.inputSourceValue, tt.scm, utils.NewResolver(tt.scm, ""))
 			if tt.wantErr != nil {
 				assert.Equal(t, tt.wantErr, gotErr)
 				return

@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 func TestSource(t *testing.T) {
@@ -62,7 +63,7 @@ func TestSource(t *testing.T) {
 			require.NoError(t, err)
 
 			gotResult := result.Source{}
-			err = x.Source(context.Background(), "", &gotResult)
+			err = x.Source(context.Background(), utils.Resolver{}, &gotResult)
 
 			switch tt.wantErr {
 			case true:

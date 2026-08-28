@@ -8,11 +8,12 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
 // Target creates a tag if needed from a local git repository, without pushing the tag
-func (gt *GitTag) Target(_ context.Context, source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
+func (gt *GitTag) Target(_ context.Context, source string, scm scm.ScmHandler, resolver utils.Resolver, dryRun bool, resultTarget *result.Target) error {
 	var err error
 
 	if gt.spec.Path != "" && scm != nil {
@@ -33,7 +34,7 @@ func (gt *GitTag) Target(_ context.Context, source string, scm scm.ScmHandler, d
 			return err
 		}
 	} else if gt.spec.Path != "" {
-		gt.directory = gt.spec.Path
+		gt.directory = resolver.Join(gt.spec.Path)
 	} else if scm != nil {
 		gt.directory = scm.GetDirectory()
 	}

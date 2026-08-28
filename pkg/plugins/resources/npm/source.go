@@ -5,10 +5,11 @@ import (
 	"fmt"
 
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 // Source returns the latest npm package version
-func (n Npm) Source(ctx context.Context, workingDir string, resultSource *result.Source) error {
+func (n Npm) Source(ctx context.Context, resolver utils.Resolver, resultSource *result.Source) error {
 	version, _, err := n.getVersions(ctx)
 	if err != nil {
 		return err

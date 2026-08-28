@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
 )
 
@@ -14,7 +15,7 @@ import (
 Condition tests if the response of the specified HTTP request meets assertion.
 If no assertion is specified, it only checks for successful HTTP response code (HTTP/1xx, HTTP/2xx or HTTP/3xx).
 */
-func (h *Http) Condition(_ context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
+func (h *Http) Condition(_ context.Context, source string, scm scm.ScmHandler, resolver utils.Resolver) (pass bool, message string, err error) {
 	var failureMessages []string
 	conditionResult := true
 

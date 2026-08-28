@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 func TestCondition(t *testing.T) {
@@ -133,7 +134,7 @@ func TestCondition(t *testing.T) {
 				},
 			}
 
-			got, _, gotErr := sut.Condition(context.Background(), tt.source, tt.scm)
+			got, _, gotErr := sut.Condition(context.Background(), tt.source, tt.scm, utils.NewResolver(tt.scm, ""))
 
 			if tt.wantErr != nil {
 				require.Error(t, gotErr)

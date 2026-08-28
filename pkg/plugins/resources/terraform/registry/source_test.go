@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 func TestSource(t *testing.T) {
@@ -61,7 +62,7 @@ func TestSource(t *testing.T) {
 			}
 
 			gotResult := result.Source{}
-			err = got.Source(context.Background(), "", &gotResult)
+			err = got.Source(context.Background(), utils.Resolver{}, &gotResult)
 
 			if tt.expectedError {
 				assert.Error(t, err)

@@ -8,13 +8,14 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 /*
 Condition tests if the response of the specified HTTP request meets assertion.
 If no assertion is specified, it only checks for successful HTTP response code (HTTP/1xx, HTTP/2xx or HTTP/3xx).
 */
-func (t *Temurin) Condition(ctx context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
+func (t *Temurin) Condition(ctx context.Context, source string, scm scm.ScmHandler, resolver utils.Resolver) (pass bool, message string, err error) {
 	if len(source) > 0 {
 		logrus.Infof("[temurin] using specific version (`spec.SpecificVersion`) from source value %q. Set `disablesourceinput` to true to avoid this behavior.", source)
 		if t.spec.SpecificVersion != "" {

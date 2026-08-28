@@ -9,11 +9,12 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
-func (h *Hcl) Target(_ context.Context, source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
-	if scm != nil {
-		h.UpdateAbsoluteFilePath(scm.GetDirectory())
+func (h *Hcl) Target(_ context.Context, source string, scm scm.ScmHandler, resolver utils.Resolver, dryRun bool, resultTarget *result.Target) error {
+	if err := h.UpdateAbsoluteFilePath(resolver); err != nil {
+		return err
 	}
 
 	for _, f := range h.files {

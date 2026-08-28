@@ -2,33 +2,24 @@ package yaml
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
-	"os"
 	"strings"
 
 	goyaml "github.com/goccy/go-yaml"
 	"github.com/goccy/go-yaml/parser"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 	"github.com/vmware-labs/yaml-jsonpath/pkg/yamlpath"
 
 	"go.yaml.in/yaml/v3"
 )
 
 // Source return the latest version
-func (y *Yaml) Source(_ context.Context, workingDir string, resultSource *result.Source) error {
+func (y *Yaml) Source(_ context.Context, resolver utils.Resolver, resultSource *result.Source) error {
 	// By default workingDir is set to local directory
 	var filePath string
-
-	// By the default workingdir is set to the current working directory
-	// it would be better to have it empty by default but it must be changed in the
-	// source core codebase.
-	currentWorkingDirectory, err := os.Getwd()
-	if err != nil {
-		return errors.New("fail getting current working directory")
-	}
 
 	if y.spec.SearchPattern {
 		return fmt.Errorf("validation error in sources of type 'yaml': the attribute `spec.searchpattern` is not supported for source")
@@ -44,11 +35,7 @@ func (y *Yaml) Source(_ context.Context, workingDir string, resultSource *result
 		logrus.Warnf("Key 'Value' is not used by source YAML")
 	}
 
-	if workingDir == currentWorkingDirectory {
-		workingDir = ""
-	}
-
-	if err := y.initFiles(workingDir); err != nil {
+	if err := y.initFiles(resolver); err != nil {
 		return fmt.Errorf("init files: %w", err)
 	}
 
@@ -64,16 +51,9 @@ func (y *Yaml) Source(_ context.Context, workingDir string, resultSource *result
 	// loop over the only file
 	for f := range y.files {
 		filePath = f
-
-		// Ideally currentWorkingDirectory should be empty
-		if workingDir != currentWorkingDirectory {
-			if err := y.UpdateAbsoluteFilePath(workingDir); err != nil {
-				return err
-			}
-		}
 	}
 
-	if err = y.Read(); err != nil {
+	if err := y.Read(); err != nil {
 		return fmt.Errorf("reading yaml file: %w", err)
 	}
 

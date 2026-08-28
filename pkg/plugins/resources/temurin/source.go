@@ -6,9 +6,10 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
-func (t *Temurin) Source(ctx context.Context, workingDir string, resultSource *result.Source) error {
+func (t *Temurin) Source(ctx context.Context, resolver utils.Resolver, resultSource *result.Source) error {
 	// Start by getting the version (required in any case)
 	releaseNames, err := t.apiGetReleaseNames(ctx)
 	if err != nil {

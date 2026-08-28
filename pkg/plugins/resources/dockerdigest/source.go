@@ -8,10 +8,11 @@ import (
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 // Source retrieves Docker image tag digest from a registry
-func (ds *DockerDigest) Source(_ context.Context, workingDir string, resultSource *result.Source) error {
+func (ds *DockerDigest) Source(_ context.Context, resolver utils.Resolver, resultSource *result.Source) error {
 	refTag := "latest"
 	refName := ds.spec.Image
 

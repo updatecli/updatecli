@@ -3,27 +3,22 @@ package systemd
 import (
 	"context"
 	"fmt"
-	"path/filepath"
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
-func (s *Systemd) Condition(_ context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
+func (s *Systemd) Condition(_ context.Context, source string, scm scm.ScmHandler, resolver utils.Resolver) (pass bool, message string, err error) {
 	expected := s.spec.Value
 	if expected == "" {
 		// Override the default value with the source output when the `spec.value` is not set.
 		expected = source
 	}
 
-	rootDir := ""
-	if scm != nil {
-		rootDir = scm.GetDirectory()
-	}
-
-	filePath := s.spec.File
-	if !filepath.IsAbs(filePath) {
-		filePath = filepath.Join(rootDir, filePath)
+	filePath, err := resolver.Resolve(s.spec.File)
+	if err != nil {
+		return false, "", fmt.Errorf("invalid file path %q: %w", s.spec.File, err)
 	}
 
 	_, matchingOpts, err := s.readOptions(filePath)

@@ -22,13 +22,11 @@ type csvContent struct {
 	comment     rune
 }
 
-func (c *csvContent) Read(rootDir string) error {
+func (c *csvContent) Read(resolver utils.Resolver) error {
 
-	securePath, err := utils.SanitizeFilePathWithWorkingDirectory(c.FilePath, rootDir)
-	if err != nil {
+	if err := c.ResolvePath(resolver); err != nil {
 		return err
 	}
-	c.FilePath = securePath
 
 	// Test at runtime if a file exist
 	if !c.ContentRetriever.FileExists(c.FilePath) {

@@ -11,18 +11,14 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/text"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 // Target updates a scm repository based on the modified yaml file.
-func (y *Yaml) Target(_ context.Context, source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
+func (y *Yaml) Target(_ context.Context, source string, scm scm.ScmHandler, resolver utils.Resolver, dryRun bool, resultTarget *result.Target) error {
 	var err error
 
-	workDir := ""
-	if scm != nil {
-		workDir = scm.GetDirectory()
-	}
-
-	if err := y.initFiles(workDir); err != nil {
+	if err := y.initFiles(resolver); err != nil {
 		return fmt.Errorf("init files: %w", err)
 	}
 
