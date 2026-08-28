@@ -69,11 +69,13 @@ func (c *Chart) DependencyUpdate(out *bytes.Buffer, chartPath string) error {
 // GetRepoIndexFromFile loads an index file from a local file and does minimal validity checking.
 // It fails if API Version isn't set (ErrNoAPIVersion) or if the "unmarshal" operation fails.
 func (c *Chart) GetRepoIndexFromFile(resolver utils.Resolver) (repo.IndexFile, error) {
-	URL := resolver.Join(strings.TrimPrefix(c.spec.URL, "file://"))
+	URL := strings.TrimPrefix(c.spec.URL, "file://")
 
 	if filepath.Base(URL) != "index.yaml" {
 		URL = filepath.Join(URL, "index.yaml")
 	}
+
+	URL = resolver.Join(URL)
 
 	rawIndexFile, err := os.Open(URL)
 	if err != nil {
