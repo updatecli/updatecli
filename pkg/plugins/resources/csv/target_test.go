@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 func TestTarget(t *testing.T) {
@@ -92,7 +93,7 @@ func TestTarget(t *testing.T) {
 			require.NoError(t, err)
 
 			gotResult := result.Target{}
-			err = c.Target(context.Background(), tt.sourceInput, nil, true, &gotResult)
+			err = c.Target(context.Background(), tt.sourceInput, nil, utils.Resolver{}, true, &gotResult)
 
 			if tt.wantErr {
 				assert.Equal(t, tt.expectedErrorMsg.Error(), err.Error())
@@ -128,7 +129,7 @@ func TestTargetDaselV3Write(t *testing.T) {
 
 	gotResult := result.Target{}
 	// dryRun=false so the file is actually written back to disk.
-	err = c.Target(context.Background(), "Tom", nil, false, &gotResult)
+	err = c.Target(context.Background(), "Tom", nil, utils.Resolver{}, false, &gotResult)
 	require.NoError(t, err)
 	assert.True(t, gotResult.Changed)
 

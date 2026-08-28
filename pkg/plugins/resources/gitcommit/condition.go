@@ -6,10 +6,11 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 // Condition checks that a Git commit exists in the repository.
-func (gc *GitCommit) Condition(_ context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
+func (gc *GitCommit) Condition(_ context.Context, source string, scm scm.ScmHandler, resolver utils.Resolver) (pass bool, message string, err error) {
 
 	if gc.spec.Path != "" && scm != nil {
 		logrus.Warningf("Path setting value %q is overriding the scm configuration (value %q)",
@@ -29,7 +30,7 @@ func (gc *GitCommit) Condition(_ context.Context, source string, scm scm.ScmHand
 			return false, "", fmt.Errorf("cloning Git repository: %w", err)
 		}
 	} else if gc.spec.Path != "" {
-		gc.directory = gc.spec.Path
+		gc.directory = resolver.Join(gc.spec.Path)
 	} else if scm != nil {
 		gc.directory = scm.GetDirectory()
 	}

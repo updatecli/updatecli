@@ -3,29 +3,15 @@ package systemd
 import (
 	"context"
 	"fmt"
-	"os"
-	"path/filepath"
 
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
-func (s *Systemd) Source(_ context.Context, workingDir string, sourceResult *result.Source) error {
-	filePath := s.spec.File
-
-	// By the default workingdir is set to the current working directory
-	// it would be better to have it empty by default but it must be changed in the
-	// source core codebase.
-	currentWorkingDirectory, err := os.Getwd()
+func (s *Systemd) Source(_ context.Context, resolver utils.Resolver, sourceResult *result.Source) error {
+	filePath, err := resolver.Resolve(s.spec.File)
 	if err != nil {
-		return fmt.Errorf("fail getting current working directory: %w", err)
-	}
-
-	if workingDir == currentWorkingDirectory {
-		workingDir = ""
-	}
-
-	if !filepath.IsAbs(filePath) {
-		filePath = filepath.Join(workingDir, filePath)
+		return fmt.Errorf("invalid file path %q: %w", s.spec.File, err)
 	}
 
 	_, matchingOpts, err := s.readOptions(filePath)

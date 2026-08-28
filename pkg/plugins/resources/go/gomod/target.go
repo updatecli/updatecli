@@ -10,7 +10,7 @@ import (
 )
 
 // Target updates a module version in a go.mod file
-func (g *GoMod) Target(_ context.Context, source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) (err error) {
+func (g *GoMod) Target(_ context.Context, source string, scm scm.ScmHandler, resolver utils.Resolver, dryRun bool, resultTarget *result.Target) (err error) {
 
 	version := source
 	if g.spec.Version != "" {
@@ -19,9 +19,9 @@ func (g *GoMod) Target(_ context.Context, source string, scm scm.ScmHandler, dry
 
 	resultTarget.NewInformation = version
 
-	filename := g.filename
-	if scm != nil {
-		filename = utils.JoinFilePathWithWorkingDirectoryPath(g.filename, scm.GetDirectory())
+	filename, err := resolver.Resolve(g.filename)
+	if err != nil {
+		return fmt.Errorf("invalid file path %q: %w", g.filename, err)
 	}
 
 	resultTarget.Information, resultTarget.NewInformation, resultTarget.Changed, err = g.setVersion(version, filename, dryRun)

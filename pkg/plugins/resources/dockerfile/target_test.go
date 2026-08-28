@@ -10,6 +10,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/text"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 func TestDockerfile_Target(t *testing.T) {
@@ -263,7 +264,7 @@ CMD ["--help:golang"]
 				parser:           newParser,
 				files:            tt.files,
 			}
-			gotErr := d.Target(context.Background(), tt.inputSourceValue, tt.scm, tt.dryRun, &gotResult)
+			gotErr := d.Target(context.Background(), tt.inputSourceValue, tt.scm, utils.NewResolver(tt.scm, ""), tt.dryRun, &gotResult)
 			if tt.wantErr != nil {
 				assert.Equal(t, tt.wantErr, gotErr)
 				return

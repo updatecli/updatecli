@@ -10,13 +10,14 @@ import (
 	goyaml "github.com/goccy/go-yaml"
 	"github.com/goccy/go-yaml/parser"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 	"github.com/vmware-labs/yaml-jsonpath/pkg/yamlpath"
 
 	"go.yaml.in/yaml/v3"
 )
 
 // Condition checks if a key exists in a yaml file
-func (y *Yaml) Condition(_ context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
+func (y *Yaml) Condition(_ context.Context, source string, scm scm.ScmHandler, resolver utils.Resolver) (pass bool, message string, err error) {
 
 	var errorMessages []error
 
@@ -26,12 +27,7 @@ func (y *Yaml) Condition(_ context.Context, source string, scm scm.ScmHandler) (
 		return false, "", fmt.Errorf("validation error in condition of type 'yaml': both `spec.value` and `spec.keyonly` specified while mutually exclusive. Remove one of these 2 directives")
 	}
 
-	workDir := ""
-	if scm != nil {
-		workDir = scm.GetDirectory()
-	}
-
-	if err := y.initFiles(workDir); err != nil {
+	if err := y.initFiles(resolver); err != nil {
 		return false, "", fmt.Errorf("init yaml files: %w", err)
 	}
 

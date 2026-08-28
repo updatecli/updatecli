@@ -3,17 +3,17 @@ package dockerfile
 import (
 	"context"
 	"fmt"
-	"path/filepath"
 	"sort"
 	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 // Target updates a targeted Dockerfile from source control management system
-func (d *Dockerfile) Target(_ context.Context, source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) (err error) {
+func (d *Dockerfile) Target(_ context.Context, source string, scm scm.ScmHandler, resolver utils.Resolver, dryRun bool, resultTarget *result.Target) (err error) {
 	// At the moment, this plugin does not return the currently used value
 	// This could be a useful improvement for the source
 	resultTarget.Information = "unknown"
@@ -23,11 +23,14 @@ func (d *Dockerfile) Target(_ context.Context, source string, scm scm.ScmHandler
 
 	changeDescriptions := []string{}
 
-	for _, file := range d.files {
-		relativeFile := file
-		if !filepath.IsAbs(file) && scm != nil {
-			file = filepath.Join(scm.GetDirectory(), file)
-			logrus.Debugf("Relative path detected: changing from %q to absolute path from SCM: %q", relativeFile, file)
+	for _, relativeFile := range d.files {
+		file, err := resolver.Resolve(relativeFile)
+		if err != nil {
+			return fmt.Errorf("invalid file path %q: %w", relativeFile, err)
+		}
+
+		if file != relativeFile {
+			logrus.Debugf("Relative path detected: changing from %q to %q", relativeFile, file)
 		}
 
 		dockerfileContent, err := d.contentRetriever.ReadAll(file)

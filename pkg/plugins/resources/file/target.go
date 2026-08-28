@@ -20,14 +20,9 @@ import (
 
 // Target creates or updates a file from a source control management system.
 // The default content is the value retrieved from source
-func (f *File) Target(_ context.Context, source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
+func (f *File) Target(_ context.Context, source string, scm scm.ScmHandler, resolver utils.Resolver, dryRun bool, resultTarget *result.Target) error {
 
-	workDir := ""
-	if scm != nil {
-		workDir = scm.GetDirectory()
-	}
-
-	if err := f.initFiles(workDir); err != nil {
+	if err := f.initFiles(resolver); err != nil {
 		return fmt.Errorf("init files: %w", err)
 	}
 
@@ -66,7 +61,7 @@ func (f *File) Target(_ context.Context, source string, scm scm.ScmHandler, dryR
 	if len(f.spec.Template) > 0 {
 		// Contain the template path within the working directory so a source
 		// templated spec.template cannot be used to read arbitrary files.
-		templatePath, err := utils.SanitizeFilePathWithWorkingDirectory(f.spec.Template, workDir)
+		templatePath, err := resolver.Resolve(f.spec.Template)
 		if err != nil {
 			return fmt.Errorf("invalid template path %q: %w", f.spec.Template, err)
 		}

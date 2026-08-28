@@ -10,6 +10,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/text"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 func Test_Target(t *testing.T) {
@@ -763,7 +764,7 @@ existing:
 			assert.NoError(t, err)
 
 			gotResult := result.Target{}
-			gotErr := y.Target(context.Background(), tt.inputSourceValue, nil, tt.dryRun, &gotResult)
+			gotErr := y.Target(context.Background(), tt.inputSourceValue, nil, utils.Resolver{}, tt.dryRun, &gotResult)
 			if tt.wantedError {
 				assert.Error(t, gotErr)
 				return
@@ -950,7 +951,7 @@ github:
 			assert.NoError(t, err)
 
 			gotResult := result.Target{}
-			gotErr := y.Target(context.Background(), tt.inputSourceValue, tt.scm, tt.dryRun, &gotResult)
+			gotErr := y.Target(context.Background(), tt.inputSourceValue, tt.scm, utils.NewResolver(tt.scm, ""), tt.dryRun, &gotResult)
 			if tt.wantedError {
 				assert.Error(t, gotErr)
 				return

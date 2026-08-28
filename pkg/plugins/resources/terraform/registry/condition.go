@@ -8,10 +8,11 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 // Condition checks if a specific version is published
-func (t *TerraformRegistry) Condition(ctx context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
+func (t *TerraformRegistry) Condition(ctx context.Context, source string, scm scm.ScmHandler, resolver utils.Resolver) (pass bool, message string, err error) {
 	if scm != nil {
 		logrus.Debugln("scm is not supported")
 	}

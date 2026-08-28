@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
@@ -498,7 +499,7 @@ func TestGitTag_Source(t *testing.T) {
 			}
 
 			gotResult := result.Source{}
-			err := gr.Source(context.Background(), tt.workingDir, &gotResult)
+			err := gr.Source(context.Background(), utils.Resolver{BaseDir: tt.workingDir, Boundary: tt.workingDir}, &gotResult)
 			if tt.wantErr {
 				assert.Error(t, err)
 				return

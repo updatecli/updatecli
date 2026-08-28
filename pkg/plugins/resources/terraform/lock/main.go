@@ -164,15 +164,26 @@ func (t *TerraformLock) Read() error {
 	return nil
 }
 
-func (t *TerraformLock) UpdateAbsoluteFilePath(workDir string) {
+// UpdateAbsoluteFilePath resolves every file of the t.files map against the resolver,
+// leaving the path the user wrote available as originalFilePath for reporting.
+func (t *TerraformLock) UpdateAbsoluteFilePath(resolver utils.Resolver) error {
 	for filePath := range t.files {
-		if workDir != "" {
-			f := t.files[filePath]
-			f.filePath = utils.JoinFilePathWithWorkingDirectoryPath(f.originalFilePath, workDir)
-			logrus.Debugf("Relative path detected: changing from %q to absolute path from SCM: %q", f.originalFilePath, f.filePath)
-			t.files[filePath] = f
+		f := t.files[filePath]
+
+		resolvedPath, err := resolver.Resolve(f.originalFilePath)
+		if err != nil {
+			return err
 		}
+
+		if resolvedPath != f.filePath {
+			logrus.Debugf("Relative path detected: changing from %q to %q", f.originalFilePath, resolvedPath)
+		}
+
+		f.filePath = resolvedPath
+		t.files[filePath] = f
 	}
+
+	return nil
 }
 
 // Changelog returns the changelog for this resource, or an empty string if not supported

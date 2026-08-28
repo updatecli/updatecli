@@ -10,6 +10,7 @@ import (
 	sv "github.com/Masterminds/semver/v3"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/text"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/dasel"
 )
 
@@ -121,7 +122,7 @@ func getCrateMetadata(rootDir string) (crateMetadata, error) {
 		ContentRetriever: &text.Text{},
 	}
 
-	err := tomlFile.Read("")
+	err := tomlFile.Read(utils.Resolver{})
 
 	if err != nil {
 		return crate, err

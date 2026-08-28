@@ -8,15 +8,11 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 // Target updates a scm repository based on the modified yaml file.
-func (c *CSV) Target(_ context.Context, source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
-
-	rootDir := ""
-	if scm != nil {
-		rootDir = scm.GetDirectory()
-	}
+func (c *CSV) Target(_ context.Context, source string, scm scm.ScmHandler, resolver utils.Resolver, dryRun bool, resultTarget *result.Target) error {
 
 	newValue := source
 	if c.spec.Value != "" {
@@ -33,7 +29,7 @@ func (c *CSV) Target(_ context.Context, source string, scm scm.ScmHandler, dryRu
 			return fmt.Errorf("URL scheme is not supported for CSV target: %q", c.spec.File)
 		}
 
-		if err := c.contents[i].Read(rootDir); err != nil {
+		if err := c.contents[i].Read(resolver); err != nil {
 			return fmt.Errorf("file %q does not exist", c.contents[i].FilePath)
 		}
 

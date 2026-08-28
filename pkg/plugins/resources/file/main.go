@@ -178,7 +178,7 @@ func hasDuplicates(values []string) bool {
 }
 
 // initFiles initializes the f.files map
-func (f *File) initFiles(workDir string) error {
+func (f *File) initFiles(resolver utils.Resolver) error {
 	f.files = make(map[string]fileMetadata)
 
 	// File as unique element of newResource.files
@@ -187,7 +187,7 @@ func (f *File) initFiles(workDir string) error {
 		var err error
 		switch f.spec.SearchPattern {
 		case true:
-			foundFiles, err = utils.FindFilesMatchingPathPattern(workDir, f.spec.File)
+			foundFiles, err = utils.FindFilesMatchingPathPattern(resolver.Dir(), f.spec.File)
 			if err != nil {
 				return fmt.Errorf("unable to find file matching %q: %s", f.spec.File, err)
 			}
@@ -210,7 +210,7 @@ func (f *File) initFiles(workDir string) error {
 
 		switch f.spec.SearchPattern {
 		case true:
-			foundFiles, err = utils.FindFilesMatchingPathPattern(workDir, specFile)
+			foundFiles, err = utils.FindFilesMatchingPathPattern(resolver.Dir(), specFile)
 			if err != nil {
 				return fmt.Errorf("unable to find files matching %q: %s", f.spec.File, err)
 			}
@@ -228,36 +228,26 @@ func (f *File) initFiles(workDir string) error {
 		}
 	}
 
-	for filePath := range f.files {
-		if workDir != "" {
-			file := f.files[filePath]
-			securePath, err := utils.SanitizeFilePathWithWorkingDirectory(file.originalPath, workDir)
-			if err != nil {
-				return err
-			}
-			file.path = securePath
-
-			logrus.Debugf("Relative path detected: changing from %q to absolute path from SCM: %q", file.originalPath, file.path)
-			f.files[filePath] = file
-		}
-	}
-
-	return nil
+	return f.UpdateAbsoluteFilePath(resolver)
 }
 
-func (f *File) UpdateAbsoluteFilePath(workDir string) error {
+// UpdateAbsoluteFilePath resolves every file of the f.files map against the resolver,
+// leaving the path the user wrote available as originalPath for reporting.
+func (f *File) UpdateAbsoluteFilePath(resolver utils.Resolver) error {
 	for filePath := range f.files {
-		if workDir != "" {
-			file := f.files[filePath]
-			securePath, err := utils.SanitizeFilePathWithWorkingDirectory(file.originalPath, workDir)
-			if err != nil {
-				return err
-			}
-			file.path = securePath
+		file := f.files[filePath]
 
-			logrus.Debugf("Relative path detected: changing from %q to absolute path from SCM: %q", file.originalPath, file.path)
-			f.files[filePath] = file
+		resolvedPath, err := resolver.Resolve(file.originalPath)
+		if err != nil {
+			return err
 		}
+
+		if resolvedPath != file.path {
+			logrus.Debugf("Relative path detected: changing from %q to %q", file.originalPath, resolvedPath)
+		}
+
+		file.path = resolvedPath
+		f.files[filePath] = file
 	}
 
 	return nil

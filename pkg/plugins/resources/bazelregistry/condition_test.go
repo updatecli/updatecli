@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 func TestCondition(t *testing.T) {
@@ -110,7 +111,7 @@ func TestCondition(t *testing.T) {
 				},
 			}
 
-			pass, message, err := b.Condition(context.Background(), tt.source, nil)
+			pass, message, err := b.Condition(context.Background(), tt.source, nil, utils.Resolver{})
 
 			if tt.wantErr {
 				require.Error(t, err)

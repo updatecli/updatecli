@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 func TestCondition(t *testing.T) {
@@ -96,7 +97,7 @@ func TestCondition(t *testing.T) {
 			DockerDigest, err := New(TestCases[i].spec)
 			require.NoError(t, err)
 
-			got, _, gotErr := DockerDigest.Condition(context.Background(), TestCases[i].sourceOutput, nil)
+			got, _, gotErr := DockerDigest.Condition(context.Background(), TestCases[i].sourceOutput, nil, utils.Resolver{})
 
 			require.NoError(t, gotErr)
 			assert.Equal(t, TestCases[i].expectedResult.Pass, got)

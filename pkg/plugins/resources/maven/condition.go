@@ -7,11 +7,12 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
 )
 
 // Condition tests if a specific version exist on the maven repository
-func (m *Maven) Condition(_ context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
+func (m *Maven) Condition(_ context.Context, source string, scm scm.ScmHandler, resolver utils.Resolver) (pass bool, message string, err error) {
 
 	if scm != nil {
 		logrus.Warningf("SCM configuration is not supported for maven condition, aborting")

@@ -6,11 +6,12 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 )
 
 // Source retrieves a specific version tag name, tag hash, or release title from GitHub Releases.
-func (gr *GitHubRelease) Source(ctx context.Context, workingDir string, resultSource *result.Source) error {
+func (gr *GitHubRelease) Source(ctx context.Context, resolver utils.Resolver, resultSource *result.Source) error {
 
 	releaseRefs, err := gr.ghHandler.SearchReleases(ctx, gr.typeFilter, 0)
 	if err != nil {

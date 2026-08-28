@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/text"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 func Test_Source(t *testing.T) {
@@ -354,7 +355,7 @@ repos:
 			for filePath := range y.files {
 				gotResult := result.Source{}
 
-				gotErr := y.Source(context.Background(), "", &gotResult)
+				gotErr := y.Source(context.Background(), utils.Resolver{}, &gotResult)
 				if tt.isErrorWanted {
 					assert.Error(t, gotErr)
 					return

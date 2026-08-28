@@ -138,15 +138,26 @@ func (h *Hcl) Read() error {
 	return nil
 }
 
-func (h *Hcl) UpdateAbsoluteFilePath(workDir string) {
+// UpdateAbsoluteFilePath resolves every file of the h.files map against the resolver,
+// leaving the path the user wrote available as originalFilePath for reporting.
+func (h *Hcl) UpdateAbsoluteFilePath(resolver utils.Resolver) error {
 	for filePath := range h.files {
-		if workDir != "" {
-			f := h.files[filePath]
-			f.filePath = utils.JoinFilePathWithWorkingDirectoryPath(f.originalFilePath, workDir)
-			logrus.Debugf("Relative path detected: changing from %q to absolute path from SCM: %q", f.originalFilePath, f.filePath)
-			h.files[filePath] = f
+		f := h.files[filePath]
+
+		resolvedPath, err := resolver.Resolve(f.originalFilePath)
+		if err != nil {
+			return err
 		}
+
+		if resolvedPath != f.filePath {
+			logrus.Debugf("Relative path detected: changing from %q to %q", f.originalFilePath, resolvedPath)
+		}
+
+		f.filePath = resolvedPath
+		h.files[filePath] = f
 	}
+
+	return nil
 }
 
 // Changelog returns the changelog for this resource, or an empty string if not supported

@@ -6,9 +6,10 @@ import (
 	"fmt"
 
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
-func (t *ToolVersions) Source(_ context.Context, workingDir string, resultSource *result.Source) error {
+func (t *ToolVersions) Source(_ context.Context, resolver utils.Resolver, resultSource *result.Source) error {
 
 	if len(t.contents) > 1 {
 		return errors.New("source only supports one file")
@@ -16,7 +17,7 @@ func (t *ToolVersions) Source(_ context.Context, workingDir string, resultSource
 
 	content := t.contents[0]
 
-	if err := content.Read(workingDir); err != nil {
+	if err := content.Read(resolver); err != nil {
 		return fmt.Errorf("reading .tool-versions file: %w", err)
 	}
 

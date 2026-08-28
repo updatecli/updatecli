@@ -2,6 +2,7 @@ package yaml
 
 import (
 	"context"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 	"os"
 	"testing"
 
@@ -623,7 +624,7 @@ func Test_TargetSearchPatternIgnoresMissingKey(t *testing.T) {
 	y.contentRetriever = &mockedText
 
 	gotResult := result.Target{}
-	require.NoError(t, y.Target(context.Background(), "v1", nil, false, &gotResult))
+	require.NoError(t, y.Target(context.Background(), "v1", nil, utils.Resolver{}, false, &gotResult))
 
 	assert.False(t, gotResult.Changed)
 	assert.Equal(t, result.SKIPPED, gotResult.Result)
@@ -647,7 +648,7 @@ func Test_TargetYamlPathMissingKeyErrors(t *testing.T) {
 	}
 
 	gotResult := result.Target{}
-	assert.Error(t, y.Target(context.Background(), "v1", nil, false, &gotResult))
+	assert.Error(t, y.Target(context.Background(), "v1", nil, utils.Resolver{}, false, &gotResult))
 }
 
 func runTargetTestCase(t *testing.T, spec Spec, inputSourceValue, mockedContent, wantedContent string, wantedResult, wantedError, dryRun bool) {
@@ -666,7 +667,7 @@ func runTargetTestCase(t *testing.T, spec Spec, inputSourceValue, mockedContent,
 	}
 
 	gotResult := result.Target{}
-	gotErr := y.Target(context.Background(), inputSourceValue, nil, dryRun, &gotResult)
+	gotErr := y.Target(context.Background(), inputSourceValue, nil, utils.Resolver{}, dryRun, &gotResult)
 
 	if wantedError {
 		assert.Error(t, gotErr)
@@ -699,7 +700,7 @@ func Test_TargetYamlPathPartialDocumentMatch(t *testing.T) {
 	}
 
 	gotResult := result.Target{}
-	require.NoError(t, y.Target(context.Background(), "v1", nil, false, &gotResult))
+	require.NoError(t, y.Target(context.Background(), "v1", nil, utils.Resolver{}, false, &gotResult))
 
 	assert.False(t, gotResult.Changed)
 	assert.Equal(t, result.SUCCESS, gotResult.Result)
@@ -874,7 +875,7 @@ func Test_TargetSearchPatternIgnoresMissingWildcardKey(t *testing.T) {
 	y.contentRetriever = &mockedText
 
 	gotResult := result.Target{}
-	require.NoError(t, y.Target(context.Background(), "v2", nil, false, &gotResult))
+	require.NoError(t, y.Target(context.Background(), "v2", nil, utils.Resolver{}, false, &gotResult))
 
 	assert.False(t, gotResult.Changed)
 	assert.Equal(t, result.SKIPPED, gotResult.Result)
@@ -902,7 +903,7 @@ func Test_TargetSearchPatternUpdatesPartialWildcardKey(t *testing.T) {
 	y.contentRetriever = &mockedText
 
 	gotResult := result.Target{}
-	require.NoError(t, y.Target(context.Background(), "v2", nil, false, &gotResult))
+	require.NoError(t, y.Target(context.Background(), "v2", nil, utils.Resolver{}, false, &gotResult))
 
 	assert.True(t, gotResult.Changed)
 	assert.Equal(t, result.ATTENTION, gotResult.Result)
@@ -929,7 +930,7 @@ func Test_TargetDocumentIndexOutOfRange(t *testing.T) {
 	}
 
 	gotResult := result.Target{}
-	gotErr := y.Target(context.Background(), "v2", nil, false, &gotResult)
+	gotErr := y.Target(context.Background(), "v2", nil, utils.Resolver{}, false, &gotResult)
 
 	require.ErrorContains(t, gotErr, "documentindex 5 addresses no document of file")
 	assert.False(t, gotResult.Changed)
@@ -956,7 +957,7 @@ func Test_TargetSearchPatternIgnoresDocumentIndexOutOfRange(t *testing.T) {
 	y.contentRetriever = &mockedText
 
 	gotResult := result.Target{}
-	require.NoError(t, y.Target(context.Background(), "v2", nil, false, &gotResult))
+	require.NoError(t, y.Target(context.Background(), "v2", nil, utils.Resolver{}, false, &gotResult))
 
 	assert.False(t, gotResult.Changed)
 	assert.Equal(t, result.SKIPPED, gotResult.Result)

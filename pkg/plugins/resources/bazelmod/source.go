@@ -3,16 +3,16 @@ package bazelmod
 import (
 	"context"
 	"fmt"
-	"path/filepath"
 
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 // Source reads the version of the specified module from MODULE.bazel
-func (b *Bazelmod) Source(_ context.Context, workingDir string, resultSource *result.Source) error {
-	filePath := b.spec.File
-	if !filepath.IsAbs(filePath) {
-		filePath = filepath.Join(workingDir, filePath)
+func (b *Bazelmod) Source(_ context.Context, resolver utils.Resolver, resultSource *result.Source) error {
+	filePath, err := resolver.Resolve(b.spec.File)
+	if err != nil {
+		return fmt.Errorf("invalid file path %q: %w", b.spec.File, err)
 	}
 
 	// Check if file exists

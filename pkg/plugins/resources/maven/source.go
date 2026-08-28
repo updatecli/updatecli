@@ -6,11 +6,12 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
 )
 
 // Source return the latest version
-func (m *Maven) Source(_ context.Context, workingDir string, resultSource *result.Source) error {
+func (m *Maven) Source(_ context.Context, resolver utils.Resolver, resultSource *result.Source) error {
 
 	for _, metadataHandler := range m.metadataHandlers {
 		// metadataURL contains the URL without username/password

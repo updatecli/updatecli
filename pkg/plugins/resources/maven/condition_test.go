@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/mavenmetadata"
 )
 
@@ -82,7 +83,7 @@ func TestCondition(t *testing.T) {
 				},
 			}
 
-			gotResult, _, gotErr := sut.Condition(context.Background(), tt.source, nil)
+			gotResult, _, gotErr := sut.Condition(context.Background(), tt.source, nil, utils.Resolver{})
 			if tt.wantErr {
 				require.Error(t, gotErr)
 				return

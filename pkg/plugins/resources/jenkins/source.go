@@ -7,10 +7,11 @@ import (
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 // Source returns the latest Jenkins version based on release type
-func (j *Jenkins) Source(_ context.Context, workingDir string, resultSource *result.Source) error {
+func (j *Jenkins) Source(_ context.Context, resolver utils.Resolver, resultSource *result.Source) error {
 	latest, versions, err := j.getVersions()
 	if err != nil {
 		return fmt.Errorf("searching jenkins version: %w", err)

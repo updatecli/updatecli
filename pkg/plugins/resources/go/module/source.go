@@ -6,11 +6,12 @@ import (
 	"fmt"
 
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 )
 
 // Source returns the latest go module version
-func (g *GoModule) Source(ctx context.Context, workingDir string, resultSource *result.Source) error {
+func (g *GoModule) Source(ctx context.Context, resolver utils.Resolver, resultSource *result.Source) error {
 	version, err := g.versions(ctx)
 	if err != nil {
 		/*

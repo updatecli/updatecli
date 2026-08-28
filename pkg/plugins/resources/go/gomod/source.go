@@ -2,9 +2,7 @@ package gomod
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"os"
 
 	"github.com/updatecli/updatecli/pkg/core/result"
 
@@ -12,21 +10,10 @@ import (
 )
 
 // Source returns the latest go module version
-func (g *GoMod) Source(_ context.Context, workingDir string, resultSource *result.Source) error {
-	var err error
-
-	// By the default workingdir is set to the current working directory
-	// it would be better to have it empty by default but it must be changed in the
-	// source core codebase.
-	currentWorkingDirectory, err := os.Getwd()
+func (g *GoMod) Source(_ context.Context, resolver utils.Resolver, resultSource *result.Source) error {
+	filename, err := resolver.Resolve(g.filename)
 	if err != nil {
-		return errors.New("fail getting current working directory")
-	}
-
-	filename := g.filename
-	// To merge File path with current working dire, unless file is an http url
-	if workingDir != currentWorkingDirectory {
-		filename = utils.JoinFilePathWithWorkingDirectoryPath(filename, workingDir)
+		return fmt.Errorf("invalid file path %q: %w", g.filename, err)
 	}
 
 	g.foundVersion, err = g.version(filename)

@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/text"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 func TestCondition(t *testing.T) {
@@ -147,7 +148,7 @@ func TestCondition(t *testing.T) {
 				contentRetriever: &mockedText,
 			}
 
-			pass, _, err := s.Condition(context.Background(), tt.source, nil)
+			pass, _, err := s.Condition(context.Background(), tt.source, nil, utils.Resolver{})
 			if tt.wantErr {
 				assert.Error(t, err)
 				return

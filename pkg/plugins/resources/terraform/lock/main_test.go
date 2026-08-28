@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 func TestQuery(t *testing.T) {
@@ -636,7 +637,7 @@ func TestUpdateAbsoluteFilePath(t *testing.T) {
 
 			require.NoError(t, err)
 
-			h.UpdateAbsoluteFilePath(tt.workingDir)
+			require.NoError(t, h.UpdateAbsoluteFilePath(utils.Resolver{BaseDir: tt.workingDir, Boundary: tt.workingDir}))
 
 			for _, v := range h.files {
 				assert.True(t, slices.Contains(tt.expectedResult, v.filePath), fmt.Sprintf("%s not in %v", v.filePath, tt.expectedResult))

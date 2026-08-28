@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 func TestTarget(t *testing.T) {
@@ -119,7 +120,7 @@ func TestTarget(t *testing.T) {
 			require.NoError(t, err)
 
 			gotResult := result.Target{}
-			err = j.Target(context.Background(), tt.sourceInput, nil, true, &gotResult)
+			err = j.Target(context.Background(), tt.sourceInput, nil, utils.Resolver{}, true, &gotResult)
 
 			if tt.wantErr {
 				assert.Equal(t, tt.expectedErrorMsg.Error(), err.Error())
@@ -175,7 +176,7 @@ func TestTargetPreservesSpecialCharacters(t *testing.T) {
 
 			gotResult := result.Target{}
 			// dryRun=false so the file is actually written back to disk.
-			err = j.Target(context.Background(), "2.0.0", nil, false, &gotResult)
+			err = j.Target(context.Background(), "2.0.0", nil, utils.Resolver{}, false, &gotResult)
 			require.NoError(t, err)
 			assert.True(t, gotResult.Changed)
 

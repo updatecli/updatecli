@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 func TestCondition(t *testing.T) {
@@ -66,7 +67,7 @@ func TestCondition(t *testing.T) {
 			got, err := New(tt.chart)
 			require.NoError(t, err)
 
-			gotResult, _, gotErr := got.Condition(context.Background(), "", nil)
+			gotResult, _, gotErr := got.Condition(context.Background(), "", nil, utils.Resolver{})
 
 			switch tt.expectedError {
 			case true:

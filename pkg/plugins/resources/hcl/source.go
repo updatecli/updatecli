@@ -5,14 +5,17 @@ import (
 	"fmt"
 
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
-func (h *Hcl) Source(_ context.Context, workingDir string, resultSource *result.Source) error {
+func (h *Hcl) Source(_ context.Context, resolver utils.Resolver, resultSource *result.Source) error {
 	if len(h.files) > 1 {
 		return fmt.Errorf("%s HCL source only supports one file", result.FAILURE)
 	}
 
-	h.UpdateAbsoluteFilePath(workingDir)
+	if err := h.UpdateAbsoluteFilePath(resolver); err != nil {
+		return err
+	}
 
 	if err := h.Read(); err != nil {
 		return fmt.Errorf("reading hcl file: %w", err)

@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 // TestFile_TargetPathContainment is the regression test for GHSA-hj4x-hm4v-7wpw.
@@ -57,7 +58,7 @@ func TestFile_TargetPathContainment(t *testing.T) {
 
 			mockSCM := &scm.MockScm{WorkingDir: workingDir}
 
-			gotErr := f.Target(context.Background(), "", mockSCM, false, &result.Target{})
+			gotErr := f.Target(context.Background(), "", mockSCM, utils.NewResolver(mockSCM, ""), false, &result.Target{})
 			assert.Error(t, gotErr, "a path escaping the working directory must be rejected")
 
 			// Whatever location the attack aimed at, the payload must not exist.
@@ -119,7 +120,7 @@ func TestFile_SourcePathContainment(t *testing.T) {
 			// The secret is readable, so only the containment check can prevent
 			// the source from returning it.
 			gotResult := result.Source{}
-			gotErr := f.Source(context.Background(), workingDir, &gotResult)
+			gotErr := f.Source(context.Background(), utils.Resolver{BaseDir: workingDir, Boundary: workingDir}, &gotResult)
 			assert.Error(t, gotErr, "a path escaping the working directory must be rejected")
 			assert.NotContains(t, gotResult.Information, secretContent,
 				"content outside the working directory must not be exposed as a source value")
@@ -148,6 +149,6 @@ func TestFile_TargetTemplatePathContainment(t *testing.T) {
 
 	mockSCM := &scm.MockScm{WorkingDir: workingDir}
 
-	gotErr := f.Target(context.Background(), "", mockSCM, false, &result.Target{})
+	gotErr := f.Target(context.Background(), "", mockSCM, utils.NewResolver(mockSCM, ""), false, &result.Target{})
 	assert.Error(t, gotErr, "reading a template outside the working directory must be rejected")
 }

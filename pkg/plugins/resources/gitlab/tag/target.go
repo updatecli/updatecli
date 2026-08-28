@@ -6,9 +6,10 @@ import (
 
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 // Target ensure that a specific release exist on GitLab, otherwise creates it
-func (g Gitlab) Target(_ context.Context, source string, scm scm.ScmHandler, dryRun bool, releaseTarget *result.Target) error {
+func (g Gitlab) Target(_ context.Context, source string, scm scm.ScmHandler, resolver utils.Resolver, dryRun bool, releaseTarget *result.Target) error {
 	return fmt.Errorf("target not supported for the plugin GitLab Tags")
 }

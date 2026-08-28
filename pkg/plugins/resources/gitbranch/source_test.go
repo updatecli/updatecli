@@ -2,6 +2,7 @@ package gitbranch
 
 import (
 	"context"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 	"testing"
 	"time"
 
@@ -72,7 +73,7 @@ func TestGitBranch_Source(t *testing.T) {
 			}
 
 			gotResult := result.Source{}
-			err := gb.Source(context.Background(), "/tmp/updatecli", &gotResult)
+			err := gb.Source(context.Background(), utils.Resolver{BaseDir: "/tmp/updatecli"}, &gotResult)
 			if tt.wantErr {
 				assert.Error(t, err)
 				return

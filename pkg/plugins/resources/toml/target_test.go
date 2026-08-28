@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 func TestTarget(t *testing.T) {
@@ -166,7 +167,7 @@ func TestTarget(t *testing.T) {
 
 			gotResult := result.Target{}
 
-			err = j.Target(context.Background(), tt.sourceInput, nil, true, &gotResult)
+			err = j.Target(context.Background(), tt.sourceInput, nil, utils.Resolver{}, true, &gotResult)
 
 			if tt.wantErr {
 				assert.Equal(t, tt.expectedErrorMsg.Error(), err.Error())
@@ -212,7 +213,7 @@ dob = 1979-05-27T07:32:00-08:00
 
 	gotResult := result.Target{}
 	// dryRun=false so the file is actually written back to disk.
-	err = j.Target(context.Background(), "Tom", nil, false, &gotResult)
+	err = j.Target(context.Background(), "Tom", nil, utils.Resolver{}, false, &gotResult)
 	require.NoError(t, err)
 	assert.True(t, gotResult.Changed)
 

@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 func TestTarget(t *testing.T) {
@@ -114,7 +115,7 @@ func TestTarget(t *testing.T) {
 			require.NoError(t, err)
 			gotResult := result.Target{}
 
-			err = got.Target(context.Background(), "", nil, true, &gotResult)
+			err = got.Target(context.Background(), "", nil, utils.Resolver{}, true, &gotResult)
 			if tt.expectedError {
 				assert.Error(t, err)
 				return

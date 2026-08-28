@@ -6,14 +6,15 @@ import (
 	"fmt"
 
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 )
 
 // Source returns the latest git tag based on create time
-func (gt *GitTag) Source(_ context.Context, workingDir string, resultSource *result.Source) error {
+func (gt *GitTag) Source(_ context.Context, resolver utils.Resolver, resultSource *result.Source) error {
 	var err error
 
-	gt.directory = workingDir
+	gt.directory = resolver.Dir()
 
 	err = gt.Validate()
 	if err != nil {
@@ -31,7 +32,7 @@ func (gt *GitTag) Source(_ context.Context, workingDir string, resultSource *res
 		}
 
 	case false:
-		tagsList, tags, err = gt.listRemoteDirectoryTags(workingDir, gt.spec.Age)
+		tagsList, tags, err = gt.listRemoteDirectoryTags(gt.directory, gt.spec.Age, resolver)
 		if err != nil {
 			/*
 				Every published tag is still cooling down, which is an expected state of

@@ -8,10 +8,11 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 // Condition checks if a go module with a specific version is published
-func (g *GoModule) Condition(ctx context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
+func (g *GoModule) Condition(ctx context.Context, source string, scm scm.ScmHandler, resolver utils.Resolver) (pass bool, message string, err error) {
 	versionToCheck := g.Spec.Version
 	if versionToCheck == "" {
 		versionToCheck = source

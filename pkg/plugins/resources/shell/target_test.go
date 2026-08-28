@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 func TestShell_Target(t *testing.T) {
@@ -85,7 +86,7 @@ func TestShell_Target(t *testing.T) {
 
 			gotResult := result.Target{}
 
-			err = s.Target(context.Background(), tt.source, nil, tt.dryrun, &gotResult)
+			err = s.Target(context.Background(), tt.source, nil, utils.Resolver{}, tt.dryrun, &gotResult)
 
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -160,7 +161,7 @@ func TestShell_TargetFromSCM(t *testing.T) {
 			require.NoError(t, err)
 
 			gotResult := result.Target{}
-			err = s.Target(context.Background(), tt.source, &ms, tt.dryrun, &gotResult)
+			err = s.Target(context.Background(), tt.source, &ms, utils.NewResolver(&ms, ""), tt.dryrun, &gotResult)
 
 			if tt.wantErr {
 				assert.Error(t, err)

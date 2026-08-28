@@ -4,29 +4,24 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"path/filepath"
 	"strings"
 
 	"github.com/coreos/go-systemd/v22/unit"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
-func (s *Systemd) Target(_ context.Context, source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
+func (s *Systemd) Target(_ context.Context, source string, scm scm.ScmHandler, resolver utils.Resolver, dryRun bool, resultTarget *result.Target) error {
 	expected := s.spec.Value
 	if expected == "" {
 		expected = source
 	}
 
-	rootDir := ""
-	if scm != nil {
-		rootDir = scm.GetDirectory()
-	}
-
-	filePath := s.spec.File
-	if !filepath.IsAbs(filePath) {
-		filePath = filepath.Join(rootDir, filePath)
+	filePath, err := resolver.Resolve(s.spec.File)
+	if err != nil {
+		return fmt.Errorf("invalid file path %q: %w", s.spec.File, err)
 	}
 
 	opts, matchingOpts, err := s.readOptions(filePath)

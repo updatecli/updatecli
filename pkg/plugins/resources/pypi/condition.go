@@ -7,10 +7,11 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 // Condition checks that a PyPI package version exists.
-func (p *Pypi) Condition(ctx context.Context, source string, scmHandler scm.ScmHandler) (pass bool, message string, err error) {
+func (p *Pypi) Condition(ctx context.Context, source string, scmHandler scm.ScmHandler, resolver utils.Resolver) (pass bool, message string, err error) {
 	if scmHandler != nil {
 		logrus.Warningf("SCM configuration is not supported for pypi condition, ignoring")
 	}

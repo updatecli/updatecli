@@ -8,15 +8,11 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 // Target updates a scm repository based on the modified yaml file.
-func (t *Toml) Target(_ context.Context, source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
-
-	rootDir := ""
-	if scm != nil {
-		rootDir = scm.GetDirectory()
-	}
+func (t *Toml) Target(_ context.Context, source string, scm scm.ScmHandler, resolver utils.Resolver, dryRun bool, resultTarget *result.Target) error {
 
 	for i := range t.contents {
 		filename := t.contents[i].FilePath
@@ -27,7 +23,7 @@ func (t *Toml) Target(_ context.Context, source string, scm scm.ScmHandler, dryR
 			return fmt.Errorf("URL scheme is not supported for Toml target: %q", t.spec.File)
 		}
 
-		if err := t.contents[i].Read(rootDir); err != nil {
+		if err := t.contents[i].Read(resolver); err != nil {
 			return fmt.Errorf("file %q does not exist", t.contents[i].FilePath)
 		}
 
