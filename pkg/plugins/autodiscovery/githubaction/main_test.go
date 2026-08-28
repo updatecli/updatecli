@@ -1521,7 +1521,14 @@ targets:
 		{
 			name:    "Scenario - GitHub Action with a dependency cooldown",
 			rootDir: "testdata/age",
-			age:     age.Spec{Minimum: "7d", Maximum: "1y"},
+			// Pinned so the generated manifest doesn't pick up a GITHUB_TOKEN from the environment.
+			credentials: map[string]gitProviderToken{
+				"github.com": {
+					Kind:  "github",
+					Token: "xxx",
+				},
+			},
+			age: age.Spec{Minimum: "7d", Maximum: "1y"},
 			expectedPipelines: []string{`name: 'deps: bump actions/checkout GitHub workflow'
 
 sources:
@@ -1534,7 +1541,7 @@ sources:
       owner: 'actions'
       repository: 'checkout'
       url: 'https://github.com'
-      token: ''
+      token: 'xxx'
       age:
         minimum: '7d'
         maximum: '1y'
@@ -1549,7 +1556,7 @@ sources:
     kind: 'gittag'
     spec:
       url: "https://github.com/actions/checkout.git"
-      password: ''
+      password: 'xxx'
       age:
         minimum: '7d'
         maximum: '1y'
@@ -1564,7 +1571,7 @@ sources:
     kind: 'gitbranch'
     spec:
       url: "https://github.com/actions/checkout.git"
-      password: ''
+      password: 'xxx'
       age:
         minimum: '7d'
         maximum: '1y'
@@ -1581,7 +1588,7 @@ conditions:
       owner: 'actions'
       repository: 'checkout'
       url: 'https://github.com'
-      token: ''
+      token: 'xxx'
       tag: 'v4'
 
   tag:
@@ -1590,7 +1597,7 @@ conditions:
     disablesourceinput: true
     spec:
       url: "https://github.com/actions/checkout.git"
-      password: ''
+      password: 'xxx'
       versionfilter:
         kind: 'regex'
         pattern: '^v4$'
@@ -1602,7 +1609,7 @@ conditions:
     spec:
       branch: 'v4'
       url: "https://github.com/actions/checkout.git"
-      password: ''
+      password: 'xxx'
 
 targets:
   release:
