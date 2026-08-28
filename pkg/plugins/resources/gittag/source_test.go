@@ -4,13 +4,20 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
+
+// tagDaysAgo builds the commit date of a tag created n days ago.
+func tagDaysAgo(n int) time.Time {
+	return time.Now().Add(-time.Duration(n) * 24 * time.Hour)
+}
 
 type mockNativeGitHandler struct {
 	gitgeneric.GitHandler
@@ -424,6 +431,58 @@ func TestGitTag_Source(t *testing.T) {
 			},
 			wantValue: "mno345",
 			wantErr:   false,
+		},
+		{
+			name:       "3 tags found, the most recent one is still in cooldown",
+			workingDir: "github.com/updatecli/updatecli",
+			mockedNativeGitHandler: &mockNativeGitHandler{
+				tagRefs: []gitgeneric.DatedTag{
+					{Name: "1.0.0", Hash: "abc123", When: tagDaysAgo(30)},
+					{Name: "2.0.0", Hash: "def456", When: tagDaysAgo(10)},
+					{Name: "3.0.0", Hash: "ghi789", When: tagDaysAgo(1)},
+				},
+			},
+			versionFilter: version.Filter{
+				Kind:    "latest",
+				Pattern: "latest",
+			},
+			spec:      Spec{Age: age.Spec{Minimum: "7d"}},
+			wantValue: "2.0.0",
+		},
+		{
+			name:       "Error: every tag is still in cooldown",
+			workingDir: "github.com/updatecli/updatecli",
+			mockedNativeGitHandler: &mockNativeGitHandler{
+				tagRefs: []gitgeneric.DatedTag{
+					{Name: "1.0.0", Hash: "abc123", When: tagDaysAgo(2)},
+					{Name: "2.0.0", Hash: "def456", When: tagDaysAgo(1)},
+				},
+			},
+			versionFilter: version.Filter{
+				Kind:    "latest",
+				Pattern: "latest",
+			},
+			spec:    Spec{Age: age.Spec{Minimum: "7d"}},
+			wantErr: true,
+		},
+		{
+			name:       "Error: age is not compatible with lsRemote",
+			workingDir: "github.com/updatecli/updatecli",
+			mockedNativeGitHandler: &mockNativeGitHandler{
+				tagRefs: []gitgeneric.DatedTag{
+					{Name: "1.0.0", Hash: "abc123", When: tagDaysAgo(30)},
+				},
+			},
+			versionFilter: version.Filter{
+				Kind:    "latest",
+				Pattern: "latest",
+			},
+			spec: Spec{
+				URL:      "https://github.com/updatecli-test/updatecli.git",
+				LsRemote: boolPtr(true),
+				Age:      age.Spec{Minimum: "7d"},
+			},
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {

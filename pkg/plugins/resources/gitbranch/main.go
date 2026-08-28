@@ -7,6 +7,7 @@ import (
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
@@ -24,6 +25,13 @@ type Spec struct {
 	//    * condition
 	//    * target
 	VersionFilter version.Filter `yaml:",omitempty"`
+	// Age defines the minimum or maximum age of a branch to be considered valid.
+	// It accepts a duration string (e.g., "24h", "7d", "3w", "1y").
+	// The age of a branch is the date of its latest commit.
+	//
+	//  compatible:
+	//    * source
+	Age age.Spec `yaml:",omitempty"`
 	// branch specifies the branch name
 	//
 	//  compatible:
@@ -121,6 +129,10 @@ func New(spec interface{}) (*GitBranch, error) {
 		validationErrors = append(validationErrors, "The only valid values for Key are 'name', 'hash', or empty.")
 	}
 
+	if err := newSpec.Age.Validate(); err != nil {
+		validationErrors = append(validationErrors, err.Error())
+	}
+
 	// Return all the validation errors if found any
 	if len(validationErrors) > 0 {
 		return &GitBranch{}, fmt.Errorf("validation error: the provided manifest configuration has the following validation errors:\n%s", strings.Join(validationErrors, "\n\n"))
@@ -166,6 +178,7 @@ func (gb *GitBranch) ReportConfig() interface{} {
 		Path:          gb.spec.Path,
 		Branch:        gb.spec.Branch,
 		VersionFilter: gb.spec.VersionFilter,
+		Age:           gb.spec.Age,
 		SourceBranch:  gb.spec.SourceBranch,
 		// Ensure that the URL doesn't contain any sensitive information
 		URL: redact.URL(gb.spec.URL),

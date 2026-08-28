@@ -29,13 +29,16 @@ func (gt *GitTag) Source(_ context.Context, workingDir string, resultSource *res
 		}
 
 	case false:
-		tagsList, tags, err = gt.listRemoteDirectoryTags(workingDir)
+		tagsList, tags, err = gt.listRemoteDirectoryTags(workingDir, gt.spec.Age)
 		if err != nil {
 			return fmt.Errorf("listing local tags: %w", err)
 		}
 	}
 
 	if len(tagsList) == 0 {
+		if !gt.spec.Age.IsZero() {
+			return fmt.Errorf("no tags found matching the age filter")
+		}
 		return fmt.Errorf("no tags found")
 	}
 

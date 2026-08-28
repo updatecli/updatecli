@@ -4,13 +4,21 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
+	"github.com/shurcooL/githubv4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
+
+// publishedDaysAgo builds the publication date of a release published n days ago.
+func publishedDaysAgo(n int) githubv4.DateTime {
+	return githubv4.DateTime{Time: time.Now().Add(-time.Duration(n) * 24 * time.Hour)}
+}
 
 type mockGhHandler struct {
 	github.Github
@@ -59,6 +67,7 @@ func TestGitHubRelease_Source(t *testing.T) {
 		releaseKey      string
 		mockedGhHandler github.GithubHandler
 		versionFilter   version.Filter
+		releaseAge      age.Spec
 		wantValue       string
 		wantErr         bool
 	}{
@@ -142,6 +151,80 @@ func TestGitHubRelease_Source(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name: "3 releases found, the most recent one is still in cooldown",
+			mockedGhHandler: &mockGhHandler{
+				releases: []github.ReleaseNode{
+					{TagName: "1.0.0", PublishedAt: publishedDaysAgo(30)},
+					{TagName: "2.0.0", PublishedAt: publishedDaysAgo(10)},
+					{TagName: "3.0.0", PublishedAt: publishedDaysAgo(1)},
+				},
+			},
+			versionFilter: version.Filter{
+				Kind:    "latest",
+				Pattern: "latest",
+			},
+			releaseAge: age.Spec{Minimum: "7d"},
+			wantValue:  "2.0.0",
+		},
+		{
+			name: "3 releases found, only the oldest one is not expired",
+			mockedGhHandler: &mockGhHandler{
+				releases: []github.ReleaseNode{
+					{TagName: "1.0.0", PublishedAt: publishedDaysAgo(30)},
+					{TagName: "2.0.0", PublishedAt: publishedDaysAgo(10)},
+					{TagName: "3.0.0", PublishedAt: publishedDaysAgo(1)},
+				},
+			},
+			versionFilter: version.Filter{
+				Kind:    "latest",
+				Pattern: "latest",
+			},
+			releaseAge: age.Spec{Minimum: "20d"},
+			wantValue:  "1.0.0",
+		},
+		{
+			name: "Draft releases fall back on their creation date",
+			mockedGhHandler: &mockGhHandler{
+				releases: []github.ReleaseNode{
+					{TagName: "1.0.0", CreatedAt: publishedDaysAgo(30)},
+					{TagName: "2.0.0", CreatedAt: publishedDaysAgo(1)},
+				},
+			},
+			versionFilter: version.Filter{
+				Kind:    "latest",
+				Pattern: "latest",
+			},
+			releaseAge: age.Spec{Minimum: "7d"},
+			wantValue:  "1.0.0",
+		},
+		{
+			name: "Error: every release is still in cooldown",
+			mockedGhHandler: &mockGhHandler{
+				releases: []github.ReleaseNode{
+					{TagName: "1.0.0", PublishedAt: publishedDaysAgo(2)},
+					{TagName: "2.0.0", PublishedAt: publishedDaysAgo(1)},
+				},
+			},
+			versionFilter: version.Filter{
+				Kind:    "latest",
+				Pattern: "latest",
+			},
+			releaseAge: age.Spec{Minimum: "7d"},
+			wantErr:    true,
+		},
+		{
+			name: "Error: the git tag fallback cannot honor an age filter",
+			mockedGhHandler: &mockGhHandler{
+				tags: []string{"1.0.0", "2.0.0", "3.0.0"},
+			},
+			versionFilter: version.Filter{
+				Kind:    "latest",
+				Pattern: "latest",
+			},
+			releaseAge: age.Spec{Minimum: "7d"},
+			wantErr:    true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -154,6 +237,7 @@ func TestGitHubRelease_Source(t *testing.T) {
 				Token:         "ghp_example",
 				Key:           tt.releaseKey,
 				VersionFilter: tt.versionFilter,
+				Age:           tt.releaseAge,
 			})
 
 			require.NoError(t, err)

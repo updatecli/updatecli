@@ -18,9 +18,20 @@ func (gr *GitHubRelease) Source(ctx context.Context, workingDir string, resultSo
 
 	var versions []string
 	for _, release := range releaseRefs {
+		date := release.PublicationDate()
+		if !gr.spec.Age.Matches(date) {
+			logrus.Debugf("ignoring release %q, published on %s, as outside of the age window", release.TagName, date)
+			continue
+		}
 		versions = append(versions, release.TagName)
 	}
 	if len(versions) == 0 {
+		// The git tag fallback only reports tag names, so an age window couldn't be honored
+		// there. Reporting it is safer than silently ignoring a cooldown.
+		if !gr.spec.Age.IsZero() {
+			return fmt.Errorf("no GitHub release found matching the age filter, and the git tag fallback cannot honor it, exiting")
+		}
+
 		switch gr.spec.TypeFilter.IsZero() {
 		case true:
 			logrus.Warningf("%s No GitHub Release found, we fallback to published git tags", result.ATTENTION)

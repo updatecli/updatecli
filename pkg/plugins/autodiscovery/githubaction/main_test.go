@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 )
 
 func TestDiscoverManifests(t *testing.T) {
@@ -14,6 +15,7 @@ func TestDiscoverManifests(t *testing.T) {
 		expectedPipelines []string
 		credentials       map[string]gitProviderToken
 		digest            bool
+		age               age.Spec
 	}{
 		{
 			name:    "Scenario - GitHub Action using Docker image",
@@ -1516,6 +1518,136 @@ targets:
       engine: 'yamlpath'
 `},
 		},
+		{
+			name:    "Scenario - GitHub Action with a dependency cooldown",
+			rootDir: "testdata/age",
+			age:     age.Spec{Minimum: "7d", Maximum: "1y"},
+			expectedPipelines: []string{`name: 'deps: bump actions/checkout GitHub workflow'
+
+sources:
+  release:
+    dependson:
+      - 'condition#release:and'
+    name: 'Get latest GitHub Release for actions/checkout'
+    kind: 'githubrelease'
+    spec:
+      owner: 'actions'
+      repository: 'checkout'
+      url: 'https://github.com'
+      token: ''
+      age:
+        minimum: '7d'
+        maximum: '1y'
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
+
+  tag:
+    dependson:
+      - 'condition#tag:and'
+    name: 'Get latest tag for actions/checkout'
+    kind: 'gittag'
+    spec:
+      url: "https://github.com/actions/checkout.git"
+      password: ''
+      age:
+        minimum: '7d'
+        maximum: '1y'
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
+
+  branch:
+    dependson:
+      - 'condition#branch:and'
+    name: 'Get latest branch for actions/checkout'
+    kind: 'gitbranch'
+    spec:
+      url: "https://github.com/actions/checkout.git"
+      password: ''
+      age:
+        minimum: '7d'
+        maximum: '1y'
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
+
+conditions:
+  release:
+    name: 'Check if actions/checkout@v4 is a GitHub release'
+    kind: 'githubrelease'
+    disablesourceinput: true
+    spec:
+      owner: 'actions'
+      repository: 'checkout'
+      url: 'https://github.com'
+      token: ''
+      tag: 'v4'
+
+  tag:
+    name: 'Check if actions/checkout@v4 is a tag'
+    kind: 'gittag'
+    disablesourceinput: true
+    spec:
+      url: "https://github.com/actions/checkout.git"
+      password: ''
+      versionfilter:
+        kind: 'regex'
+        pattern: '^v4$'
+
+  branch:
+    name: 'Check if actions/checkout@v4 is a branch'
+    kind: 'gitbranch'
+    disablesourceinput: true
+    spec:
+      branch: 'v4'
+      url: "https://github.com/actions/checkout.git"
+      password: ''
+
+targets:
+  release:
+    dependson:
+      - 'condition#release:and'
+    disableconditions: true
+    name: 'deps(github): bump Action release for actions/checkout from v4 to {{ source "release" }}'
+    kind: 'yaml'
+    sourceid: 'release'
+    transformers:
+      - addprefix: 'actions/checkout@'
+    spec:
+      file: '.github/workflows/updatecli.yaml'
+      key: '$.jobs.build.steps[0].uses'
+      engine: 'yamlpath'
+
+  tag:
+    dependson:
+      - 'condition#tag:and'
+    disableconditions: true
+    name: 'deps(github): bump Action tag for actions/checkout from v4 to {{ source "tag" }}'
+    kind: 'yaml'
+    sourceid: 'tag'
+    transformers:
+      - addprefix: 'actions/checkout@'
+    spec:
+      file: '.github/workflows/updatecli.yaml'
+      key: '$.jobs.build.steps[0].uses'
+      engine: 'yamlpath'
+
+  branch:
+    dependson:
+      - 'condition#branch:and'
+    disableconditions: true
+    name: 'deps(github): bump Action branch for actions/checkout from v4 to {{ source "branch" }}'
+    kind: yaml
+    sourceid: branch
+    transformers:
+      - addprefix: 'actions/checkout@'
+    spec:
+      file: '.github/workflows/updatecli.yaml'
+      key: '$.jobs.build.steps[0].uses'
+      engine: 'yamlpath'
+`},
+		},
 	}
 
 	for _, tt := range testdata {
@@ -1525,6 +1657,7 @@ targets:
 				Spec{
 					Credentials: tt.credentials,
 					Digest:      &tt.digest,
+					Age:         tt.age,
 				}, tt.rootDir, "", "")
 
 			require.NoError(t, err)

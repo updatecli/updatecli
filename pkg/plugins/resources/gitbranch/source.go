@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
@@ -34,8 +35,17 @@ func (gb *GitBranch) Source(_ context.Context, workingDir string, resultSource *
 
 	values := []string{}
 	for _, ref := range refs {
+		if !gb.spec.Age.Matches(ref.When) {
+			logrus.Debugf("ignoring branch %q, dated %s, as outside of the age window", ref.Name, ref.When)
+			continue
+		}
 		values = append(values, ref.Name)
 	}
+
+	if len(values) == 0 && !gb.spec.Age.IsZero() {
+		return fmt.Errorf("no branch found matching the age filter")
+	}
+
 	gb.foundVersion, err = gb.versionFilter.Search(values)
 	if err != nil {
 		return fmt.Errorf("filtering branches: %w", err)

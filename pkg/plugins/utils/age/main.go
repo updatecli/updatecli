@@ -123,3 +123,31 @@ func (a Spec) IsNewerThan(t time.Time, since *time.Time) bool {
 func (a Spec) IsZero() bool {
 	return a.Minimum == "" && a.Maximum == ""
 }
+
+// Matches returns true if a release published at t falls inside the age window.
+// Both bounds are evaluated against the same instant.
+func (a Spec) Matches(t time.Time) bool {
+	now := time.Now()
+	return !a.IsOlderThan(t, &now) && !a.IsNewerThan(t, &now)
+}
+
+// ManifestTemplate defines the "age" Go template used by autodiscovery crawlers to emit
+// an age filter in the spec of a generated source. It takes a Spec as argument and emits
+// nothing for an empty one:
+//
+//	tmpl, err := template.New("manifest").Parse(age.ManifestTemplate + myCrawlerTemplate)
+//	// then, in myCrawlerTemplate:
+//	//   {{- template "age" .Age }}
+//
+// The emitted keys are indented for a source spec, which is where crawlers use them.
+const ManifestTemplate = `{{- define "age" }}
+{{- if not .IsZero }}
+      age:
+        {{- if .Minimum }}
+        minimum: '{{ .Minimum }}'
+        {{- end }}
+        {{- if .Maximum }}
+        maximum: '{{ .Maximum }}'
+        {{- end }}
+{{- end }}
+{{- end }}`

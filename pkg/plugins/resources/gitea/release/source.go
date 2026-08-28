@@ -9,13 +9,16 @@ import (
 )
 
 func (g *Gitea) Source(ctx context.Context, workingDir string, resultSource *result.Source) error {
-	versions, err := g.SearchReleases(ctx)
+	versions, err := g.SearchReleases(ctx, g.spec.Age)
 
 	if err != nil {
 		return fmt.Errorf("search gitea release: %w", err)
 	}
 
 	if len(versions) == 0 {
+		if !g.spec.Age.IsZero() {
+			return fmt.Errorf("no Gitea Release found matching the age filter")
+		}
 		return fmt.Errorf("no Gitea Release found")
 	}
 
