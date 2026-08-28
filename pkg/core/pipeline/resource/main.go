@@ -50,6 +50,7 @@ import (
 	updateclihttp "github.com/updatecli/updatecli/pkg/plugins/resources/updateclihttp"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/xml"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/yaml"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 type ResourceConfig struct {
@@ -280,11 +281,11 @@ func New(rs ResourceConfig) (resource Resource, err error) {
 // Resource allow to manipulate a resource that can be a source, a condition or a target
 type Resource interface {
 	// Source returns the resource value
-	Source(ctx context.Context, workingDir string, sourceResult *result.Source) error
+	Source(ctx context.Context, resolver utils.Resolver, sourceResult *result.Source) error
 	// Condition checks if the resource is in the expected state
-	Condition(ctx context.Context, version string, scm scm.ScmHandler) (pass bool, message string, err error)
+	Condition(ctx context.Context, version string, scm scm.ScmHandler, resolver utils.Resolver) (pass bool, message string, err error)
 	// Target updates the resource with the given value
-	Target(ctx context.Context, source string, scm scm.ScmHandler, dryRun bool, targetResult *result.Target) (err error)
+	Target(ctx context.Context, source string, scm scm.ScmHandler, resolver utils.Resolver, dryRun bool, targetResult *result.Target) (err error)
 	// Changelog returns the changelog for this resource, or an empty string if not supported
 	Changelog(from, to string) *result.Changelogs
 	// ReportConfig returns a new resource configuration

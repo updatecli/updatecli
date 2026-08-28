@@ -8,10 +8,16 @@ import (
 
 // Options defines application specific behaviors
 type Options struct {
-	// Config holds the application configuration options
+	// Config holds the application configuration options: how manifests are read.
 	Config config.Option
-	// Pipeline holds pipeline execution options
+	// Pipeline holds pipeline execution options: how manifests are run.
 	Pipeline pipeline.Options
+	// ManifestOptions holds the defaults for the manifest "options" section, applied to
+	// the manifests that do not set them themselves.
+	//
+	// It is named ManifestOptions rather than Manifest to stay distinguishable from the
+	// Manifests field below, which lists the manifest files to process.
+	ManifestOptions config.ManifestOptions
 	// Manifests holds a list of manifests to process
 	Manifests []manifest.Manifest
 	// DisplayFlavor defines the flavor of the display output

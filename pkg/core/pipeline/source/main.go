@@ -16,6 +16,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 // Source defines how a value is retrieved from a specific source
@@ -30,6 +31,9 @@ type Source struct {
 	Config Config
 	// Scm stores scm information
 	Scm *scm.ScmHandler
+	// BaseDir is the directory the relative paths of this source resolve against
+	// when no scm is attached. Empty means the process working directory.
+	BaseDir string
 }
 
 // Config struct defines a source configuration
@@ -86,30 +90,18 @@ func (s *Source) Run(ctx context.Context, sourceCache *cache.SourceCache) (err e
 			return err
 		}
 
-		workingDir := ""
+		var scmHandler scm.ScmHandler
+		if s.Scm != nil {
+			scmHandler = *s.Scm
 
-		switch s.Scm == nil {
-		case true:
-			pwd, err := os.Getwd()
+			err = scmHandler.Checkout()
 			if err != nil {
 				s.Result.Result = result.FAILURE
 				return err
 			}
-
-			workingDir = pwd
-		case false:
-			SCM := *s.Scm
-
-			err = SCM.Checkout()
-			if err != nil {
-				s.Result.Result = result.FAILURE
-				return err
-			}
-
-			workingDir = SCM.GetDirectory()
 		}
 
-		err = source.Source(ctx, workingDir, s.Result)
+		err = source.Source(ctx, utils.NewResolver(scmHandler, s.BaseDir), s.Result)
 		if err != nil {
 			s.Result.Result = result.FAILURE
 			return err
