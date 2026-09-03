@@ -168,6 +168,8 @@ type Spec struct {
 	//  * missing intermediate keys are created as nested maps.
 	//  * the key is only created, never removed, and existing keys are left untouched.
 	//  * a missing sequence index such as `$.agents[0].name` cannot be created.
+	//  * a key selecting several nodes, such as `$.agents[*].tag` or `$..tag`,
+	//    is rejected: the key cannot be created under each selected node.
 	//  * not supported by the "yamlpath" engine.
 	//  * the yaml file itself must already exist.
 	//
@@ -317,6 +319,20 @@ func (s *Spec) Validate() error {
 
 	if s.Engine == EngineYamlPath && s.AppendToArray {
 		validationErrors = append(validationErrors, fmt.Sprintf("Validation error in target of type 'yaml': engine %q does not support the attributes `spec.appendtoarray`", s.Engine))
+	}
+
+	// A wildcard or a recursive selector addresses one node per selected position,
+	// and there is no way to create a key under each of them: goccy's selector
+	// replacement only rewrites the positions that already hold the key, so
+	// creating through such a key would silently write nothing.
+	if s.CreateMissingKey {
+		for _, key := range s.getKeys() {
+			// A key that does not parse is reported when it is evaluated, with a
+			// message naming the offending character.
+			if multiMatch, err := multiMatchKey(key); err == nil && multiMatch {
+				validationErrors = append(validationErrors, fmt.Sprintf("Validation error in target of type 'yaml': the attribute `spec.createmissingkey` does not support the wildcard or recursive selector of key %q", key))
+			}
+		}
 	}
 
 	// Return all the validation errors if found any

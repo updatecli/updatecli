@@ -380,37 +380,58 @@ func multiMatchKey(key string) (bool, error) {
 	return false, nil
 }
 
-// appendTargetSequences returns the sequences that an appendtoarray target must
-// append to. node is the node goccy matched for key: for a key matching several
-// nodes ("$.agents[*].tags", "$..tags") that node is a detached wrapper, and
-// appending to it would mutate a copy while leaving the document untouched, so its
-// matched entries are unwrapped and returned instead.
-func appendTargetSequences(node ast.Node, key, originFilePath string) ([]*ast.SequenceNode, error) {
+// matchedNodes unwraps the node goccy returned for key into the nodes it actually
+// matched, and reports how many of the selected positions hold no node at all.
+//
+// A key addressing several nodes ("$.agents[*].tag", "$..tag") never resolves to
+// the matched node itself: goccy answers with a detached sequence holding one entry
+// per selected position, and that entry is nil where the key is absent. A non-nil
+// node is therefore no proof that the key exists, and mutating it in place mutates
+// a copy. An empty wrapper, or one holding only nil entries, means the key is
+// absent everywhere.
+func matchedNodes(node ast.Node, key string) (matched []ast.Node, missing int, err error) {
 	multiMatch, err := multiMatchKey(key)
 	if err != nil {
-		return nil, fmt.Errorf("cannot append to key %q: %w", key, err)
+		return nil, 0, fmt.Errorf("cannot evaluate key %q: %w", key, err)
 	}
 
-	sequence, ok := node.(*ast.SequenceNode)
-	if !ok {
-		return nil, fmt.Errorf("cannot append to key %q from file %q: expected a yaml sequence but got %s", key, originFilePath, node.Type())
+	// goccy answers a path that resolves nowhere at all with a nil node, whether or
+	// not it holds a multi match selector.
+	if node == nil {
+		return nil, 0, nil
 	}
 
 	if !multiMatch {
-		return []*ast.SequenceNode{sequence}, nil
+		return []ast.Node{node}, 0, nil
 	}
 
-	if len(sequence.Values) == 0 {
-		return nil, fmt.Errorf("cannot append to key %q from file %q: no yaml sequence matched", key, originFilePath)
+	wrapper, ok := node.(*ast.SequenceNode)
+	if !ok {
+		return nil, 0, fmt.Errorf("evaluating key %q: expected a yaml sequence of matches but got %s", key, node.Type())
 	}
 
-	sequences := make([]*ast.SequenceNode, 0, len(sequence.Values))
-	for _, matched := range sequence.Values {
-		matchedSequence, ok := matched.(*ast.SequenceNode)
-		if !ok {
-			return nil, fmt.Errorf("cannot append to key %q from file %q: expected a yaml sequence but got %s", key, originFilePath, matched.Type())
+	for _, value := range wrapper.Values {
+		if value == nil {
+			missing++
+			continue
 		}
-		sequences = append(sequences, matchedSequence)
+		matched = append(matched, value)
+	}
+
+	return matched, missing, nil
+}
+
+// appendTargetSequences returns the sequences that an appendtoarray target must
+// append to, one per node matched by its key.
+func appendTargetSequences(matched []ast.Node, key, originFilePath string) ([]*ast.SequenceNode, error) {
+	sequences := make([]*ast.SequenceNode, 0, len(matched))
+
+	for _, node := range matched {
+		sequence, ok := node.(*ast.SequenceNode)
+		if !ok {
+			return nil, fmt.Errorf("cannot append to key %q from file %q: expected a yaml sequence but got %s", key, originFilePath, node.Type())
+		}
+		sequences = append(sequences, sequence)
 	}
 
 	return sequences, nil

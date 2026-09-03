@@ -67,11 +67,31 @@ func (y Yaml) goYamlTarget(valueToWrite string, resultTarget *result.Target, dry
 				// create it we let our own walker decide rather than FilterNode.
 				node, filterErr := urlPath.FilterNode(doc.Body)
 
+				// A key selecting several nodes ("$.agents[*].tag", "$..tag")
+				// resolves to a detached wrapper holding one entry per selected
+				// position, so a non-nil node is not by itself proof that the key
+				// exists anywhere. Unwrap it before deciding what to do.
+				var matched []ast.Node
+				var missing int
+				if filterErr == nil {
+					matched, missing, err = matchedNodes(node, key)
+					if err != nil {
+						return 0, ignoredFiles, err
+					}
+				}
+
 				switch {
+				// goccy's selector replacement only rewrites the positions that
+				// already hold the key, and createmissingkey cannot create the
+				// others either, so a partial match would quietly write less than
+				// the manifest asks for.
+				case filterErr == nil && len(matched) > 0 && missing > 0:
+					errMsg = append(errMsg, fmt.Sprintf("key %q from file %q is missing from %d of the %d nodes it selects in document index %d", key, originFilePath, missing, missing+len(matched), index))
+
 				// A null value is an existing node that holds nothing, so when we
 				// may create the key we overwrite it instead of updating it.
-				case filterErr == nil && node != nil && (!y.spec.CreateMissingKey || !isNullNode(node)):
-					changed, err := y.updateNode(yamlFile, index, doc, urlPath, node, key, valueToWrite, nodeToWrite, resultTarget, originFilePath, dryRun)
+				case filterErr == nil && len(matched) > 0 && (!y.spec.CreateMissingKey || !isNullNode(node)):
+					changed, err := y.updateNode(yamlFile, index, doc, urlPath, matched, key, valueToWrite, nodeToWrite, resultTarget, originFilePath, dryRun)
 					if err != nil {
 						return 0, ignoredFiles, err
 					}
@@ -205,13 +225,13 @@ func (y Yaml) createKey(doc *ast.DocumentNode, key, valueToWrite string, resultT
 	return true, nil
 }
 
-// updateNode either appends to the sequence addressed by key, or replaces the value
-// of the node it addresses. It reports whether the document was modified.
-func (y Yaml) updateNode(yamlFile *ast.File, index int, doc *ast.DocumentNode, urlPath *goyaml.Path, node ast.Node, key, valueToWrite string, nodeToWrite ast.Node, resultTarget *result.Target, originFilePath string, dryRun bool) (bool, error) {
+// updateNode either appends to the sequences addressed by key, or replaces the value
+// of the nodes it addresses. matched holds every node the key selected, which is more
+// than one for a wildcard or a recursive selector. It reports whether the document
+// was modified.
+func (y Yaml) updateNode(yamlFile *ast.File, index int, doc *ast.DocumentNode, urlPath *goyaml.Path, matched []ast.Node, key, valueToWrite string, nodeToWrite ast.Node, resultTarget *result.Target, originFilePath string, dryRun bool) (bool, error) {
 	if y.spec.AppendToArray {
-		// A key matching several nodes resolves to a detached wrapper, so append to
-		// each matched sequence rather than to the node goccy returned.
-		sequences, err := appendTargetSequences(node, key, originFilePath)
+		sequences, err := appendTargetSequences(matched, key, originFilePath)
 		if err != nil {
 			return false, err
 		}
@@ -244,13 +264,12 @@ func (y Yaml) updateNode(yamlFile *ast.File, index int, doc *ast.DocumentNode, u
 		return true, nil
 	}
 
-	oldVersion := node.String()
+	oldVersion := matchedValues(matched)
 	resultTarget.Information = oldVersion
 
-	// Compare decoded value so folded/literal scalars (>-, |) aren't
-	// flagged as changed by their formatting markers. See issue #8295.
-	var decoded string
-	if err := goyaml.NodeToValue(node, &decoded); err == nil && decoded == valueToWrite {
+	// Every selected node must already hold the value for the target to be a no-op,
+	// as ReplaceWithNode rewrites all of them at once.
+	if alreadySet(matched, valueToWrite) {
 		resultTarget.Description = fmt.Sprintf("%s\nkey %q already set to %q, from file %q",
 			resultTarget.Description,
 			key,
@@ -286,4 +305,33 @@ func shouldMessage(dryRun bool) string {
 		return " should be "
 	}
 	return " "
+}
+
+// matchedValues renders the value(s) held by the matched nodes, for the target
+// description and information.
+func matchedValues(matched []ast.Node) string {
+	if len(matched) == 1 {
+		return matched[0].String()
+	}
+
+	values := make([]string, 0, len(matched))
+	for _, node := range matched {
+		values = append(values, strings.TrimSpace(node.String()))
+	}
+
+	return strings.Join(values, ", ")
+}
+
+// alreadySet reports whether every matched node already holds valueToWrite. The
+// decoded value is compared so that folded and literal scalars (">-", "|") are not
+// flagged as changed by their formatting markers. See issue #8295.
+func alreadySet(matched []ast.Node, valueToWrite string) bool {
+	for _, node := range matched {
+		var decoded string
+		if err := goyaml.NodeToValue(node, &decoded); err != nil || decoded != valueToWrite {
+			return false
+		}
+	}
+
+	return len(matched) > 0
 }

@@ -704,3 +704,179 @@ func Test_TargetYamlPathPartialDocumentMatch(t *testing.T) {
 	assert.False(t, gotResult.Changed)
 	assert.Equal(t, result.SUCCESS, gotResult.Result)
 }
+
+// Test_TargetWildcardKey covers keys selecting several nodes. goccy answers such a
+// query with a detached sequence holding one entry per selected position, and a nil
+// entry where the key is absent, so a non-nil node used to be mistaken for a key
+// that exists everywhere: the target then reported a change that ReplaceWithNode
+// had not made.
+func Test_TargetWildcardKey(t *testing.T) {
+	tests := []struct {
+		name             string
+		spec             Spec
+		inputSourceValue string
+		mockedContent    string
+		wantedContent    string
+		wantedResult     bool
+		wantedError      bool
+		dryRun           bool
+	}{
+		{
+			name:             "Update every node selected by a wildcard",
+			spec:             Spec{File: "test.yaml", Key: "$.agents[*].tag"},
+			inputSourceValue: "v2",
+			mockedContent: `agents:
+  - name: first
+    tag: v1
+  - name: second
+    tag: v1
+`,
+			wantedContent: `agents:
+  - name: first
+    tag: v2
+  - name: second
+    tag: v2
+`,
+			wantedResult: true,
+		},
+		{
+			name:             "Updating a wildcard reports no change when every selected node already holds the value",
+			spec:             Spec{File: "test.yaml", Key: "$.agents[*].tag"},
+			inputSourceValue: "v2",
+			mockedContent: `agents:
+  - name: first
+    tag: v2
+  - name: second
+    tag: v2
+`,
+			wantedContent: `agents:
+  - name: first
+    tag: v2
+  - name: second
+    tag: v2
+`,
+			wantedResult: false,
+		},
+		{
+			name:             "Updating a wildcard reports a change when only some selected nodes hold the value",
+			spec:             Spec{File: "test.yaml", Key: "$.agents[*].tag"},
+			inputSourceValue: "v2",
+			mockedContent: `agents:
+  - name: first
+    tag: v2
+  - name: second
+    tag: v1
+`,
+			wantedContent: `agents:
+  - name: first
+    tag: v2
+  - name: second
+    tag: v2
+`,
+			wantedResult: true,
+		},
+		{
+			name:             "A key missing from every node selected by a wildcard is not found",
+			spec:             Spec{File: "test.yaml", Key: "$.agents[*].tag"},
+			inputSourceValue: "v2",
+			mockedContent: `agents:
+  - name: first
+  - name: second
+`,
+			wantedError: true,
+		},
+		{
+			name:             "A key missing from some of the nodes selected by a wildcard fails",
+			spec:             Spec{File: "test.yaml", Key: "$.agents[*].tag"},
+			inputSourceValue: "v2",
+			mockedContent: `agents:
+  - name: first
+    tag: v1
+  - name: second
+`,
+			wantedError: true,
+		},
+		{
+			name:             "A recursive selector matching nothing is not found",
+			spec:             Spec{File: "test.yaml", Key: "$..tag"},
+			inputSourceValue: "v2",
+			mockedContent:    "foo: bar\n",
+			wantedError:      true,
+		},
+		{
+			name:             "Update every node selected by a recursive selector",
+			spec:             Spec{File: "test.yaml", Key: "$..tag"},
+			inputSourceValue: "v2",
+			mockedContent: `spec:
+  tag: v1
+status:
+  tag: v1
+`,
+			wantedContent: `spec:
+  tag: v2
+status:
+  tag: v2
+`,
+			wantedResult: true,
+		},
+		{
+			name:             "Appending to a sequence missing from every node selected by a wildcard is not found",
+			spec:             Spec{File: "test.yaml", Key: "$.agents[*].tags", AppendToArray: true},
+			inputSourceValue: "b",
+			mockedContent: `agents:
+  - name: first
+  - name: second
+`,
+			wantedError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			runTargetTestCase(t, tt.spec, tt.inputSourceValue, tt.mockedContent, tt.wantedContent, tt.wantedResult, tt.wantedError, tt.dryRun)
+		})
+	}
+}
+
+// Test_CreateMissingKeyRejectsMultiMatchKey covers createmissingkey refusing a key
+// that selects several nodes: goccy's selector replacement only rewrites the
+// positions already holding the key, so creating through such a key writes nothing.
+func Test_CreateMissingKeyRejectsMultiMatchKey(t *testing.T) {
+	for _, key := range []string{"$.agents[*].tag", "$..tag", "$.agents[*].spec.tag"} {
+		t.Run(key, func(t *testing.T) {
+			_, err := New(Spec{File: "test.yaml", Key: key, CreateMissingKey: true})
+			require.ErrorContains(t, err, "`spec.createmissingkey` does not support the wildcard or recursive selector")
+		})
+	}
+
+	// A trailing "[*]" addresses the sequence itself, which goccy resolves to the
+	// live node, so it stays supported.
+	_, err := New(Spec{File: "test.yaml", Key: "$.tags[*]", CreateMissingKey: true})
+	require.NoError(t, err)
+}
+
+// Test_TargetSearchPatternIgnoresMissingWildcardKey covers spec.searchpattern being
+// honored when a wildcard selects nodes that do not hold the key, which used to be
+// unreachable because the detached wrapper goccy returns is not nil.
+func Test_TargetSearchPatternIgnoresMissingWildcardKey(t *testing.T) {
+	content := "agents:\n  - name: first\n  - name: second\n"
+
+	t.Chdir(t.TempDir())
+	require.NoError(t, os.WriteFile("test.yaml", []byte(content), 0600))
+
+	mockedText := text.MockTextRetriever{
+		Contents: map[string]string{"test.yaml": content},
+	}
+
+	y, err := New(Spec{File: "test.yaml", Key: "$.agents[*].tag", SearchPattern: true})
+	require.NoError(t, err)
+
+	y.contentRetriever = &mockedText
+
+	gotResult := result.Target{}
+	require.NoError(t, y.Target(context.Background(), "v2", nil, false, &gotResult))
+
+	assert.False(t, gotResult.Changed)
+	assert.Equal(t, result.SKIPPED, gotResult.Result)
+	assert.Equal(t, content, mockedText.Contents["test.yaml"])
+}
