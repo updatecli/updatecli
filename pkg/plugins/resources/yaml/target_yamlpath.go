@@ -62,6 +62,10 @@ func (y *Yaml) goYamlPathTarget(valueToWrite string, resultTarget *result.Target
 			// No DocumentIndex: search across all documents and process each doc that matches
 			foundAny := false
 			var docNotChangedCount int
+			// docsMatched counts the documents in which the key was found, which is
+			// the only meaningful denominator: len(docs) ignores both DocumentIndex
+			// and the documents that simply do not carry the key.
+			var docsMatched int
 
 			for index, doc := range docs {
 
@@ -80,7 +84,7 @@ func (y *Yaml) goYamlPathTarget(valueToWrite string, resultTarget *result.Target
 				}
 
 				foundAny = true
-				fileKeysProcessed++
+				docsMatched++
 				var oldVersion string
 				var notChangedNode int
 				for _, node := range nodes {
@@ -128,18 +132,23 @@ func (y *Yaml) goYamlPathTarget(valueToWrite string, resultTarget *result.Target
 				if notChangedNode == len(nodes) {
 					docNotChangedCount++
 				}
+			}
 
-				if !foundAny {
-					if y.spec.SearchPattern {
-						logrus.Debugf("ignoring key %q in file %q as we couldn't find it in any document", key, originFilePath)
-						continue
-					}
-					return 0, ignoredFiles, fmt.Errorf("couldn't find key %q from file %q", key, originFilePath)
+			// Whether the key was found has to be decided once every document has
+			// been evaluated, not while iterating over them.
+			if !foundAny {
+				if y.spec.SearchPattern {
+					logrus.Debugf("ignoring key %q in file %q as we couldn't find it in any document", key, originFilePath)
+					continue
 				}
-				if docNotChangedCount == len(docs) {
-					// if every matching document had only unchanged nodes, consider file not changed for this key
-					fileNotChanged++
-				}
+				return 0, ignoredFiles, fmt.Errorf("couldn't find key %q from file %q", key, originFilePath)
+			}
+
+			fileKeysProcessed++
+
+			if docNotChangedCount == docsMatched {
+				// if every matching document had only unchanged nodes, consider file not changed for this key
+				fileNotChanged++
 			}
 		} // end keys loop
 

@@ -156,6 +156,45 @@ type Spec struct {
 	//```
 	//
 	SearchPattern bool `yaml:",omitempty"`
+	//"createmissingkey" allows creating the key when it does not exist yet in the yaml document.
+	//
+	//compatible:
+	//  * target
+	//
+	//default:
+	//	false
+	//
+	//remark:
+	//  * missing intermediate keys are created as nested maps.
+	//  * the key is only created, never removed, and existing keys are left untouched.
+	//  * a missing sequence index such as `$.agents[0].name` cannot be created.
+	//  * not supported by the "yamlpath" engine.
+	//  * the yaml file itself must already exist.
+	//
+	//example:
+	//  * key: $.image.tag
+	//    createmissingkey: true
+	//
+	CreateMissingKey bool `yaml:",omitempty"`
+	//"appendtoarray" appends the value as a new entry of the yaml sequence targeted by "key".
+	//
+	//compatible:
+	//  * target
+	//
+	//default:
+	//	false
+	//
+	//remark:
+	//  * the operation is idempotent, appending is skipped when the sequence already contains the value.
+	//  * combined with "createmissingkey", a missing sequence is created holding the value as its sole entry.
+	//  * "key" must target the sequence itself, not one of its entries.
+	//  * not supported by the "yamlpath" engine.
+	//
+	//example:
+	//  * key: $.allowedTags
+	//    appendtoarray: true
+	//
+	AppendToArray bool `yaml:",omitempty"`
 	//comment defines a comment to add after the value.
 	//
 	//default: empty
@@ -271,6 +310,9 @@ func (s *Spec) Validate() error {
 	}
 	if len(s.Keys) > 1 && hasDuplicates(s.Keys) {
 		validationErrors = append(validationErrors, "Validation error in target of type 'yaml': the attribute `spec.keys` contains duplicated values")
+	}
+	if s.Engine == EngineYamlPath && (s.CreateMissingKey || s.AppendToArray) {
+		validationErrors = append(validationErrors, fmt.Sprintf("Validation error in target of type 'yaml': engine %q does not support the attributes `spec.createmissingkey` and `spec.appendtoarray`", s.Engine))
 	}
 
 	// Return all the validation errors if found any
@@ -397,13 +439,15 @@ func (y *Yaml) UpdateAbsoluteFilePath(workDir string) error {
 // to identify the resource without any sensitive information or context specific data.
 func (y *Yaml) ReportConfig() interface{} {
 	return Spec{
-		File:          y.spec.File,
-		Files:         y.spec.Files,
-		Key:           y.spec.Key,
-		Keys:          y.spec.Keys,
-		Value:         y.spec.Value,
-		Engine:        y.spec.Engine,
-		KeyOnly:       y.spec.KeyOnly,
-		SearchPattern: y.spec.SearchPattern,
+		File:             y.spec.File,
+		Files:            y.spec.Files,
+		Key:              y.spec.Key,
+		Keys:             y.spec.Keys,
+		Value:            y.spec.Value,
+		Engine:           y.spec.Engine,
+		KeyOnly:          y.spec.KeyOnly,
+		SearchPattern:    y.spec.SearchPattern,
+		CreateMissingKey: y.spec.CreateMissingKey,
+		AppendToArray:    y.spec.AppendToArray,
 	}
 }
