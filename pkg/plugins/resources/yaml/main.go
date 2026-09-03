@@ -77,6 +77,15 @@ type Spec struct {
 	//
 	//remark:
 	//  * key is a simpler version of yamlpath accepts keys.
+	//  * as a target, a key that a document does not hold is an error, so that a
+	//    manifest never reports a success for an update it did not make. The same
+	//    rule applies to a wildcard such as `$.agents[*].name`: every position it
+	//    selects must hold the key, otherwise the target fails rather than updating
+	//    only some of them. Set "searchpattern" to update the positions holding the
+	//    key and tolerate the others.
+	//  * a recursive selector such as `$..name` cannot report a partial match: it
+	//    searches for the key itself, so it only ever selects the positions already
+	//    holding it, and never fails on the ones that do not.
 	//
 	//example using default engine:
 	//  * key: $.name
@@ -155,7 +164,54 @@ type Spec struct {
 	//        lo '-' hi   matches character c for lo <= c <= hi
 	//```
 	//
+	//remark:
+	//  * as a target, it also relaxes the requirement that the key exists: a file
+	//    that does not hold it is ignored instead of failing the target, and a
+	//    wildcard key updates the positions holding it rather than failing on the
+	//    ones that do not.
+	//
 	SearchPattern bool `yaml:",omitempty"`
+	//"createmissingkey" allows creating the key when it does not exist yet in the yaml document.
+	//
+	//compatible:
+	//  * target
+	//
+	//default:
+	//	false
+	//
+	//remark:
+	//  * missing intermediate keys are created as nested maps.
+	//  * the key is only created, never removed, and existing keys are left untouched.
+	//  * a missing sequence index such as `$.agents[0].name` cannot be created.
+	//  * a key selecting several nodes, such as `$.agents[*].tag` or `$..tag`,
+	//    is rejected: the key cannot be created under each selected node.
+	//  * not supported by the "yamlpath" engine.
+	//  * the yaml file itself must already exist.
+	//
+	//example:
+	//  * key: $.image.tag
+	//    createmissingkey: true
+	//
+	CreateMissingKey bool `yaml:",omitempty"`
+	//"appendtoarray" appends the value as a new entry of the yaml sequence targeted by "key".
+	//
+	//compatible:
+	//  * target
+	//
+	//default:
+	//	false
+	//
+	//remark:
+	//  * the operation is idempotent, appending is skipped when the sequence already contains the value.
+	//  * combined with "createmissingkey", a missing sequence is created holding the value as its sole entry.
+	//  * "key" must target the sequence itself, not one of its entries.
+	//  * not supported by the "yamlpath" engine.
+	//
+	//example:
+	//  * key: $.allowedTags
+	//    appendtoarray: true
+	//
+	AppendToArray bool `yaml:",omitempty"`
 	//comment defines a comment to add after the value.
 	//
 	//default: empty
@@ -271,6 +327,27 @@ func (s *Spec) Validate() error {
 	}
 	if len(s.Keys) > 1 && hasDuplicates(s.Keys) {
 		validationErrors = append(validationErrors, "Validation error in target of type 'yaml': the attribute `spec.keys` contains duplicated values")
+	}
+	if s.Engine == EngineYamlPath && s.CreateMissingKey {
+		validationErrors = append(validationErrors, fmt.Sprintf("Validation error in target of type 'yaml': engine %q does not support the attributes `spec.createmissingkey`", s.Engine))
+	}
+
+	if s.Engine == EngineYamlPath && s.AppendToArray {
+		validationErrors = append(validationErrors, fmt.Sprintf("Validation error in target of type 'yaml': engine %q does not support the attributes `spec.appendtoarray`", s.Engine))
+	}
+
+	// A wildcard or a recursive selector addresses one node per selected position,
+	// and there is no way to create a key under each of them: goccy's selector
+	// replacement only rewrites the positions that already hold the key, so
+	// creating through such a key would silently write nothing.
+	if s.CreateMissingKey {
+		for _, key := range s.getKeys() {
+			// A key that does not parse is reported when it is evaluated, with a
+			// message naming the offending character.
+			if multiMatch, err := multiMatchKey(key); err == nil && multiMatch {
+				validationErrors = append(validationErrors, fmt.Sprintf("Validation error in target of type 'yaml': the attribute `spec.createmissingkey` does not support the wildcard or recursive selector of key %q", key))
+			}
+		}
 	}
 
 	// Return all the validation errors if found any
@@ -397,13 +474,15 @@ func (y *Yaml) UpdateAbsoluteFilePath(workDir string) error {
 // to identify the resource without any sensitive information or context specific data.
 func (y *Yaml) ReportConfig() interface{} {
 	return Spec{
-		File:          y.spec.File,
-		Files:         y.spec.Files,
-		Key:           y.spec.Key,
-		Keys:          y.spec.Keys,
-		Value:         y.spec.Value,
-		Engine:        y.spec.Engine,
-		KeyOnly:       y.spec.KeyOnly,
-		SearchPattern: y.spec.SearchPattern,
+		File:             y.spec.File,
+		Files:            y.spec.Files,
+		Key:              y.spec.Key,
+		Keys:             y.spec.Keys,
+		Value:            y.spec.Value,
+		Engine:           y.spec.Engine,
+		KeyOnly:          y.spec.KeyOnly,
+		SearchPattern:    y.spec.SearchPattern,
+		CreateMissingKey: y.spec.CreateMissingKey,
+		AppendToArray:    y.spec.AppendToArray,
 	}
 }

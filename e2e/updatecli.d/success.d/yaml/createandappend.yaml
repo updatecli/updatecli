@@ -1,0 +1,58 @@
+name: Test YAML resource createmissingkey and appendtoarray
+
+sources:
+  tag:
+    name: Get the existing image tag
+    kind: yaml
+    spec:
+      file: e2e/testdata/yaml/values.yaml
+      key: $.image.tag
+
+targets:
+  createMissingKey:
+    name: Create a key that does not exist yet
+    kind: yaml
+    sourceid: tag
+    spec:
+      file: e2e/testdata/yaml/values.yaml
+      key: $.image.registry.tag
+      createmissingkey: true
+
+  createMissingKeys:
+    name: Create several keys sharing the same value
+    kind: yaml
+    sourceid: tag
+    spec:
+      file: e2e/testdata/yaml/values.yaml
+      keys:
+        - $.image.mirror.tag
+        - $.image.fallback.tag
+      createmissingkey: true
+
+  appendToArray:
+    name: Append a new entry to an existing array
+    kind: yaml
+    spec:
+      file: e2e/testdata/yaml/values.yaml
+      key: $.allowedTags
+      appendtoarray: true
+      value: v1.1.0
+
+  appendToArrayIdempotent:
+    name: Appending an entry already present reports no change
+    kind: yaml
+    spec:
+      file: e2e/testdata/yaml/values.yaml
+      key: $.allowedTags
+      appendtoarray: true
+      value: v1.0.0
+
+  appendToMissingArray:
+    name: Create a missing array holding the value
+    kind: yaml
+    spec:
+      file: e2e/testdata/yaml/values.yaml
+      key: $.deniedTags
+      appendtoarray: true
+      createmissingkey: true
+      value: v0.1.0
