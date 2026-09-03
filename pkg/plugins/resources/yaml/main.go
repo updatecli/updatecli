@@ -311,8 +311,12 @@ func (s *Spec) Validate() error {
 	if len(s.Keys) > 1 && hasDuplicates(s.Keys) {
 		validationErrors = append(validationErrors, "Validation error in target of type 'yaml': the attribute `spec.keys` contains duplicated values")
 	}
-	if s.Engine == EngineYamlPath && (s.CreateMissingKey || s.AppendToArray) {
-		validationErrors = append(validationErrors, fmt.Sprintf("Validation error in target of type 'yaml': engine %q does not support the attributes `spec.createmissingkey` and `spec.appendtoarray`", s.Engine))
+	if s.Engine == EngineYamlPath && s.CreateMissingKey {
+		validationErrors = append(validationErrors, fmt.Sprintf("Validation error in target of type 'yaml': engine %q does not support the attributes `spec.createmissingkey`", s.Engine))
+	}
+
+	if s.Engine == EngineYamlPath && s.AppendToArray {
+		validationErrors = append(validationErrors, fmt.Sprintf("Validation error in target of type 'yaml': engine %q does not support the attributes `spec.appendtoarray`", s.Engine))
 	}
 
 	// Return all the validation errors if found any
