@@ -84,13 +84,18 @@ func (y Yaml) goYamlTarget(valueToWrite string, resultTarget *result.Target, dry
 				// goccy's selector replacement only rewrites the positions that
 				// already hold the key, and createmissingkey cannot create the
 				// others either, so a partial match would quietly write less than
-				// the manifest asks for.
-				case filterErr == nil && len(matched) > 0 && missing > 0:
+				// the manifest asks for. spec.searchpattern asks for that
+				// tolerance explicitly, so it updates what it found instead.
+				case filterErr == nil && len(matched) > 0 && missing > 0 && !y.spec.SearchPattern:
 					errMsg = append(errMsg, fmt.Sprintf("key %q from file %q is missing from %d of the %d nodes it selects in document index %d", key, originFilePath, missing, missing+len(matched), index))
 
 				// A null value is an existing node that holds nothing, so when we
 				// may create the key we overwrite it instead of updating it.
 				case filterErr == nil && len(matched) > 0 && (!y.spec.CreateMissingKey || !isNullNode(node)):
+					if missing > 0 {
+						logrus.Debugf("key %q from file %q is missing from %d of the %d nodes it selects in document %d, updating the %d nodes holding it", key, originFilePath, missing, missing+len(matched), index, len(matched))
+					}
+
 					changed, err := y.updateNode(yamlFile, index, doc, urlPath, matched, key, valueToWrite, nodeToWrite, resultTarget, originFilePath, dryRun)
 					if err != nil {
 						return 0, ignoredFiles, err

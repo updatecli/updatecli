@@ -77,6 +77,15 @@ type Spec struct {
 	//
 	//remark:
 	//  * key is a simpler version of yamlpath accepts keys.
+	//  * as a target, a key that a document does not hold is an error, so that a
+	//    manifest never reports a success for an update it did not make. The same
+	//    rule applies to a wildcard such as `$.agents[*].name`: every position it
+	//    selects must hold the key, otherwise the target fails rather than updating
+	//    only some of them. Set "searchpattern" to update the positions holding the
+	//    key and tolerate the others.
+	//  * a recursive selector such as `$..name` cannot report a partial match: it
+	//    searches for the key itself, so it only ever selects the positions already
+	//    holding it, and never fails on the ones that do not.
 	//
 	//example using default engine:
 	//  * key: $.name
@@ -154,6 +163,12 @@ type Spec struct {
 	//        '\\' c      matches character c
 	//        lo '-' hi   matches character c for lo <= c <= hi
 	//```
+	//
+	//remark:
+	//  * as a target, it also relaxes the requirement that the key exists: a file
+	//    that does not hold it is ignored instead of failing the target, and a
+	//    wildcard key updates the positions holding it rather than failing on the
+	//    ones that do not.
 	//
 	SearchPattern bool `yaml:",omitempty"`
 	//"createmissingkey" allows creating the key when it does not exist yet in the yaml document.
