@@ -1,0 +1,7 @@
+# Test data used by the yaml createmissingkey/appendtoarray e2e manifest.
+# It is only ever read in dry run, so it stays unmodified.
+image:
+  name: nginx
+  tag: v1.0.0
+allowedTags:
+  - v1.0.0

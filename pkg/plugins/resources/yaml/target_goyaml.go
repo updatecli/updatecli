@@ -1,7 +1,6 @@
 package yaml
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -13,33 +12,18 @@ import (
 	goyaml "github.com/goccy/go-yaml"
 	"github.com/goccy/go-yaml/ast"
 	"github.com/goccy/go-yaml/parser"
-	"github.com/goccy/go-yaml/token"
 )
 
 func (y Yaml) goYamlTarget(valueToWrite string, resultTarget *result.Target, dryRun bool) (notChanged int, ignoredFiles int, err error) {
 	nodeToWrite, err := goyaml.ValueToNode(valueToWrite)
-
-	if y.spec.Comment != "" {
-		commentGroup := &ast.CommentGroupNode{
-			Comments: []*ast.CommentNode{
-				{
-					Token: &token.Token{
-						Type: token.CommentType,
-						// Add a space before the comment
-						Value: " " + y.spec.Comment,
-					},
-				},
-			},
-		}
-
-		err = nodeToWrite.SetComment(commentGroup)
-		if err != nil {
-			logrus.Errorf("error setting comment: %s", err)
-		}
-	}
-
 	if err != nil {
 		return 0, ignoredFiles, fmt.Errorf("parsing value to write: %w", err)
+	}
+
+	if y.spec.Comment != "" {
+		if err := setNodeComment(nodeToWrite, y.spec.Comment); err != nil {
+			logrus.Errorf("error setting comment: %s", err)
+		}
 	}
 
 	keys := y.spec.getKeys()
@@ -56,6 +40,21 @@ func (y Yaml) goYamlTarget(valueToWrite string, resultTarget *result.Target, dry
 			return 0, ignoredFiles, fmt.Errorf("parsing yaml file: %w", err)
 		}
 
+		// A documentindex addressing no document of the file leaves the keys loop
+		// below evaluating nothing at all, reporting neither a match nor a miss, so
+		// the file would be silently ignored and the target would succeed without
+		// having updated anything. The yamlpath engine and the source both report
+		// this as a missing key.
+		if y.spec.DocumentIndex != nil && (*y.spec.DocumentIndex < 0 || *y.spec.DocumentIndex >= len(yamlFile.Docs)) {
+			if y.spec.SearchPattern {
+				logrus.Debugf("ignoring file %q as it holds %d document(s) and documentindex is %d", originFilePath, len(yamlFile.Docs), *y.spec.DocumentIndex)
+				ignoredFiles++
+				continue
+			}
+
+			return 0, ignoredFiles, fmt.Errorf("documentindex %d addresses no document of file %q, which holds %d document(s)", *y.spec.DocumentIndex, originFilePath, len(yamlFile.Docs))
+		}
+
 		// Process each key for this file
 		for _, key := range keys {
 			urlPath, err := goyaml.PathString(key)
@@ -63,48 +62,80 @@ func (y Yaml) goYamlTarget(valueToWrite string, resultTarget *result.Target, dry
 				return 0, ignoredFiles, fmt.Errorf("crafting yamlpath query for key %q: %w", key, err)
 			}
 
-			oldVersion := ""
 			keyNotFound := []string{}
 			errMsg := []string{}
-			contentChanged := false
+			// keyProcessed reports whether the key was resolved, or created, in at
+			// least one of the evaluated documents.
+			keyProcessed := false
+			keyChanged := false
 
 			for index, doc := range yamlFile.Docs {
-				var node ast.Node
-
 				if y.spec.DocumentIndex != nil {
 					if index != *y.spec.DocumentIndex {
 						continue
 					}
 				}
 
-				node, err = urlPath.FilterNode(doc.Body)
-				if err != nil {
-					if errors.Is(err, goyaml.ErrNotFoundNode) {
-						if y.spec.SearchPattern {
-							// If search pattern is true then we don't want to return an error
-							// as we are probably trying to identify a file matching the key
-							logrus.Debugf("ignoring key %q from file %q in document %d: %s", key, originFilePath, index, err)
-							continue
-						}
-						keyNotFound = append(keyNotFound, fmt.Sprintf("couldn't find key %q from file %q in document %d", key, originFilePath, index))
+				// goccy reports a missing key as a nil node rather than an error,
+				// but reports an intermediate null value ("key:") as an invalid
+				// query. Both mean the key is absent, so when we are allowed to
+				// create it we let our own walker decide rather than FilterNode.
+				node, filterErr := urlPath.FilterNode(doc.Body)
+
+				// A key selecting several nodes ("$.agents[*].tag", "$..tag")
+				// resolves to a detached wrapper holding one entry per selected
+				// position, so a non-nil node is not by itself proof that the key
+				// exists anywhere. Unwrap it before deciding what to do.
+				var matched []ast.Node
+				var missing int
+				if filterErr == nil {
+					matched, missing, err = matchedNodes(node, key)
+					if err != nil {
+						return 0, ignoredFiles, err
+					}
+				}
+
+				switch {
+				// goccy's selector replacement only rewrites the positions that
+				// already hold the key, and createmissingkey cannot create the
+				// others either, so a partial match would quietly write less than
+				// the manifest asks for. spec.searchpattern asks for that
+				// tolerance explicitly, so it updates what it found instead.
+				case filterErr == nil && len(matched) > 0 && missing > 0 && !y.spec.SearchPattern:
+					errMsg = append(errMsg, fmt.Sprintf("key %q from file %q is missing from %d of the %d nodes it selects in document index %d", key, originFilePath, missing, missing+len(matched), index))
+
+				// A null value is an existing node that holds nothing, so when we
+				// may create the key we overwrite it instead of updating it.
+				case filterErr == nil && len(matched) > 0 && (!y.spec.CreateMissingKey || !isNullNode(node)):
+					if missing > 0 {
+						logrus.Debugf("key %q from file %q is missing from %d of the %d nodes it selects in document %d, updating the %d nodes holding it", key, originFilePath, missing, missing+len(matched), index, len(matched))
 					}
 
-					errMsg = append(errMsg, fmt.Sprintf("searching for key %q in document index %d: %s", key, index, err.Error()))
-					continue
-				}
+					changed, err := y.updateNode(yamlFile, index, doc, urlPath, matched, key, valueToWrite, nodeToWrite, resultTarget, originFilePath, dryRun)
+					if err != nil {
+						return 0, ignoredFiles, err
+					}
+					keyProcessed = true
+					keyChanged = keyChanged || changed
 
-				if node == nil {
-					keyNotFound = append(keyNotFound, fmt.Sprintf("couldn't find key %s from file %q", key, originFilePath))
-					continue
-				}
+				case y.spec.CreateMissingKey:
+					changed, err := y.createKey(doc, key, valueToWrite, resultTarget, originFilePath, dryRun)
+					if err != nil {
+						return 0, ignoredFiles, err
+					}
+					keyProcessed = true
+					keyChanged = keyChanged || changed
 
-				oldVersion = node.String()
+				case filterErr != nil:
+					errMsg = append(errMsg, fmt.Sprintf("searching for key %q in document index %d: %s", key, index, filterErr.Error()))
 
-				// Compare decoded value so folded/literal scalars (>-, |) aren't
-				// flagged as changed by their formatting markers. See issue #8295.
-				var decoded string
-				if err := goyaml.NodeToValue(node, &decoded); err != nil || decoded != valueToWrite {
-					contentChanged = true
+				case y.spec.SearchPattern:
+					// If search pattern is true then we don't want to return an error
+					// as we are probably trying to identify a file matching the key
+					logrus.Debugf("ignoring key %q from file %q in document %d as it does not exist", key, originFilePath, index)
+
+				default:
+					keyNotFound = append(keyNotFound, fmt.Sprintf("couldn't find key %q from file %q in document %d", key, originFilePath, index))
 				}
 			}
 
@@ -119,34 +150,15 @@ func (y Yaml) goYamlTarget(valueToWrite string, resultTarget *result.Target, dry
 				return 0, ignoredFiles, fmt.Errorf("key not found from file %q", originFilePath)
 			}
 
-			fileKeysProcessed++
-			resultTarget.Information = oldVersion
-
-			if !contentChanged {
-				resultTarget.Description = fmt.Sprintf("%s\nkey %q already set to %q, from file %q",
-					resultTarget.Description,
-					key,
-					valueToWrite,
-					originFilePath)
-				fileNotChanged++
+			if !keyProcessed {
 				continue
 			}
 
-			for index, doc := range yamlFile.Docs {
-				if y.spec.DocumentIndex != nil {
-					if index != *y.spec.DocumentIndex {
-						continue
-					}
-				}
+			fileKeysProcessed++
 
-				tmpYAMLFile := ast.File{
-					Name: yamlFile.Name,
-				}
-				tmpYAMLFile.Docs = append(tmpYAMLFile.Docs, doc)
-				if err := urlPath.ReplaceWithNode(&tmpYAMLFile, nodeToWrite); err != nil {
-					return 0, ignoredFiles, fmt.Errorf("replacing yaml key %q: %w", key, err)
-				}
-				yamlFile.Docs[index].Body = tmpYAMLFile.Docs[0].Body
+			if !keyChanged {
+				fileNotChanged++
+				continue
 			}
 
 			if _, ok := resultTargetFilesMap[filePath]; !ok {
@@ -156,20 +168,6 @@ func (y Yaml) goYamlTarget(valueToWrite string, resultTarget *result.Target, dry
 
 			resultTarget.Changed = true
 			resultTarget.Result = result.ATTENTION
-
-			shouldMsg := " "
-			if dryRun {
-				// Use to craft message depending if we run Updatecli in dryrun mode or not
-				shouldMsg = " should be "
-			}
-
-			resultTarget.Description = fmt.Sprintf("%s\nkey %q%supdated from %q to %q, in file %q",
-				resultTarget.Description,
-				key,
-				shouldMsg,
-				oldVersion,
-				valueToWrite,
-				originFilePath)
 		}
 
 		// If no keys were processed for this file (all were ignored), count as ignored
@@ -205,4 +203,155 @@ func (y Yaml) goYamlTarget(valueToWrite string, resultTarget *result.Target, dry
 	}
 
 	return notChanged, ignoredFiles, nil
+}
+
+// createKey inserts a key that does not exist yet in doc. When the target also
+// appends to an array, the key is created holding the value as its sole entry.
+func (y Yaml) createKey(doc *ast.DocumentNode, key, valueToWrite string, resultTarget *result.Target, originFilePath string, dryRun bool) (bool, error) {
+	elements, err := splitYamlPathKey(key)
+	if err != nil {
+		return false, fmt.Errorf("cannot create key %q: %w", key, err)
+	}
+
+	var leafValue interface{} = valueToWrite
+	if y.spec.AppendToArray {
+		leafValue = []interface{}{valueToWrite}
+	}
+
+	leaf, err := createMissingKey(doc, key, elements, leafValue)
+	if err != nil {
+		return false, err
+	}
+
+	if y.spec.Comment != "" {
+		if y.spec.AppendToArray {
+			// The comment belongs to the sole entry of the created sequence.
+			if sequence, ok := leaf.(*ast.SequenceNode); ok && len(sequence.Values) == 1 {
+				leaf = sequence.Values[0]
+			}
+		}
+		if err := setNodeComment(leaf, y.spec.Comment); err != nil {
+			logrus.Errorf("error setting comment: %s", err)
+		}
+	}
+
+	resultTarget.Description = fmt.Sprintf("%s\nkey %q%screated in file %q with value %q",
+		resultTarget.Description,
+		key,
+		shouldMessage(dryRun),
+		originFilePath,
+		valueToWrite)
+
+	return true, nil
+}
+
+// updateNode either appends to the sequences addressed by key, or replaces the value
+// of the nodes it addresses. matched holds every node the key selected, which is more
+// than one for a wildcard or a recursive selector. It reports whether the document
+// was modified.
+func (y Yaml) updateNode(yamlFile *ast.File, index int, doc *ast.DocumentNode, urlPath *goyaml.Path, matched []ast.Node, key, valueToWrite string, nodeToWrite ast.Node, resultTarget *result.Target, originFilePath string, dryRun bool) (bool, error) {
+	if y.spec.AppendToArray {
+		sequences, err := appendTargetSequences(matched, key, originFilePath)
+		if err != nil {
+			return false, err
+		}
+
+		appended := false
+		for _, sequence := range sequences {
+			sequenceAppended, err := appendToSequence(sequence, valueToWrite, y.spec.Comment)
+			if err != nil {
+				return false, fmt.Errorf("appending to key %q from file %q: %w", key, originFilePath, err)
+			}
+			appended = appended || sequenceAppended
+		}
+
+		if !appended {
+			resultTarget.Description = fmt.Sprintf("%s\nkey %q already contains %q, from file %q",
+				resultTarget.Description,
+				key,
+				valueToWrite,
+				originFilePath)
+			return false, nil
+		}
+
+		resultTarget.Description = fmt.Sprintf("%s\nvalue %q%sappended to key %q, in file %q",
+			resultTarget.Description,
+			valueToWrite,
+			shouldMessage(dryRun),
+			key,
+			originFilePath)
+
+		return true, nil
+	}
+
+	oldVersion := matchedValues(matched)
+	resultTarget.Information = oldVersion
+
+	// Every selected node must already hold the value for the target to be a no-op,
+	// as ReplaceWithNode rewrites all of them at once.
+	if alreadySet(matched, valueToWrite) {
+		resultTarget.Description = fmt.Sprintf("%s\nkey %q already set to %q, from file %q",
+			resultTarget.Description,
+			key,
+			valueToWrite,
+			originFilePath)
+		return false, nil
+	}
+
+	tmpYAMLFile := ast.File{
+		Name: yamlFile.Name,
+	}
+	tmpYAMLFile.Docs = append(tmpYAMLFile.Docs, doc)
+	if err := urlPath.ReplaceWithNode(&tmpYAMLFile, nodeToWrite); err != nil {
+		return false, fmt.Errorf("replacing yaml key %q: %w", key, err)
+	}
+	yamlFile.Docs[index].Body = tmpYAMLFile.Docs[0].Body
+
+	resultTarget.Description = fmt.Sprintf("%s\nkey %q%supdated from %q to %q, in file %q",
+		resultTarget.Description,
+		key,
+		shouldMessage(dryRun),
+		oldVersion,
+		valueToWrite,
+		originFilePath)
+
+	return true, nil
+}
+
+// shouldMessage crafts the message fragment depending on whether Updatecli runs in
+// dry run mode or not.
+func shouldMessage(dryRun bool) string {
+	if dryRun {
+		return " should be "
+	}
+	return " "
+}
+
+// matchedValues renders the value(s) held by the matched nodes, for the target
+// description and information.
+func matchedValues(matched []ast.Node) string {
+	if len(matched) == 1 {
+		return matched[0].String()
+	}
+
+	values := make([]string, 0, len(matched))
+	for _, node := range matched {
+		values = append(values, strings.TrimSpace(node.String()))
+	}
+
+	return strings.Join(values, ", ")
+}
+
+// alreadySet reports whether every matched node already holds valueToWrite. The
+// decoded value is compared so that folded and literal scalars (">-", "|") are not
+// flagged as changed by their formatting markers. See issue #8295.
+func alreadySet(matched []ast.Node, valueToWrite string) bool {
+	for _, node := range matched {
+		var decoded string
+		if err := goyaml.NodeToValue(node, &decoded); err != nil || decoded != valueToWrite {
+			return false
+		}
+	}
+
+	return len(matched) > 0
 }

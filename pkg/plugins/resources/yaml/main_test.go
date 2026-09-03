@@ -14,6 +14,45 @@ func Test_Validate(t *testing.T) {
 		isErrorWanted bool
 	}{
 		{
+			name: "Validation error when 'createmissingkey' is used with the yamlpath engine",
+			spec: Spec{
+				File:             "/tmp/test.yaml",
+				Key:              "foo.bar",
+				Engine:           EngineYamlPath,
+				CreateMissingKey: true,
+			},
+			isErrorWanted: true,
+		},
+		{
+			name: "Validation error when 'appendtoarray' is used with the yamlpath engine",
+			spec: Spec{
+				File:          "/tmp/test.yaml",
+				Key:           "foo.bar",
+				Engine:        EngineYamlPath,
+				AppendToArray: true,
+			},
+			isErrorWanted: true,
+		},
+		{
+			name: "Normal case with 'createmissingkey' and the go-yaml engine",
+			spec: Spec{
+				File:             "/tmp/test.yaml",
+				Key:              "foo.bar",
+				Engine:           EngineGoYaml,
+				CreateMissingKey: true,
+			},
+			isErrorWanted: false,
+		},
+		{
+			name: "Normal case with 'appendtoarray' and the default engine",
+			spec: Spec{
+				File:          "/tmp/test.yaml",
+				Key:           "foo.bar",
+				AppendToArray: true,
+			},
+			isErrorWanted: false,
+		},
+		{
 			name: "Normal case with 'File'",
 			spec: Spec{
 				File: "/tmp/test.yaml",
