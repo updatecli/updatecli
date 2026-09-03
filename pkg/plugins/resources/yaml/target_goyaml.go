@@ -40,6 +40,21 @@ func (y Yaml) goYamlTarget(valueToWrite string, resultTarget *result.Target, dry
 			return 0, ignoredFiles, fmt.Errorf("parsing yaml file: %w", err)
 		}
 
+		// A documentindex addressing no document of the file leaves the keys loop
+		// below evaluating nothing at all, reporting neither a match nor a miss, so
+		// the file would be silently ignored and the target would succeed without
+		// having updated anything. The yamlpath engine and the source both report
+		// this as a missing key.
+		if y.spec.DocumentIndex != nil && (*y.spec.DocumentIndex < 0 || *y.spec.DocumentIndex >= len(yamlFile.Docs)) {
+			if y.spec.SearchPattern {
+				logrus.Debugf("ignoring file %q as it holds %d document(s) and documentindex is %d", originFilePath, len(yamlFile.Docs), *y.spec.DocumentIndex)
+				ignoredFiles++
+				continue
+			}
+
+			return 0, ignoredFiles, fmt.Errorf("documentindex %d addresses no document of file %q, which holds %d document(s)", *y.spec.DocumentIndex, originFilePath, len(yamlFile.Docs))
+		}
+
 		// Process each key for this file
 		for _, key := range keys {
 			urlPath, err := goyaml.PathString(key)

@@ -908,3 +908,57 @@ func Test_TargetSearchPatternUpdatesPartialWildcardKey(t *testing.T) {
 	assert.Equal(t, result.ATTENTION, gotResult.Result)
 	assert.Equal(t, "agents:\n  - name: first\n    tag: v2\n  - name: second\n", mockedText.Contents["test.yaml"])
 }
+
+// Test_TargetDocumentIndexOutOfRange covers a documentindex addressing no document
+// of the file: the keys loop then evaluates nothing, which used to leave the target
+// reporting a success it had not made. The yamlpath engine and the source both
+// report this as a missing key.
+func Test_TargetDocumentIndexOutOfRange(t *testing.T) {
+	documentIndex := 5
+
+	mockedText := text.MockTextRetriever{
+		Contents: map[string]string{"test.yaml": "image:\n  tag: v1\n"},
+	}
+
+	y, err := New(Spec{File: "test.yaml", Key: "$.image.tag", DocumentIndex: &documentIndex})
+	require.NoError(t, err)
+
+	y.contentRetriever = &mockedText
+	y.files = map[string]file{
+		"test.yaml": {filePath: "test.yaml", originalFilePath: "test.yaml"},
+	}
+
+	gotResult := result.Target{}
+	gotErr := y.Target(context.Background(), "v2", nil, false, &gotResult)
+
+	require.ErrorContains(t, gotErr, "documentindex 5 addresses no document of file")
+	assert.False(t, gotResult.Changed)
+	assert.Equal(t, "image:\n  tag: v1\n", mockedText.Contents["test.yaml"])
+}
+
+// Test_TargetSearchPatternIgnoresDocumentIndexOutOfRange covers spec.searchpattern
+// relaxing that check, as the matched files need not all hold the same number of
+// documents.
+func Test_TargetSearchPatternIgnoresDocumentIndexOutOfRange(t *testing.T) {
+	content := "image:\n  tag: v1\n"
+	documentIndex := 5
+
+	t.Chdir(t.TempDir())
+	require.NoError(t, os.WriteFile("test.yaml", []byte(content), 0600))
+
+	mockedText := text.MockTextRetriever{
+		Contents: map[string]string{"test.yaml": content},
+	}
+
+	y, err := New(Spec{File: "test.yaml", Key: "$.image.tag", DocumentIndex: &documentIndex, SearchPattern: true})
+	require.NoError(t, err)
+
+	y.contentRetriever = &mockedText
+
+	gotResult := result.Target{}
+	require.NoError(t, y.Target(context.Background(), "v2", nil, false, &gotResult))
+
+	assert.False(t, gotResult.Changed)
+	assert.Equal(t, result.SKIPPED, gotResult.Result)
+	assert.Equal(t, content, mockedText.Contents["test.yaml"])
+}
