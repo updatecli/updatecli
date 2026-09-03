@@ -356,3 +356,62 @@ func appendToSequence(seq *ast.SequenceNode, value string, comment string) (bool
 
 	return true, nil
 }
+
+// multiMatchKey reports whether key can address more than one node. goccy answers
+// such a query with a synthetic sequence wrapping the matched nodes rather than
+// with a matched node itself, so callers that mutate the returned node in place
+// must unwrap it first. A recursive descent always wraps, while "[*]" only wraps
+// when it is not the last element of the path.
+func multiMatchKey(key string) (bool, error) {
+	elements, err := splitYamlPathKey(key)
+	if err != nil {
+		return false, err
+	}
+
+	for i, element := range elements {
+		switch {
+		case strings.HasPrefix(element.raw, ".."):
+			return true, nil
+		case element.raw == "[*]" && i < len(elements)-1:
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
+// appendTargetSequences returns the sequences that an appendtoarray target must
+// append to. node is the node goccy matched for key: for a key matching several
+// nodes ("$.agents[*].tags", "$..tags") that node is a detached wrapper, and
+// appending to it would mutate a copy while leaving the document untouched, so its
+// matched entries are unwrapped and returned instead.
+func appendTargetSequences(node ast.Node, key, originFilePath string) ([]*ast.SequenceNode, error) {
+	multiMatch, err := multiMatchKey(key)
+	if err != nil {
+		return nil, fmt.Errorf("cannot append to key %q: %w", key, err)
+	}
+
+	sequence, ok := node.(*ast.SequenceNode)
+	if !ok {
+		return nil, fmt.Errorf("cannot append to key %q from file %q: expected a yaml sequence but got %s", key, originFilePath, node.Type())
+	}
+
+	if !multiMatch {
+		return []*ast.SequenceNode{sequence}, nil
+	}
+
+	if len(sequence.Values) == 0 {
+		return nil, fmt.Errorf("cannot append to key %q from file %q: no yaml sequence matched", key, originFilePath)
+	}
+
+	sequences := make([]*ast.SequenceNode, 0, len(sequence.Values))
+	for _, matched := range sequence.Values {
+		matchedSequence, ok := matched.(*ast.SequenceNode)
+		if !ok {
+			return nil, fmt.Errorf("cannot append to key %q from file %q: expected a yaml sequence but got %s", key, originFilePath, matched.Type())
+		}
+		sequences = append(sequences, matchedSequence)
+	}
+
+	return sequences, nil
+}

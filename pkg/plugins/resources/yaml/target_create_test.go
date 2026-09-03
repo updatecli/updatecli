@@ -481,6 +481,119 @@ tags:
 			mockedContent:    "foo: bar\n",
 			wantedError:      true,
 		},
+		{
+			// goccy answers a wildcard query with a detached sequence wrapping the
+			// matched nodes, so appending to it used to report a change while
+			// leaving the file untouched.
+			name:             "Append a value to every sequence matched by a wildcard",
+			spec:             Spec{File: "test.yaml", Key: "$.agents[*].tags", AppendToArray: true},
+			inputSourceValue: "b",
+			mockedContent: `agents:
+  - name: first
+    tags:
+      - a
+  - name: second
+    tags:
+      - a
+`,
+			wantedContent: `agents:
+  - name: first
+    tags:
+      - a
+      - b
+  - name: second
+    tags:
+      - a
+      - b
+`,
+			wantedResult: true,
+		},
+		{
+			name:             "Append to a wildcard skips the sequences already holding the value",
+			spec:             Spec{File: "test.yaml", Key: "$.agents[*].tags", AppendToArray: true},
+			inputSourceValue: "b",
+			mockedContent: `agents:
+  - name: first
+    tags:
+      - a
+      - b
+  - name: second
+    tags:
+      - a
+`,
+			wantedContent: `agents:
+  - name: first
+    tags:
+      - a
+      - b
+  - name: second
+    tags:
+      - a
+      - b
+`,
+			wantedResult: true,
+		},
+		{
+			name:             "Append to a wildcard reports no change when every sequence holds the value",
+			spec:             Spec{File: "test.yaml", Key: "$.agents[*].tags", AppendToArray: true},
+			inputSourceValue: "b",
+			mockedContent: `agents:
+  - name: first
+    tags:
+      - b
+  - name: second
+    tags:
+      - b
+`,
+			wantedContent: `agents:
+  - name: first
+    tags:
+      - b
+  - name: second
+    tags:
+      - b
+`,
+			wantedResult: false,
+		},
+		{
+			name:             "Append a value to every sequence matched by a recursive descent",
+			spec:             Spec{File: "test.yaml", Key: "$..tags", AppendToArray: true},
+			inputSourceValue: "b",
+			mockedContent: `spec:
+  tags:
+    - a
+status:
+  tags:
+    - a
+`,
+			wantedContent: `spec:
+  tags:
+    - a
+    - b
+status:
+  tags:
+    - a
+    - b
+`,
+			wantedResult: true,
+		},
+		{
+			name:             "Appending to a wildcard matching a value that is not a sequence fails",
+			spec:             Spec{File: "test.yaml", Key: "$.agents[*].tags", AppendToArray: true},
+			inputSourceValue: "b",
+			mockedContent: `agents:
+  - name: first
+    tags: a
+`,
+			wantedError: true,
+		},
+		{
+			name:             "Appending to a recursive descent matching nothing fails",
+			spec:             Spec{File: "test.yaml", Key: "$..tags", AppendToArray: true},
+			inputSourceValue: "b",
+			mockedContent:    "foo: bar\n",
+			wantedError:      true,
+		},
 	}
 
 	for _, tt := range tests {

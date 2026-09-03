@@ -209,14 +209,20 @@ func (y Yaml) createKey(doc *ast.DocumentNode, key, valueToWrite string, resultT
 // of the node it addresses. It reports whether the document was modified.
 func (y Yaml) updateNode(yamlFile *ast.File, index int, doc *ast.DocumentNode, urlPath *goyaml.Path, node ast.Node, key, valueToWrite string, nodeToWrite ast.Node, resultTarget *result.Target, originFilePath string, dryRun bool) (bool, error) {
 	if y.spec.AppendToArray {
-		sequence, ok := node.(*ast.SequenceNode)
-		if !ok {
-			return false, fmt.Errorf("cannot append to key %q from file %q: expected a yaml sequence but got %s", key, originFilePath, node.Type())
+		// A key matching several nodes resolves to a detached wrapper, so append to
+		// each matched sequence rather than to the node goccy returned.
+		sequences, err := appendTargetSequences(node, key, originFilePath)
+		if err != nil {
+			return false, err
 		}
 
-		appended, err := appendToSequence(sequence, valueToWrite, y.spec.Comment)
-		if err != nil {
-			return false, fmt.Errorf("appending to key %q from file %q: %w", key, originFilePath, err)
+		appended := false
+		for _, sequence := range sequences {
+			sequenceAppended, err := appendToSequence(sequence, valueToWrite, y.spec.Comment)
+			if err != nil {
+				return false, fmt.Errorf("appending to key %q from file %q: %w", key, originFilePath, err)
+			}
+			appended = appended || sequenceAppended
 		}
 
 		if !appended {
