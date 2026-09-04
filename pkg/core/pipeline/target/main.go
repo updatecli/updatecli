@@ -109,6 +109,10 @@ func (t *Target) Run(ctx context.Context, source string, o *Options) (err error)
 	defer logrus.SetOutput(os.Stdout)
 	defer t.Result.SetConsoleOutput(&consoleOutput)
 
+	// The target is being executed: mark it as finalized to distinguish it from
+	// a target still pending execution.
+	t.Result.IsRun = true
+
 	failTargetRun := func() {
 		t.Result.Result = result.FAILURE
 		t.Result.Description = "something went wrong during pipeline execution"
