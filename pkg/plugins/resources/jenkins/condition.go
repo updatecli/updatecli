@@ -6,11 +6,12 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 // Condition checks that a Jenkins version exists and that the version
 // match a valid release type
-func (j Jenkins) Condition(_ context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
+func (j Jenkins) Condition(_ context.Context, source string, scm scm.ScmHandler, resolver utils.Resolver) (pass bool, message string, err error) {
 
 	if scm != nil {
 		logrus.Warningf("SCM configuration is not supported for Jenkins condition")

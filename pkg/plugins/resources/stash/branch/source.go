@@ -6,10 +6,11 @@ import (
 	"fmt"
 
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
-func (g *Stash) Source(_ context.Context, workingDir string, resultSource *result.Source) error {
+func (g *Stash) Source(_ context.Context, resolver utils.Resolver, resultSource *result.Source) error {
 	versions, err := g.SearchBranches()
 
 	if err != nil {

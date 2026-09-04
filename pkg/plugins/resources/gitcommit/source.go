@@ -5,20 +5,21 @@ import (
 	"fmt"
 
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 // Source returns the latest commit hash for the configured Git branch.
-func (gc *GitCommit) Source(_ context.Context, workingDir string, resultSource *result.Source) error {
+func (gc *GitCommit) Source(_ context.Context, resolver utils.Resolver, resultSource *result.Source) error {
 	var err error
 
-	gc.directory = workingDir
+	gc.directory = resolver.Dir()
 	if gc.spec.URL != "" {
 		gc.directory, err = gc.clone()
 		if err != nil {
 			return fmt.Errorf("cloning Git repository: %w", err)
 		}
 	} else if gc.spec.Path != "" {
-		gc.directory = gc.spec.Path
+		gc.directory = resolver.Join(gc.spec.Path)
 	}
 
 	if gc.directory == "" {

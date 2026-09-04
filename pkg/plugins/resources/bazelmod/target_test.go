@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 func TestTarget(t *testing.T) {
@@ -152,7 +153,7 @@ bazel_dep(name = "rules_go", version = "0.42.0")`,
 			require.NoError(t, err)
 
 			resultTarget := &result.Target{}
-			err = b.Target(context.Background(), tt.source, nil, tt.dryRun, resultTarget)
+			err = b.Target(context.Background(), tt.source, nil, utils.Resolver{}, tt.dryRun, resultTarget)
 
 			if tt.wantErr {
 				assert.Error(t, err)

@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/tmp"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 // wantedScriptFilename is an utility used to get the filescript named generated
@@ -103,7 +104,7 @@ func TestShell_Source(t *testing.T) {
 			require.NoError(t, gotErr)
 
 			gotResult := result.Source{}
-			err := s.Source(context.Background(), tt.workingDir, &gotResult)
+			err := s.Source(context.Background(), utils.Resolver{BaseDir: tt.workingDir, Boundary: tt.workingDir}, &gotResult)
 
 			if tt.wantErr {
 				assert.Error(t, err)

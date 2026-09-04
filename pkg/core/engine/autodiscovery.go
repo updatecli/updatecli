@@ -66,9 +66,14 @@ func (e *Engine) LoadAutoDiscovery(ctx context.Context, defaultEnabled bool) err
 		var autodiscoveryAction action.Action
 		var found bool
 
-		workDir, err := os.Getwd()
-		if err != nil {
-			return fmt.Errorf("failed getting current working directory due to %v", err)
+		// Crawlers walk the same tree the manifest resolves its own relative paths from.
+		workDir := p.Config.BaseDir()
+		if workDir == "" {
+			var err error
+			workDir, err = os.Getwd()
+			if err != nil {
+				return fmt.Errorf("failed getting current working directory due to %v", err)
+			}
 		}
 
 		// Retrieve scm spec if it exists
@@ -76,7 +81,7 @@ func (e *Engine) LoadAutoDiscovery(ctx context.Context, defaultEnabled bool) err
 			autodiscoveryScm, found = p.SCMs[p.Config.Spec.AutoDiscovery.ScmId]
 
 			if found {
-				if err = autodiscoveryScm.Handler.Checkout(); err != nil {
+				if err := autodiscoveryScm.Handler.Checkout(); err != nil {
 					logrus.Errorf("git checkout: %s", err)
 				}
 				workDir = autodiscoveryScm.Handler.GetDirectory()
@@ -241,6 +246,9 @@ func (e *Engine) LoadAutoDiscovery(ctx context.Context, defaultEnabled bool) err
 				newConfig := config.Config{
 					Spec: manifest,
 				}
+				// A generated manifest has no file on disk, but the paths its crawler
+				// produced are relative to workDir, so that is what it resolves from.
+				newConfig.SetBaseDir(workDir)
 				manifestFingerprint, err := autodiscoveryManifestFingerprint(newConfig.Spec, p.Config.Spec.PipelineID)
 				if err != nil {
 					return fmt.Errorf("computing autodiscovery manifest fingerprint for %q: %w", manifest.Name, err)

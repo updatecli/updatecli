@@ -3,29 +3,24 @@ package bazelmod
 import (
 	"context"
 	"fmt"
-	"path/filepath"
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 // Condition checks if the version in MODULE.bazel matches the expected version
-func (b *Bazelmod) Condition(_ context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
+func (b *Bazelmod) Condition(_ context.Context, source string, scm scm.ScmHandler, resolver utils.Resolver) (pass bool, message string, err error) {
 	// Use source as the expected version if provided
 	expectedVersion := source
 	if expectedVersion == "" {
 		return false, "", fmt.Errorf("no version provided for condition check")
 	}
 
-	rootDir := ""
-	if scm != nil {
-		rootDir = scm.GetDirectory()
-	}
-
-	filePath := b.spec.File
-	if !filepath.IsAbs(filePath) {
-		filePath = filepath.Join(rootDir, filePath)
+	filePath, err := resolver.Resolve(b.spec.File)
+	if err != nil {
+		return false, "", fmt.Errorf("invalid file path %q: %w", b.spec.File, err)
 	}
 
 	// Check if file exists

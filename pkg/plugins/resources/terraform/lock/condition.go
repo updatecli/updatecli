@@ -7,15 +7,16 @@ import (
 
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
-func (t *TerraformLock) Condition(_ context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
+func (t *TerraformLock) Condition(_ context.Context, source string, scm scm.ScmHandler, resolver utils.Resolver) (pass bool, message string, err error) {
 	if len(t.files) > 1 {
 		return false, "", fmt.Errorf("%s terraform/lock condition only supports one file", result.FAILURE)
 	}
 
-	if scm != nil {
-		t.UpdateAbsoluteFilePath(scm.GetDirectory())
+	if err := t.UpdateAbsoluteFilePath(resolver); err != nil {
+		return false, "", err
 	}
 
 	if err := t.Read(); err != nil {

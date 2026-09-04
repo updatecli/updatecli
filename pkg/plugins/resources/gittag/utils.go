@@ -7,6 +7,7 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 // listRemoteURLTags lists all tags from a remote git repository
@@ -52,13 +53,15 @@ func (gt *GitTag) listRemoteURLTags() ([]string, map[string]string, error) {
 	return tagsList, results, nil
 }
 
-// listRemoteDirectoryTags lists all tags from a local git repository
-func (gt *GitTag) listRemoteDirectoryTags(workingDir string) ([]string, map[string]string, error) {
+// listRemoteDirectoryTags lists all tags from a local git repository.
+//
+// directory is the repository to read from when the spec names neither a URL nor a path.
+func (gt *GitTag) listRemoteDirectoryTags(directory string, resolver utils.Resolver) ([]string, map[string]string, error) {
 	if gt.nativeGitHandler == nil {
 		return nil, nil, fmt.Errorf("nativeGitHandler is not initialized")
 	}
 
-	gt.directory = workingDir
+	gt.directory = directory
 
 	var err error
 
@@ -72,7 +75,7 @@ func (gt *GitTag) listRemoteDirectoryTags(workingDir string) ([]string, map[stri
 		}
 	}
 	if gt.spec.Path != "" {
-		gt.directory = gt.spec.Path
+		gt.directory = resolver.Join(gt.spec.Path)
 	}
 
 	if gt.directory == "" {

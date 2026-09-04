@@ -69,6 +69,10 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 
 	p.Config = config
 
+	// baseDir is where the relative paths of this manifest resolve from when a resource
+	// is not attached to an scm. Empty keeps them relative to the process working directory.
+	baseDir := config.BaseDir()
+
 	// Init context resource size
 	p.SCMs = make(map[string]scm.Scm, len(config.Spec.SCMs))
 	p.Sources = make(map[string]source.Source, len(config.Spec.Sources))
@@ -92,6 +96,8 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 
 		// avoid gosec G601: Reassign the loop iteration variable to a local variable so the pointer address is correct
 		scmConfig := scmConfig
+
+		resolveScmDirectory(&scmConfig, baseDir)
 
 		p.SCMs[id], err = scm.New(&scmConfig, config.Spec.PipelineID)
 		if err != nil {
@@ -146,7 +152,8 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 			Result: &result.Source{
 				Result: result.SKIPPED,
 			},
-			Scm: scmPointer,
+			Scm:     scmPointer,
+			BaseDir: baseDir,
 		}
 
 		r := p.Sources[id].Result
@@ -185,7 +192,8 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 			Result: &result.Condition{
 				Result: result.SKIPPED,
 			},
-			Scm: scmPointer,
+			Scm:     scmPointer,
+			BaseDir: baseDir,
 		}
 
 		r := p.Conditions[id].Result
@@ -224,7 +232,8 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 			Result: &result.Target{
 				Result: result.SKIPPED,
 			},
-			Scm: scmPointer,
+			Scm:     scmPointer,
+			BaseDir: baseDir,
 		}
 
 		r := p.Targets[id].Result

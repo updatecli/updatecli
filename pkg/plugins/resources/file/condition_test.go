@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/text"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 func TestFile_Condition(t *testing.T) {
@@ -290,7 +291,7 @@ func TestFile_Condition(t *testing.T) {
 				files:            tt.files,
 			}
 
-			gotResult, _, gotErr := f.Condition(context.Background(), tt.inputSourceValue, nil)
+			gotResult, _, gotErr := f.Condition(context.Background(), tt.inputSourceValue, nil, utils.Resolver{})
 			if tt.wantedErr {
 				assert.Error(t, gotErr)
 				return

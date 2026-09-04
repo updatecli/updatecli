@@ -5,13 +5,14 @@ import (
 	"fmt"
 
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 // Source returns the latest git tag based on create time
-func (gt *GitTag) Source(_ context.Context, workingDir string, resultSource *result.Source) error {
+func (gt *GitTag) Source(_ context.Context, resolver utils.Resolver, resultSource *result.Source) error {
 	var err error
 
-	gt.directory = workingDir
+	gt.directory = resolver.Dir()
 
 	err = gt.Validate()
 	if err != nil {
@@ -29,7 +30,7 @@ func (gt *GitTag) Source(_ context.Context, workingDir string, resultSource *res
 		}
 
 	case false:
-		tagsList, tags, err = gt.listRemoteDirectoryTags(workingDir)
+		tagsList, tags, err = gt.listRemoteDirectoryTags(gt.directory, resolver)
 		if err != nil {
 			return fmt.Errorf("listing local tags: %w", err)
 		}

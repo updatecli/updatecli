@@ -8,11 +8,12 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
 )
 
 // Source returns content from the response of the specified HTTP request (defaults to the body).
-func (h *Http) Source(_ context.Context, workingDir string, resultSource *result.Source) error {
+func (h *Http) Source(_ context.Context, resolver utils.Resolver, resultSource *result.Source) error {
 	resultSource.Result = result.FAILURE
 
 	httpRes, err := h.performHttpRequest()

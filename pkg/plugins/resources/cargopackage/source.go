@@ -6,14 +6,22 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 // Source returns the latest npm package version
-func (cp CargoPackage) Source(ctx context.Context, workingDir string, resultSource *result.Source) error {
-	logrus.Debugf("Registry RootDir: %s, workingDir: %s", cp.registry.RootDir, workingDir)
-	if cp.isSCM {
-		// We are in a scm context, workingDir is holding the data
-		cp.registry.RootDir = workingDir
+func (cp CargoPackage) Source(ctx context.Context, resolver utils.Resolver, resultSource *result.Source) error {
+	logrus.Debugf("Registry RootDir: %s, base directory: %s", cp.registry.RootDir, resolver.Dir())
+	switch cp.isSCM {
+	case true:
+		// We are in a scm context, the base directory is holding the data
+		cp.registry.RootDir = resolver.Dir()
+	case false:
+		if cp.registry.RootDir != "" {
+			// An empty RootDir means "no local registry checkout", so it must stay
+			// empty rather than be resolved to the base directory.
+			cp.registry.RootDir = resolver.Join(cp.registry.RootDir)
+		}
 	}
 
 	version, _, err := cp.getVersions(ctx)

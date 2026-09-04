@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/text"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 func ptrInt(i int) *int {
@@ -796,7 +797,7 @@ name: github
 
 			assert.NoError(t, err)
 
-			gotResult, _, gotErr := y.Condition(context.Background(), tt.inputSourceValue, scmHandler)
+			gotResult, _, gotErr := y.Condition(context.Background(), tt.inputSourceValue, scmHandler, utils.NewResolver(scmHandler, ""))
 			if tt.isErrorWanted {
 				assert.Error(t, gotErr)
 				return

@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/text"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 func TestFile_Source(t *testing.T) {
@@ -282,7 +283,7 @@ func TestFile_Source(t *testing.T) {
 			// No working directory: the resource is run locally, without an SCM
 			// checkout, so the file paths of the specification are used as is.
 			gotResult := result.Source{}
-			gotErr := f.Source(context.Background(), "", &gotResult)
+			gotErr := f.Source(context.Background(), utils.Resolver{}, &gotResult)
 			if tt.wantedErr {
 				assert.Error(t, gotErr)
 				return

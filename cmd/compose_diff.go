@@ -6,6 +6,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/updatecli/updatecli/pkg/core/compose"
+	"github.com/updatecli/updatecli/pkg/core/config"
 	"github.com/updatecli/updatecli/pkg/core/engine/manifest"
 )
 
@@ -48,6 +49,7 @@ var (
 			e.Options.Pipeline.Target.DryRun = true
 			e.Options.Pipeline.DisableChangelog = disableChangelog
 			e.Options.Config.ValidateSchema = validateSchema
+			e.Options.ManifestOptions.RelativePaths = config.RelativePathBase(relativePaths)
 			compose.ValidateSchema = validateSchema
 
 			err = run("compose/diff")
@@ -71,6 +73,7 @@ func init() {
 
 	addDisableChangelogFlag(composeDiffCmd, &disableChangelog)
 	addValidateSchemaFlag(composeDiffCmd, &validateSchema)
+	addRelativePathsFlag(composeDiffCmd, &relativePaths)
 	addExportReportToYAMLFlag(composeDiffCmd, &exportReportToYAML)
 	addDisableUdashReportFlag(composeDiffCmd, &disableUdashReport)
 

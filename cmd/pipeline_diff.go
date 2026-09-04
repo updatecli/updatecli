@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/config"
 	"github.com/updatecli/updatecli/pkg/core/engine/manifest"
 
 	"github.com/spf13/cobra"
@@ -35,6 +36,7 @@ var (
 			e.Options.Pipeline.Target.DryRun = true
 			e.Options.Pipeline.DisableChangelog = disableChangelog
 			e.Options.Config.ValidateSchema = validateSchema
+			e.Options.ManifestOptions.RelativePaths = config.RelativePathBase(relativePaths)
 
 			err = run("pipeline/diff")
 			if err != nil {
@@ -58,6 +60,7 @@ func init() {
 
 	addDisableChangelogFlag(pipelineDiffCmd, &disableChangelog)
 	addValidateSchemaFlag(pipelineDiffCmd, &validateSchema)
+	addRelativePathsFlag(pipelineDiffCmd, &relativePaths)
 	addExportReportToYAMLFlag(pipelineDiffCmd, &exportReportToYAML)
 	addDisableUdashReportFlag(pipelineDiffCmd, &disableUdashReport)
 

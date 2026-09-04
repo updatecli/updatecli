@@ -2,18 +2,17 @@ package file
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"os"
 	"regexp"
 	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 // Source return a file content
-func (f *File) Source(_ context.Context, workingDir string, resultSource *result.Source) error {
+func (f *File) Source(_ context.Context, resolver utils.Resolver, resultSource *result.Source) error {
 	var validationErrors []string
 	var foundContent string
 
@@ -34,19 +33,7 @@ func (f *File) Source(_ context.Context, workingDir string, resultSource *result
 		return fmt.Errorf("validation error: the provided manifest configuration had the following validation errors:\n%s", strings.Join(validationErrors, "\n\n"))
 	}
 
-	// By the default workingdir is set to the current working directory
-	// it would be better to have it empty by default but it must be changed in the
-	// source core codebase.
-	currentWorkingDirectory, err := os.Getwd()
-	if err != nil {
-		return errors.New("fail getting current working directory")
-	}
-	// Ideally currentWorkingDirectory should be empty
-	if workingDir == currentWorkingDirectory {
-		workingDir = ""
-	}
-
-	if err := f.initFiles(workingDir); err != nil {
+	if err := f.initFiles(resolver); err != nil {
 		return fmt.Errorf("init files: %w", err)
 	}
 

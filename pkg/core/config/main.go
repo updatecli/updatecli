@@ -58,6 +58,9 @@ type Config struct {
 	filename string
 	// manifestID contains the effective manifest identifier used by the engine.
 	manifestID string
+	// baseDir overrides the directory relative paths resolve against. It is only set for
+	// the manifests Updatecli generates in memory, which have no filename to be relative to.
+	baseDir string
 	// Spec describe an updatecli manifest
 	Spec Spec
 	// gitHandler holds a git client implementation to manipulate git SCMs
@@ -207,6 +210,15 @@ type Spec struct {
 	Targets map[string]target.Config `yaml:",omitempty"`
 	// "version" defines the minimum Updatecli version compatible with the manifest
 	Version string `yaml:",omitempty"`
+	// "options" defines the manifest level settings that change how Updatecli behaves,
+	// as opposed to the keys describing what the pipeline is made of.
+	//
+	// example:
+	// ---
+	// options:
+	//   relativepaths: manifest
+	// ---
+	Options ManifestOptions `yaml:",omitempty"`
 	// Labels contains user defined labels attached to the pipeline.
 	//
 	// Labels are arbitrary key/value pairs that can be used to categorize or
@@ -259,6 +271,29 @@ func (config *Config) Reset() {
 	}
 }
 
+// BaseDir returns the directory the relative paths of this manifest resolve against.
+//
+// An empty value means they resolve against the process working directory, which is both
+// the historical behavior and what an autodiscovery generated manifest needs, as it has no
+// file on disk to be relative to.
+func (config *Config) BaseDir() string {
+	if config.Spec.Options.RelativePaths != RelativePathBaseManifest {
+		return config.baseDir
+	}
+
+	if config.filename == "" {
+		return config.baseDir
+	}
+
+	return filepath.Dir(config.filename)
+}
+
+// SetBaseDir pins the directory relative paths resolve against, for the manifests that
+// Updatecli generates in memory rather than reads from disk.
+func (config *Config) SetBaseDir(baseDir string) {
+	config.baseDir = baseDir
+}
+
 // ManifestID returns the internal manifest identifier used by the engine.
 func (config *Config) ManifestID() string {
 	return config.manifestID
@@ -279,10 +314,15 @@ func (config *Config) SetManifestID(seed string) {
 	config.manifestID = fmt.Sprintf("%x", hash.Sum(nil))
 }
 
-// New reads an updatecli configuration file
+// New reads an updatecli configuration file.
+//
+// manifestDefaults holds the "options" a manifest inherits when it does not set them
+// itself. They are a separate parameter rather than a field of Option because Option is
+// about reading a file off disk, which is a different concern from how the pipeline that
+// file describes behaves.
 //
 //nolint:funlen
-func New(option Option, pipelineIDFilters []string, pipelineLabels map[string]string) (configs []Config, err error) {
+func New(option Option, manifestDefaults ManifestOptions, pipelineIDFilters []string, pipelineLabels map[string]string) (configs []Config, err error) {
 	_, basename := filepath.Split(option.ManifestFile)
 
 	// We need to be sure to generate a file checksum before we inject
@@ -463,6 +503,13 @@ func New(option Option, pipelineIDFilters []string, pipelineLabels map[string]st
 		if len(config.Spec.Version) == 0 {
 			config.Spec.Version = version.Version
 		}
+
+		// A manifest inherits the settings it did not pick itself.
+		//
+		// This has to happen before EnsureLocalScm below, which already resolves
+		// config.BaseDir(): merging later would make "--relative-paths manifest" silently
+		// skip local scm autoguessing while the manifest key did not.
+		config.Spec.Options.Merge(manifestDefaults)
 
 		// Ensure there is a local SCM defined as specified
 		if err = config.EnsureLocalScm(); err != nil {
@@ -795,6 +842,10 @@ func (config *Config) Validate() error {
 
 	if config.Spec.Title != "" {
 		logrus.Warningf("title is deprecated, please use name instead")
+	}
+
+	if err := config.Spec.Options.Validate(); err != nil {
+		errs = append(errs, fmt.Errorf("options validation error:\n%s", err))
 	}
 
 	err = config.validateConditions()

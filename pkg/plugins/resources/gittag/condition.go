@@ -6,10 +6,11 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 // Condition checks that a git tag exists
-func (gt *GitTag) Condition(_ context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
+func (gt *GitTag) Condition(_ context.Context, source string, scm scm.ScmHandler, resolver utils.Resolver) (pass bool, message string, err error) {
 
 	err = gt.Validate()
 	if err != nil {
@@ -43,7 +44,7 @@ func (gt *GitTag) Condition(_ context.Context, source string, scm scm.ScmHandler
 				scm.GetDirectory())
 		}
 
-		tagsList, tags, err = gt.listRemoteDirectoryTags(gt.directory)
+		tagsList, tags, err = gt.listRemoteDirectoryTags(gt.directory, resolver)
 		if err != nil {
 			return false, "", fmt.Errorf("listing local tags: %w", err)
 		}

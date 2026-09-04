@@ -12,7 +12,7 @@ import (
 )
 
 // OCISource return a Helm Chart version hosted on a OCI registry
-func (c *Chart) OCISource(workingDir string, resultSource *result.Source) error {
+func (c *Chart) OCISource(resultSource *result.Source) error {
 
 	refName := filepath.Join(strings.TrimPrefix(c.spec.URL, "oci://"), c.spec.Name)
 

@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/mavenmetadata"
 )
 
@@ -73,7 +74,7 @@ func TestJenkins_Source(t *testing.T) {
 				mavenMetaHandler: tt.mockedMetadataHandler,
 			}
 			gotResult := result.Source{}
-			gotErr := sut.Source(context.Background(), tt.workingDir, &gotResult)
+			gotErr := sut.Source(context.Background(), utils.Resolver{BaseDir: tt.workingDir, Boundary: tt.workingDir}, &gotResult)
 			if tt.wantErr {
 				require.Error(t, gotErr)
 				return

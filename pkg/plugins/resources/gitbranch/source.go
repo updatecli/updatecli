@@ -5,13 +5,14 @@ import (
 	"fmt"
 
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 // Source returns the latest git tag based on create time
-func (gb *GitBranch) Source(_ context.Context, workingDir string, resultSource *result.Source) error {
+func (gb *GitBranch) Source(_ context.Context, resolver utils.Resolver, resultSource *result.Source) error {
 	var err error
 
-	gb.directory = workingDir
+	gb.directory = resolver.Dir()
 	if gb.spec.URL != "" {
 		gb.directory, err = gb.clone()
 		if err != nil {
@@ -19,7 +20,7 @@ func (gb *GitBranch) Source(_ context.Context, workingDir string, resultSource *
 		}
 
 	} else if gb.spec.Path != "" {
-		gb.directory = gb.spec.Path
+		gb.directory = resolver.Join(gb.spec.Path)
 	}
 
 	if gb.directory == "" {

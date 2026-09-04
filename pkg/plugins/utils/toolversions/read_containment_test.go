@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 // TestFileContent_ReadPathContainment is the regression test for
@@ -28,7 +29,7 @@ func TestFileContent_ReadPathContainment(t *testing.T) {
 			f := FileContent{
 				FilePath: tt.filePath,
 			}
-			assert.Error(t, f.Read(workingDir))
+			assert.Error(t, f.Read(utils.Resolver{BaseDir: workingDir, Boundary: workingDir}))
 		})
 	}
 }

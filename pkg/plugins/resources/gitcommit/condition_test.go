@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 func TestCondition(t *testing.T) {
@@ -78,7 +79,7 @@ func TestCondition(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			resource := &GitCommit{spec: tt.spec, nativeGitHandler: tt.handler}
-			pass, message, err := resource.Condition(context.Background(), tt.source, tt.scm)
+			pass, message, err := resource.Condition(context.Background(), tt.source, tt.scm, utils.NewResolver(tt.scm, ""))
 			if tt.wantErr != "" {
 				require.Error(t, err)
 				assert.Contains(t, err.Error(), tt.wantErr)

@@ -103,6 +103,9 @@ func newSchemaRegistry() (*schemaRegistry, error) {
 			sectionActions:    action.GetActionMapping(),
 		},
 		deprecated: map[string]map[string]string{
+			// Only the manifest top level is reflected here. A key deprecated inside a
+			// nested section, such as ManifestOptions, has to add its type to this list
+			// to be reported as deprecated rather than as unknown.
 			nodeRoot: deprecatedFieldKeys([]reflect.Type{reflect.TypeOf(Spec{})}),
 		},
 		compiled: map[string]*validator.Schema{},

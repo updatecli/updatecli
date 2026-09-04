@@ -5,11 +5,12 @@ import (
 	"fmt"
 
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
 // Source returns the stdout of the shell command if its exit code is 0
 // otherwise an error is returned with the content of stderr
-func (s *Shell) Source(_ context.Context, workingDir string, resultSource *result.Source) error {
+func (s *Shell) Source(_ context.Context, resolver utils.Resolver, resultSource *result.Source) error {
 
 	// Ensure environment variable(s) are up to date
 	// either it already has a value specified, or it retrieves
@@ -33,7 +34,7 @@ func (s *Shell) Source(_ context.Context, workingDir string, resultSource *resul
 
 	// PreCommand is executed to collect information before running the shell command
 	// so we could collect information needed to validate that a command successfully as expected
-	err = s.success.PreCommand(s.getWorkingDirPath(workingDir))
+	err = s.success.PreCommand(s.getWorkingDirPath(resolver))
 	if err != nil {
 		return fmt.Errorf("running precommand: %w", err)
 	}
@@ -45,7 +46,7 @@ func (s *Shell) Source(_ context.Context, workingDir string, resultSource *resul
 
 	err = s.executeCommand(command{
 		Cmd: s.interpreter + " " + scriptFilename,
-		Dir: s.getWorkingDirPath(workingDir),
+		Dir: s.getWorkingDirPath(resolver),
 		Env: env.ToStringSlice(),
 	})
 	if err != nil {
@@ -54,7 +55,7 @@ func (s *Shell) Source(_ context.Context, workingDir string, resultSource *resul
 
 	// PostCommand is executed to collect information after running the shell command
 	// so we could collect information needed to validate that a command successfully as expected
-	err = s.success.PostCommand(s.getWorkingDirPath(workingDir))
+	err = s.success.PostCommand(s.getWorkingDirPath(resolver))
 	if err != nil {
 		return fmt.Errorf("running postcommand: %w", err)
 	}

@@ -1,0 +1,28 @@
+name: Test relative paths resolved from the manifest directory
+pipelineid: e2e/relativepaths/manifest
+
+# Updatecli runs from the root of the repository, so "data.txt" only resolves
+# because this manifest asks for its own directory to be the base.
+# The fixture is a .txt so the manifest loader does not mistake it for a manifest.
+options:
+  relativepaths: manifest
+
+sources:
+  version:
+    name: Get the version from the file sitting next to this manifest
+    kind: json
+    spec:
+      file: data.txt
+      key: version
+      engine: dasel/v3
+
+conditions:
+  version:
+    name: Check the version from the file sitting next to this manifest
+    kind: json
+    disablesourceinput: true
+    spec:
+      file: data.txt
+      key: version
+      engine: dasel/v3
+      value: 1.2.3

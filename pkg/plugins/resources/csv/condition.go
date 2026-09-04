@@ -7,21 +7,17 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
-func (c *CSV) Condition(_ context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
-
-	rootDir := ""
-	if scm != nil {
-		rootDir = scm.GetDirectory()
-	}
+func (c *CSV) Condition(_ context.Context, source string, scm scm.ScmHandler, resolver utils.Resolver) (pass bool, message string, err error) {
 
 	conditionResult := true
 	messages := []string{}
 
 	for i := range c.contents {
 
-		if err := c.contents[i].Read(rootDir); err != nil {
+		if err := c.contents[i].Read(resolver); err != nil {
 			return false, "", fmt.Errorf("reading csv file: %w", err)
 		}
 

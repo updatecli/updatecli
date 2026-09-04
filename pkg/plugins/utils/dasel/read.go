@@ -9,14 +9,31 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
-// Read reads the content of a file after runtime validation
-func (f *FileContent) Read(rootDir string) error {
+// ResolvePath resolves FilePath against the resolver.
+//
+// It is idempotent: the path written in the manifest is kept aside so that calling it
+// twice cannot join the base directory twice.
+func (f *FileContent) ResolvePath(resolver utils.Resolver) error {
+	if f.OriginalFilePath == "" {
+		f.OriginalFilePath = f.FilePath
+	}
 
-	securePath, err := utils.SanitizeFilePathWithWorkingDirectory(f.FilePath, rootDir)
+	resolvedPath, err := resolver.Resolve(f.OriginalFilePath)
 	if err != nil {
 		return err
 	}
-	f.FilePath = securePath
+
+	f.FilePath = resolvedPath
+
+	return nil
+}
+
+// Read reads the content of a file after runtime validation
+func (f *FileContent) Read(resolver utils.Resolver) error {
+
+	if err := f.ResolvePath(resolver); err != nil {
+		return err
+	}
 
 	if !f.ContentRetriever.FileExists(f.FilePath) {
 		return fmt.Errorf("file %q does not exist", f.FilePath)

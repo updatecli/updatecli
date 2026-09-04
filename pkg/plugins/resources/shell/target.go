@@ -7,15 +7,11 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils"
 )
 
-func (s *Shell) Target(_ context.Context, source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
-	getDir := ""
-	if scm != nil {
-		getDir = scm.GetDirectory()
-	}
-
-	err := s.target(source, getDir, dryRun, resultTarget)
+func (s *Shell) Target(_ context.Context, source string, scm scm.ScmHandler, resolver utils.Resolver, dryRun bool, resultTarget *result.Target) error {
+	err := s.target(source, resolver, dryRun, resultTarget)
 	if err != nil {
 		return err
 	}
@@ -38,7 +34,7 @@ func (s *Shell) Target(_ context.Context, source string, scm scm.ScmHandler, dry
 //   - Any other exit code means "failed command with no change"
 //
 // The environment variable 'DRY_RUN' is set to true or false based on the input parameter (e.g. 'updatecli diff' or 'apply'?)
-func (s *Shell) target(source, workingDir string, dryRun bool, resultTarget *result.Target) error {
+func (s *Shell) target(source string, resolver utils.Resolver, dryRun bool, resultTarget *result.Target) error {
 
 	// Ensure environment variable(s) are up to date
 	// either it already has a value specified, or it retrieves
@@ -66,7 +62,7 @@ func (s *Shell) target(source, workingDir string, dryRun bool, resultTarget *res
 		Value: &dryRunValue,
 	})
 
-	err = s.success.PreCommand(s.getWorkingDirPath(workingDir))
+	err = s.success.PreCommand(s.getWorkingDirPath(resolver))
 	if err != nil {
 		return err
 	}
@@ -78,14 +74,14 @@ func (s *Shell) target(source, workingDir string, dryRun bool, resultTarget *res
 
 	err = s.executeCommand(command{
 		Cmd: s.interpreter + " " + scriptFilename,
-		Dir: s.getWorkingDirPath(workingDir),
+		Dir: s.getWorkingDirPath(resolver),
 		Env: env.ToStringSlice(),
 	})
 	if err != nil {
 		return fmt.Errorf("failed while running target script - %s", err)
 	}
 
-	err = s.success.PostCommand(s.getWorkingDirPath(workingDir))
+	err = s.success.PostCommand(s.getWorkingDirPath(resolver))
 	if err != nil {
 		return err
 	}
