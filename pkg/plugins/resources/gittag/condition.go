@@ -6,6 +6,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 )
 
 // Condition checks that a git tag exists
@@ -43,7 +44,9 @@ func (gt *GitTag) Condition(_ context.Context, source string, scm scm.ScmHandler
 				scm.GetDirectory())
 		}
 
-		tagsList, tags, err = gt.listRemoteDirectoryTags(gt.directory)
+		// A condition checks whether a specific tag exists, so the age filter,
+		// which only narrows down which tag to pick, doesn't apply here.
+		tagsList, tags, err = gt.listRemoteDirectoryTags(gt.directory, age.Spec{})
 		if err != nil {
 			return false, "", fmt.Errorf("listing local tags: %w", err)
 		}

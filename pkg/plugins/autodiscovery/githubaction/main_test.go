@@ -5,15 +5,38 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 )
 
+// unsetGitHubTokenEnv neutralizes every environment variable the crawler consults
+// before the `credentials` setting, so that the generated manifests only ever contain
+// the tokens the test cases pin.
+func unsetGitHubTokenEnv(t *testing.T) {
+	t.Helper()
+
+	for _, name := range []string{
+		"UPDATECLI_GITHUB_TOKEN",
+		"GITHUB_TOKEN",
+		"UPDATECLI_GITHUB_APP_CLIENT_ID",
+		"UPDATECLI_GITHUB_APP_PRIVATE_KEY",
+		"UPDATECLI_GITHUB_APP_PRIVATE_KEY_PATH",
+		"UPDATECLI_GITHUB_APP_INSTALLATION_ID",
+		"UPDATECLI_GITHUB_APP_EXPIRATION_TIME",
+	} {
+		t.Setenv(name, "")
+	}
+}
+
 func TestDiscoverManifests(t *testing.T) {
+	unsetGitHubTokenEnv(t)
+
 	testdata := []struct {
 		name              string
 		rootDir           string
 		expectedPipelines []string
 		credentials       map[string]gitProviderToken
 		digest            bool
+		age               age.Spec
 	}{
 		{
 			name:    "Scenario - GitHub Action using Docker image",
@@ -1516,6 +1539,142 @@ targets:
       engine: 'yamlpath'
 `},
 		},
+		{
+			name:    "Scenario - GitHub Action with a dependency cooldown",
+			rootDir: "testdata/age",
+			credentials: map[string]gitProviderToken{
+				"github.com": {
+					Kind:  "github",
+					Token: "xxx",
+				},
+			},
+			age: age.Spec{Minimum: "7d", Maximum: "1y"},
+			expectedPipelines: []string{`name: 'deps: bump actions/checkout GitHub workflow'
+
+sources:
+  release:
+    dependson:
+      - 'condition#release:and'
+    name: 'Get latest GitHub Release for actions/checkout'
+    kind: 'githubrelease'
+    spec:
+      owner: 'actions'
+      repository: 'checkout'
+      url: 'https://github.com'
+      token: 'xxx'
+      age:
+        minimum: '7d'
+        maximum: '1y'
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
+
+  tag:
+    dependson:
+      - 'condition#tag:and'
+    name: 'Get latest tag for actions/checkout'
+    kind: 'gittag'
+    spec:
+      url: "https://github.com/actions/checkout.git"
+      password: 'xxx'
+      age:
+        minimum: '7d'
+        maximum: '1y'
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
+
+  branch:
+    dependson:
+      - 'condition#branch:and'
+    name: 'Get latest branch for actions/checkout'
+    kind: 'gitbranch'
+    spec:
+      url: "https://github.com/actions/checkout.git"
+      password: 'xxx'
+      age:
+        minimum: '7d'
+        maximum: '1y'
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
+
+conditions:
+  release:
+    name: 'Check if actions/checkout@v4 is a GitHub release'
+    kind: 'githubrelease'
+    disablesourceinput: true
+    spec:
+      owner: 'actions'
+      repository: 'checkout'
+      url: 'https://github.com'
+      token: 'xxx'
+      tag: 'v4'
+
+  tag:
+    name: 'Check if actions/checkout@v4 is a tag'
+    kind: 'gittag'
+    disablesourceinput: true
+    spec:
+      url: "https://github.com/actions/checkout.git"
+      password: 'xxx'
+      versionfilter:
+        kind: 'regex'
+        pattern: '^v4$'
+
+  branch:
+    name: 'Check if actions/checkout@v4 is a branch'
+    kind: 'gitbranch'
+    disablesourceinput: true
+    spec:
+      branch: 'v4'
+      url: "https://github.com/actions/checkout.git"
+      password: 'xxx'
+
+targets:
+  release:
+    dependson:
+      - 'condition#release:and'
+    disableconditions: true
+    name: 'deps(github): bump Action release for actions/checkout from v4 to {{ source "release" }}'
+    kind: 'yaml'
+    sourceid: 'release'
+    transformers:
+      - addprefix: 'actions/checkout@'
+    spec:
+      file: '.github/workflows/updatecli.yaml'
+      key: '$.jobs.build.steps[0].uses'
+      engine: 'yamlpath'
+
+  tag:
+    dependson:
+      - 'condition#tag:and'
+    disableconditions: true
+    name: 'deps(github): bump Action tag for actions/checkout from v4 to {{ source "tag" }}'
+    kind: 'yaml'
+    sourceid: 'tag'
+    transformers:
+      - addprefix: 'actions/checkout@'
+    spec:
+      file: '.github/workflows/updatecli.yaml'
+      key: '$.jobs.build.steps[0].uses'
+      engine: 'yamlpath'
+
+  branch:
+    dependson:
+      - 'condition#branch:and'
+    disableconditions: true
+    name: 'deps(github): bump Action branch for actions/checkout from v4 to {{ source "branch" }}'
+    kind: yaml
+    sourceid: branch
+    transformers:
+      - addprefix: 'actions/checkout@'
+    spec:
+      file: '.github/workflows/updatecli.yaml'
+      key: '$.jobs.build.steps[0].uses'
+      engine: 'yamlpath'
+`},
+		},
 	}
 
 	for _, tt := range testdata {
@@ -1525,6 +1684,7 @@ targets:
 				Spec{
 					Credentials: tt.credentials,
 					Digest:      &tt.digest,
+					Age:         tt.age,
 				}, tt.rootDir, "", "")
 
 			require.NoError(t, err)

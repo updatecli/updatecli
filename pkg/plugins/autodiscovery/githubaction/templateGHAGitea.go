@@ -20,6 +20,7 @@ sources:
       repository: '{{ .Repository }}'
       url: '{{ .URL }}'
       token: '{{ .Token }}'
+{{- template "age" .Age }}
       versionfilter:
         kind: '{{ .VersionFilterKind }}'
         pattern: '{{ .VersionFilterPattern }}'
@@ -35,6 +36,7 @@ sources:
     spec:
       url: "{{ .URL }}/{{ .Owner }}/{{ .Repository }}.git"
       password: '{{ .Token }}'
+{{- template "age" .Age }}
       versionfilter:
         kind: '{{ .VersionFilterKind }}'
         pattern: '{{ .VersionFilterPattern }}'
@@ -50,6 +52,7 @@ sources:
     spec:
       url: "{{ .URL }}/{{ .Owner }}/{{ .Repository }}.git"
       password: '{{ .Token }}'
+{{- template "age" .Age }}
       versionfilter:
         kind: '{{ .VersionFilterKind }}'
         pattern: '{{ .VersionFilterPattern }}'

@@ -21,6 +21,7 @@ func TestSearchWorkflowFiles(t *testing.T) {
 	}
 
 	expectedWorkflowFiles := []string{
+		"testdata/age/.github/workflows/updatecli.yaml",
 		"testdata/digest/.github/workflows/updatecli.yaml",
 		"testdata/docker/.github/workflows/docker-01.yaml",
 		"testdata/docker/.github/workflows/docker-02.yaml",

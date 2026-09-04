@@ -8,6 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github/app"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
@@ -74,6 +75,17 @@ type Spec struct {
 	//  * source
 	//
 	VersionFilter version.Filter `yaml:",omitempty"`
+	// age defines the minimum or maximum age of a release to be considered valid.
+	// It accepts a duration string (e.g., "24h", "7d", "3w", "1y").
+	//
+	// compatible:
+	//  * source
+	//
+	// remark:
+	//  * the age filter cannot be applied to the git tag fallback used when a repository
+	//    doesn't publish any GitHub release.
+	//
+	Age age.Spec `yaml:",omitempty"`
 	// typeFilter specifies the GitHub Release type to retrieve before applying the versionfilter rule
 	//
 	// default:
@@ -164,6 +176,10 @@ func New(spec interface{}) (*GitHubRelease, error) {
 
 	}
 
+	if err := newSpec.Age.Validate(); err != nil {
+		validationErrors = append(validationErrors, err.Error())
+	}
+
 	// Return all the validation errors if found any
 	if len(validationErrors) > 0 {
 		return &GitHubRelease{}, fmt.Errorf("validation error: the provided manifest configuration has the following validation errors:\n%s", strings.Join(validationErrors, "\n\n"))
@@ -205,6 +221,7 @@ func (g *GitHubRelease) ReportConfig() interface{} {
 		Owner:         g.spec.Owner,
 		Repository:    g.spec.Repository,
 		VersionFilter: g.spec.VersionFilter,
+		Age:           g.spec.Age,
 		TypeFilter:    g.spec.TypeFilter,
 		URL:           redact.URL(g.spec.URL),
 		Tag:           g.spec.Tag,
