@@ -21,6 +21,7 @@ type Time struct {
 	// Day of the month: "2" "_2" "02"
 	layout       string
 	versions     []time.Time
+	originals    []string
 	FoundVersion Version
 }
 
@@ -35,6 +36,7 @@ func (d *Time) Init(versions []string) error {
 		}
 
 		d.versions = append(d.versions, t)
+		d.originals = append(d.originals, version)
 	}
 
 	if len(d.versions) == 0 {
@@ -60,7 +62,7 @@ func (d *Time) Search(rawversions map[string]string) error {
 	}
 	d.Sort()
 
-	id := d.versions[len(d.versions)-1].Format(d.layout)
+	id := d.originals[len(d.originals)-1]
 
 	d.FoundVersion.ParsedVersion = rawversions[id]
 	d.FoundVersion.OriginalVersion = d.FoundVersion.ParsedVersion
