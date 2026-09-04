@@ -215,7 +215,7 @@ func TestGitHubRelease_Source(t *testing.T) {
 			wantSkipped: true,
 		},
 		{
-			name: "the git tag fallback is skipped when an age filter is set",
+			name: "an age filter doesn't prevent the git tag fallback for a repository without any release",
 			mockedGhHandler: &mockGhHandler{
 				tags: []string{"1.0.0", "2.0.0", "3.0.0"},
 			},
@@ -223,8 +223,8 @@ func TestGitHubRelease_Source(t *testing.T) {
 				Kind:    "latest",
 				Pattern: "latest",
 			},
-			releaseAge:  age.Spec{Minimum: "7d"},
-			wantSkipped: true,
+			releaseAge: age.Spec{Minimum: "7d"},
+			wantValue:  "3.0.0",
 		},
 	}
 	for _, tt := range tests {

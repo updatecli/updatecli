@@ -6,6 +6,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 )
 
 // Source retrieves a specific version tag name, tag hash, or release title from GitHub Releases.
@@ -25,22 +26,26 @@ func (gr *GitHubRelease) Source(ctx context.Context, workingDir string, resultSo
 		}
 		versions = append(versions, release.TagName)
 	}
-	if len(versions) == 0 {
-		/*
-			Every published release is still cooling down, which is an expected state of
-			the age filter rather than a failure, so the source is skipped instead. The
-			git tag fallback is not attempted because it only reports tag names, so it
-			couldn't honor the age window.
-		*/
-		if !gr.spec.Age.IsZero() {
-			resultSource.Result = result.SKIPPED
-			resultSource.Description = "no GitHub release matches the age filter yet"
-			return nil
-		}
+	/*
+		The repository does publish releases but the age filter discarded every one of
+		them, which is an expected state of the filter rather than a failure, so the
+		source is skipped instead. The git tag fallback is deliberately not attempted
+		here: it only reports tag names, so it couldn't honor the age window.
+	*/
+	if len(releaseRefs) > 0 && len(versions) == 0 {
+		logrus.Debugf("%s", age.ErrNoVersionMatchingAge)
+		resultSource.Result = result.SKIPPED
+		resultSource.Description = "no GitHub release matches the age filter yet"
+		return nil
+	}
 
+	if len(versions) == 0 {
 		switch gr.spec.TypeFilter.IsZero() {
 		case true:
 			logrus.Warningf("%s No GitHub Release found, we fallback to published git tags", result.ATTENTION)
+			if !gr.spec.Age.IsZero() {
+				logrus.Warningf("%s The age filter cannot be honored by the git tag fallback, as git tags are reported without their date", result.ATTENTION)
+			}
 
 			versions, err = gr.ghHandler.SearchTags(ctx, 0)
 			if err != nil {
