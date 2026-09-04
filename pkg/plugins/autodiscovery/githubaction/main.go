@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/docker"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 
@@ -95,6 +96,26 @@ type Spec struct {
 	//
 	//  More examples can be found at https://www.updatecli.io/docs/core/versionfilter/
 	VersionFilter version.Filter `yaml:",omitempty"`
+	// age defines the minimum or maximum age of a release, tag, or branch to be considered valid.
+	// It accepts a duration string (e.g., "24h", "7d", "3w", "1y").
+	//
+	// It is the "dependency cooldown" knob: setting `minimum` keeps Updatecli from
+	// suggesting a version which has just been published.
+	//
+	// default: empty, no age filtering
+	//
+	// remark:
+	//  * the age filter is not applied to the Docker images referenced by a workflow.
+	//
+	// example:
+	// ```
+	//   autodiscovery:
+	//     crawlers:
+	//       github/action:
+	//         age:
+	//           minimum: '7d'
+	// ```
+	Age age.Spec `yaml:",omitempty"`
 	// Credentials allows to specify the credentials to use to authenticate to the git provider
 	// The ID of the credential must be the domain of the git provider to configure
 	//
@@ -191,6 +212,10 @@ func New(spec interface{}, rootDir, scmID, actionID string) (GitHubAction, error
 	// Validate only rules
 	if err := s.Only.Validate(); err != nil {
 		return GitHubAction{}, fmt.Errorf("invalid only spec: %w", err)
+	}
+
+	if err := s.Age.Validate(); err != nil {
+		return GitHubAction{}, fmt.Errorf("invalid age spec: %w", err)
 	}
 
 	dir := rootDir

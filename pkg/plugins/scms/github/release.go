@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/shurcooL/githubv4"
 	"github.com/sirupsen/logrus"
@@ -37,6 +38,8 @@ query getLatestRelease($owner: String!, $repository: String!, $before: String, $
           }
           isDraft
           isPrerelease
+          createdAt
+          publishedAt
         }
         cursor
       }
@@ -66,7 +69,19 @@ type ReleaseNode struct {
 	IsDraft      bool
 	IsLatest     bool
 	IsPrerelease bool
+	CreatedAt    githubv4.DateTime
+	PublishedAt  githubv4.DateTime
 }
+
+// PublicationDate returns the date at which the release became public.
+// Draft releases have no publication date, so their creation date is used instead.
+func (r ReleaseNode) PublicationDate() time.Time {
+	if !r.PublishedAt.IsZero() {
+		return r.PublishedAt.Time
+	}
+	return r.CreatedAt.Time
+}
+
 type TagCommit struct {
 	Oid string
 }

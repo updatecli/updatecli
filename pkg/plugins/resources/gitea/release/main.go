@@ -10,6 +10,7 @@ import (
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/gitea/client"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
@@ -23,6 +24,9 @@ type Spec struct {
 	Repository string `yaml:",omitempty" jsonschema:"required"`
 	// [S] versionfilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
 	VersionFilter version.Filter `yaml:",omitempty"`
+	// [S] age defines the minimum or maximum age of a release to be considered valid.
+	// It accepts a duration string (e.g., "24h", "7d", "3w", "1y").
+	Age age.Spec `yaml:",omitempty"`
 	// [T] title defines the Gitea release title.
 	Title string `yaml:",omitempty"`
 	// [C][T] tag defines the Gitea release tag.
@@ -110,10 +114,14 @@ func New(spec interface{}) (*Gitea, error) {
 	return &g, nil
 }
 
-// Retrieve git tags from a remote gitea repository
-func (g *Gitea) SearchReleases(ctx context.Context) ([]string, error) {
+// SearchReleases retrieves the release tags from a remote gitea repository,
+// keeping only the ones published inside the provided age window.
+func (g *Gitea) SearchReleases(ctx context.Context, releaseAge age.Spec) ([]string, error) {
 
 	results := []string{}
+	// Tracks whether the repository publishes releases at all, so that a running
+	// cooldown isn't reported as a repository without any release.
+	foundRelease := false
 	page := 0
 	for {
 		// Timeout api query after 30sec
@@ -139,9 +147,16 @@ func (g *Gitea) SearchReleases(ctx context.Context) ([]string, error) {
 		}
 
 		for i := len(releases) - 1; i >= 0; i-- {
-			if !releases[i].Draft {
-				results = append(results, releases[i].Tag)
+			if releases[i].Draft {
+				continue
 			}
+			foundRelease = true
+			date := releaseDate(releases[i])
+			if !releaseAge.Matches(date) {
+				logrus.Debugf("ignoring release %q, dated %s, as outside of the age window", releases[i].Tag, date)
+				continue
+			}
+			results = append(results, releases[i].Tag)
 		}
 
 		if page >= resp.Page.Last {
@@ -151,7 +166,27 @@ func (g *Gitea) SearchReleases(ctx context.Context) ([]string, error) {
 
 	}
 
+	/*
+		The repository does publish releases but the age filter discarded every one of
+		them, which means the release we would have returned is still cooling down.
+		That's not a lookup failure, so the sentinel lets the caller skip rather than
+		fail.
+	*/
+	if foundRelease && len(results) == 0 {
+		return nil, fmt.Errorf("%w for the Gitea releases of %s/%s", age.ErrNoVersionMatchingAge, g.spec.Owner, g.spec.Repository)
+	}
+
 	return results, nil
+}
+
+// releaseDate returns the date at which a release became public.
+// Gitea leaves the publication date empty for releases created without one, so the
+// creation date is used as a fallback.
+func releaseDate(r *scm.Release) time.Time {
+	if !r.Published.IsZero() {
+		return r.Published
+	}
+	return r.Created
 }
 
 func (s Spec) Validate() error {
@@ -173,6 +208,11 @@ func (s Spec) Validate() error {
 	if len(s.Repository) == 0 {
 		gotError = true
 		missingParameters = append(missingParameters, "repository")
+	}
+
+	if err := s.Age.Validate(); err != nil {
+		logrus.Errorln(err)
+		gotError = true
 	}
 
 	if len(missingParameters) > 0 {
@@ -197,5 +237,6 @@ func (g *Gitea) ReportConfig() interface{} {
 			URL: redact.URL(g.spec.URL),
 		},
 		VersionFilter: g.spec.VersionFilter,
+		Age:           g.spec.Age,
 	}
 }

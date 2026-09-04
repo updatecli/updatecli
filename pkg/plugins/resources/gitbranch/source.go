@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 )
 
 // Source returns the latest git tag based on create time
@@ -34,8 +36,25 @@ func (gb *GitBranch) Source(_ context.Context, workingDir string, resultSource *
 
 	values := []string{}
 	for _, ref := range refs {
+		if !gb.spec.Age.Matches(ref.When) {
+			logrus.Debugf("ignoring branch %q, dated %s, as outside of the age window", ref.Name, ref.When)
+			continue
+		}
 		values = append(values, ref.Name)
 	}
+
+	/*
+		The repository does publish branches but the age filter discarded every one of
+		them, which is an expected state of the filter rather than a failure, so the
+		source is skipped instead.
+	*/
+	if len(refs) > 0 && len(values) == 0 {
+		logrus.Debugf("%s", age.ErrNoVersionMatchingAge)
+		resultSource.Result = result.SKIPPED
+		resultSource.Description = "no git branch matches the age filter yet"
+		return nil
+	}
+
 	gb.foundVersion, err = gb.versionFilter.Search(values)
 	if err != nil {
 		return fmt.Errorf("filtering branches: %w", err)

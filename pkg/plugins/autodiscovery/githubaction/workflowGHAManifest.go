@@ -9,6 +9,7 @@ import (
 	"text/template"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 )
 
 type githubActionManifestSpec struct {
@@ -106,12 +107,12 @@ func (g GitHubAction) getGitHubActionManifest(spec *githubActionManifestSpec) ([
 	var tmpl *template.Template
 	switch kind {
 	case kindGitHub:
-		tmpl, err = template.New("manifest").Parse(workflowManifestGitHubTemplate)
+		tmpl, err = template.New("manifest").Parse(age.ManifestTemplate + workflowManifestGitHubTemplate)
 		if err != nil {
 			return nil, fmt.Errorf("parsing template: %s", err)
 		}
 	case kindGitea:
-		tmpl, err = template.New("manifest").Parse(workflowManifestGiteaTemplate)
+		tmpl, err = template.New("manifest").Parse(age.ManifestTemplate + workflowManifestGiteaTemplate)
 		if err != nil {
 			return nil, fmt.Errorf("parsing template: %s", err)
 		}
@@ -143,6 +144,7 @@ func (g GitHubAction) getGitHubActionManifest(spec *githubActionManifestSpec) ([
 		ScmID                string
 		Token                string
 		Digest               bool
+		Age                  age.Spec
 	}{
 		ActionID:             g.actionID,
 		ActionName:           actionName,
@@ -159,6 +161,7 @@ func (g GitHubAction) getGitHubActionManifest(spec *githubActionManifestSpec) ([
 		TargetKey:            targetKey,
 		Token:                token,
 		Digest:               g.digest,
+		Age:                  g.spec.Age,
 	}
 
 	manifest := bytes.Buffer{}

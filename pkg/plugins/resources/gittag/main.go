@@ -7,6 +7,7 @@ import (
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
@@ -24,6 +25,16 @@ type Spec struct {
 	//    * condition
 	//    * target
 	VersionFilter version.Filter `yaml:",omitempty"`
+	// Age defines the minimum or maximum age of a tag to be considered valid.
+	// It accepts a duration string (e.g., "24h", "7d", "3w", "1y").
+	// The age of a tag is the commit date of the commit it points to.
+	//
+	//  compatible:
+	//    * source
+	//
+	//  remark:
+	//    * not compatible with `lsRemote`, which lists tags without their dates.
+	Age age.Spec `yaml:",omitempty"`
 	// Tag defines the git tag to check for exact match.
 	//
 	// compatible:
@@ -179,6 +190,13 @@ func (gt *GitTag) Validate() error {
 		if gt.spec.URL == "" {
 			validationErrors = append(validationErrors, "The parameter `url` is required when `lsRemote` is set to true, as it needs a git repository URL to retrieve tags from the remote repository without cloning it.")
 		}
+		if !gt.spec.Age.IsZero() {
+			validationErrors = append(validationErrors, "The parameter `age` cannot be used when `lsRemote` is set to true, as `lsremote` doesn't report the date of a tag.")
+		}
+	}
+
+	if err := gt.spec.Age.Validate(); err != nil {
+		validationErrors = append(validationErrors, err.Error())
 	}
 
 	// Return all the validation errors if found any
@@ -215,6 +233,7 @@ func (gt *GitTag) ReportConfig() interface{} {
 	return Spec{
 		Path:          gt.spec.Path,
 		VersionFilter: gt.spec.VersionFilter,
+		Age:           gt.spec.Age,
 		Tag:           gt.spec.Tag,
 		Key:           gt.spec.Key,
 		URL:           redact.URL(gt.spec.URL),

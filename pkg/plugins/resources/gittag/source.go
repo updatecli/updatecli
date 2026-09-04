@@ -2,9 +2,11 @@ package gittag
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 )
 
 // Source returns the latest git tag based on create time
@@ -29,8 +31,18 @@ func (gt *GitTag) Source(_ context.Context, workingDir string, resultSource *res
 		}
 
 	case false:
-		tagsList, tags, err = gt.listRemoteDirectoryTags(workingDir)
+		tagsList, tags, err = gt.listRemoteDirectoryTags(workingDir, gt.spec.Age)
 		if err != nil {
+			/*
+				Every published tag is still cooling down, which is an expected state of
+				the age filter rather than a failure, so the source is skipped instead.
+			*/
+			if errors.Is(err, age.ErrNoVersionMatchingAge) {
+				resultSource.Result = result.SKIPPED
+				resultSource.Description = "no git tag matches the age filter yet"
+				return nil
+			}
+
 			return fmt.Errorf("listing local tags: %w", err)
 		}
 	}

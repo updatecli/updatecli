@@ -334,3 +334,59 @@ func TestSpecIsZero(t *testing.T) {
 		})
 	}
 }
+
+func TestSpecMatches(t *testing.T) {
+	daysAgo := func(n int) time.Time {
+		return time.Now().Add(-time.Duration(n) * 24 * time.Hour)
+	}
+
+	tests := []struct {
+		name string
+		spec Spec
+		date time.Time
+		want bool
+	}{
+		{
+			name: "empty spec accepts everything",
+			spec: Spec{},
+			date: daysAgo(0),
+			want: true,
+		},
+		{
+			name: "release younger than the minimum is rejected",
+			spec: Spec{Minimum: "7d"},
+			date: daysAgo(1),
+			want: false,
+		},
+		{
+			name: "release older than the minimum is accepted",
+			spec: Spec{Minimum: "7d"},
+			date: daysAgo(10),
+			want: true,
+		},
+		{
+			name: "release older than the maximum is rejected",
+			spec: Spec{Maximum: "30d"},
+			date: daysAgo(40),
+			want: false,
+		},
+		{
+			name: "release inside both bounds is accepted",
+			spec: Spec{Minimum: "7d", Maximum: "30d"},
+			date: daysAgo(10),
+			want: true,
+		},
+		{
+			name: "release outside both bounds is rejected",
+			spec: Spec{Minimum: "7d", Maximum: "30d"},
+			date: daysAgo(40),
+			want: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, tt.spec.Matches(tt.date))
+		})
+	}
+}

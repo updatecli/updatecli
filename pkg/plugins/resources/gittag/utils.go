@@ -7,6 +7,8 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
+	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 )
 
 // listRemoteURLTags lists all tags from a remote git repository
@@ -52,8 +54,9 @@ func (gt *GitTag) listRemoteURLTags() ([]string, map[string]string, error) {
 	return tagsList, results, nil
 }
 
-// listRemoteDirectoryTags lists all tags from a local git repository
-func (gt *GitTag) listRemoteDirectoryTags(workingDir string) ([]string, map[string]string, error) {
+// listRemoteDirectoryTags lists the tags of a local git repository which were created
+// inside the provided age window.
+func (gt *GitTag) listRemoteDirectoryTags(workingDir string, tagAge age.Spec) ([]string, map[string]string, error) {
 	if gt.nativeGitHandler == nil {
 		return nil, nil, fmt.Errorf("nativeGitHandler is not initialized")
 	}
@@ -85,8 +88,21 @@ func (gt *GitTag) listRemoteDirectoryTags(workingDir string) ([]string, map[stri
 	}
 
 	for _, ref := range refs {
+		if !tagAge.Matches(ref.When) {
+			logrus.Debugf("ignoring tag %q, dated %s, as outside of the age window", ref.Name, ref.When)
+			continue
+		}
 		results[ref.Name] = ref.Hash
 		tagsList = append(tagsList, ref.Name)
+	}
+
+	/*
+		The repository does publish tags but the age filter discarded every one of them,
+		which means the tag we would have returned is still cooling down. That's not a
+		lookup failure, so the sentinel lets the caller skip rather than fail.
+	*/
+	if len(refs) > 0 && len(tagsList) == 0 {
+		return nil, nil, fmt.Errorf("%w for the tags of %q", age.ErrNoVersionMatchingAge, gt.directory)
 	}
 
 	return tagsList, results, nil
