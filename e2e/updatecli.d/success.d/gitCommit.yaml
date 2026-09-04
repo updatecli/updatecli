@@ -21,6 +21,14 @@ sources:
       branch: main
       depth: 1
       url: https://github.com/updatecli-test/updatecli-submodules.git
+  from-scm-with-age:
+    name: Get the latest commit settled for at least one hour from an SCM working directory
+    kind: gitcommit
+    scmid: git-repository
+    spec:
+      branch: main
+      age:
+        minimum: "1h"
   from-path:
     name: Get the latest commit from the current working directory
     kind: gitcommit

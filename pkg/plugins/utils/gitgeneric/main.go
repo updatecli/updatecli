@@ -341,29 +341,12 @@ func (g GoGit) GetCommitHash(workingDir, branch string) (string, error) {
 		return "", fmt.Errorf("opening %q git directory: %s", workingDir, err)
 	}
 
-	if branch == "" {
-		head, err := gitRepository.Head()
-		if err != nil {
-			return "", fmt.Errorf("getting HEAD: %s", err)
-		}
-		return head.Hash().String(), nil
+	hash, err := resolveBranchHash(gitRepository, branch)
+	if err != nil {
+		return "", err
 	}
 
-	references := []plumbing.ReferenceName{
-		plumbing.NewBranchReferenceName(branch),
-		plumbing.NewRemoteReferenceName(DefaultRemoteReferenceName, branch),
-	}
-	for _, referenceName := range references {
-		reference, err := gitRepository.Reference(referenceName, true)
-		if err == nil {
-			return reference.Hash().String(), nil
-		}
-		if err != plumbing.ErrReferenceNotFound {
-			return "", fmt.Errorf("getting branch %q: %s", branch, err)
-		}
-	}
-
-	return "", fmt.Errorf("branch %q not found", branch)
+	return hash.String(), nil
 }
 
 // GetLatestCommitHash returns the latest commit hash from the working directory
