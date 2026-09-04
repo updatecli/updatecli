@@ -8,7 +8,28 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 )
 
+// unsetGitHubTokenEnv neutralizes every environment variable the crawler consults
+// before the `credentials` setting, so that the generated manifests only ever contain
+// the tokens the test cases pin.
+func unsetGitHubTokenEnv(t *testing.T) {
+	t.Helper()
+
+	for _, name := range []string{
+		"UPDATECLI_GITHUB_TOKEN",
+		"GITHUB_TOKEN",
+		"UPDATECLI_GITHUB_APP_CLIENT_ID",
+		"UPDATECLI_GITHUB_APP_PRIVATE_KEY",
+		"UPDATECLI_GITHUB_APP_PRIVATE_KEY_PATH",
+		"UPDATECLI_GITHUB_APP_INSTALLATION_ID",
+		"UPDATECLI_GITHUB_APP_EXPIRATION_TIME",
+	} {
+		t.Setenv(name, "")
+	}
+}
+
 func TestDiscoverManifests(t *testing.T) {
+	unsetGitHubTokenEnv(t)
+
 	testdata := []struct {
 		name              string
 		rootDir           string
@@ -1521,7 +1542,6 @@ targets:
 		{
 			name:    "Scenario - GitHub Action with a dependency cooldown",
 			rootDir: "testdata/age",
-			// Pinned so the generated manifest doesn't pick up a GITHUB_TOKEN from the environment.
 			credentials: map[string]gitProviderToken{
 				"github.com": {
 					Kind:  "github",
