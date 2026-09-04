@@ -35,10 +35,11 @@ func TestGitBranch_Source(t *testing.T) {
 	}
 
 	tests := []struct {
-		name      string
-		spec      Spec
-		wantValue string
-		wantErr   bool
+		name        string
+		spec        Spec
+		wantValue   string
+		wantSkipped bool
+		wantErr     bool
 	}{
 		{
 			name:      "no age filter returns the latest branch",
@@ -56,9 +57,9 @@ func TestGitBranch_Source(t *testing.T) {
 			wantValue: "v3.0",
 		},
 		{
-			name:    "Error: every branch is still in cooldown",
-			spec:    Spec{Age: age.Spec{Minimum: "60d"}},
-			wantErr: true,
+			name:        "the source is skipped while every branch is still in cooldown",
+			spec:        Spec{Age: age.Spec{Minimum: "60d"}},
+			wantSkipped: true,
 		},
 	}
 
@@ -78,6 +79,12 @@ func TestGitBranch_Source(t *testing.T) {
 			}
 
 			require.NoError(t, err)
+
+			if tt.wantSkipped {
+				assert.Equal(t, result.SKIPPED, gotResult.Result)
+				return
+			}
+
 			assert.Equal(t, tt.wantValue, gotResult.Information)
 		})
 	}

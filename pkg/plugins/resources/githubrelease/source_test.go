@@ -69,6 +69,7 @@ func TestGitHubRelease_Source(t *testing.T) {
 		versionFilter   version.Filter
 		releaseAge      age.Spec
 		wantValue       string
+		wantSkipped     bool
 		wantErr         bool
 	}{
 		{
@@ -199,7 +200,7 @@ func TestGitHubRelease_Source(t *testing.T) {
 			wantValue:  "1.0.0",
 		},
 		{
-			name: "Error: every release is still in cooldown",
+			name: "the source is skipped while every release is still in cooldown",
 			mockedGhHandler: &mockGhHandler{
 				releases: []github.ReleaseNode{
 					{TagName: "1.0.0", PublishedAt: publishedDaysAgo(2)},
@@ -210,11 +211,11 @@ func TestGitHubRelease_Source(t *testing.T) {
 				Kind:    "latest",
 				Pattern: "latest",
 			},
-			releaseAge: age.Spec{Minimum: "7d"},
-			wantErr:    true,
+			releaseAge:  age.Spec{Minimum: "7d"},
+			wantSkipped: true,
 		},
 		{
-			name: "Error: the git tag fallback cannot honor an age filter",
+			name: "the git tag fallback is skipped when an age filter is set",
 			mockedGhHandler: &mockGhHandler{
 				tags: []string{"1.0.0", "2.0.0", "3.0.0"},
 			},
@@ -222,8 +223,8 @@ func TestGitHubRelease_Source(t *testing.T) {
 				Kind:    "latest",
 				Pattern: "latest",
 			},
-			releaseAge: age.Spec{Minimum: "7d"},
-			wantErr:    true,
+			releaseAge:  age.Spec{Minimum: "7d"},
+			wantSkipped: true,
 		},
 	}
 	for _, tt := range tests {
@@ -253,6 +254,12 @@ func TestGitHubRelease_Source(t *testing.T) {
 			}
 
 			require.NoError(t, err)
+
+			if tt.wantSkipped {
+				assert.Equal(t, result.SKIPPED, gotResult.Result)
+				return
+			}
+
 			assert.Equal(t, tt.wantValue, gotResult.Information)
 		})
 	}

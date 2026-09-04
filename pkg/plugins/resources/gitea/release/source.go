@@ -2,9 +2,11 @@ package release
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
@@ -12,13 +14,20 @@ func (g *Gitea) Source(ctx context.Context, workingDir string, resultSource *res
 	versions, err := g.SearchReleases(ctx, g.spec.Age)
 
 	if err != nil {
+		/*
+			Every published release is still cooling down, which is an expected state of
+			the age filter rather than a failure, so the source is skipped instead.
+		*/
+		if errors.Is(err, age.ErrNoVersionMatchingAge) {
+			resultSource.Result = result.SKIPPED
+			resultSource.Description = "no Gitea Release matches the age filter yet"
+			return nil
+		}
+
 		return fmt.Errorf("search gitea release: %w", err)
 	}
 
 	if len(versions) == 0 {
-		if !g.spec.Age.IsZero() {
-			return fmt.Errorf("no Gitea Release found matching the age filter")
-		}
 		return fmt.Errorf("no Gitea Release found")
 	}
 

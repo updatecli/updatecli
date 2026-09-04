@@ -26,10 +26,16 @@ func (gr *GitHubRelease) Source(ctx context.Context, workingDir string, resultSo
 		versions = append(versions, release.TagName)
 	}
 	if len(versions) == 0 {
-		// The git tag fallback only reports tag names, so an age window couldn't be honored
-		// there. Reporting it is safer than silently ignoring a cooldown.
+		/*
+			Every published release is still cooling down, which is an expected state of
+			the age filter rather than a failure, so the source is skipped instead. The
+			git tag fallback is not attempted because it only reports tag names, so it
+			couldn't honor the age window.
+		*/
 		if !gr.spec.Age.IsZero() {
-			return fmt.Errorf("no GitHub release found matching the age filter, and the git tag fallback cannot honor it, exiting")
+			resultSource.Result = result.SKIPPED
+			resultSource.Description = "no GitHub release matches the age filter yet"
+			return nil
 		}
 
 		switch gr.spec.TypeFilter.IsZero() {

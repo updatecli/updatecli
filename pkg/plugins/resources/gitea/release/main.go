@@ -119,6 +119,9 @@ func New(spec interface{}) (*Gitea, error) {
 func (g *Gitea) SearchReleases(ctx context.Context, releaseAge age.Spec) ([]string, error) {
 
 	results := []string{}
+	// Tracks whether the repository publishes releases at all, so that a running
+	// cooldown isn't reported as a repository without any release.
+	foundRelease := false
 	page := 0
 	for {
 		// Timeout api query after 30sec
@@ -147,6 +150,7 @@ func (g *Gitea) SearchReleases(ctx context.Context, releaseAge age.Spec) ([]stri
 			if releases[i].Draft {
 				continue
 			}
+			foundRelease = true
 			date := releaseDate(releases[i])
 			if !releaseAge.Matches(date) {
 				logrus.Debugf("ignoring release %q, dated %s, as outside of the age window", releases[i].Tag, date)
@@ -160,6 +164,16 @@ func (g *Gitea) SearchReleases(ctx context.Context, releaseAge age.Spec) ([]stri
 		}
 		page++
 
+	}
+
+	/*
+		The repository does publish releases but the age filter discarded every one of
+		them, which means the release we would have returned is still cooling down.
+		That's not a lookup failure, so the sentinel lets the caller skip rather than
+		fail.
+	*/
+	if foundRelease && len(results) == 0 {
+		return nil, fmt.Errorf("%w for the Gitea releases of %s/%s", age.ErrNoVersionMatchingAge, g.spec.Owner, g.spec.Repository)
 	}
 
 	return results, nil

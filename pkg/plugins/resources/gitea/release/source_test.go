@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
@@ -20,9 +21,11 @@ func TestSource(t *testing.T) {
 			Owner         string
 			Repository    string
 			VersionFilter version.Filter
+			Age           age.Spec
 		}
-		wantResult string
-		wantErr    bool
+		wantResult  string
+		wantSkipped bool
+		wantErr     bool
 	}{
 		{
 			name: "repository updatecli/updatecli-nonexistent should not exist",
@@ -32,6 +35,7 @@ func TestSource(t *testing.T) {
 				Owner         string
 				Repository    string
 				VersionFilter version.Filter
+				Age           age.Spec
 			}{
 				URL:        "codeberg.org",
 				Token:      "",
@@ -49,6 +53,7 @@ func TestSource(t *testing.T) {
 				Owner         string
 				Repository    string
 				VersionFilter version.Filter
+				Age           age.Spec
 			}{
 				URL:        "codeberg.org",
 				Token:      "",
@@ -66,6 +71,7 @@ func TestSource(t *testing.T) {
 				Owner         string
 				Repository    string
 				VersionFilter version.Filter
+				Age           age.Spec
 			}{
 				URL:        "codeberg.org",
 				Token:      "",
@@ -78,6 +84,30 @@ func TestSource(t *testing.T) {
 			},
 			wantResult: "v2.15.0",
 			wantErr:    false,
+		},
+		{
+			name: "the source is skipped while every release is still in cooldown",
+			manifest: struct {
+				URL           string
+				Token         string
+				Owner         string
+				Repository    string
+				VersionFilter version.Filter
+				Age           age.Spec
+			}{
+				URL:        "codeberg.org",
+				Token:      "",
+				Owner:      "updatecli",
+				Repository: "updatecli-action",
+				VersionFilter: version.Filter{
+					Kind:    "semver",
+					Pattern: "~2.15",
+				},
+				// No release can ever be that old, so the age filter discards all of them.
+				Age: age.Spec{Minimum: "100y"},
+			},
+			wantResult:  "",
+			wantSkipped: true,
 		},
 	}
 
@@ -95,6 +125,10 @@ func TestSource(t *testing.T) {
 				require.Error(t, gotErr)
 			} else {
 				require.NoError(t, gotErr)
+			}
+
+			if tt.wantSkipped {
+				assert.Equal(t, result.SKIPPED, gotResult.Result)
 			}
 
 			assert.Equal(t, tt.wantResult, gotResult.Information)

@@ -1,6 +1,7 @@
 package age
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -8,6 +9,11 @@ import (
 
 	"github.com/sirupsen/logrus"
 )
+
+// ErrNoVersionMatchingAge is returned when a resource publishes versions but the age
+// filter discarded all of them. It reports a cooldown still running, not a lookup
+// failure, so callers are expected to skip rather than to fail.
+var ErrNoVersionMatchingAge = errors.New("no version matching the age filter")
 
 // Spec defines parameters to filter versions based on their release date
 type Spec struct {

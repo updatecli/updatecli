@@ -41,6 +41,7 @@ func TestGitTag_Source(t *testing.T) {
 		versionFilter          version.Filter
 		spec                   Spec
 		wantValue              string
+		wantSkipped            bool
 		wantErr                bool
 	}{
 		{
@@ -450,7 +451,7 @@ func TestGitTag_Source(t *testing.T) {
 			wantValue: "2.0.0",
 		},
 		{
-			name:       "Error: every tag is still in cooldown",
+			name:       "the source is skipped while every tag is still in cooldown",
 			workingDir: "github.com/updatecli/updatecli",
 			mockedNativeGitHandler: &mockNativeGitHandler{
 				tagRefs: []gitgeneric.DatedTag{
@@ -462,8 +463,8 @@ func TestGitTag_Source(t *testing.T) {
 				Kind:    "latest",
 				Pattern: "latest",
 			},
-			spec:    Spec{Age: age.Spec{Minimum: "7d"}},
-			wantErr: true,
+			spec:        Spec{Age: age.Spec{Minimum: "7d"}},
+			wantSkipped: true,
 		},
 		{
 			name:       "Error: age is not compatible with lsRemote",
@@ -504,6 +505,12 @@ func TestGitTag_Source(t *testing.T) {
 			}
 
 			require.NoError(t, err)
+
+			if tt.wantSkipped {
+				assert.Equal(t, result.SKIPPED, gotResult.Result)
+				return
+			}
+
 			assert.Equal(t, tt.wantValue, gotResult.Information)
 		})
 	}

@@ -96,5 +96,14 @@ func (gt *GitTag) listRemoteDirectoryTags(workingDir string, tagAge age.Spec) ([
 		tagsList = append(tagsList, ref.Name)
 	}
 
+	/*
+		The repository does publish tags but the age filter discarded every one of them,
+		which means the tag we would have returned is still cooling down. That's not a
+		lookup failure, so the sentinel lets the caller skip rather than fail.
+	*/
+	if len(refs) > 0 && len(tagsList) == 0 {
+		return nil, nil, fmt.Errorf("%w for the tags of %q", age.ErrNoVersionMatchingAge, gt.directory)
+	}
+
 	return tagsList, results, nil
 }
