@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -805,5 +806,55 @@ name: github
 			require.NoError(t, gotErr)
 			assert.Equal(t, tt.isResultWanted, gotResult)
 		})
+	}
+}
+
+// Test_Condition_yamlpathUndecodableFile guards against a decode loop that never
+// terminates. yaml.v3 does not advance past a syntax error, so a file whose first
+// document parses and whose remainder does not (a Markdown file dropped in a
+// workflows directory, say) makes the decoder return the same non-EOF error
+// forever. Retrying instead of stopping grew errorMessages until the process was
+// OOM-killed.
+func Test_Condition_yamlpathUndecodableFile(t *testing.T) {
+	spec := Spec{
+		File:   "README.md",
+		Key:    "$.name",
+		Engine: "yamlpath",
+	}
+
+	y, err := New(spec)
+	require.NoError(t, err)
+
+	y.contentRetriever = &text.MockTextRetriever{
+		Contents: map[string]string{
+			"README.md": `# OpenAPI Breaking Changes Detection
+
+## Overview
+
+This workflow detects breaking changes in the OpenAPI specification.
+
+## How It Works
+
+1. **Automatic Detection**: On every PR, the workflow:
+   - compares the spec against the base branch
+`,
+		},
+	}
+	y.files = map[string]file{
+		"README.md": {originalFilePath: "README.md", filePath: "README.md"},
+	}
+
+	done := make(chan error, 1)
+	go func() {
+		_, _, condErr := y.Condition(context.Background(), "", nil)
+		done <- condErr
+	}()
+
+	select {
+	case condErr := <-done:
+		require.Error(t, condErr)
+		assert.Contains(t, condErr.Error(), "parsing yaml file")
+	case <-time.After(10 * time.Second):
+		t.Fatal("Condition did not return: the decoder loop is spinning on a non-EOF error")
 	}
 }

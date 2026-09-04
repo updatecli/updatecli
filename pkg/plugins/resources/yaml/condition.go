@@ -108,9 +108,12 @@ func (y *Yaml) Condition(_ context.Context, source string, scm scm.ScmHandler) (
 					if derr == io.EOF {
 						break
 					}
+					// The decoder does not advance past a syntax error, so it would
+					// return the same error on every subsequent call. Stop reading
+					// this file instead of looping on it.
 					errorMessages = append(errorMessages, fmt.Errorf(
-						"%q - parsing yaml file: %w", originalFilePath, err))
-					continue
+						"%q - parsing yaml file: %w", originalFilePath, derr))
+					break
 				}
 				docs = append(docs, &doc)
 			}
