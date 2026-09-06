@@ -9,6 +9,7 @@ import (
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/gitlab/client"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
@@ -23,6 +24,11 @@ type Spec struct {
 	Repository string `yaml:",omitempty" jsonschema:"required"`
 	// [S] VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
 	VersionFilter version.Filter `yaml:",omitempty"`
+	// [S] Age defines the minimum or maximum age of a release to be considered valid.
+	// It accepts a duration string (e.g., "24h", "7d", "3w", "1y").
+	// The age of a release is the date at which it was released, or the date at which
+	// it was created for a release published without one.
+	Age age.Spec `yaml:",omitempty"`
 	// [T] Title defines the GitLab release title.
 	Title string `yaml:",omitempty"`
 	// [C][T] Tag defines the GitLab release tag.
@@ -100,8 +106,9 @@ func New(spec interface{}) (*Gitlab, error) {
 	return &g, nil
 }
 
-// Retrieve git tags from a remote GitLab repository
-func (g *Gitlab) SearchReleases() ([]string, error) {
+// SearchReleases retrieves the release tags from a remote GitLab repository, keeping
+// only the ones released inside the provided age window.
+func (g *Gitlab) SearchReleases(releaseAge age.Spec) ([]string, error) {
 
 	ctx := context.Background()
 	// Timeout api query after 30sec
@@ -109,6 +116,9 @@ func (g *Gitlab) SearchReleases() ([]string, error) {
 	defer cancel()
 
 	results := []string{}
+	// Tracks whether the repository publishes releases at all, so that a running
+	// cooldown isn't reported as a repository without any release.
+	foundRelease := false
 	page := 0
 	for {
 		opt := &gitlab.ListReleasesOptions{ListOptions: gitlab.ListOptions{Page: int64(page), PerPage: 30}}
@@ -128,9 +138,24 @@ func (g *Gitlab) SearchReleases() ([]string, error) {
 		}
 
 		for i := len(releases) - 1; i >= 0; i-- {
-			if !releases[i].UpcomingRelease {
-				results = append(results, releases[i].TagName)
+			if releases[i].UpcomingRelease {
+				continue
 			}
+			foundRelease = true
+
+			if !releaseAge.IsZero() {
+				date, ok := releaseDate(releases[i])
+				if !ok {
+					logrus.Debugf("ignoring release %q, which carries no date, as the age filter cannot be applied to it", releases[i].TagName)
+					continue
+				}
+				if !releaseAge.Matches(date) {
+					logrus.Debugf("ignoring release %q, dated %s, as outside of the age window", releases[i].TagName, date)
+					continue
+				}
+			}
+
+			results = append(results, releases[i].TagName)
 		}
 
 		// Means that we parsed all pages
@@ -140,7 +165,30 @@ func (g *Gitlab) SearchReleases() ([]string, error) {
 		page++
 	}
 
+	/*
+		The repository does publish releases but the age filter discarded every one of
+		them, which means the release we would have returned is still cooling down.
+		That's not a lookup failure, so the sentinel lets the caller skip rather than
+		fail.
+	*/
+	if !releaseAge.IsZero() && foundRelease && len(results) == 0 {
+		return nil, fmt.Errorf("%w for the GitLab releases of %s", age.ErrNoVersionMatchingAge, g.getPID())
+	}
+
 	return results, nil
+}
+
+// releaseDate returns the date at which a release became public, and whether GitLab
+// reported one. The release date is left empty for a release created without one, so
+// the creation date is used as a fallback.
+func releaseDate(r *gitlab.Release) (time.Time, bool) {
+	if r.ReleasedAt != nil && !r.ReleasedAt.IsZero() {
+		return *r.ReleasedAt, true
+	}
+	if r.CreatedAt != nil && !r.CreatedAt.IsZero() {
+		return *r.CreatedAt, true
+	}
+	return time.Time{}, false
 }
 
 func (s Spec) Validate() error {
@@ -155,6 +203,11 @@ func (s Spec) Validate() error {
 	if len(s.Repository) == 0 {
 		gotError = true
 		missingParameters = append(missingParameters, "repository")
+	}
+
+	if err := s.Age.Validate(); err != nil {
+		gotError = true
+		logrus.Errorln(err)
 	}
 
 	if len(missingParameters) > 0 {
@@ -179,6 +232,7 @@ func (g *Gitlab) ReportConfig() interface{} {
 		},
 		Repository:    g.spec.Repository,
 		VersionFilter: g.spec.VersionFilter,
+		Age:           g.spec.Age,
 		Tag:           g.spec.Tag,
 	}
 }
