@@ -3,7 +3,6 @@ package gomodule
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -19,11 +18,6 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
-
-// ErrNoVersionMatchingAge is returned when a Golang module publishes versions but the age
-// filter discarded all of them. It reports a cooldown still running, not a lookup failure,
-// so callers are expected to skip rather than to fail.
-var ErrNoVersionMatchingAge = errors.New("no version matching the age filter")
 
 // versionInfo represents the structure of the version information returned by the Go proxy API.
 type versionInfo struct {
@@ -136,7 +130,7 @@ func (g *GoModule) versions(ctx context.Context) (v string, err error) {
 	}
 
 	if heldBackByAge {
-		return "", fmt.Errorf("%w for GO module %q", ErrNoVersionMatchingAge, g.Spec.Module)
+		return "", fmt.Errorf("%w for GO module %q", age.ErrNoVersionMatchingAge, g.Spec.Module)
 	}
 
 	return "", fmt.Errorf("GO module %q not found on proxy %q", g.Spec.Module, GOPROXY)
