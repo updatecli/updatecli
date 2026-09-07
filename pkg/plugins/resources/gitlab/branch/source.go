@@ -2,16 +2,28 @@ package branch
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
 func (g *Gitlab) Source(_ context.Context, workingDir string, resultSource *result.Source) error {
-	versions, err := g.SearchBranches()
+	versions, err := g.SearchBranches(g.spec.Age)
 
 	if err != nil {
+		/*
+			Every branch is still cooling down, which is an expected state of the age
+			filter rather than a failure, so the source is skipped instead.
+		*/
+		if errors.Is(err, age.ErrNoVersionMatchingAge) {
+			resultSource.Result = result.SKIPPED
+			resultSource.Description = "no GitLab branch matches the age filter yet"
+			return nil
+		}
+
 		return fmt.Errorf("searching GitLab branches: %q", err)
 	}
 
