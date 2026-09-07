@@ -6,6 +6,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 )
 
 func (g *Gitlab) Condition(_ context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
@@ -13,7 +14,9 @@ func (g *Gitlab) Condition(_ context.Context, source string, scm scm.ScmHandler)
 		logrus.Warningf("Condition not supported for the plugin GitLab release")
 	}
 
-	releases, err := g.SearchReleases()
+	// A condition checks whether a specific release exists, so the age filter, which
+	// only narrows down which release to pick, doesn't apply here.
+	releases, err := g.SearchReleases(age.Spec{})
 	if err != nil {
 		return false, "", fmt.Errorf("looking for GitLab release: %w", err)
 	}
