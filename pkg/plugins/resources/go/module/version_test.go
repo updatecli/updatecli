@@ -225,7 +225,7 @@ func TestVersions(t *testing.T) {
 			gotVersion, err := got.versions(context.Background())
 
 			if tt.expectedHeldBackByAge {
-				require.ErrorIs(t, err, ErrNoVersionMatchingAge)
+				require.ErrorIs(t, err, age.ErrNoVersionMatchingAge)
 				assert.Empty(t, gotVersion)
 			} else {
 				require.NoError(t, err)

@@ -7,6 +7,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 )
 
 // Condition checks that an Npm package version exist
@@ -25,7 +26,11 @@ func (n Npm) Condition(ctx context.Context, source string, scm scm.ScmHandler) (
 	}
 
 	_, versions, err := n.getVersions(ctx)
-	if err != nil {
+	/*
+		A cooldown still running means no published version is usable yet, which the loop
+		below already reports as an unmet condition, so it isn't surfaced as an error.
+	*/
+	if err != nil && !errors.Is(err, age.ErrNoVersionMatchingAge) {
 		return false, "", err
 	}
 

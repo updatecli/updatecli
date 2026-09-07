@@ -10,9 +10,18 @@ sources:
         kind: semver
         pattern: "~0"
 
+  latest:
+    kind: gitlab/release
+    spec:
+      owner: "olblak"
+      repository: "updatecli"
+      age:
+        minimum: 4y
+
 conditions:
   default:
     kind: gitlab/release
+    disablesourceinput: true
     spec:
       owner: "olblak"
       repository: "updatecli"
@@ -24,4 +33,3 @@ conditions:
       url: "gitlab.com"
       owner: "olblak"
       repository: "updatecli"
-

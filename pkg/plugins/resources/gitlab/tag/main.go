@@ -3,12 +3,14 @@ package tag
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/gitlab/client"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 )
@@ -22,6 +24,11 @@ type Spec struct {
 	Repository string `yaml:",omitempty" jsonschema:"required"`
 	// [S][C] VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
 	VersionFilter version.Filter `yaml:",omitempty"`
+	// [S] Age defines the minimum or maximum age of a tag to be considered valid.
+	// It accepts a duration string (e.g., "24h", "7d", "3w", "1y").
+	// The age of a tag is its creation date, which GitLab reports as the tagger date
+	// of an annotated tag and as the commit date of a lightweight one.
+	Age age.Spec `yaml:",omitempty"`
 	// [S] Tag defines the GitLab tag .
 	Tag string `yaml:",omitempty"`
 }
@@ -82,20 +89,26 @@ func New(spec interface{}) (*Gitlab, error) {
 
 }
 
-// Retrieve git tags from a remote GitLab repository
-func (g *Gitlab) SearchTags() (tags []string, err error) {
+// SearchTags retrieves the tags of a remote GitLab repository, keeping only the ones
+// created inside the provided age window. The returned tags are ordered from the
+// oldest to the most recent one, as expected by the version filters.
+func (g *Gitlab) SearchTags(tagAge age.Spec) (tags []string, err error) {
 
 	// Timeout api query after 30sec
 	ctx := context.Background()
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	page := 0
+	// GitLab paginates from page 1, so starting anywhere else fetches the first page twice.
+	page := int64(1)
+	// Tracks whether the repository holds tags at all, so that a running cooldown
+	// isn't reported as a repository without any tag.
+	foundTag := false
 
 	// Query gitlab api until we visit all pages
 	for {
 
-		opt := &gitlab.ListTagsOptions{ListOptions: gitlab.ListOptions{Page: int64(page), PerPage: 100}}
+		opt := &gitlab.ListTagsOptions{ListOptions: gitlab.ListOptions{Page: page, PerPage: 100}}
 
 		references, resp, err := g.client.Tags.ListTags(
 			g.getPID(),
@@ -112,16 +125,58 @@ func (g *Gitlab) SearchTags() (tags []string, err error) {
 		}
 
 		for _, ref := range references {
+			foundTag = true
+
+			if !tagAge.IsZero() {
+				date, ok := tagDate(ref)
+				if !ok {
+					logrus.Debugf("ignoring tag %q, which carries no date, as the age filter cannot be applied to it", ref.Name)
+					continue
+				}
+				if !tagAge.Matches(date) {
+					logrus.Debugf("ignoring tag %q, dated %s, as outside of the age window", ref.Name, date)
+					continue
+				}
+			}
+
 			tags = append(tags, ref.Name)
 		}
 
-		if int64(page) >= resp.NextPage {
+		// GitLab reports no next page once the last one has been visited.
+		if resp.NextPage == 0 {
 			break
 		}
-		page++
+		page = resp.NextPage
 	}
 
+	/*
+		The repository does hold tags but the age filter discarded every one of them,
+		which means the tag we would have returned is still cooling down. That's not a
+		lookup failure, so the sentinel lets the caller skip rather than fail.
+	*/
+	if !tagAge.IsZero() && foundTag && len(tags) == 0 {
+		return nil, fmt.Errorf("%w for the GitLab tags of %s", age.ErrNoVersionMatchingAge, g.getPID())
+	}
+
+	// GitLab returns the most recently updated tag first, while the version filters
+	// expect the oldest one first, such as when they pick the last element for the
+	// "latest" kind.
+	slices.Reverse(tags)
+
 	return tags, nil
+}
+
+// tagDate returns the date at which a tag was created, and whether GitLab reported one.
+// The creation date is absent from older GitLab versions, so the committer date of the
+// commit the tag points at is used as a fallback.
+func tagDate(t *gitlab.Tag) (time.Time, bool) {
+	if t.CreatedAt != nil && !t.CreatedAt.IsZero() {
+		return *t.CreatedAt, true
+	}
+	if t.Commit != nil && t.Commit.CommittedDate != nil && !t.Commit.CommittedDate.IsZero() {
+		return *t.Commit.CommittedDate, true
+	}
+	return time.Time{}, false
 }
 
 func (s Spec) Validate() error {
@@ -136,6 +191,11 @@ func (s Spec) Validate() error {
 	if len(s.Repository) == 0 {
 		gotError = true
 		missingParameters = append(missingParameters, "repository")
+	}
+
+	if err := s.Age.Validate(); err != nil {
+		gotError = true
+		logrus.Errorln(err)
 	}
 
 	if len(missingParameters) > 0 {
@@ -160,6 +220,7 @@ func (g *Gitlab) ReportConfig() interface{} {
 			URL: g.spec.URL,
 		},
 		VersionFilter: g.spec.VersionFilter,
+		Age:           g.spec.Age,
 		Tag:           g.spec.Tag,
 	}
 }
