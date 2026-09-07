@@ -9,6 +9,7 @@ import (
 	"text/template"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 )
 
 type lockFileSupport struct {
@@ -182,7 +183,7 @@ func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 					}
 				}
 
-				tmpl, err := template.New("manifest").Parse(manifestTemplate)
+				tmpl, err := template.New("manifest").Parse(age.ManifestTemplate + manifestTemplate)
 				if err != nil {
 					logrus.Debugln(err)
 					continue
