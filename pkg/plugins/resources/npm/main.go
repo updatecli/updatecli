@@ -224,19 +224,34 @@ func (n *Npm) getVersions(ctx context.Context) (v string, versions []string, err
 		return "", nil, err
 	}
 
+	publishedVersions := []string{}
 	for _, value := range n.data.Versions {
-		versions = append(versions, value.Version)
+		publishedVersions = append(publishedVersions, value.Version)
 	}
 
 	// Discard the versions published outside of the age window, if any is defined.
-	versions = filterVersionsByAge(versions, n.data.Time, n.spec.Age)
+	versions = filterVersionsByAge(publishedVersions, n.data.Time, n.spec.Age)
+
+	/*
+		The package does publish versions but the age filter discarded every one of them,
+		which reports a cooldown still running rather than a lookup failure, so callers are
+		expected to skip rather than to fail.
+	*/
+	if len(publishedVersions) > 0 && len(versions) == 0 {
+		return "", versions, fmt.Errorf("%w for the npm package %q", age.ErrNoVersionMatchingAge, n.spec.Name)
+	}
 
 	if n.versionFilter.Kind == version.LATESTVERSIONKIND {
 		if n.spec.Age.IsZero() {
 			return n.data.DistTags.Latest, versions, nil
 		}
 
-		return latestVersionMatchingAge(n.data.DistTags.Latest, n.data.orderedVersions, versions), versions, nil
+		latestVersion := latestVersionMatchingAge(n.data.DistTags.Latest, n.data.orderedVersions, versions)
+		if latestVersion == "" {
+			return "", versions, fmt.Errorf("%w for the npm package %q", age.ErrNoVersionMatchingAge, n.spec.Name)
+		}
+
+		return latestVersion, versions, nil
 	}
 
 	sort.Strings(versions)
