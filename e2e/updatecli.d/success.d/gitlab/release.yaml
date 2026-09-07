@@ -21,6 +21,7 @@ sources:
 conditions:
   default:
     kind: gitlab/release
+    disablesourceinput: true
     spec:
       owner: "olblak"
       repository: "updatecli"

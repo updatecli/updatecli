@@ -3,6 +3,7 @@ package release
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -107,7 +108,8 @@ func New(spec interface{}) (*Gitlab, error) {
 }
 
 // SearchReleases retrieves the release tags from a remote GitLab repository, keeping
-// only the ones released inside the provided age window.
+// only the ones released inside the provided age window. The returned tags are ordered
+// from the oldest to the most recent one, as expected by the version filters.
 func (g *Gitlab) SearchReleases(releaseAge age.Spec) ([]string, error) {
 
 	ctx := context.Background()
@@ -119,9 +121,10 @@ func (g *Gitlab) SearchReleases(releaseAge age.Spec) ([]string, error) {
 	// Tracks whether the repository publishes releases at all, so that a running
 	// cooldown isn't reported as a repository without any release.
 	foundRelease := false
-	page := 0
+	// GitLab paginates from page 1, so starting anywhere else fetches the first page twice.
+	page := int64(1)
 	for {
-		opt := &gitlab.ListReleasesOptions{ListOptions: gitlab.ListOptions{Page: int64(page), PerPage: 30}}
+		opt := &gitlab.ListReleasesOptions{ListOptions: gitlab.ListOptions{Page: page, PerPage: 30}}
 
 		releases, resp, err := g.client.Releases.ListReleases(
 			g.getPID(),
@@ -137,32 +140,32 @@ func (g *Gitlab) SearchReleases(releaseAge age.Spec) ([]string, error) {
 			logrus.Debugf("GitLab Api Response:\n%+v", resp)
 		}
 
-		for i := len(releases) - 1; i >= 0; i-- {
-			if releases[i].UpcomingRelease {
+		for _, release := range releases {
+			if release.UpcomingRelease {
 				continue
 			}
 			foundRelease = true
 
 			if !releaseAge.IsZero() {
-				date, ok := releaseDate(releases[i])
+				date, ok := releaseDate(release)
 				if !ok {
-					logrus.Debugf("ignoring release %q, which carries no date, as the age filter cannot be applied to it", releases[i].TagName)
+					logrus.Debugf("ignoring release %q, which carries no date, as the age filter cannot be applied to it", release.TagName)
 					continue
 				}
 				if !releaseAge.Matches(date) {
-					logrus.Debugf("ignoring release %q, dated %s, as outside of the age window", releases[i].TagName, date)
+					logrus.Debugf("ignoring release %q, dated %s, as outside of the age window", release.TagName, date)
 					continue
 				}
 			}
 
-			results = append(results, releases[i].TagName)
+			results = append(results, release.TagName)
 		}
 
-		// Means that we parsed all pages
-		if int64(page) >= resp.NextPage {
+		// GitLab reports no next page once the last one has been visited.
+		if resp.NextPage == 0 {
 			break
 		}
-		page++
+		page = resp.NextPage
 	}
 
 	/*
@@ -174,6 +177,12 @@ func (g *Gitlab) SearchReleases(releaseAge age.Spec) ([]string, error) {
 	if !releaseAge.IsZero() && foundRelease && len(results) == 0 {
 		return nil, fmt.Errorf("%w for the GitLab releases of %s", age.ErrNoVersionMatchingAge, g.getPID())
 	}
+
+	// GitLab returns the most recent release first, while the version filters expect
+	// the oldest one first, such as when they pick the last element for the "latest"
+	// kind. Reversing the whole list, rather than each page, keeps the releases ordered
+	// across page boundaries too.
+	slices.Reverse(results)
 
 	return results, nil
 }
