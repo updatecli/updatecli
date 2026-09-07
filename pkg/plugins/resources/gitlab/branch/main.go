@@ -92,21 +92,23 @@ func New(spec interface{}) (*Gitlab, error) {
 }
 
 // SearchBranches retrieves the branches of a remote GitLab repository, keeping only
-// the ones whose latest commit falls inside the provided age window.
-func (g *Gitlab) SearchBranches(branchAge age.Spec) (tags []string, err error) {
+// the ones whose latest commit falls inside the provided age window. GitLab orders
+// branches by name rather than by date, so the result is left in that order.
+func (g *Gitlab) SearchBranches(branchAge age.Spec) ([]string, error) {
 
 	// Timeout api query after 30sec
 	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
 	results := []string{}
 	// Tracks whether the repository holds branches at all, so that a running cooldown
 	// isn't reported as a repository without any branch.
 	foundBranch := false
-	page := 0
+	// GitLab paginates from page 1, so starting anywhere else fetches the first page twice.
+	page := int64(1)
 	for {
-		ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
-		defer cancel()
-
-		opt := &gitlab.ListBranchesOptions{ListOptions: gitlab.ListOptions{Page: int64(page), PerPage: 30}}
+		opt := &gitlab.ListBranchesOptions{ListOptions: gitlab.ListOptions{Page: page, PerPage: 30}}
 
 		branches, resp, err := g.client.Branches.ListBranches(
 			g.getPID(),
@@ -139,11 +141,11 @@ func (g *Gitlab) SearchBranches(branchAge age.Spec) (tags []string, err error) {
 
 			results = append(results, branch.Name)
 		}
-		// if the next page is 0 then it means we visited all pages
-		if int64(page) >= resp.NextPage {
+		// GitLab reports no next page once the last one has been visited.
+		if resp.NextPage == 0 {
 			break
 		}
-		page++
+		page = resp.NextPage
 	}
 
 	/*
