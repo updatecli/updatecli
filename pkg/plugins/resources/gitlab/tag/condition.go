@@ -6,6 +6,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 )
 
 func (g *Gitlab) Condition(_ context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
@@ -13,7 +14,9 @@ func (g *Gitlab) Condition(_ context.Context, source string, scm scm.ScmHandler)
 		logrus.Warningf("scm is not supported for the GitLab tag condition, ignoring")
 	}
 
-	tags, err := g.SearchTags()
+	// A condition checks whether a specific tag exists, so the age filter, which only
+	// narrows down which tag to pick, doesn't apply here.
+	tags, err := g.SearchTags(age.Spec{})
 	if err != nil {
 		return false, "", fmt.Errorf("looking for GitLab tags: %w", err)
 	}
