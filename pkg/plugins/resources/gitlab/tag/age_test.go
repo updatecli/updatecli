@@ -19,8 +19,8 @@ func daysAgo(n int) string {
 	return time.Now().Add(-time.Duration(n) * 24 * time.Hour).Format(time.RFC3339)
 }
 
-// newTagServer serves a single page of tags, so that the age filtering is exercised
-// without reaching the real GitLab API.
+// newTagServer serves a single page of tags, the most recent one first the way the
+// GitLab API orders them, so that the age filtering is exercised without reaching it.
 func newTagServer(t *testing.T, tags ...string) *httptest.Server {
 	t.Helper()
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
@@ -46,10 +46,11 @@ func newTagResource(t *testing.T, url string, tagAge age.Spec) *Gitlab {
 }
 
 func TestSearchTagsAge(t *testing.T) {
+	// The most recent tag comes first, as the GitLab API reports it.
 	tags := []string{
-		tagJSON("v1.0.0", daysAgo(30)),
-		tagJSON("v2.0.0", daysAgo(10)),
 		tagJSON("v3.0.0", daysAgo(1)),
+		tagJSON("v2.0.0", daysAgo(10)),
+		tagJSON("v1.0.0", daysAgo(30)),
 	}
 
 	tests := []struct {

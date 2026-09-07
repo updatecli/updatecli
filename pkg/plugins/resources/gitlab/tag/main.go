@@ -3,6 +3,7 @@ package tag
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -89,7 +90,8 @@ func New(spec interface{}) (*Gitlab, error) {
 }
 
 // SearchTags retrieves the tags of a remote GitLab repository, keeping only the ones
-// created inside the provided age window.
+// created inside the provided age window. The returned tags are ordered from the
+// oldest to the most recent one, as expected by the version filters.
 func (g *Gitlab) SearchTags(tagAge age.Spec) (tags []string, err error) {
 
 	// Timeout api query after 30sec
@@ -97,7 +99,8 @@ func (g *Gitlab) SearchTags(tagAge age.Spec) (tags []string, err error) {
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	page := 0
+	// GitLab paginates from page 1, so starting anywhere else fetches the first page twice.
+	page := int64(1)
 	// Tracks whether the repository holds tags at all, so that a running cooldown
 	// isn't reported as a repository without any tag.
 	foundTag := false
@@ -105,7 +108,7 @@ func (g *Gitlab) SearchTags(tagAge age.Spec) (tags []string, err error) {
 	// Query gitlab api until we visit all pages
 	for {
 
-		opt := &gitlab.ListTagsOptions{ListOptions: gitlab.ListOptions{Page: int64(page), PerPage: 100}}
+		opt := &gitlab.ListTagsOptions{ListOptions: gitlab.ListOptions{Page: page, PerPage: 100}}
 
 		references, resp, err := g.client.Tags.ListTags(
 			g.getPID(),
@@ -139,10 +142,11 @@ func (g *Gitlab) SearchTags(tagAge age.Spec) (tags []string, err error) {
 			tags = append(tags, ref.Name)
 		}
 
-		if int64(page) >= resp.NextPage {
+		// GitLab reports no next page once the last one has been visited.
+		if resp.NextPage == 0 {
 			break
 		}
-		page++
+		page = resp.NextPage
 	}
 
 	/*
@@ -153,6 +157,11 @@ func (g *Gitlab) SearchTags(tagAge age.Spec) (tags []string, err error) {
 	if !tagAge.IsZero() && foundTag && len(tags) == 0 {
 		return nil, fmt.Errorf("%w for the GitLab tags of %s", age.ErrNoVersionMatchingAge, g.getPID())
 	}
+
+	// GitLab returns the most recently updated tag first, while the version filters
+	// expect the oldest one first, such as when they pick the last element for the
+	// "latest" kind.
+	slices.Reverse(tags)
 
 	return tags, nil
 }
