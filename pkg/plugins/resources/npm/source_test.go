@@ -25,6 +25,7 @@ func TestSource(t *testing.T) {
 		spec                 Spec
 		expectedResult       string
 		expectedError        bool
+		expectedSkipped      bool
 		expectedNewError     bool
 		mockedResponse       bool
 		mockedBody           string
@@ -135,7 +136,7 @@ func TestSource(t *testing.T) {
 			expectedResult:       "0.2.0",
 		},
 		{
-			name: "Failing case of retrieving axios version with an unrealistic minimum age",
+			name: "Skipped case of retrieving axios version with an unrealistic minimum age",
 			spec: Spec{
 				Name: "axios",
 				VersionFilter: version.Filter{
@@ -151,7 +152,7 @@ func TestSource(t *testing.T) {
 			mockedHTTPStatusCode: 200,
 			mockedToken:          "mytoken",
 			mockedUrl:            "https://mycustomregistry.updatecli.io",
-			expectedError:        true,
+			expectedSkipped:      true,
 		},
 		{
 			name: "Passing case of retrieving axios version with a maximum age",
@@ -173,7 +174,7 @@ func TestSource(t *testing.T) {
 			expectedResult:       "0.2.0",
 		},
 		{
-			name: "Failing case of retrieving axios version with an unrealistic maximum age",
+			name: "Skipped case of retrieving axios version with an unrealistic maximum age",
 			spec: Spec{
 				Name: "axios",
 				VersionFilter: version.Filter{
@@ -189,7 +190,7 @@ func TestSource(t *testing.T) {
 			mockedHTTPStatusCode: 200,
 			mockedToken:          "mytoken",
 			mockedUrl:            "https://mycustomregistry.updatecli.io",
-			expectedError:        true,
+			expectedSkipped:      true,
 		},
 		{
 			name: "Passing case of retrieving axios version with a minimum age and the default latest versionfilter",
@@ -208,7 +209,7 @@ func TestSource(t *testing.T) {
 			expectedResult: "0.1.0",
 		},
 		{
-			name: "Failing case of retrieving axios version with an unrealistic minimum age and the default latest versionfilter",
+			name: "Skipped case of retrieving axios version with an unrealistic minimum age and the default latest versionfilter",
 			spec: Spec{
 				Name:          "axios",
 				Age:           age.Spec{Minimum: "100y"},
@@ -220,7 +221,7 @@ func TestSource(t *testing.T) {
 			mockedHTTPStatusCode: 200,
 			mockedToken:          "mytoken",
 			mockedUrl:            "https://mycustomregistry.updatecli.io",
-			expectedError:        true,
+			expectedSkipped:      true,
 		},
 		{
 			name: "Failing case of an invalid age spec",
@@ -249,6 +250,13 @@ func TestSource(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
+
+			// A cooldown discarding every published version skips the source, it doesn't fail it.
+			if tt.expectedSkipped {
+				assert.Equal(t, result.SKIPPED, gotResult.Result)
+				return
+			}
+
 			assert.Equal(t, tt.expectedResult, gotResult.Information)
 		})
 	}

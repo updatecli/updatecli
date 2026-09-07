@@ -20,15 +20,7 @@ sources:
 {{- if .SourceRegistryToken }}
       registrytoken: '{{ .SourceRegistryToken }}'
 {{- end }}
-{{- if or .SourceAge.Minimum .SourceAge.Maximum }}
-      age:
-        {{- if .SourceAge.Minimum }}
-        minimum: '{{ .SourceAge.Minimum }}'
-        {{- end }}
-        {{- if .SourceAge.Maximum }}
-        maximum: '{{ .SourceAge.Maximum }}'
-        {{- end }}
-{{- end }}
+{{- template "age" .SourceAge }}
       versionfilter:
         kind: '{{ .SourceVersionFilterKind }}'
         pattern: '{{ .SourceVersionFilterPattern }}'

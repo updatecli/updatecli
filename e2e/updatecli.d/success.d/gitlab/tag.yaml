@@ -15,6 +15,8 @@ sources:
       url: "gitlab.com"
       owner: "olblak"
       repository: "updatecli"
+      age:
+        minimum: 4y
 
 conditions:
   default:
@@ -40,4 +42,3 @@ conditions:
     spec:
       owner: "olblak"
       repository: "updatecli"
-
