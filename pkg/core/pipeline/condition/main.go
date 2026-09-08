@@ -60,6 +60,10 @@ func (c *Condition) Run(ctx context.Context, source string) (err error) {
 	defer logrus.SetOutput(os.Stdout)
 	defer c.Result.SetConsoleOutput(&consoleOutput)
 
+	// The condition is being executed: mark it as finalized to distinguish it
+	// from a condition still pending execution.
+	c.Result.IsRun = true
+
 	c.Result.Result = result.FAILURE
 
 	condition, err := resource.New(c.Config.ResourceConfig)

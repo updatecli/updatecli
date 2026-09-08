@@ -80,8 +80,24 @@ func updatecliRuntimeFuncMap(data interface{}) template.FuncMap {
 				return getFieldValueByQuery(data, []string{"Sources", s, "Output"})
 			case result.FAILURE:
 				return "", fmt.Errorf("parent source %q failed", s)
-			// If the result of the parent source execution is not SUCCESS or FAILURE, then it means it was either skipped or not already run.
-			// In this case, the function is return "as it" (literally) to allow retry later (on a second configuration iteration)
+			case result.SKIPPED:
+				// A source is initialized with a SKIPPED result, so SKIPPED alone
+				// is ambiguous: it can mean "not run yet" or "explicitly skipped".
+				// IsRun disambiguates the two. A source still pending execution
+				// (IsRun false) is returned literally so it can be re-evaluated on
+				// a later configuration iteration, while a source that the pipeline
+				// finalized as skipped (IsRun true) is a hard error.
+				isRun, err := getFieldBoolByQuery(data, []string{"Sources", s, "Result", "IsRun"})
+				if err != nil {
+					return "", err
+				}
+				if isRun {
+					return "", fmt.Errorf("parent source %q was skipped", s)
+				}
+				return fmt.Sprintf("{{ source %q }}", s), nil
+			// If the result of the parent source execution is not SUCCESS, FAILURE, or SKIPPED,
+			// then it means it was not already run.
+			// In this case, the function is returned "as it" (literally) to allow retry later (on a second configuration iteration)
 			default:
 				return fmt.Sprintf("{{ source %q }}", s), nil
 			}
