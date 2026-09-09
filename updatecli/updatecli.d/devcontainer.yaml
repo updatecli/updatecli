@@ -8,7 +8,7 @@ labels:
 actions:
   default:
     kind: github/pullrequest
-    title: 'deps: Bump Golang version to {{ source "golang" }}'
+    title: 'deps: Bump Golang version to {{ source "golangfullversion" }}'
     spec:
       automerge: true
       labels:
@@ -39,10 +39,15 @@ sources:
           pattern: '(\d+\.\d+)'
       - addprefix: "dev-"
 
+  golangfullversion:
+    name: Get latest golang version
+    kind: golang
+
 conditions:
   docker:
     name: 'Check if mcr.microsoft.com/devcontainers/go:{{ source "golang" }} exist'
     kind: dockerimage
+    sourceid: golang
     spec:
       image: mcr.microsoft.com/devcontainers/go
 
@@ -51,6 +56,7 @@ targets:
   # so we can't use the json plugin
   devcontainer:
     name: 'update devcontainer to golang {{ source "golang" }}'
+    disablesourceinput: true
     kind: file
     scmid: default
     spec:
