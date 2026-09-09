@@ -176,7 +176,7 @@ func run(command string) error {
 
 	switch command {
 	case "apply", "compose/apply", "pipeline/apply":
-		udash.Audience = udashOAuthAudience
+		udash.APIURLSelector = udashReportAPI
 
 		if applyClean {
 			defer func() {
@@ -198,7 +198,7 @@ func run(command string) error {
 			return err
 		}
 	case "diff", "compose/diff", "pipeline/diff":
-		udash.Audience = udashOAuthAudience
+		udash.APIURLSelector = udashReportAPI
 		if diffClean {
 			defer func() {
 				if err := e.Clean(); err != nil {
@@ -311,7 +311,7 @@ func run(command string) error {
 		logrus.Infof("Config file located at %q", configFilePath)
 
 	case "udash/login":
-		err := udash.Login(udashEndpointURL, udashEndpointAPIURL, udashOAuthClientID, udashOAuthIssuer, udashOAuthAudience, udashOAuthAccessToken)
+		err := udash.Login(udashEndpointURL, udashEndpointAPIURL, udashAccessToken)
 		if err != nil {
 			logrus.Errorf("%s %s", result.FAILURE, err)
 			return err

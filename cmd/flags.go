@@ -48,3 +48,17 @@ func addDisableUdashReportFlag(cmd *cobra.Command, dest *bool) {
 		"Disable publishing pipeline reports to Udash",
 	)
 }
+
+// udashReportAPI selects which of the credentials stored by `updatecli udash login`
+// to publish with, by API URL. It is empty when the default one should be used.
+var udashReportAPI string
+
+// addReportAPIFlag registers the shared --reportAPI flag on the provided command.
+func addReportAPIFlag(cmd *cobra.Command) {
+	cmd.Flags().StringVar(
+		&udashReportAPI,
+		"reportAPI",
+		"",
+		"Set the report API URL where to publish pipeline reports",
+	)
+}

@@ -61,12 +61,16 @@ func writeConfigFile(configFileName string, data *spec) error {
 		return fmt.Errorf("marshal Updatecli configuration file: %w", err)
 	}
 
-	// create file
-	f, err := os.Create(configFileName)
+	// The file holds a long lived API token, so it must not be world readable.
+	f, err := os.OpenFile(configFileName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil && !os.IsExist(err) {
 		return fmt.Errorf("create Updatecli configuration file: %w", err)
 	}
 	defer f.Close()
+
+	if err := f.Chmod(0600); err != nil {
+		return fmt.Errorf("set Updatecli configuration file permissions: %w", err)
+	}
 
 	// write bytes to the file
 	_, err = f.Write(d)
