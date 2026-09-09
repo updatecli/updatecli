@@ -64,8 +64,11 @@ func TestLoginRejectedTokenIsNotPersisted(t *testing.T) {
 
 	// Nothing must have been written: a bad token has to fail at login time
 	// rather than silently later on, when a pipeline tries to publish.
-	_, _, _, err = getConfigFromFile("")
+	url, apiURL, token, err := getConfigFromFile("")
 	require.Error(t, err)
+	assert.Empty(t, url)
+	assert.Empty(t, apiURL)
+	assert.Empty(t, token)
 }
 
 func TestLoginAcceptsServiceWithoutWhoami(t *testing.T) {
