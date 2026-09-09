@@ -68,6 +68,10 @@ func writeConfigFile(configFileName string, data *spec) error {
 	}
 	defer f.Close()
 
+	if err := f.Chmod(0600); err != nil {
+		return fmt.Errorf("set Updatecli configuration file permissions: %w", err)
+	}
+
 	// write bytes to the file
 	_, err = f.Write(d)
 	if err != nil {
