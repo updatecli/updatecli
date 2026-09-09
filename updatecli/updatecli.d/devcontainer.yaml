@@ -1,4 +1,4 @@
-name: "docs: bump updatecli version"
+name: "deps: Bump Golang version"
 pipelineid: "golang/version"
 
 labels:
@@ -8,6 +8,7 @@ labels:
 actions:
   default:
     kind: github/pullrequest
+    title: 'deps: Bump Golang version to {{ source "golang" }}'
     spec:
       automerge: true
       labels:
@@ -42,7 +43,6 @@ conditions:
   docker:
     name: 'Check if mcr.microsoft.com/devcontainers/go:{{ source "golang" }} exist'
     kind: dockerimage
-    disablesourceinput: true
     spec:
       image: mcr.microsoft.com/devcontainers/go
 
