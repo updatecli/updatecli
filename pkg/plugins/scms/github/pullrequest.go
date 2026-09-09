@@ -44,6 +44,22 @@ var (
 	AnnouncedExistingPullRequest map[string]bool
 )
 
+const (
+	/*
+		cleanupMaxAttempts defines how many times Updatecli queries the GitHub API to
+		retrieve a pull request state matching the head commit of its working branch,
+		before giving up cleaning that pull request.
+	*/
+	cleanupMaxAttempts int = 3
+	// cleanupRetryDelay defines how long Updatecli waits between two attempts.
+	cleanupRetryDelay time.Duration = time.Second
+)
+
+var (
+	// cleanupSleep is a variable so it can be overridden from the tests.
+	cleanupSleep = time.Sleep
+)
+
 // PullRequest contains multiple fields mapped to GitHub V4 api
 type PullRequestApi struct {
 	ChangedFiles int
@@ -51,6 +67,7 @@ type PullRequestApi struct {
 	Body         string
 	CreatedAt    string
 	HeadRefName  string
+	HeadRefOid   string
 	ID           string
 	State        string
 	Title        string
@@ -303,22 +320,92 @@ func (p *PullRequest) CleanAction(ctx context.Context, report *reports.Action) e
 		}
 	}
 
-	if p.remotePullRequest.ChangedFiles == 0 {
-		logrus.Debugf("No changed file detected at pull request:\n\t%s", p.remotePullRequest.Url)
-		// Not returning an error if the comment failed to be added
-		// as the main purpose of this function is to close the pullrequest
-		err = p.closePullRequest(ctx, 0)
-		if err != nil {
-			return fmt.Errorf("closing pull request: %w", err)
-		}
+	/*
+		A pull request must only be closed once we are sure that it doesn't contain any
+		change anymore, otherwise the next Updatecli execution reopens a new pull request
+		with the same content.
+	*/
+	isEmpty, err := p.isPullRequestEmpty(ctx, cleanupMaxAttempts)
+	if err != nil {
+		return err
+	}
 
-		report.Link = ""
-		report.Description = "Pull request closed as no changed file detected"
-
+	if !isEmpty {
 		return nil
 	}
 
+	logrus.Debugf("No changed file detected at pull request:\n\t%s", p.remotePullRequest.Url)
+	// Not returning an error if the comment failed to be added
+	// as the main purpose of this function is to close the pullrequest
+	if err = p.closePullRequest(ctx, 0); err != nil {
+		return fmt.Errorf("closing pull request: %w", err)
+	}
+
+	report.Link = ""
+	report.Description = "Pull request closed as no changed file detected"
+
 	return nil
+}
+
+/*
+isPullRequestEmpty checks if the remote pull request doesn't contain any changed file.
+
+GitHub computes a pull request diff asynchronously, which means that the "changedFiles"
+information is only meaningful once GitHub processed the commit currently at the top of
+the working branch. A pull request just opened, or which just had its working branch
+(force) pushed, temporarily reports zero changed file.
+Trusting such a stale value closes a pull request which actually contains changes and
+then the next Updatecli execution reopens a new one with the same content.
+
+To avoid it, the pull request state is queried until its head commit matches the head
+commit of the remote working branch. If they still diverge after maxAttempts, then we
+consider that we don't know enough to close the pull request and we let a future
+Updatecli execution deal with it.
+*/
+func (p *PullRequest) isPullRequestEmpty(ctx context.Context, maxAttempts int) (bool, error) {
+	_, workingBranch, _ := p.gh.GetBranches()
+
+	for attempt := 1; attempt <= maxAttempts; attempt++ {
+		remoteBranch, err := p.gh.GetLatestCommitHash(ctx, workingBranch)
+		if err != nil {
+			return false, fmt.Errorf("retrieving latest commit hash for branch %q: %w", workingBranch, err)
+		}
+
+		if remoteBranch.HeadOid != "" && remoteBranch.HeadOid == p.remotePullRequest.HeadRefOid {
+			return p.remotePullRequest.ChangedFiles == 0, nil
+		}
+
+		logrus.Debugf("pull request head commit %q doesn't match the head commit %q of the working branch %q yet, retrying (%d/%d)",
+			p.remotePullRequest.HeadRefOid,
+			remoteBranch.HeadOid,
+			workingBranch,
+			attempt,
+			maxAttempts)
+
+		if attempt == maxAttempts {
+			break
+		}
+
+		cleanupSleep(cleanupRetryDelay)
+
+		remotePullRequest, err := p.queryRemotePullRequest(ctx, 0)
+		if err != nil {
+			return false, err
+		}
+
+		if remotePullRequest.ID == "" {
+			// The pull request is not open anymore so there is nothing to clean
+			return false, nil
+		}
+
+		p.remotePullRequest = remotePullRequest
+	}
+
+	logrus.Debugf("Skipping pull request cleanup as its state doesn't reflect the working branch %q yet:\n\t%s",
+		workingBranch,
+		p.remotePullRequest.Url)
+
+	return false, nil
 }
 
 // CheckActionExist checks if a pullrequest already exists and update the report object accordingly
@@ -873,8 +960,9 @@ func (p *PullRequest) isAutoMergedEnabledOnRepository(ctx context.Context, retry
 
 }
 
-// getRemotePullRequest checks if a Pull Request already exists on GitHub and is in the state 'open' or 'closed'.
-func (p *PullRequest) getRemotePullRequest(ctx context.Context, resetBody bool, retry int) error {
+// queryRemotePullRequest returns the open pull request associated with the working branch
+// of the current pipeline, if any.
+func (p *PullRequest) queryRemotePullRequest(ctx context.Context, retry int) (PullRequestApi, error) {
 	/*
 		https://developer.github.com/v4/explorer/
 		# Query
@@ -942,21 +1030,41 @@ func (p *PullRequest) getRemotePullRequest(ctx context.Context, resetBody bool, 
 			if retry < client.MaxRetry {
 				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
 				rateLimit.Pause()
-				return p.getRemotePullRequest(ctx, resetBody, retry+1)
+				return p.queryRemotePullRequest(ctx, retry+1)
 			}
-			return errors.New(ErrAPIRateLimitExceededFinalAttempt)
+			return PullRequestApi{}, errors.New(ErrAPIRateLimitExceededFinalAttempt)
 		}
-		return fmt.Errorf("getting existing pull request: %w", err)
+		return PullRequestApi{}, fmt.Errorf("getting existing pull request: %w", err)
 	}
 
 	// If no pull-request found, then we can exit
 	if len(query.Repository.PullRequests.Nodes) == 0 {
 		logrus.Debugf("No existing pull-request found in repo: %s/%s", owner, name)
-		p.remotePullRequest = PullRequestApi{}
+		return PullRequestApi{}, nil
+	}
+
+	return query.Repository.PullRequests.Nodes[0], nil
+}
+
+/*
+getRemotePullRequest retrieves the open pull request associated with the working branch of
+the current pipeline and updates the pull request object accordingly.
+
+The pull request body is merged with the report of the current execution unless resetBody
+is set to true.
+*/
+func (p *PullRequest) getRemotePullRequest(ctx context.Context, resetBody bool, retry int) error {
+	remotePullRequest, err := p.queryRemotePullRequest(ctx, retry)
+	if err != nil {
+		return err
+	}
+
+	p.remotePullRequest = remotePullRequest
+
+	if p.remotePullRequest.ID == "" {
 		return nil
 	}
 
-	p.remotePullRequest = query.Repository.PullRequests.Nodes[0]
 	// If a remote pullrequest already exist, then we reuse its body to generate the final one
 	switch resetBody {
 	case false:
