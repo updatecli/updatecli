@@ -30,6 +30,7 @@ policies:
               "github.com/Masterminds/*": ""
               "github.com/shurcooL/*": ""
               "github.com/aws/*": ""
+              "go.opentelemetry.io/*": ""
 
   - name: Module from golang.org
     id: golang_major_golang.org

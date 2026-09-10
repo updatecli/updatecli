@@ -79,6 +79,14 @@ type Action struct {
 	Scm     *scm.Scm
 	Handler ActionHandler
 	Report  reports.Action
+	/*
+		Published is set to true when the action has been created or updated during the
+		current Updatecli execution.
+
+		Such an action must not be cleaned up by the same execution as the cleanup relies
+		on remote information which may not reflect what Updatecli just published.
+	*/
+	Published bool
 }
 
 // Validate ensures that an action configuration has required parameters.
