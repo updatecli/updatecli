@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
@@ -185,15 +186,11 @@ func (t *TerraformLock) Changelog(from, to string) *result.Changelogs {
 }
 
 func (t *TerraformLock) getProviderHashes(version string) ([]string, error) {
-	// For OpenTofu registry, the provider package metadata API returns
-	// per-platform h1 hashes for *all* published platforms in the
-	// `packages` field without requiring per-platform zip downloads.
-	// Terraform registry does not expose h1 for all platforms this way, so
-	// h1 must be computed per requested platform via download.
-	// To match `tofu init` (which records h1 for every published platform
-	// on OpenTofu), expand to all platforms when registry is opentofu.
+	// For OpenTofu registry, use bounded timeout to avoid hanging on stalled registry
 	if t.provider.Hostname == "registry.opentofu.org" {
-		if hashes, err := t.getOpenTofuAllHashes(context.Background(), version); err == nil && len(hashes) > 0 {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if hashes, err := t.getOpenTofuAllHashes(ctx, version); err == nil && len(hashes) > 0 {
 			return hashes, nil
 		} else if err != nil {
 			logrus.Debugf("opentofu all-hashes fetch failed, falling back to per-platform: %v", err)
@@ -218,7 +215,7 @@ func (t *TerraformLock) getProviderHashes(version string) ([]string, error) {
 // and returns hashes for all published platforms. It uses the `packages` map
 // returned by the provider package metadata endpoint, which contains both
 // zh and h1 hashes per platform without requiring zip downloads.
-// Falls back to caller on any error so default registry path is unaffected.
+// Uses a timeout-bounded client to avoid stalling.
 func (t *TerraformLock) getOpenTofuAllHashes(ctx context.Context, version string) ([]string, error) {
 	if len(t.spec.Platforms) == 0 {
 		return nil, fmt.Errorf("platforms required")
@@ -239,7 +236,8 @@ func (t *TerraformLock) getOpenTofuAllHashes(ctx context.Context, version string
 	if err != nil {
 		return nil, err
 	}
-	resp, err := http.DefaultClient.Do(req)
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
