@@ -186,8 +186,8 @@ require (
 	github.com/exponent-io/jsonpath v0.0.0-20210407135951-1de76d718b3f // indirect
 	github.com/felixge/httpsnoop v1.1.0 // indirect
 	github.com/fluxcd/pkg/apis/acl v0.10.0 // indirect
-	github.com/fluxcd/pkg/apis/kustomize v1.19.1 // indirect
-	github.com/fluxcd/pkg/apis/meta v1.30.1 // indirect
+	github.com/fluxcd/pkg/apis/kustomize v1.19.2 // indirect
+	github.com/fluxcd/pkg/apis/meta v1.30.2 // indirect
 	github.com/fxamacker/cbor/v2 v2.9.2 // indirect
 	github.com/getsops/gopgagent v0.0.0-20241224165529-7044f28e491e // indirect
 	github.com/go-errors/errors v1.5.1 // indirect
@@ -336,13 +336,13 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/api v0.36.2 // indirect
-	k8s.io/apiextensions-apiserver v0.36.2 // indirect
-	k8s.io/apimachinery v0.36.2 // indirect
-	k8s.io/apiserver v0.36.2 // indirect
+	k8s.io/api v0.36.4 // indirect
+	k8s.io/apiextensions-apiserver v0.36.4 // indirect
+	k8s.io/apimachinery v0.36.4 // indirect
+	k8s.io/apiserver v0.36.4 // indirect
 	k8s.io/cli-runtime v0.36.2 // indirect
-	k8s.io/client-go v0.36.2 // indirect
-	k8s.io/component-base v0.36.2 // indirect
+	k8s.io/client-go v0.36.4 // indirect
+	k8s.io/component-base v0.36.4 // indirect
 	k8s.io/klog/v2 v2.140.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20260603220949-865597e52e25 // indirect
 	k8s.io/kubectl v0.36.2 // indirect
