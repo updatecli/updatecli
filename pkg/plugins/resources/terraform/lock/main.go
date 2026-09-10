@@ -2,7 +2,11 @@ package lock
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/url"
+	"slices"
 	"strings"
 
 	"github.com/go-viper/mapstructure/v2"
@@ -181,6 +185,21 @@ func (t *TerraformLock) Changelog(from, to string) *result.Changelogs {
 }
 
 func (t *TerraformLock) getProviderHashes(version string) ([]string, error) {
+	// For OpenTofu registry, the provider package metadata API returns
+	// per-platform h1 hashes for *all* published platforms in the
+	// `packages` field without requiring per-platform zip downloads.
+	// Terraform registry does not expose h1 for all platforms this way, so
+	// h1 must be computed per requested platform via download.
+	// To match `tofu init` (which records h1 for every published platform
+	// on OpenTofu), expand to all platforms when registry is opentofu.
+	if t.provider.Hostname == "registry.opentofu.org" {
+		if hashes, err := t.getOpenTofuAllHashes(context.Background(), version); err == nil && len(hashes) > 0 {
+			return hashes, nil
+		} else if err != nil {
+			logrus.Debugf("opentofu all-hashes fetch failed, falling back to per-platform: %v", err)
+		}
+	}
+
 	pv, err := t.lockIndex.GetOrCreateProviderVersion(context.Background(), t.provider.ForDisplay(), version, t.spec.Platforms)
 	if err != nil {
 		return nil, fmt.Errorf("%s failed to query provider locks for provider: %q, version: %q, platforms: %q: %s",
@@ -193,6 +212,59 @@ func (t *TerraformLock) getProviderHashes(version string) ([]string, error) {
 	}
 
 	return pv.AllHashes(), nil
+}
+
+// getOpenTofuAllHashes fetches provider metadata from registry.opentofu.org
+// and returns hashes for all published platforms. It uses the `packages` map
+// returned by the provider package metadata endpoint, which contains both
+// zh and h1 hashes per platform without requiring zip downloads.
+// Falls back to caller on any error so default registry path is unaffected.
+func (t *TerraformLock) getOpenTofuAllHashes(ctx context.Context, version string) ([]string, error) {
+	if len(t.spec.Platforms) == 0 {
+		return nil, fmt.Errorf("platforms required")
+	}
+	platform := t.spec.Platforms[0]
+	parts := strings.Split(platform, "_")
+	if len(parts) != 2 {
+		return nil, fmt.Errorf("invalid platform %q", platform)
+	}
+	osName, arch := parts[0], parts[1]
+	baseURL := fmt.Sprintf("https://%s/", t.provider.Hostname)
+	u, err := url.Parse(baseURL)
+	if err != nil {
+		return nil, err
+	}
+	u.Path = fmt.Sprintf("/v1/providers/%s/%s/%s/download/%s/%s", t.provider.Namespace, t.provider.Type, version, osName, arch)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("opentofu registry unexpected status %s for %s", resp.Status, u.String())
+	}
+	var body struct {
+		Packages map[string]struct {
+			Hashes []string `json:"hashes"`
+		} `json:"packages"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+		return nil, err
+	}
+	if len(body.Packages) == 0 {
+		return nil, fmt.Errorf("no packages in opentofu response")
+	}
+	var hashes []string
+	for _, pkg := range body.Packages {
+		hashes = append(hashes, pkg.Hashes...)
+	}
+	slices.Sort(hashes)
+	hashes = slices.Compact(hashes)
+	return hashes, nil
 }
 
 // ReportConfig returns a new configuration object with only the necessary fields
