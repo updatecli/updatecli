@@ -84,6 +84,8 @@ func (e *Engine) pushSCMCommits() error {
 
 	changedSCM := map[string][]string{}
 
+	inconclusiveSCM := e.inconclusiveSCMBranches()
+
 	allScm := map[string]map[string]*scm.ScmHandler{}
 	logrus.Infof("\n\n%s\n", strings.ToTitle("Pushing Git changes"))
 	logrus.Infof("%s\n\n", strings.Repeat("=", len("Pushing Git changes")+1))
@@ -169,6 +171,11 @@ func (e *Engine) pushSCMCommits() error {
 
 			scmHandler := *scmHandlerPtr
 
+			if slices.Contains(inconclusiveSCM[url], branch) {
+				logrus.Debugf("Not publishing branch %q to %q as at least one of its target(s) didn't run during this execution\n", branch, redact.URL(url))
+				continue
+			}
+
 			isRemoteBranchUpToDate, err := scmHandler.IsRemoteBranchUpToDate()
 			if err != nil {
 				errs = append(errs, fmt.Sprintf("checking remote branch status for %q on branch %q: %s", redact.URL(url), branch, err.Error()))
@@ -210,6 +217,7 @@ func (e *Engine) pruneSCMBranches() error {
 	errs := []string{}
 
 	allScm := e.getUniqueTargetSCMTargets()
+	inconclusiveSCM := e.inconclusiveSCMBranches()
 
 	logrus.Debugf("Cleaning working branches")
 
@@ -226,6 +234,16 @@ func (e *Engine) pruneSCMBranches() error {
 			scmHandler := *scmHandlerPtr
 
 			_, workingBranch, targetBranch := scmHandler.GetBranches()
+
+			/*
+				Deleting a working branch closes the pull request associated with it so it
+				must only happen when Updatecli knows that the working branch isn't needed
+				anymore.
+			*/
+			if slices.Contains(inconclusiveSCM[url], branch) {
+				logrus.Debugf("Not cleaning working branch %q on %q as at least one of its target(s) didn't run during this execution\n", workingBranch, redact.URL(url))
+				continue
+			}
 
 			if workingBranch == targetBranch {
 				logrus.Debugf("Skipping cleaning working branch %q on %q (same as target branch)\n", workingBranch, redact.URL(url))
@@ -250,6 +268,53 @@ func (e *Engine) pruneSCMBranches() error {
 	}
 
 	return nil
+}
+
+/*
+inconclusiveSCMBranches returns, per repository url, the working branches having at least
+one target which didn't run to completion during this execution, such as a target skipped
+because its source failed.
+
+In that situation Updatecli doesn't know which content the working branch should have, so
+it must not publish nor delete it: doing so would remove the changes published by a
+previous execution and close the associated pull request, which would then be reopened by
+a later execution.
+*/
+func (e *Engine) inconclusiveSCMBranches() map[string][]string {
+	inconclusive := map[string][]string{}
+
+	for id := range e.Pipelines {
+		pipeline := e.Pipelines[id]
+
+		for id := range pipeline.Targets {
+			target := pipeline.Targets[id]
+
+			// Sanity check, skip if no SCM is configured
+			if target.Scm == nil {
+				continue
+			}
+
+			targetResult := ""
+			if target.Result != nil {
+				targetResult = target.Result.Result
+			}
+
+			// The target ran so we know the state that it expects
+			if targetResult == result.SUCCESS || targetResult == result.ATTENTION {
+				continue
+			}
+
+			s := *target.Scm
+			url := s.GetURL()
+			_, branch, _ := s.GetBranches()
+
+			if !slices.Contains(inconclusive[url], branch) {
+				inconclusive[url] = append(inconclusive[url], branch)
+			}
+		}
+	}
+
+	return inconclusive
 }
 
 // getUniqueTargetSCMTargets retrieves all the target scm configurations

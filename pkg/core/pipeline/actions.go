@@ -228,6 +228,14 @@ func (p *Pipeline) RunActions(ctx context.Context) error {
 
 		isBranchReset = false
 
+		/*
+			The action has just been published so the remote information used by the clean
+			stage may not reflect it yet.
+			The clean stage is only meant to detect actions published by previous
+			Updatecli executions.
+		*/
+		action.Published = true
+
 		p.Actions[id] = action
 	}
 	return nil
@@ -242,15 +250,28 @@ func (p *Pipeline) RunCleanActions(ctx context.Context) error {
 		return nil
 	}
 
-	for _, action := range p.Actions {
-		if !p.Options.Target.DryRun {
-			if action.Handler != nil {
-				// At least we try to clean existing pullrequest
-				err := action.Handler.CleanAction(ctx, &action.Report)
-				if err != nil {
-					errs = append(errs, err.Error())
-				}
-			}
+	for id := range p.Actions {
+		action := p.Actions[id]
+
+		if p.Options.Target.DryRun {
+			continue
+		}
+
+		if action.Handler == nil {
+			continue
+		}
+
+		// An action published by the current execution must not be cleaned up by that
+		// same execution.
+		if action.Published {
+			logrus.Debugf("Action %q published during this execution, skipping its cleanup", id)
+			continue
+		}
+
+		// At least we try to clean existing pullrequest
+		err := action.Handler.CleanAction(ctx, &action.Report)
+		if err != nil {
+			errs = append(errs, err.Error())
 		}
 	}
 
