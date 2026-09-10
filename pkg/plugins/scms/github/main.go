@@ -665,10 +665,15 @@ func (g *Github) queryHeadOid(ctx context.Context, workingBranch string, retry i
 		headOid = query.Repository.Ref.Target.Oid
 	}
 
+	defaultBranchOid := ""
+	if query.Repository.DefaultBranchRef != nil {
+		defaultBranchOid = query.Repository.DefaultBranchRef.Target.Oid
+	}
+
 	return &RepositoryRef{
 		ID:               query.Repository.ID,
 		HeadOid:          headOid,
-		DefaultBranchOid: query.Repository.DefaultBranchRef.Target.Oid,
+		DefaultBranchOid: defaultBranchOid,
 	}, nil
 }
 
