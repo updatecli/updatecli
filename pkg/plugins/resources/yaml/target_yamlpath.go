@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -15,19 +17,46 @@ import (
 	"go.yaml.in/yaml/v3"
 )
 
+var (
+	yamlUnicodeEscape8 = regexp.MustCompile(`\\U[0-9A-Fa-f]{8}`)
+	yamlUnicodeEscape4 = regexp.MustCompile(`\\u[0-9A-Fa-f]{4}`)
+)
+
+// decodeYAMLEscapedUnicode converts YAML double-quoted escape sequences
+// \U0001F308 and \uXXXX back to literal utf8. go.yaml.in/yaml escapes
+// emoji because its is_printable check follows YAML 1.1 (only up to U+FFFD),
+// so plain scalars with 4-byte utf8 are emitted as double-quoted \U escapes.
+// Preserving the literal keeps GitHub Actions workflow names like
+// "Run zizmor 🌈" unchanged. See issues #522 and #10192.
+func decodeYAMLEscapedUnicode(s string) string {
+	if !strings.Contains(s, `\u`) && !strings.Contains(s, `\U`) {
+		return s
+	}
+	s = yamlUnicodeEscape8.ReplaceAllStringFunc(s, func(m string) string {
+		hex := m[2:]
+		v, err := strconv.ParseUint(hex, 16, 32)
+		if err != nil {
+			return m
+		}
+		return string(rune(v))
+	})
+	s = yamlUnicodeEscape4.ReplaceAllStringFunc(s, func(m string) string {
+		hex := m[2:]
+		v, err := strconv.ParseUint(hex, 16, 16)
+		if err != nil {
+			return m
+		}
+		return string(rune(v))
+	})
+	return s
+}
+
 func (y *Yaml) goYamlPathTarget(valueToWrite string, resultTarget *result.Target, dryRun bool) (notChanged int, ignoredFiles int, err error) {
-	var buf bytes.Buffer
-	e := yaml.NewEncoder(&buf)
-	defer e.Close()
-
-	e.SetIndent(2)
-
 	keys := y.spec.getKeys()
 
 	resultTargetFilesMap := map[string]bool{}
 
 	for filePath := range y.files {
-		buf = bytes.Buffer{}
 		originFilePath := y.files[filePath].originalFilePath
 		fileNotChanged := 0
 		fileKeysProcessed := 0
@@ -164,15 +193,19 @@ func (y *Yaml) goYamlPathTarget(valueToWrite string, resultTarget *result.Target
 		}
 
 		// Re-encode all documents back into buffer
-		buf = bytes.Buffer{}
+		var buf bytes.Buffer
+		enc := yaml.NewEncoder(&buf)
+		enc.SetIndent(2)
 		for _, doc := range docs {
-			if err := e.Encode(doc); err != nil {
+			if err := enc.Encode(doc); err != nil {
+				_ = enc.Close()
 				return 0, ignoredFiles, fmt.Errorf("unable to marshal the yaml file: %w", err)
 			}
 		}
+		_ = enc.Close()
 
 		f := y.files[filePath]
-		f.content = buf.String()
+		f.content = decodeYAMLEscapedUnicode(buf.String())
 		// preserve leading document marker if it was present originally
 		if strings.HasPrefix(y.files[filePath].content, "---\n") && !strings.HasPrefix(f.content, "---\n") {
 			f.content = "---\n" + f.content
