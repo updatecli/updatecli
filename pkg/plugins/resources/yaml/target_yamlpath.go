@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"regexp"
 	"strconv"
 	"strings"
 
@@ -17,38 +16,66 @@ import (
 	"go.yaml.in/yaml/v3"
 )
 
-var (
-	yamlUnicodeEscape8 = regexp.MustCompile(`\\U[0-9A-Fa-f]{8}`)
-	yamlUnicodeEscape4 = regexp.MustCompile(`\\u[0-9A-Fa-f]{4}`)
-)
-
 // decodeYAMLEscapedUnicode converts YAML double-quoted escape sequences
-// \U0001F308 and \uXXXX back to literal utf8. go.yaml.in/yaml escapes
-// emoji because its is_printable check follows YAML 1.1 (only up to U+FFFD),
-// so plain scalars with 4-byte utf8 are emitted as double-quoted \U escapes.
-// Preserving the literal keeps GitHub Actions workflow names like
-// "Run zizmor 🌈" unchanged. See issues #522 and #10192.
+// \U0001F308 and \uXXXX back to literal utf8, but only inside double-quoted
+// scalars and honoring escaped backslashes (e.g. "\\u0041" stays literal).
+// go.yaml.in/yaml escapes emoji because its is_printable follows YAML 1.1
+// (only up to U+FFFD), so 4-byte utf8 is emitted as double-quoted \U escapes.
 func decodeYAMLEscapedUnicode(s string) string {
-	if !strings.Contains(s, `\u`) && !strings.Contains(s, `\U`) {
-		return s
+	var out bytes.Buffer
+	inDQ := false
+	escaped := false
+	for i := 0; i < len(s); {
+		c := s[i]
+		if c == '"' && !escaped {
+			inDQ = !inDQ
+			out.WriteByte(c)
+			i++
+			continue
+		}
+		if inDQ && c == '\\' && !escaped && i+1 < len(s) {
+			// Check for \UXXXXXXXX (8 hex) and \uXXXX (4 hex)
+			if s[i+1] == 'U' && i+10 <= len(s) && isHex(s[i+2:i+10]) {
+				hex := s[i+2 : i+10]
+				v, err := strconv.ParseUint(hex, 16, 32)
+				if err == nil {
+					out.WriteRune(rune(v))
+					i += 10
+					escaped = false
+					continue
+				}
+			}
+			if s[i+1] == 'u' && i+6 <= len(s) && isHex(s[i+2:i+6]) {
+				hex := s[i+2 : i+6]
+				v, err := strconv.ParseUint(hex, 16, 16)
+				if err == nil {
+					out.WriteRune(rune(v))
+					i += 6
+					escaped = false
+					continue
+				}
+			}
+		}
+		// track escaped state for next char (\ escapes next char)
+		if c == '\\' && !escaped {
+			escaped = true
+		} else {
+			escaped = false
+		}
+		out.WriteByte(c)
+		i++
 	}
-	s = yamlUnicodeEscape8.ReplaceAllStringFunc(s, func(m string) string {
-		hex := m[2:]
-		v, err := strconv.ParseUint(hex, 16, 32)
-		if err != nil {
-			return m
+	return out.String()
+}
+
+func isHex(s string) bool {
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		if !((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
+			return false
 		}
-		return string(rune(v))
-	})
-	s = yamlUnicodeEscape4.ReplaceAllStringFunc(s, func(m string) string {
-		hex := m[2:]
-		v, err := strconv.ParseUint(hex, 16, 16)
-		if err != nil {
-			return m
-		}
-		return string(rune(v))
-	})
-	return s
+	}
+	return true
 }
 
 func (y *Yaml) goYamlPathTarget(valueToWrite string, resultTarget *result.Target, dryRun bool) (notChanged int, ignoredFiles int, err error) {
