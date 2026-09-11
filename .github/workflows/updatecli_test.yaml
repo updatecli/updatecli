@@ -15,7 +15,7 @@ jobs:
       - name: "Setup updatecli"
         uses: "updatecli/updatecli-action@41b9c8d707830a9daebaeaa84c1b62d60b779564" # v3.6.0
         with:
-          version: "v0.120.1"
+          version: "v0.121.0"
       - name: "Set up Go"
         uses: "actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e" # v7.0.0
         with:
