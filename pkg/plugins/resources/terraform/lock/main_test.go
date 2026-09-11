@@ -3,7 +3,11 @@ package lock
 import (
 	"errors"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -643,4 +647,71 @@ func TestUpdateAbsoluteFilePath(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGetOpenTofuProviderHashes(t *testing.T) {
+	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasSuffix(r.URL.Path, "/versions") {
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`{
+				"versions": [
+					{
+						"version": "1.0.0",
+						"platforms": [
+							{
+								"os": "linux",
+								"arch": "amd64"
+							}
+						]
+					}
+				]
+			}`))
+			return
+		}
+		if strings.Contains(r.URL.Path, "/download/linux/amd64") {
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`{
+				"packages": {
+					"linux_amd64": {
+						"hashes": [
+							"zh:linux-zip-hash",
+							"h1:linux-content-hash"
+						]
+					},
+					"darwin_amd64": {
+						"hashes": [
+							"zh:darwin-zip-hash",
+							"h1:darwin-content-hash"
+						]
+					}
+				}
+			}`))
+			return
+		}
+		w.WriteHeader(http.StatusNotFound)
+	}))
+	defer mockServer.Close()
+
+	parsedURL, err := url.Parse(mockServer.URL)
+	require.NoError(t, err)
+
+	spec := Spec{
+		File:      "testdata/terraform.lock.hcl",
+		Provider:  fmt.Sprintf("%s/hashicorp/null", parsedURL.Host),
+		Platforms: []string{"linux_amd64"},
+	}
+
+	h, err := New(spec)
+	require.NoError(t, err)
+
+	hashes, err := h.getOpenTofuProviderHashes("1.0.0")
+	require.NoError(t, err)
+
+	expectedHashes := []string{
+		"h1:darwin-content-hash",
+		"h1:linux-content-hash",
+		"zh:darwin-zip-hash",
+		"zh:linux-zip-hash",
+	}
+	assert.Equal(t, expectedHashes, hashes)
 }
