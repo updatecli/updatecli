@@ -36,6 +36,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/resources/json"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/maven"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/npm"
+	"github.com/updatecli/updatecli/pkg/plugins/resources/osv"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/pypi"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/shell"
 	stashBranch "github.com/updatecli/updatecli/pkg/plugins/resources/stash/branch"
@@ -215,6 +216,10 @@ func New(rs ResourceConfig) (resource Resource, err error) {
 
 		return npm.New(rs.Spec)
 
+	case "osv":
+
+		return osv.New(rs.Spec)
+
 	case "pypi":
 
 		return pypi.New(rs.Spec)
@@ -325,6 +330,7 @@ func GetResourceMapping() map[string]interface{} {
 		"json":               &json.Spec{},
 		"maven":              &maven.Spec{},
 		"npm":                &npm.Spec{},
+		"osv":                &osv.Spec{},
 		"pypi":               &pypi.Spec{},
 		"shell":              &shell.Spec{},
 		"stash/branch":       &stashBranch.Spec{},

@@ -1,0 +1,244 @@
+package osv
+
+import (
+	"errors"
+	"fmt"
+	"net/url"
+	"strings"
+
+	"github.com/go-viper/mapstructure/v2"
+	"github.com/updatecli/updatecli/pkg/core/httpclient"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
+)
+
+// Spec defines a specification for querying the OSV vulnerability database (https://osv.dev)
+// parsed from an updatecli manifest.
+type Spec struct {
+	// URL defines the OSV API URL (defaults to https://api.osv.dev).
+	URL string `yaml:",omitempty"`
+	// Ecosystem defines the OSV ecosystem of the package.
+	//
+	// compatible:
+	//   * condition
+	//   * source
+	//
+	// example: PyPI, npm, Go, crates.io, Debian:12, Ubuntu:22.04:LTS
+	//
+	// remark:
+	//   * The value is case-sensitive, the OSV API rejects "pypi" or "debian".
+	//   * It is mutually exclusive with purl.
+	//   * Accepted values, as published by osv.dev at https://osv-vulnerabilities.storage.googleapis.com/ecosystems.txt, are:
+	//     AlmaLinux, Alpaquita, Alpine, Android, Azure Linux, BellSoft Hardened Containers, Bitnami, Chainguard,
+	//     CleanStart, CRAN, crates.io, Debian, Echo, GHC, GIT, GitHub Actions, Go, GSD, Hackage, Hex, Julia,
+	//     Linux, Mageia, Maven, MinimOS, npm, NuGet, opam, openEuler, openSUSE, OSS-Fuzz, Packagist, Pub, PyPI,
+	//     Red Hat, Rocky Linux, Root, RubyGems, SUSE, SwiftURL, TuxCare, Ubuntu, UVI, VSCode and Wolfi.
+	//   * Linux distributions accept a release suffix, such as "Debian:12" or "Ubuntu:22.04:LTS".
+	//   * GIT expects the repository URL as name and a tag as version, such as "https://github.com/libarchive/libarchive.git" and "v3.7.4".
+	//   * The source key "fixedversion" only supports Go, npm, crates.io, NuGet, Hex, Pub and PyPI.
+	//     Every ecosystem works with the source key "ids" and with conditions.
+	Ecosystem string `yaml:",omitempty"`
+	// Name defines the package name within the ecosystem.
+	//
+	// compatible:
+	//   * condition
+	//   * source
+	//
+	// example: jinja2, golang.org/x/net, org.apache.logging.log4j:log4j-core, @angular/core
+	//
+	// remark:
+	//   * It is mutually exclusive with purl.
+	Name string `yaml:",omitempty"`
+	// Purl defines the package URL without version.
+	//
+	// compatible:
+	//   * condition
+	//   * source
+	//
+	// example: pkg:pypi/jinja2, pkg:golang/golang.org/x/net, pkg:npm/%40angular/core
+	//
+	// remark:
+	//   * It is mutually exclusive with ecosystem and name.
+	//   * The ecosystem is derived from the package URL type: cargo (crates.io), composer (Packagist), gem (RubyGems),
+	//     golang (Go), hex (Hex), maven (Maven), npm (npm), nuget (NuGet), pub (Pub) and pypi (PyPI).
+	//     Vulnerabilities of other package URL types are only matched on the package URL itself,
+	//     and the source key "fixedversion" does not support them.
+	Purl string `yaml:",omitempty"`
+	// Version defines the package version to check.
+	// It is required for sources, conditions fall back to the source output when it is empty.
+	Version string `yaml:",omitempty"`
+	// Key defines the source output, accepted values are:
+	//   * "fixedversion" (default): the lowest version, from version, without known vulnerabilities.
+	//     Supported ecosystems are Go, npm, crates.io, NuGet, Hex, Pub and PyPI.
+	//     Pre-release fixes are only considered when version is itself a pre-release.
+	//   * "ids": the comma-separated IDs of the known vulnerabilities affecting version.
+	Key string `yaml:",omitempty"`
+	// Ignore lists vulnerability IDs or aliases to disregard, such as "GHSA-cpwx-vrp4-4pq7" or "CVE-2025-27516".
+	Ignore []string `yaml:",omitempty"`
+	// MinSeverity only accounts for vulnerabilities at or above a severity, accepted values are LOW, MODERATE, HIGH and CRITICAL.
+	// The severity comes from GitHub advisories, vulnerabilities without one are always accounted for.
+	MinSeverity string `yaml:",omitempty"`
+}
+
+const (
+	osvDefaultURL = "https://api.osv.dev"
+	// KeyFixedVersion makes the source return the lowest version without known vulnerabilities.
+	KeyFixedVersion = "fixedversion"
+	// KeyIDs makes the source return the IDs of the known vulnerabilities.
+	KeyIDs = "ids"
+
+	ecosystemGo    = "Go"
+	ecosystemMaven = "Maven"
+	ecosystemNpm   = "npm"
+	ecosystemNuGet = "NuGet"
+	ecosystemPyPI  = "PyPI"
+)
+
+// purlTypeEcosystems maps package URL types to their OSV ecosystem.
+var purlTypeEcosystems = map[string]string{
+	"cargo":    "crates.io",
+	"composer": "Packagist",
+	"gem":      "RubyGems",
+	"golang":   ecosystemGo,
+	"hex":      "Hex",
+	"maven":    ecosystemMaven,
+	"npm":      ecosystemNpm,
+	"nuget":    ecosystemNuGet,
+	"pub":      "Pub",
+	"pypi":     ecosystemPyPI,
+}
+
+// Osv defines a resource of kind "osv".
+type Osv struct {
+	spec      Spec
+	webClient httpclient.HTTPClient
+	// ecosystem is the OSV ecosystem, from the spec or derived from the purl type.
+	// It is empty when the purl type has no known OSV ecosystem.
+	ecosystem string
+	// name is the OSV package name, from the spec or derived from the purl.
+	name        string
+	minSeverity int
+	ignore      map[string]struct{}
+}
+
+// New returns a new valid Osv resource object.
+func New(spec interface{}) (*Osv, error) {
+	var newSpec Spec
+
+	err := mapstructure.Decode(spec, &newSpec)
+	if err != nil {
+		return &Osv{}, err
+	}
+
+	err = newSpec.Validate()
+	if err != nil {
+		return &Osv{}, err
+	}
+
+	if newSpec.URL == "" {
+		newSpec.URL = osvDefaultURL
+	}
+	newSpec.URL = strings.TrimSuffix(newSpec.URL, "/")
+
+	newSpec.Key = strings.ToLower(newSpec.Key)
+	if newSpec.Key == "" {
+		newSpec.Key = KeyFixedVersion
+	}
+
+	ignore := make(map[string]struct{}, len(newSpec.Ignore))
+	for _, id := range newSpec.Ignore {
+		ignore[strings.ToUpper(strings.TrimSpace(id))] = struct{}{}
+	}
+
+	ecosystem, name := newSpec.Ecosystem, newSpec.Name
+	if newSpec.Purl != "" {
+		ecosystem, name = parsePurl(newSpec.Purl)
+	}
+
+	return &Osv{
+		spec:        newSpec,
+		webClient:   httpclient.NewRetryClient(),
+		ecosystem:   ecosystem,
+		name:        name,
+		minSeverity: severityRank(newSpec.MinSeverity),
+		ignore:      ignore,
+	}, nil
+}
+
+// Validate checks that the Osv spec is valid.
+func (s *Spec) Validate() error {
+	var errs []error
+
+	switch {
+	case s.Purl != "" && (s.Ecosystem != "" || s.Name != ""):
+		errs = append(errs, errors.New("osv purl is mutually exclusive with ecosystem and name"))
+	case s.Purl != "":
+		if !strings.HasPrefix(s.Purl, "pkg:") {
+			errs = append(errs, fmt.Errorf("osv purl %q must start with \"pkg:\"", s.Purl))
+		}
+		if strings.Contains(s.Purl, "@") {
+			errs = append(errs, fmt.Errorf("osv purl %q must not contain a version, use the version field instead", s.Purl))
+		}
+	case s.Ecosystem == "" || s.Name == "":
+		errs = append(errs, errors.New("osv package not defined, set ecosystem and name, or purl"))
+	}
+
+	switch strings.ToLower(s.Key) {
+	case "", KeyFixedVersion, KeyIDs:
+	default:
+		errs = append(errs, fmt.Errorf("osv key %q not supported, accepted values are %q and %q", s.Key, KeyFixedVersion, KeyIDs))
+	}
+
+	if s.MinSeverity != "" && severityRank(s.MinSeverity) == 0 {
+		errs = append(errs, fmt.Errorf("osv minseverity %q not supported, accepted values are LOW, MODERATE, HIGH and CRITICAL", s.MinSeverity))
+	}
+
+	return errors.Join(errs...)
+}
+
+// parsePurl returns the OSV ecosystem and package name of a package URL without version.
+// The ecosystem is empty when the package URL type has no known OSV ecosystem.
+func parsePurl(purl string) (ecosystem, name string) {
+	purl, _, _ = strings.Cut(purl, "#")
+	purl, _, _ = strings.Cut(purl, "?")
+
+	purlType, path, _ := strings.Cut(strings.TrimPrefix(purl, "pkg:"), "/")
+
+	segments := strings.Split(strings.Trim(path, "/"), "/")
+	for i, segment := range segments {
+		// Package URLs percent-encode reserved characters, such as the npm scope "%40angular".
+		if unescaped, err := url.PathUnescape(segment); err == nil {
+			segments[i] = unescaped
+		}
+	}
+
+	ecosystem = purlTypeEcosystems[strings.ToLower(purlType)]
+
+	// OSV names Maven packages "groupId:artifactId".
+	if ecosystem == ecosystemMaven && len(segments) == 2 {
+		return ecosystem, segments[0] + ":" + segments[1]
+	}
+
+	return ecosystem, strings.Join(segments, "/")
+}
+
+// packageLabel describes the queried package for logs and messages.
+func (o *Osv) packageLabel() string {
+	if o.spec.Purl != "" {
+		return fmt.Sprintf("package %q", o.spec.Purl)
+	}
+	return fmt.Sprintf("%s package %q", o.spec.Ecosystem, o.spec.Name)
+}
+
+// ReportConfig returns a sanitized copy of the spec for reporting.
+func (o *Osv) ReportConfig() interface{} {
+	return Spec{
+		URL:         redact.URL(o.spec.URL),
+		Ecosystem:   o.spec.Ecosystem,
+		Name:        o.spec.Name,
+		Purl:        o.spec.Purl,
+		Version:     o.spec.Version,
+		Key:         o.spec.Key,
+		Ignore:      o.spec.Ignore,
+		MinSeverity: o.spec.MinSeverity,
+	}
+}
