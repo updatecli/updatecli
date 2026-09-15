@@ -188,7 +188,7 @@ func (p *Pipeline) RunActions(ctx context.Context) error {
 			pipelineName = p.Name
 		}
 
-		action.Report.ID = fmt.Sprintf("%x", sha256.Sum256([]byte(p.Name)))
+		action.Report.ID = p.actionReportID()
 		action.Report.Title = action.Title
 		action.Report.PipelineTitle = pipelineName
 
@@ -357,4 +357,16 @@ func (p *Pipeline) detectActionTitle(action *action.Action) {
 			return
 		}
 	}
+}
+
+// actionReportID returns the ID identifying the pipeline in action reports, such as pullrequest descriptions.
+// It relies on the unrendered pipeline name, so the ID doesn't change when the name references runtime values
+// such as {{ source "id" }}, and the report of an existing pullrequest keeps being merged instead of duplicated.
+func (p *Pipeline) actionReportID() string {
+	name := p.unrenderedName
+	// Pipelines not created by Init have no unrendered name
+	if name == "" {
+		name = p.Name
+	}
+	return fmt.Sprintf("%x", sha256.Sum256([]byte(name)))
 }
