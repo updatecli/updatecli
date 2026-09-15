@@ -1,6 +1,8 @@
 package pipeline
 
 import (
+	"crypto/sha256"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -57,4 +59,33 @@ func TestUpdateRefreshesName(t *testing.T) {
 			assert.Equal(t, "pipeline-id", p.Config.Spec.PipelineID)
 		})
 	}
+}
+
+// TestActionReportIDIgnoresRenderedName ensures the action report ID doesn't change when the pipeline name
+// is rendered, so pullrequest reports created before and after a version change are merged together.
+func TestActionReportIDIgnoresRenderedName(t *testing.T) {
+	rawName := `deps(go): bump module golang.org/x/net to {{ source "fixed" }}`
+
+	p := Pipeline{}
+	require.NoError(t, p.Init(&config.Config{
+		Spec: config.Spec{
+			Name:       rawName,
+			PipelineID: "pipeline-id",
+		},
+	}, Options{}))
+
+	p.Sources["fixed"] = source.Source{
+		Result: &result.Source{Result: result.SUCCESS},
+		Output: "v0.38.0",
+	}
+	require.NoError(t, p.Update())
+
+	require.Equal(t, "deps(go): bump module golang.org/x/net to v0.38.0", p.Name)
+	assert.Equal(t, fmt.Sprintf("%x", sha256.Sum256([]byte(rawName))), p.actionReportID())
+}
+
+func TestActionReportIDWithoutInit(t *testing.T) {
+	p := Pipeline{Name: "pipeline"}
+
+	assert.Equal(t, fmt.Sprintf("%x", sha256.Sum256([]byte("pipeline"))), p.actionReportID())
 }
