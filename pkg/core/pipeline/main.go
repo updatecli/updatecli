@@ -671,10 +671,10 @@ func (p *Pipeline) String() string {
 // refreshName sets the pipeline and report names from the rendered configuration.
 func (p *Pipeline) refreshName() {
 	p.Name = p.Config.Spec.Name
-	if len(p.Config.Spec.Title) > 0 && p.Name == "" {
+	if len(p.Config.Spec.Title) > 0 && p.Config.Spec.Name == "" {
 		p.Name = p.Config.Spec.Title
 	}
-	p.Report.Name = p.Config.Spec.Name
+	p.Report.Name = p.Name
 }
 
 func (p *Pipeline) Update() error {
