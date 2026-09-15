@@ -668,11 +668,24 @@ func (p *Pipeline) String() string {
 }
 
 // Update updates the pipeline based on the latest configuration
+// refreshName sets the pipeline and report names from the rendered configuration.
+func (p *Pipeline) refreshName() {
+	p.Name = p.Config.Spec.Name
+	if len(p.Config.Spec.Title) > 0 && p.Name == "" {
+		p.Name = p.Config.Spec.Title
+	}
+	p.Report.Name = p.Config.Spec.Name
+}
+
 func (p *Pipeline) Update() error {
 	err := p.Config.Update(p)
 	if err != nil {
 		return err
 	}
+
+	// The pipeline name may reference runtime values, such as {{ source "id" }},
+	// so it's refreshed once the configuration is rendered.
+	p.refreshName()
 
 	// Reset scm
 	for id, scmConfig := range p.Config.Spec.SCMs {
