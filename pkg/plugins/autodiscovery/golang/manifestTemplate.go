@@ -40,6 +40,34 @@ targets:
 {{ end }}
 `
 
+	// goTidyTemplate is the Go template of the "go mod tidy" target shared by module manifests
+	goTidyTemplate string = `{{- define "tidy" }}
+{{- if .GoModTidyEnabled }}
+  tidy:
+    name: 'clean: go mod tidy'
+    disablesourceinput: true
+    dependsonchange: true
+    dependson:
+      - 'module'
+    kind: 'shell'
+    spec:
+      command: 'go mod tidy'
+      environments:
+        - name: HOME
+        - name: PATH
+      workdir: {{ .WorkDir }}
+      changedif:
+        kind: 'file/checksum'
+        spec:
+          files:
+           - 'go.mod'
+           - 'go.sum'
+{{- if .ScmID }}
+    scmid: '{{ .ScmID }}'
+{{ end }}
+{{- end }}
+{{- end }}`
+
 	// goModuleManifestTemplate is the Go template used to generate Golang manifest update
 	goModuleManifestTemplate string = `name: 'deps(go): bump module {{ .Module }}'
 {{- if .ActionID }}
@@ -79,30 +107,7 @@ targets:
 {{- if .ScmID }}
     scmid: '{{ .ScmID }}'
 {{ end }}
-{{- if .GoModTidyEnabled }}
-  tidy:
-    name: 'clean: go mod tidy'
-    disablesourceinput: true
-    dependsonchange: true
-    dependson:
-      - 'module'
-    kind: 'shell'
-    spec:
-      command: 'go mod tidy'
-      environments:
-        - name: HOME
-        - name: PATH
-      workdir: {{ .WorkDir }}
-      changedif:
-        kind: 'file/checksum'
-        spec:
-          files:
-           - 'go.mod'
-           - 'go.sum'
-{{- if .ScmID }}
-    scmid: '{{ .ScmID }}'
-{{ end }}
-{{- end }}
+{{- template "tidy" . }}
 `
 
 	// goReplaceModuleManifestTemplate is the Go template used to generate Golang manifest update
@@ -148,29 +153,43 @@ targets:
 {{- if .ScmID }}
     scmid: '{{ .ScmID }}'
 {{ end }}
-{{- if .GoModTidyEnabled }}
-  tidy:
-    name: 'clean: go mod tidy'
-    disablesourceinput: true
-    dependsonchange: true
-    dependson:
-      - 'module'
-    kind: 'shell'
+{{- template "tidy" . }}
+`
+
+	// goModuleSecurityManifestTemplate is the Go template used to generate Golang module security update manifest.
+	// The pipeline name contains the fixed version, so it can be used as pullrequest title.
+	goModuleSecurityManifestTemplate string = `name: 'deps(go): bump {{ if .Replace }}replaced {{ end }}module {{ .Module }} to {{ "{{" }} source "fixed" {{ "}}" }}'
+{{- if .ActionID }}
+actions:
+  {{ .ActionID }}:
+    title: 'deps(go): bump {{ if .Replace }}replaced {{ end }}module {{ .Module }} to {{ "{{" }} source "fixed" {{ "}}" }}'
+{{ end }}
+sources:
+  fixed:
+    name: 'Get lowest golang module {{ .Module }} version without known vulnerabilities'
+    kind: 'vulnerability/osv'
     spec:
-      command: 'go mod tidy'
-      environments:
-        - name: HOME
-        - name: PATH
-      workdir: {{ .WorkDir }}
-      changedif:
-        kind: 'file/checksum'
-        spec:
-          files:
-           - 'go.mod'
-           - 'go.sum'
+      ecosystem: 'Go'
+      name: '{{ .Module }}'
+      version: '{{ .Version }}'
+{{- template "vulnerability" .Vulnerability }}
+targets:
+  module:
+    name: 'deps(go): bump module {{ .Module }} to {{ "{{" }} source "fixed" {{ "}}" }}'
+    kind: 'golang/gomod'
+    sourceid: 'fixed'
+    spec:
+      file: '{{ .GoModFile }}'
+      module: '{{ .TargetModule }}'
+      {{- if .Replace }}
+      replace: true
+      {{- if .ReplaceVersion }}
+      replaceVersion: '{{ .ReplaceVersion }}'
+      {{- end }}
+      {{- end }}
 {{- if .ScmID }}
     scmid: '{{ .ScmID }}'
 {{ end }}
-{{- end }}
+{{- template "tidy" . }}
 `
 )
