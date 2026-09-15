@@ -48,6 +48,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/resources/toml"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/toolversions"
 	updateclihttp "github.com/updatecli/updatecli/pkg/plugins/resources/updateclihttp"
+	vulnerabilityOsv "github.com/updatecli/updatecli/pkg/plugins/resources/vulnerability/osv"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/xml"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/yaml"
 )
@@ -263,6 +264,10 @@ func New(rs ResourceConfig) (resource Resource, err error) {
 
 		return toolversions.New(rs.Spec)
 
+	case "vulnerability/osv":
+
+		return vulnerabilityOsv.New(rs.Spec)
+
 	case "xml":
 
 		return xml.New(rs.Spec)
@@ -337,6 +342,7 @@ func GetResourceMapping() map[string]interface{} {
 		"terraform/registry": &terraformRegistry.Spec{},
 		"toml":               &toml.Spec{},
 		"toolversions":       &toolversions.Spec{},
+		"vulnerability/osv":  &vulnerabilityOsv.Spec{},
 		"xml":                &xml.Spec{},
 		"yaml":               &yaml.Spec{},
 	}
