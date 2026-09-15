@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -15,19 +16,74 @@ import (
 	"go.yaml.in/yaml/v3"
 )
 
+// decodeYAMLEscapedUnicode converts YAML double-quoted escape sequences
+// \U0001F308 and \uXXXX back to literal utf8, but only inside double-quoted
+// scalars and honoring escaped backslashes (e.g. "\\u0041" stays literal).
+// go.yaml.in/yaml escapes emoji because its is_printable follows YAML 1.1
+// (only up to U+FFFD), so 4-byte utf8 is emitted as double-quoted \U escapes.
+func decodeYAMLEscapedUnicode(s string) string {
+	var out bytes.Buffer
+	inDQ := false
+	escaped := false
+	for i := 0; i < len(s); {
+		c := s[i]
+		if c == '"' && !escaped {
+			inDQ = !inDQ
+			out.WriteByte(c)
+			i++
+			continue
+		}
+		if inDQ && c == '\\' && !escaped && i+1 < len(s) {
+			// Check for \UXXXXXXXX (8 hex) and \uXXXX (4 hex)
+			if s[i+1] == 'U' && i+10 <= len(s) && isHex(s[i+2:i+10]) {
+				hex := s[i+2 : i+10]
+				v, err := strconv.ParseUint(hex, 16, 32)
+				if err == nil {
+					out.WriteRune(rune(v))
+					i += 10
+					escaped = false
+					continue
+				}
+			}
+			if s[i+1] == 'u' && i+6 <= len(s) && isHex(s[i+2:i+6]) {
+				hex := s[i+2 : i+6]
+				v, err := strconv.ParseUint(hex, 16, 16)
+				if err == nil {
+					out.WriteRune(rune(v))
+					i += 6
+					escaped = false
+					continue
+				}
+			}
+		}
+		// track escaped state for next char (\ escapes next char)
+		if c == '\\' && !escaped {
+			escaped = true
+		} else {
+			escaped = false
+		}
+		out.WriteByte(c)
+		i++
+	}
+	return out.String()
+}
+
+func isHex(s string) bool {
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		if !((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
+			return false
+		}
+	}
+	return true
+}
+
 func (y *Yaml) goYamlPathTarget(valueToWrite string, resultTarget *result.Target, dryRun bool) (notChanged int, ignoredFiles int, err error) {
-	var buf bytes.Buffer
-	e := yaml.NewEncoder(&buf)
-	defer e.Close()
-
-	e.SetIndent(2)
-
 	keys := y.spec.getKeys()
 
 	resultTargetFilesMap := map[string]bool{}
 
 	for filePath := range y.files {
-		buf = bytes.Buffer{}
 		originFilePath := y.files[filePath].originalFilePath
 		fileNotChanged := 0
 		fileKeysProcessed := 0
@@ -164,15 +220,19 @@ func (y *Yaml) goYamlPathTarget(valueToWrite string, resultTarget *result.Target
 		}
 
 		// Re-encode all documents back into buffer
-		buf = bytes.Buffer{}
+		var buf bytes.Buffer
+		enc := yaml.NewEncoder(&buf)
+		enc.SetIndent(2)
 		for _, doc := range docs {
-			if err := e.Encode(doc); err != nil {
+			if err := enc.Encode(doc); err != nil {
+				_ = enc.Close()
 				return 0, ignoredFiles, fmt.Errorf("unable to marshal the yaml file: %w", err)
 			}
 		}
+		_ = enc.Close()
 
 		f := y.files[filePath]
-		f.content = buf.String()
+		f.content = decodeYAMLEscapedUnicode(buf.String())
 		// preserve leading document marker if it was present originally
 		if strings.HasPrefix(y.files[filePath].content, "---\n") && !strings.HasPrefix(f.content, "---\n") {
 			f.content = "---\n" + f.content
