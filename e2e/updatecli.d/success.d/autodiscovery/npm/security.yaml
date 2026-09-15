@@ -1,0 +1,30 @@
+name: "NPM security updates using git scm"
+scms:
+  default:
+    kind: github
+    spec:
+      owner: olblak
+      repository: updatecli-app-dashboard
+      branch: main
+
+actions:
+  default:
+    kind: github/pullrequest
+    scmid: default
+    spec:
+      labels:
+        - "dependencies"
+        - "security"
+
+autodiscovery:
+  # scmid is applied to all crawlers
+  scmid: default
+  actionid: default
+  groupby: individual
+  crawlers:
+    npm:
+      vulnerability:
+        minseverity: moderate
+      only:
+        - packages:
+            "axios": ""
