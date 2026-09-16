@@ -1,0 +1,94 @@
+package osv
+
+import (
+	"context"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func TestCondition(t *testing.T) {
+	tests := []struct {
+		name            string
+		spec            Spec
+		sourceInput     string
+		responses       map[string]string
+		statusCode      int
+		expectedPass    bool
+		expectedMessage []string
+		expectedError   bool
+	}{
+		{
+			name:            "Version without known vulnerabilities passes",
+			spec:            Spec{Ecosystem: "PyPI", Name: "jinja2", Version: "3.1.6"},
+			expectedPass:    true,
+			expectedMessage: []string{`no known vulnerabilities for version "3.1.6"`},
+		},
+		{
+			name:         "Vulnerable version fails",
+			spec:         Spec{Ecosystem: "PyPI", Name: "jinja2", Version: "3.1.2"},
+			responses:    map[string]string{"3.1.2|": jinja2At312},
+			expectedPass: false,
+			expectedMessage: []string{
+				"4 known vulnerabilities",
+				"GHSA-cpwx-vrp4-4pq7 (CVE-2025-27516, PYSEC-2026-1471) [MODERATE]",
+				"PYSEC-2026-9999 Summary of PYSEC-2026-9999 - fixed in: 3.1.4",
+			},
+		},
+		{
+			name:            "No version in spec uses source input",
+			spec:            Spec{Ecosystem: "PyPI", Name: "jinja2"},
+			sourceInput:     "3.1.2",
+			responses:       map[string]string{"3.1.2|": jinja2At312},
+			expectedPass:    false,
+			expectedMessage: []string{`version "3.1.2"`},
+		},
+		{
+			name:         "Ignoring every vulnerability passes",
+			spec:         Spec{Ecosystem: "PyPI", Name: "jinja2", Version: "3.1.2", Ignore: []string{"CVE-2025-27516", "CVE-2024-34064", "GHSA-high-0000-0000", "PYSEC-2026-9999"}},
+			responses:    map[string]string{"3.1.2|": jinja2At312},
+			expectedPass: true,
+		},
+		{
+			name:            "Unknown severity fails above the minimum severity",
+			spec:            Spec{Ecosystem: "PyPI", Name: "jinja2", Version: "3.1.2", MinSeverity: "CRITICAL"},
+			responses:       map[string]string{"3.1.2|": jinja2At312},
+			expectedPass:    false,
+			expectedMessage: []string{"1 known vulnerabilities", "PYSEC-2026-9999"},
+		},
+		{
+			name:          "No version defined at all returns error",
+			spec:          Spec{Ecosystem: "PyPI", Name: "jinja2"},
+			expectedError: true,
+		},
+		{
+			name:          "HTTP error returns error",
+			spec:          Spec{Ecosystem: "PyPI", Name: "jinja2", Version: "3.1.2"},
+			statusCode:    500,
+			expectedError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			o, err := New(tt.spec)
+			require.NoError(t, err)
+
+			mock := &mockOSV{responses: tt.responses, statusCode: tt.statusCode}
+			o.webClient = mock.client()
+
+			pass, message, err := o.Condition(context.Background(), tt.sourceInput, nil)
+			if tt.expectedError {
+				assert.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+
+			assert.Equal(t, tt.expectedPass, pass)
+			for _, expected := range tt.expectedMessage {
+				assert.Contains(t, message, expected)
+			}
+		})
+	}
+}

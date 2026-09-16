@@ -1,0 +1,195 @@
+package osv
+
+import (
+	"context"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/core/result"
+)
+
+func TestSource(t *testing.T) {
+	tests := []struct {
+		name                string
+		spec                Spec
+		responses           map[string]string
+		expectedInformation string
+		expectedResult      string
+		expectedVersions    []string
+		expectedError       bool
+	}{
+		{
+			name:                "Fixed version is the highest lowest fix",
+			spec:                Spec{Ecosystem: "PyPI", Name: "jinja2", Version: "3.1.2"},
+			responses:           map[string]string{"3.1.2|": jinja2At312},
+			expectedInformation: "3.1.6",
+			expectedResult:      result.SUCCESS,
+			expectedVersions:    []string{"3.1.2", "3.1.6"},
+		},
+		{
+			name: "Fixed version follows vulnerabilities introduced by a candidate",
+			spec: Spec{Ecosystem: "PyPI", Name: "jinja2", Version: "3.1.2"},
+			responses: map[string]string{
+				"3.1.2|": jinja2At312,
+				"3.1.6|": response("", ghsaNew),
+			},
+			expectedInformation: "3.1.7",
+			expectedResult:      result.SUCCESS,
+			expectedVersions:    []string{"3.1.2", "3.1.6", "3.1.7"},
+		},
+		{
+			name: "Fixed version applies the minimum severity to candidates",
+			spec: Spec{Ecosystem: "PyPI", Name: "jinja2", Version: "3.1.2", MinSeverity: "HIGH"},
+			responses: map[string]string{
+				"3.1.2|": jinja2At312,
+				"3.1.4|": response("", ghsaSandbox, pysecSandbox),
+			},
+			expectedInformation: "3.1.4",
+			expectedResult:      result.SUCCESS,
+			expectedVersions:    []string{"3.1.2", "3.1.4"},
+		},
+		{
+			name:                "Fixed version of a safe version is the version itself",
+			spec:                Spec{Ecosystem: "PyPI", Name: "jinja2", Version: "3.1.6"},
+			expectedInformation: "3.1.6",
+			expectedResult:      result.SUCCESS,
+			expectedVersions:    []string{"3.1.6"},
+		},
+		{
+			name: "No fix published skips the source",
+			spec: Spec{Ecosystem: "PyPI", Name: "jinja2", Version: "3.1.2"},
+			responses: map[string]string{
+				"3.1.2|": jinja2At312,
+				"3.1.6|": response("", ghsaUnfixed),
+			},
+			expectedResult:   result.SKIPPED,
+			expectedVersions: []string{"3.1.2", "3.1.6"},
+		},
+		{
+			name:                "Fixed version ignores other packages of the records",
+			spec:                Spec{Ecosystem: "Go", Name: "golang.org/x/net", Version: "0.20.0"},
+			responses:           map[string]string{"0.20.0|": xnetAt020},
+			expectedInformation: "0.23.0",
+			expectedResult:      result.SUCCESS,
+			expectedVersions:    []string{"0.20.0", "0.23.0"},
+		},
+		{
+			name:                "Fixed version keeps the Go version prefix",
+			spec:                Spec{Ecosystem: "Go", Name: "golang.org/x/net", Version: "v0.20.0"},
+			responses:           map[string]string{"v0.20.0|": xnetAt020},
+			expectedInformation: "v0.23.0",
+			expectedResult:      result.SUCCESS,
+			expectedVersions:    []string{"v0.20.0", "0.23.0"},
+		},
+		{
+			name: "Purl matches records naming the package differently and without purl",
+			spec: Spec{Purl: "pkg:pypi/typing_extensions", Version: "3.10.0"},
+			responses: map[string]string{"3.10.0|": response("",
+				record("PYSEC-2099-0002", "", nil, affectedEntry("PyPI", "Typing-Extensions", "", "ECOSYSTEM", "4.0.1")),
+			)},
+			expectedInformation: "4.0.1",
+			expectedResult:      result.SUCCESS,
+			expectedVersions:    []string{"3.10.0", "4.0.1"},
+		},
+		{
+			name: "Fixed version orders four-part NuGet versions",
+			spec: Spec{Ecosystem: "NuGet", Name: "Portable.BouncyCastle", Version: "1.8.6.7"},
+			responses: map[string]string{"1.8.6.7|": response("",
+				record("GHSA-ngt1-0000-0000", "HIGH", nil, affectedEntry("NuGet", "Portable.BouncyCastle", "", "ECOSYSTEM", "1.8.9.1")),
+				record("GHSA-ngt2-0000-0000", "HIGH", nil, affectedEntry("NuGet", "Portable.BouncyCastle", "", "ECOSYSTEM", "1.8.10")),
+			)},
+			expectedInformation: "1.8.10",
+			expectedResult:      result.SUCCESS,
+			expectedVersions:    []string{"1.8.6.7", "1.8.10"},
+		},
+		{
+			name: "Fixed version prefers a stable fix over a pre-release one",
+			spec: Spec{Ecosystem: "PyPI", Name: "jinja2", Version: "5.3.0"},
+			responses: map[string]string{"5.3.0|": response("",
+				record("GHSA-prer-0000-0000", "HIGH", nil, jinja2Affected("6.0.0rc1"), jinja2Affected("6.0.1")),
+			)},
+			expectedInformation: "6.0.1",
+			expectedResult:      result.SUCCESS,
+			expectedVersions:    []string{"5.3.0", "6.0.1"},
+		},
+		{
+			name: "Fixed only in a pre-release skips the source",
+			spec: Spec{Ecosystem: "PyPI", Name: "jinja2", Version: "5.3.0"},
+			responses: map[string]string{"5.3.0|": response("",
+				record("GHSA-prer-0000-0000", "HIGH", nil, jinja2Affected("6.0.0rc1")),
+			)},
+			expectedResult:   result.SKIPPED,
+			expectedVersions: []string{"5.3.0"},
+		},
+		{
+			name: "Fixed version from a pre-release accepts a pre-release fix",
+			spec: Spec{Ecosystem: "PyPI", Name: "jinja2", Version: "6.0.0b1"},
+			responses: map[string]string{"6.0.0b1|": response("",
+				record("GHSA-prer-0000-0000", "HIGH", nil, jinja2Affected("6.0.0rc1")),
+			)},
+			expectedInformation: "6.0.0rc1",
+			expectedResult:      result.SUCCESS,
+			expectedVersions:    []string{"6.0.0b1", "6.0.0rc1"},
+		},
+		{
+			name:          "Fixed version of an unsupported ecosystem returns error",
+			spec:          Spec{Ecosystem: "Maven", Name: "org.apache.logging.log4j:log4j-core", Version: "2.14.1"},
+			expectedError: true,
+		},
+		{
+			name:                "IDs of a purl",
+			spec:                Spec{Purl: "pkg:pypi/jinja2", Version: "3.1.2", Key: KeyIDs},
+			responses:           map[string]string{"3.1.2|": jinja2At312},
+			expectedInformation: "GHSA-cpwx-vrp4-4pq7,GHSA-h75v-3vvj-5mfj,GHSA-high-0000-0000,PYSEC-2026-9999",
+			expectedResult:      result.SUCCESS,
+			expectedVersions:    []string{"3.1.2"},
+		},
+		{
+			name:             "IDs of a safe version are empty",
+			spec:             Spec{Ecosystem: "PyPI", Name: "jinja2", Version: "3.1.6", Key: KeyIDs},
+			expectedResult:   result.SUCCESS,
+			expectedVersions: []string{"3.1.6"},
+		},
+		{
+			name:          "Missing version returns error",
+			spec:          Spec{Ecosystem: "PyPI", Name: "jinja2"},
+			expectedError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			o, err := New(tt.spec)
+			require.NoError(t, err)
+
+			mock := &mockOSV{responses: tt.responses}
+			o.webClient = mock.client()
+
+			gotResult := result.Source{}
+			err = o.Source(context.Background(), "", &gotResult)
+			if tt.expectedError {
+				assert.Error(t, err)
+				assert.Empty(t, mock.requests)
+				return
+			}
+			require.NoError(t, err)
+
+			assert.Equal(t, tt.expectedResult, gotResult.Result)
+			assert.Equal(t, tt.expectedInformation, gotResult.Information)
+			assert.Equal(t, tt.expectedVersions, mock.requestedVersions())
+		})
+	}
+}
+
+func TestSourceQuery(t *testing.T) {
+	o, err := New(Spec{Purl: "pkg:pypi/jinja2", Version: "3.1.2", Key: KeyIDs})
+	require.NoError(t, err)
+
+	mock := &mockOSV{}
+	o.webClient = mock.client()
+
+	require.NoError(t, o.Source(context.Background(), "", &result.Source{}))
+	require.Len(t, mock.requests, 1)
+	assert.Equal(t, queryRequest{Package: osvPackage{Purl: "pkg:pypi/jinja2"}, Version: "3.1.2"}, mock.requests[0])
+}
