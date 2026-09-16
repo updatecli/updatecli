@@ -53,6 +53,8 @@ type Pipeline struct {
 	// injected by the engine before the pipeline runs.
 	SourceCache *cache.SourceCache
 	tracer      trace.Tracer
+	// unrenderedName holds the pipeline name before runtime values, such as {{ source "id" }}, are rendered.
+	unrenderedName string
 }
 
 // Init initialize an updatecli context based on its configuration
@@ -62,6 +64,7 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 	if len(config.Spec.Title) > 0 && p.Name == "" {
 		p.Name = config.Spec.Title
 	}
+	p.unrenderedName = p.Name
 
 	p.Options = options
 
@@ -80,7 +83,7 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 	p.Report.Sources = make(map[string]*result.Source, len(config.Spec.Sources))
 	p.Report.Conditions = make(map[string]*result.Condition, len(config.Spec.Conditions))
 	p.Report.Targets = make(map[string]*result.Target, len(config.Spec.Targets))
-	p.Report.Name = config.Spec.Name
+	p.Report.Name = p.Name
 	p.Report.Result = result.SKIPPED
 	p.Report.PipelineID = config.Spec.PipelineID
 	p.Report.Labels = config.Spec.Labels
@@ -667,12 +670,25 @@ func (p *Pipeline) String() string {
 	return result
 }
 
+// refreshName sets the pipeline and report names from the rendered configuration.
+func (p *Pipeline) refreshName() {
+	p.Name = p.Config.Spec.Name
+	if len(p.Config.Spec.Title) > 0 && p.Config.Spec.Name == "" {
+		p.Name = p.Config.Spec.Title
+	}
+	p.Report.Name = p.Name
+}
+
 // Update updates the pipeline based on the latest configuration
 func (p *Pipeline) Update() error {
 	err := p.Config.Update(p)
 	if err != nil {
 		return err
 	}
+
+	// The pipeline name may reference runtime values, such as {{ source "id" }},
+	// so it's refreshed once the configuration is rendered.
+	p.refreshName()
 
 	// Reset scm
 	for id, scmConfig := range p.Config.Spec.SCMs {
