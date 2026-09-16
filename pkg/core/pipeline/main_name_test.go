@@ -89,3 +89,23 @@ func TestActionReportIDWithoutInit(t *testing.T) {
 
 	assert.Equal(t, fmt.Sprintf("%x", sha256.Sum256([]byte("pipeline"))), p.actionReportID())
 }
+
+// TestInitNameFallsBackToTitle ensures a specification defining only a title exposes that title
+// as both the pipeline name and the report name, including before the configuration is rendered.
+func TestInitNameFallsBackToTitle(t *testing.T) {
+	p := Pipeline{}
+	require.NoError(t, p.Init(&config.Config{
+		Spec: config.Spec{
+			Title:      "Bump golang.org/x/net",
+			PipelineID: "pipeline-id",
+		},
+	}, Options{}))
+
+	assert.Equal(t, "Bump golang.org/x/net", p.Name)
+	assert.Equal(t, "Bump golang.org/x/net", p.Report.Name)
+
+	require.NoError(t, p.Update())
+
+	assert.Equal(t, "Bump golang.org/x/net", p.Name)
+	assert.Equal(t, "Bump golang.org/x/net", p.Report.Name)
+}

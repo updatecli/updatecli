@@ -83,7 +83,7 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 	p.Report.Sources = make(map[string]*result.Source, len(config.Spec.Sources))
 	p.Report.Conditions = make(map[string]*result.Condition, len(config.Spec.Conditions))
 	p.Report.Targets = make(map[string]*result.Target, len(config.Spec.Targets))
-	p.Report.Name = config.Spec.Name
+	p.Report.Name = p.Name
 	p.Report.Result = result.SKIPPED
 	p.Report.PipelineID = config.Spec.PipelineID
 	p.Report.Labels = config.Spec.Labels
