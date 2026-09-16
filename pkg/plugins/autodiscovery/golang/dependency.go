@@ -69,7 +69,7 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 			}
 		}
 
-		goVersion, goModules, goModulesToReplace, err := getGoModContent(foundFile)
+		goVersion, goModules, goModulesToReplace, replacedGoModules, err := getGoModContent(foundFile)
 		if err != nil {
 			logrus.Debugln(err)
 			continue
@@ -111,6 +111,12 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 				}
 
 				if g.spec.Vulnerability != nil {
+					// A replaced module is never built, so only its replacement is checked against the OSV database
+					if replacedGoModules[goModule] {
+						logrus.Debugf("skipping golang module %q security manifest as it's replaced in %q", goModule, relativeFoundFile)
+						continue
+					}
+
 					params := newSecurityManifestParams()
 					params.Module = goModule
 					params.Version = goModuleVersion

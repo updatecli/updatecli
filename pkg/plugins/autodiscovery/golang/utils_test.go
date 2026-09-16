@@ -1,6 +1,8 @@
 package golang
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -42,6 +44,7 @@ func TestGetGoModContent(t *testing.T) {
 		goModFile              string
 		expectedModules        map[string]string
 		expectedReplaceModules []Replace
+		expectedReplaced       map[string]bool
 		expectedGoVersion      string
 	}{
 		{
@@ -60,6 +63,11 @@ func TestGetGoModContent(t *testing.T) {
 					NewPath:    "github.com/crewjam/saml",
 					NewVersion: "v0.5.0",
 				},
+			},
+			expectedReplaced: map[string]bool{
+				"github.com/rancher/saml":     true,
+				"github.com/crewjam/saml":     true,
+				"github.com/stretchr/testify": true,
 			},
 			expectedModules: map[string]string{
 				"github.com/rancher/saml":     "v0.3.0",
@@ -80,14 +88,51 @@ func TestGetGoModContent(t *testing.T) {
 
 	for _, d := range dataset {
 		t.Run(d.name, func(t *testing.T) {
-			foundGoVersion, foundGoModules, foundReplaceGoModules, err := getGoModContent(d.goModFile)
+			foundGoVersion, foundGoModules, foundReplaceGoModules, foundReplacedGoModules, err := getGoModContent(d.goModFile)
 			require.NoError(t, err)
 
 			assert.Equal(t, d.expectedModules, foundGoModules)
 			assert.Equal(t, d.expectedReplaceModules, foundReplaceGoModules)
+			assert.Equal(t, d.expectedReplaced, foundReplacedGoModules)
 			assert.Equal(t, d.expectedGoVersion, foundGoVersion)
 		})
 	}
+}
+
+func TestGetGoModContentReplacedModules(t *testing.T) {
+	goModFile := filepath.Join(t.TempDir(), "go.mod")
+	goMod := `module example.com/replaced
+
+go 1.25.0
+
+require (
+	github.com/a/unversioned v1.0.0
+	github.com/b/matching v1.0.0
+	github.com/c/mismatching v1.0.0
+	github.com/d/local v1.0.0
+	github.com/e/indirect v1.0.0 // indirect
+)
+
+replace (
+	github.com/a/unversioned => github.com/a/fork v1.2.0
+	github.com/b/matching v1.0.0 => github.com/b/matching v0.9.0
+	github.com/c/mismatching v0.1.0 => github.com/c/mismatching v0.2.0
+	github.com/d/local => ../local
+	github.com/e/indirect => github.com/e/fork v1.0.0
+)
+`
+	require.NoError(t, os.WriteFile(goModFile, []byte(goMod), 0o600))
+
+	goVersion, _, _, replacedGoModules, err := getGoModContent(goModFile)
+	require.NoError(t, err)
+
+	assert.Equal(t, "1.25.0", goVersion)
+
+	assert.Equal(t, map[string]bool{
+		"github.com/a/unversioned": true,
+		"github.com/b/matching":    true,
+		"github.com/d/local":       true,
+	}, replacedGoModules)
 }
 
 func TestPseudoVersion(t *testing.T) {
