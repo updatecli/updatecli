@@ -1,6 +1,8 @@
 package golang
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -22,6 +24,7 @@ func TestSearchGoModFiles(t *testing.T) {
 				"testdata/noSumFile/go.mod",
 				"testdata/pseudoVersion/go.mod",
 				"testdata/replace/go.mod",
+				"testdata/replaceInactive/go.mod",
 			},
 		},
 	}
@@ -42,6 +45,7 @@ func TestGetGoModContent(t *testing.T) {
 		goModFile              string
 		expectedModules        map[string]string
 		expectedReplaceModules []Replace
+		expectedApplied        map[string]Replace
 		expectedGoVersion      string
 	}{
 		{
@@ -59,6 +63,23 @@ func TestGetGoModContent(t *testing.T) {
 					OldVersion: "v0.6.0",
 					NewPath:    "github.com/crewjam/saml",
 					NewVersion: "v0.5.0",
+				},
+			},
+			expectedApplied: map[string]Replace{
+				"github.com/rancher/saml": {
+					OldPath:    "github.com/rancher/saml",
+					NewPath:    "github.com/rancher/saml",
+					NewVersion: "v0.2.0",
+				},
+				"github.com/crewjam/saml": {
+					OldPath:    "github.com/crewjam/saml",
+					OldVersion: "v0.6.0",
+					NewPath:    "github.com/crewjam/saml",
+					NewVersion: "v0.5.0",
+				},
+				"github.com/stretchr/testify": {
+					OldPath: "github.com/stretchr/testify",
+					NewPath: "../local/testify",
 				},
 			},
 			expectedModules: map[string]string{
@@ -80,13 +101,80 @@ func TestGetGoModContent(t *testing.T) {
 
 	for _, d := range dataset {
 		t.Run(d.name, func(t *testing.T) {
-			foundGoVersion, foundGoModules, foundReplaceGoModules, err := getGoModContent(d.goModFile)
+			foundGoVersion, foundGoModules, foundReplaceGoModules, foundAppliedReplaces, err := getGoModContent(d.goModFile)
 			require.NoError(t, err)
 
 			assert.Equal(t, d.expectedModules, foundGoModules)
 			assert.Equal(t, d.expectedReplaceModules, foundReplaceGoModules)
+			assert.Equal(t, d.expectedApplied, foundAppliedReplaces)
 			assert.Equal(t, d.expectedGoVersion, foundGoVersion)
 		})
+	}
+}
+
+func TestGetGoModContentAppliedReplaces(t *testing.T) {
+	goModFile := filepath.Join(t.TempDir(), "go.mod")
+	goMod := `module example.com/replaced
+
+go 1.25.0
+
+require (
+	github.com/a/unversioned v1.0.0
+	github.com/b/matching v1.0.0
+	github.com/c/mismatching v1.0.0
+	github.com/d/local v1.0.0
+	github.com/e/indirect v1.0.0 // indirect
+	github.com/f/both v1.0.0
+	github.com/g/shadowed v1.0.0
+	github.com/i/ambiguous v1.0.0
+)
+
+replace (
+	github.com/a/unversioned => github.com/a/fork v1.2.0
+	github.com/b/matching v1.0.0 => github.com/b/matching v0.9.0
+	github.com/c/mismatching v0.1.0 => github.com/c/mismatching v0.2.0
+	github.com/d/local => ../local
+	github.com/e/indirect => github.com/e/fork v1.0.0
+	github.com/f/both => github.com/f/fork v1.0.0
+	github.com/f/both v1.0.0 => github.com/f/pinned v2.0.0
+	github.com/g/shadowed v1.0.0 => ../shadowed
+	github.com/g/shadowed => github.com/g/fork v1.0.0
+	github.com/h/unrequired => github.com/h/fork v1.0.0
+	github.com/i/ambiguous v0.1.0 => github.com/i/old v0.1.0
+	github.com/i/ambiguous => github.com/i/fork v1.0.0
+)
+`
+	require.NoError(t, os.WriteFile(goModFile, []byte(goMod), 0o600))
+
+	goVersion, _, _, appliedReplaces, err := getGoModContent(goModFile)
+	require.NoError(t, err)
+
+	assert.Equal(t, "1.25.0", goVersion)
+
+	applied := make(map[string]string, len(appliedReplaces))
+	for module, r := range appliedReplaces {
+		assert.Equal(t, module, r.OldPath)
+		applied[module] = r.OldVersion + "=>" + r.NewPath
+	}
+
+	assert.Equal(t, map[string]string{
+		// Unversioned replace directive of a direct module
+		"github.com/a/unversioned": "=>github.com/a/fork",
+		// Replace directive matching the required version
+		"github.com/b/matching": "v1.0.0=>github.com/b/matching",
+		// Replace directive pointing to a local path
+		"github.com/d/local": "=>../local",
+		// Replace directive matching the required version takes precedence over the unversioned one, whatever the order
+		"github.com/f/both":     "v1.0.0=>github.com/f/pinned",
+		"github.com/g/shadowed": "v1.0.0=>../shadowed",
+		// Unversioned replace directive applied while another one with a version exists
+		"github.com/i/ambiguous": "=>github.com/i/fork",
+	}, applied)
+
+	assert.True(t, appliedReplaces["github.com/i/ambiguous"].Ambiguous)
+	assert.True(t, appliedReplaces["github.com/d/local"].isLocal())
+	for _, module := range []string{"github.com/a/unversioned", "github.com/b/matching", "github.com/d/local", "github.com/f/both", "github.com/g/shadowed"} {
+		assert.False(t, appliedReplaces[module].Ambiguous, module)
 	}
 }
 

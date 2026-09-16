@@ -69,7 +69,7 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 			}
 		}
 
-		goVersion, goModules, goModulesToReplace, err := getGoModContent(foundFile)
+		goVersion, goModules, goModulesToReplace, appliedReplaces, err := getGoModContent(foundFile)
 		if err != nil {
 			logrus.Debugln(err)
 			continue
@@ -108,22 +108,6 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 						logrus.Debugf("Ignoring module %q from %q, as not matching only rule(s)\n", goModule, relativeFoundFile)
 						continue
 					}
-				}
-
-				if g.spec.Vulnerability != nil {
-					params := newSecurityManifestParams()
-					params.Module = goModule
-					params.Version = goModuleVersion
-					params.TargetModule = goModule
-
-					moduleManifest, err := getGolangModuleSecurityManifest(params)
-					if err != nil {
-						logrus.Debugf("skipping golang module %q security manifest due to: %s", goModule, err)
-						continue
-					}
-
-					manifests = append(manifests, moduleManifest)
-					continue
 				}
 
 				goModuleVersionPattern := g.versionFilter.Pattern
@@ -189,25 +173,6 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 					}
 				}
 
-				if g.spec.Vulnerability != nil {
-					// The replacement module is the one built, so it's the one checked against the OSV database
-					params := newSecurityManifestParams()
-					params.Module = replace.NewPath
-					params.Version = replace.NewVersion
-					params.TargetModule = replace.OldPath
-					params.Replace = true
-					params.ReplaceVersion = replace.OldVersion
-
-					moduleManifest, err := getGolangModuleSecurityManifest(params)
-					if err != nil {
-						logrus.Debugf("skipping golang module %q security manifest due to: %s", replace.NewPath, err)
-						continue
-					}
-
-					manifests = append(manifests, moduleManifest)
-					continue
-				}
-
 				goModuleVersionPattern := g.versionFilter.Pattern
 				goModuleVersionKind := g.versionFilter.Kind
 				switch isPseudoVersion(replace.NewVersion) {
@@ -252,8 +217,67 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 			}
 		}
 
-		generateModuleManifests(goModules)
-		generateReplaceModuleManifests(goModulesToReplace)
+		// generateSecurityManifests checks every direct module against the OSV database.
+		// Only and ignore rules are evaluated against the direct module, even when it's replaced.
+		generateSecurityManifests := func() {
+
+			for goModule, goModuleVersion := range goModules {
+				replace, replaced := appliedReplaces[goModule]
+
+				// Test if the ignore rule based on path is respected
+				if len(g.spec.Ignore) > 0 {
+					if g.spec.Ignore.isMatchingRules(g.rootDir, relativeFoundFile, goVersion, goModule, goModuleVersion, replaced) {
+						logrus.Debugf("Ignoring module %q from file %q, as matching ignore rule(s)\n", goModule, relativeFoundFile)
+						continue
+					}
+				}
+
+				// Test if the only rule based on path is respected
+				if len(g.spec.Only) > 0 {
+					if !g.spec.Only.isMatchingRules(g.rootDir, relativeFoundFile, goVersion, goModule, goModuleVersion, replaced) {
+						logrus.Debugf("Ignoring module %q from %q, as not matching only rule(s)\n", goModule, relativeFoundFile)
+						continue
+					}
+				}
+
+				params := newSecurityManifestParams()
+				params.Module = goModule
+				params.Version = goModuleVersion
+				params.TargetModule = goModule
+
+				if replaced {
+					switch {
+					case replace.isLocal():
+						logrus.Debugf("skipping golang module %q security manifest as it's replaced by the local path %q in %q", goModule, replace.NewPath, relativeFoundFile)
+						continue
+					case replace.Ambiguous:
+						logrus.Warningf("skipping golang module %q security manifest as its replace directive without version can't be updated while another one with a version exists in %q", goModule, relativeFoundFile)
+						continue
+					}
+
+					// The replacement module is the one built, so it's the one checked against the OSV database
+					params.Module = replace.NewPath
+					params.Version = replace.NewVersion
+					params.Replace = true
+					params.ReplaceVersion = replace.OldVersion
+				}
+
+				moduleManifest, err := getGolangModuleSecurityManifest(params)
+				if err != nil {
+					logrus.Debugf("skipping golang module %q security manifest due to: %s", params.Module, err)
+					continue
+				}
+
+				manifests = append(manifests, moduleManifest)
+			}
+		}
+
+		if g.spec.Vulnerability != nil {
+			generateSecurityManifests()
+		} else {
+			generateModuleManifests(goModules)
+			generateReplaceModuleManifests(goModulesToReplace)
+		}
 
 		if g.spec.Only.isGoModuleOnly() || g.onlyGoModule {
 			continue
