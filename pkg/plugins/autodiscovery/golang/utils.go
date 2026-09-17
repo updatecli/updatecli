@@ -58,17 +58,20 @@ func isGolangInstalled() bool {
 	return err == nil
 }
 
-func getGoModContent(filename string) (goVersion string, goModules map[string]string, replaceGoModules []Replace, err error) {
+// getGoModContent parses a go.mod file and returns its go version, its direct modules,
+// the replace directives pointing to a remote module, and the direct modules covered
+// by any replace directive, including the ones pointing to a local path.
+func getGoModContent(filename string) (goVersion string, goModules map[string]string, replaceGoModules []Replace, replacedGoModules map[string]bool, err error) {
 
 	data, err := os.ReadFile(filename)
 
 	if err != nil {
-		return "", nil, nil, err
+		return "", nil, nil, nil, err
 	}
 
 	modfile, err := modfile.Parse(filename, data, nil)
 	if err != nil {
-		return "", nil, nil, err
+		return "", nil, nil, nil, err
 	}
 
 	goVersion = modfile.Go.Version
@@ -83,6 +86,14 @@ func getGoModContent(filename string) (goVersion string, goModules map[string]st
 	}
 
 	for _, r := range modfile.Replace {
+		// A replace directive without version applies to every version of the module
+		if version, found := goModules[r.Old.Path]; found && (r.Old.Version == "" || r.Old.Version == version) {
+			if replacedGoModules == nil {
+				replacedGoModules = make(map[string]bool)
+			}
+			replacedGoModules[r.Old.Path] = true
+		}
+
 		// Ignore replace directives with local path
 		if strings.HasPrefix(r.New.Path, ".") || strings.HasPrefix(r.New.Path, "/") {
 			continue
@@ -95,7 +106,7 @@ func getGoModContent(filename string) (goVersion string, goModules map[string]st
 		})
 	}
 
-	return goVersion, goModules, replaceGoModules, nil
+	return goVersion, goModules, replaceGoModules, replacedGoModules, nil
 }
 
 // isPseudoVersion checks if the provided version is a pseudo-version.
