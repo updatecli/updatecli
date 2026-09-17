@@ -178,7 +178,7 @@ func (s Spec) validateVulnerability() error {
 		return errors.New("versionfilter can't be combined with vulnerability, the version is the lowest one without known vulnerabilities")
 	}
 
-	if s.OnlyGoVersion != nil && *s.OnlyGoVersion {
+	if (s.OnlyGoVersion != nil && *s.OnlyGoVersion) || s.Only.isGoVersionOnly() {
 		return errors.New("onlygoversion can't be combined with vulnerability, Go version security updates are not supported")
 	}
 
