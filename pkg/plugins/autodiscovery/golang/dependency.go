@@ -9,7 +9,6 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
-	"github.com/updatecli/updatecli/pkg/plugins/utils/vulnerability"
 )
 
 // discoverDependencyManifests search for each go.mod file
@@ -69,22 +68,10 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 			}
 		}
 
-		goVersion, goModules, goModulesToReplace, replacedGoModules, err := getGoModContent(foundFile)
+		goVersion, goModules, goModulesToReplace, err := getGoModContent(foundFile)
 		if err != nil {
 			logrus.Debugln(err)
 			continue
-		}
-
-		// newSecurityManifestParams returns the security manifest parameters shared by every module of the go.mod file
-		newSecurityManifestParams := func() securityManifestParams {
-			return securityManifestParams{
-				ActionID:         g.actionID,
-				GoModFile:        relativeFoundFile,
-				Vulnerability:    g.spec.Vulnerability,
-				GoModTidyEnabled: goModTidyEnabled,
-				ScmID:            g.scmID,
-				WorkDir:          relativeWorkDir,
-			}
 		}
 
 		generateModuleManifests := func(modules map[string]string) {
@@ -108,28 +95,6 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 						logrus.Debugf("Ignoring module %q from %q, as not matching only rule(s)\n", goModule, relativeFoundFile)
 						continue
 					}
-				}
-
-				if g.spec.Vulnerability != nil {
-					// A replaced module is never built, so only its replacement is checked against the OSV database
-					if replacedGoModules[goModule] {
-						logrus.Debugf("skipping golang module %q security manifest as it's replaced in %q", goModule, relativeFoundFile)
-						continue
-					}
-
-					params := newSecurityManifestParams()
-					params.Module = goModule
-					params.Version = goModuleVersion
-					params.TargetModule = goModule
-
-					moduleManifest, err := getGolangModuleSecurityManifest(params)
-					if err != nil {
-						logrus.Debugf("skipping golang module %q security manifest due to: %s", goModule, err)
-						continue
-					}
-
-					manifests = append(manifests, moduleManifest)
-					continue
 				}
 
 				goModuleVersionPattern := g.versionFilter.Pattern
@@ -195,25 +160,6 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 					}
 				}
 
-				if g.spec.Vulnerability != nil {
-					// The replacement module is the one built, so it's the one checked against the OSV database
-					params := newSecurityManifestParams()
-					params.Module = replace.NewPath
-					params.Version = replace.NewVersion
-					params.TargetModule = replace.OldPath
-					params.Replace = true
-					params.ReplaceVersion = replace.OldVersion
-
-					moduleManifest, err := getGolangModuleSecurityManifest(params)
-					if err != nil {
-						logrus.Debugf("skipping golang module %q security manifest due to: %s", replace.NewPath, err)
-						continue
-					}
-
-					manifests = append(manifests, moduleManifest)
-					continue
-				}
-
 				goModuleVersionPattern := g.versionFilter.Pattern
 				goModuleVersionKind := g.versionFilter.Kind
 				switch isPseudoVersion(replace.NewVersion) {
@@ -265,11 +211,6 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 			continue
 		}
 
-		if g.spec.Vulnerability != nil {
-			logrus.Debugf("Ignoring golang version update from file %q, as Go version security updates are not supported", relativeFoundFile)
-			continue
-		}
-
 		// Test if the ignore rule based on path is respected
 		if len(g.spec.Ignore) > 0 {
 			if g.spec.Ignore.isMatchingRules(g.rootDir, relativeFoundFile, goVersion, "", "", false) {
@@ -313,11 +254,6 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 	return manifests, nil
 }
 
-// parseManifestTemplate parses a manifest template along with the templates it can reference, "tidy" and "vulnerability".
-func parseManifestTemplate(text string) (*template.Template, error) {
-	return template.New("manifest").Parse(vulnerability.ManifestTemplate + goTidyTemplate + text)
-}
-
 func getGolangVersionManifest(
 	filename,
 	versionFilterKind,
@@ -326,7 +262,7 @@ func getGolangVersionManifest(
 	scmID,
 	actionID string,
 	a age.Spec) ([]byte, error) {
-	tmpl, err := parseManifestTemplate(goManifestTemplate)
+	tmpl, err := template.New("manifest").Parse(goManifestTemplate)
 	if err != nil {
 		logrus.Debugln(err)
 		return nil, err
@@ -370,7 +306,7 @@ func getGolangModuleManifest(
 	goModTidy bool,
 	a age.Spec) ([]byte, error) {
 
-	tmpl, err := parseManifestTemplate(goModuleManifestTemplate)
+	tmpl, err := template.New("manifest").Parse(goModuleManifestTemplate)
 	if err != nil {
 		logrus.Debugln(err)
 		return nil, err
@@ -421,7 +357,7 @@ func getGolangReplaceModuleManifest(filename,
 	goModTidy bool,
 	a age.Spec) ([]byte, error) {
 
-	tmpl, err := parseManifestTemplate(goReplaceModuleManifestTemplate)
+	tmpl, err := template.New("manifest").Parse(goReplaceModuleManifestTemplate)
 	if err != nil {
 		logrus.Debugln(err)
 		return nil, err
@@ -453,42 +389,6 @@ func getGolangReplaceModuleManifest(filename,
 		ScmID:                scmID,
 		WorkDir:              workdir,
 		Age:                  a,
-	}
-
-	manifest := bytes.Buffer{}
-	if err := tmpl.Execute(&manifest, params); err != nil {
-		logrus.Debugln(err)
-		return nil, err
-	}
-	return manifest.Bytes(), nil
-}
-
-// securityManifestParams holds the values rendered by goModuleSecurityManifestTemplate.
-type securityManifestParams struct {
-	ActionID  string
-	GoModFile string
-	// Module is the module checked against the OSV database, the replacement module for a replace directive.
-	Module string
-	// Version is the version of Module.
-	Version string
-	// TargetModule is the module updated in the go.mod file, the replaced module for a replace directive.
-	TargetModule string
-	// Replace indicates that the manifest updates a replace directive.
-	Replace bool
-	// ReplaceVersion is the replaced module version of the replace directive, if any.
-	ReplaceVersion string
-	// Vulnerability holds the settings shared by generated "vulnerability/osv" specs.
-	Vulnerability    *vulnerability.Spec
-	GoModTidyEnabled bool
-	ScmID            string
-	WorkDir          string
-}
-
-func getGolangModuleSecurityManifest(params securityManifestParams) ([]byte, error) {
-	tmpl, err := parseManifestTemplate(goModuleSecurityManifestTemplate)
-	if err != nil {
-		logrus.Debugln(err)
-		return nil, err
 	}
 
 	manifest := bytes.Buffer{}
