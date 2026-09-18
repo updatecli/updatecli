@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"path"
 	"path/filepath"
+	"sort"
 	"strings"
 	"text/template"
 
@@ -64,6 +65,29 @@ func detectLockFileSupport(dir string) (lockFileSupport, bool) {
 	return support, false
 }
 
+// reportUnresolvedDependencies warns about the dependencies of a package.json skipped for lack of an
+// installed version, so a scan examining nothing can't be mistaken for one finding nothing.
+func (n Npm) reportUnresolvedDependencies(dependencies []string, packageJson string, locked lockedVersions) {
+	if len(dependencies) == 0 {
+		return
+	}
+
+	sort.Strings(dependencies)
+	skipped := strings.Join(dependencies, ", ")
+
+	if locked.lockFile == "" {
+		logrus.Warningf("no lock file found for %q, skipping its dependencies using a version constraint: %s", packageJson, skipped)
+		return
+	}
+
+	lockFile, err := filepath.Rel(n.rootDir, locked.lockFile)
+	if err != nil {
+		lockFile = locked.lockFile
+	}
+
+	logrus.Warningf("no version resolved in %q for some dependencies of %q, skipping: %s", lockFile, packageJson, skipped)
+}
+
 func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 
 	var manifests [][]byte
@@ -106,12 +130,15 @@ func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 
 		// Vulnerabilities are checked against the installed versions, that lock files record for version constraints
 		var locked lockedVersions
+		var lockErr error
+		// unresolvedDependencies collects the dependencies dropped for lack of an installed version, so the
+		// user is told about them at once rather than getting a silently incomplete vulnerability report.
+		var unresolvedDependencies []string
+
 		if n.spec.Vulnerability != nil {
-			var lockErr error
-			locked, lockErr = loadLockedVersions(filepath.Dir(foundFile), lockSupport)
+			locked, lockErr = loadLockedVersions(filepath.Dir(foundFile), searchFromDir)
 			if lockErr != nil {
-				// Without the lock file, no dependency using a version constraint can be scanned,
-				// so the user must know about it rather than getting a silently incomplete report.
+				// Without the lock file, no dependency using a version constraint can be scanned
 				logrus.Warningf("%s: skipping the dependencies of %q using a version constraint", lockErr, relativeFoundFile)
 			}
 		}
@@ -176,6 +203,7 @@ func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 
 					if _, err := semver.StrictNewVersion(currentVersion); err != nil {
 						logrus.Debugf("Ignoring NPM package %q from %q, as no installed version could be identified for %q\n", dependencyName, relativeFoundFile, dependencyVersion)
+						unresolvedDependencies = append(unresolvedDependencies, dependencyName)
 						continue
 					}
 
@@ -265,6 +293,11 @@ func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 
 		getManifest(data.Dependencies, "dependencies")
 		getManifest(data.DevDependencies, "devDependencies")
+
+		// The lock file error already reported the dependencies it drops
+		if lockErr == nil {
+			n.reportUnresolvedDependencies(unresolvedDependencies, relativeFoundFile, locked)
+		}
 	}
 
 	logrus.Printf("%v manifests identified", len(manifests))

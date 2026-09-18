@@ -92,8 +92,8 @@ type Spec struct {
 	//   * It is mutually exclusive with age, versionfilter and ignoreversionconstraints.
 	//   * The default minimum release age doesn't apply, a fixed version is suggested as soon as it is known.
 	//   * The current version is the exact version from package.json or, for a version constraint,
-	//     the version resolved in package-lock.json, pnpm-lock.yaml or yarn.lock next to it.
-	//     Packages without an identifiable current version are ignored.
+	//     the version resolved in the package-lock.json, pnpm-lock.yaml or yarn.lock next to it,
+	//     or at the root of its workspace. Packages without an identifiable current version are ignored.
 	//   * Labels, such as "security", are set on the action used by the manifest.
 	Vulnerability *vulnerability.Spec `yaml:",omitempty"`
 }

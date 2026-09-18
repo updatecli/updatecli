@@ -28,7 +28,7 @@ func TestParsePackageLock(t *testing.T) {
 		data, err := os.ReadFile("testdata/npmlockfile/package-lock.json")
 		require.NoError(t, err)
 
-		versions, err := parsePackageLock(data)
+		versions, err := parsePackageLock(data, ".")
 		require.NoError(t, err)
 
 		assertLockedVersions(t, versions, []lockedVersionTest{
@@ -47,7 +47,7 @@ func TestParsePackageLock(t *testing.T) {
     "node_modules/axios/node_modules/follow-redirects": {"version": "1.14.0"},
     "packages/workspace": {"version": "0.1.0"}
   }
-}`))
+}`), ".")
 		require.NoError(t, err)
 
 		assertLockedVersions(t, versions, []lockedVersionTest{
@@ -66,7 +66,7 @@ func TestParsePackageLock(t *testing.T) {
       "dependencies": {"follow-redirects": {"version": "1.14.0"}}
     }
   }
-}`))
+}`), ".")
 		require.NoError(t, err)
 
 		assertLockedVersions(t, versions, []lockedVersionTest{
@@ -75,8 +75,43 @@ func TestParsePackageLock(t *testing.T) {
 		})
 	})
 
+	t.Run("lockfileVersion 3 with a workspace project", func(t *testing.T) {
+		lock := []byte(`{
+  "lockfileVersion": 3,
+  "packages": {
+    "": {"name": "workspace"},
+    "node_modules/axios": {"version": "1.2.6"},
+    "node_modules/vue": {"version": "3.2.13"},
+    "packages/app": {"version": "0.1.0"},
+    "packages/app/node_modules/axios": {"version": "1.1.0"},
+    "packages/app/node_modules/axios/node_modules/follow-redirects": {"version": "1.14.0"}
+  }
+}`)
+
+		t.Run("Root project", func(t *testing.T) {
+			versions, err := parsePackageLock(lock, ".")
+			require.NoError(t, err)
+
+			assertLockedVersions(t, versions, []lockedVersionTest{
+				{name: "axios", constraint: "^1.0.0", expected: "1.2.6"},
+			})
+		})
+
+		t.Run("Workspace project", func(t *testing.T) {
+			versions, err := parsePackageLock(lock, "packages/app")
+			require.NoError(t, err)
+
+			assertLockedVersions(t, versions, []lockedVersionTest{
+				// The package installed next to the project takes precedence over the hoisted one
+				{name: "axios", constraint: "^1.0.0", expected: "1.1.0"},
+				{name: "vue", constraint: "^3.0.0", expected: "3.2.13"},
+				{name: "follow-redirects", constraint: "^1.0.0", expected: ""},
+			})
+		})
+	})
+
 	t.Run("Invalid file", func(t *testing.T) {
-		_, err := parsePackageLock([]byte(`{`))
+		_, err := parsePackageLock([]byte(`{`), ".")
 		require.Error(t, err)
 	})
 }
@@ -86,7 +121,7 @@ func TestParsePnpmLock(t *testing.T) {
 		data, err := os.ReadFile("testdata/pnpmlockfile/pnpm-lock.yaml")
 		require.NoError(t, err)
 
-		versions, err := parsePnpmLock(data)
+		versions, err := parsePnpmLock(data, ".")
 		require.NoError(t, err)
 
 		assertLockedVersions(t, versions, []lockedVersionTest{
@@ -107,12 +142,34 @@ importers:
       react:
         specifier: ^17.0.0
         version: 17.0.2
-`))
+`), ".")
 		require.NoError(t, err)
 
 		assertLockedVersions(t, versions, []lockedVersionTest{
 			{name: "typescript", constraint: "^5.0.0", expected: "5.1.6"},
 			{name: "react", constraint: "^17.0.0", expected: ""},
+		})
+	})
+
+	t.Run("lockfileVersion 9 from a workspace project", func(t *testing.T) {
+		versions, err := parsePnpmLock([]byte(`lockfileVersion: '9.0'
+importers:
+  .:
+    devDependencies:
+      typescript:
+        specifier: ^5.0.0
+        version: 5.1.6
+  packages/app:
+    dependencies:
+      react:
+        specifier: ^17.0.0
+        version: 17.0.2
+`), "packages/app")
+		require.NoError(t, err)
+
+		assertLockedVersions(t, versions, []lockedVersionTest{
+			{name: "react", constraint: "^17.0.0", expected: "17.0.2"},
+			{name: "typescript", constraint: "^5.0.0", expected: ""},
 		})
 	})
 
@@ -126,7 +183,7 @@ devDependencies:
   typescript:
     specifier: ^5.0.0
     version: 5.1.6
-`))
+`), ".")
 		require.NoError(t, err)
 
 		assertLockedVersions(t, versions, []lockedVersionTest{
@@ -141,7 +198,7 @@ specifiers:
   axios: ^1.0.0
 dependencies:
   axios: 1.2.6_debug@4.3.4
-`))
+`), ".")
 		require.NoError(t, err)
 
 		assertLockedVersions(t, versions, []lockedVersionTest{
@@ -177,28 +234,28 @@ axios@^1.0.0, axios@^1.1.0:
 
 follow-redirects@^1.15.0:
   version "1.15.2"
-`))
+`), ".")
 		require.NoError(t, err)
 
 		assertLockedVersions(t, versions, expected)
 	})
 
 	t.Run("Yarn berry", func(t *testing.T) {
-		versions, err := parseYarnLock([]byte("__metadata:\r\n" +
-			"  version: 6\r\n" +
-			"  cacheKey: 8\r\n" +
-			"\r\n" +
-			"\"@mdi/font@npm:5.9.55\":\r\n" +
-			"  version: 5.9.55\r\n" +
-			"  resolution: \"@mdi/font@npm:5.9.55\"\r\n" +
-			"\r\n" +
-			"\"axios@npm:^1.0.0, axios@npm:^1.1.0\":\r\n" +
-			"  version: 1.2.6\r\n" +
-			"  dependencies:\r\n" +
-			"    follow-redirects: ^1.15.0\r\n" +
-			"\r\n" +
-			"\"follow-redirects@npm:^1.15.0\":\r\n" +
-			"  version: 1.15.2\r\n"))
+		versions, err := parseYarnLock([]byte("__metadata:\r\n"+
+			"  version: 6\r\n"+
+			"  cacheKey: 8\r\n"+
+			"\r\n"+
+			"\"@mdi/font@npm:5.9.55\":\r\n"+
+			"  version: 5.9.55\r\n"+
+			"  resolution: \"@mdi/font@npm:5.9.55\"\r\n"+
+			"\r\n"+
+			"\"axios@npm:^1.0.0, axios@npm:^1.1.0\":\r\n"+
+			"  version: 1.2.6\r\n"+
+			"  dependencies:\r\n"+
+			"    follow-redirects: ^1.15.0\r\n"+
+			"\r\n"+
+			"\"follow-redirects@npm:^1.15.0\":\r\n"+
+			"  version: 1.15.2\r\n"), ".")
 		require.NoError(t, err)
 
 		assertLockedVersions(t, versions, expected)
@@ -219,26 +276,40 @@ func TestNormalizeYarnDescriptor(t *testing.T) {
 }
 
 func TestLoadLockedVersions(t *testing.T) {
-	t.Run("no package manager supported", func(t *testing.T) {
-		versions, err := loadLockedVersions("testdata/npmlockfile", lockFileSupport{})
+	t.Run("lock file next to the package.json", func(t *testing.T) {
+		versions, err := loadLockedVersions("testdata/npmlockfile", "testdata/npmlockfile")
 		require.NoError(t, err)
 
-		assertLockedVersions(t, versions, []lockedVersionTest{
-			{name: "axios", constraint: "^1.0.0", expected: ""},
-		})
-	})
-
-	t.Run("existing lock file", func(t *testing.T) {
-		versions, err := loadLockedVersions("testdata/npmlockfile", lockFileSupport{npm: true})
-		require.NoError(t, err)
-
+		assert.Equal(t, filepath.Join("testdata", "npmlockfile", "package-lock.json"), versions.lockFile)
 		assertLockedVersions(t, versions, []lockedVersionTest{
 			{name: "axios", constraint: "^1.0.0", expected: "1.2.6"},
 		})
 	})
 
+	t.Run("workspace lock file at the root", func(t *testing.T) {
+		versions, err := loadLockedVersions("testdata/npmworkspace/packages/app", "testdata/npmworkspace")
+		require.NoError(t, err)
+
+		assert.Equal(t, filepath.Join("testdata", "npmworkspace", "package-lock.json"), versions.lockFile)
+		assertLockedVersions(t, versions, []lockedVersionTest{
+			{name: "axios", constraint: "^1.0.0", expected: "1.2.6"},
+		})
+	})
+
+	t.Run("lock file above the searched directory", func(t *testing.T) {
+		versions, err := loadLockedVersions("testdata/npmworkspace/packages/app", "testdata/npmworkspace/packages")
+		require.NoError(t, err)
+
+		assert.Empty(t, versions.lockFile)
+		assertLockedVersions(t, versions, []lockedVersionTest{
+			{name: "axios", constraint: "^1.0.0", expected: ""},
+		})
+	})
+
 	t.Run("missing lock file", func(t *testing.T) {
-		versions, err := loadLockedVersions(t.TempDir(), lockFileSupport{npm: true})
+		dir := t.TempDir()
+
+		versions, err := loadLockedVersions(dir, dir)
 		require.NoError(t, err)
 
 		assertLockedVersions(t, versions, []lockedVersionTest{
@@ -250,7 +321,7 @@ func TestLoadLockedVersions(t *testing.T) {
 		dir := t.TempDir()
 		require.NoError(t, os.WriteFile(filepath.Join(dir, "package-lock.json"), []byte("{not json"), 0o600))
 
-		_, err := loadLockedVersions(dir, lockFileSupport{npm: true})
+		_, err := loadLockedVersions(dir, dir)
 		assert.ErrorContains(t, err, "parsing lock file")
 	})
 
@@ -259,7 +330,7 @@ func TestLoadLockedVersions(t *testing.T) {
 		// A directory in place of the lock file fails to be read on every platform
 		require.NoError(t, os.Mkdir(filepath.Join(dir, "pnpm-lock.yaml"), 0o755))
 
-		_, err := loadLockedVersions(dir, lockFileSupport{pnpm: true})
+		_, err := loadLockedVersions(dir, dir)
 		assert.ErrorContains(t, err, "reading lock file")
 	})
 }

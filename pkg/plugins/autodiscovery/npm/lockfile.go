@@ -2,9 +2,7 @@ package npm
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
-	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -15,6 +13,8 @@ import (
 
 // lockedVersions holds the package versions resolved in a lock file.
 type lockedVersions struct {
+	// lockFile holds the path of the lock file the versions come from, empty when no lock file was found.
+	lockFile string
 	// byName maps package names to their resolved version, as recorded by npm and pnpm.
 	byName map[string]string
 	// byDescriptor maps dependency descriptors, such as "axios@^1.0.0", to their resolved version, as recorded by Yarn.
@@ -29,46 +29,79 @@ func (l lockedVersions) version(name, constraint string) string {
 	return l.byName[name]
 }
 
+// lockFileParser returns the versions a lock file resolved for one of the projects it records,
+// identified by its path relative to the lock file, such as "." or "packages/app".
+type lockFileParser func(data []byte, importer string) (lockedVersions, error)
+
+// lockFiles associates the supported lock files with their parser, in the order they are looked up.
+var lockFiles = []struct {
+	name  string
+	parse lockFileParser
+}{
+	{name: "package-lock.json", parse: parsePackageLock},
+	{name: "pnpm-lock.yaml", parse: parsePnpmLock},
+	{name: "yarn.lock", parse: parseYarnLock},
+}
+
 // loadLockedVersions returns the versions resolved by the lock file of a package.json directory.
-// Only the lock files whose package manager is available are read, as the other ones prevent any update.
 // A missing lock file returns no version and no error, while an unreadable or malformed one returns an
 // error, as silently ignoring it would drop every constrained dependency from the vulnerability report.
-func loadLockedVersions(dir string, support lockFileSupport) (lockedVersions, error) {
-	var lockFile string
-	var parse func([]byte) (lockedVersions, error)
-
-	switch {
-	case support.npm:
-		lockFile, parse = "package-lock.json", parsePackageLock
-	case support.pnpm:
-		lockFile, parse = "pnpm-lock.yaml", parsePnpmLock
-	case support.yarn:
-		lockFile, parse = "yarn.lock", parseYarnLock
-	default:
+func loadLockedVersions(dir, rootDir string) (lockedVersions, error) {
+	lockFile, parse := searchLockFile(dir, rootDir)
+	if parse == nil {
+		logrus.Debugf("no lock file found for %q", dir)
 		return lockedVersions{}, nil
 	}
 
-	lockFile = filepath.Join(dir, lockFile)
+	importer, err := filepath.Rel(filepath.Dir(lockFile), dir)
+	if err != nil {
+		return lockedVersions{}, fmt.Errorf("locating %q from lock file %q: %w", dir, lockFile, err)
+	}
 
 	data, err := os.ReadFile(lockFile)
-	switch {
-	case errors.Is(err, fs.ErrNotExist):
-		logrus.Debugf("no lock file %q found", lockFile)
-		return lockedVersions{}, nil
-	case err != nil:
+	if err != nil {
 		return lockedVersions{}, fmt.Errorf("reading lock file %q: %w", lockFile, err)
 	}
 
-	versions, err := parse(data)
+	versions, err := parse(data, filepath.ToSlash(importer))
 	if err != nil {
 		return lockedVersions{}, fmt.Errorf("parsing lock file %q: %w", lockFile, err)
 	}
+	versions.lockFile = lockFile
 
 	return versions, nil
 }
 
-// parsePackageLock returns the top-level package versions of a package-lock.json file.
-func parsePackageLock(data []byte) (lockedVersions, error) {
+// searchLockFile returns the closest lock file of a package.json directory, looking up to the root
+// directory the search started from, as a workspace only holds a lock file at its root.
+// The package manager doesn't have to be available to read the versions it resolved, unlike to update them.
+func searchLockFile(dir, rootDir string) (string, lockFileParser) {
+	dir, rootDir = filepath.Clean(dir), filepath.Clean(rootDir)
+
+	if relative, err := filepath.Rel(rootDir, dir); err != nil || relative == ".." || strings.HasPrefix(relative, ".."+string(filepath.Separator)) {
+		// The package.json is outside of the searched directory, so only its own directory can be looked up
+		rootDir = dir
+	}
+
+	for {
+		for _, candidate := range lockFiles {
+			lockFile := filepath.Join(dir, candidate.name)
+			if isLockFileDetected(lockFile) {
+				return lockFile, candidate.parse
+			}
+		}
+
+		parent := filepath.Dir(dir)
+		if dir == rootDir || parent == dir {
+			return "", nil
+		}
+		dir = parent
+	}
+}
+
+// parsePackageLock returns the package versions a package-lock.json file installed for a project,
+// either hoisted at its root or, for a workspace project, next to it.
+func parsePackageLock(data []byte, importer string) (lockedVersions, error) {
 	type lockedPackage struct {
 		Version string `json:"version"`
 	}
@@ -92,13 +125,21 @@ func parsePackageLock(data []byte) (lockedVersions, error) {
 		}
 	}
 
-	for packagePath, dependency := range lock.Packages {
-		name, found := strings.CutPrefix(packagePath, "node_modules/")
-		// Nested packages are dependencies of dependencies
-		if !found || strings.Contains(name, "/node_modules/") || dependency.Version == "" {
-			continue
+	prefixes := []string{"node_modules/"}
+	if importer != "." {
+		// The packages installed next to a workspace project take precedence over the hoisted ones
+		prefixes = append(prefixes, importer+"/node_modules/")
+	}
+
+	for _, prefix := range prefixes {
+		for packagePath, dependency := range lock.Packages {
+			name, found := strings.CutPrefix(packagePath, prefix)
+			// Nested packages are dependencies of dependencies
+			if !found || strings.Contains(name, "/node_modules/") || dependency.Version == "" {
+				continue
+			}
+			versions[name] = dependency.Version
 		}
-		versions[name] = dependency.Version
 	}
 
 	return lockedVersions{byName: versions}, nil
@@ -127,8 +168,8 @@ func (d *pnpmDependency) UnmarshalYAML(value *yaml.Node) error {
 	return nil
 }
 
-// parsePnpmLock returns the direct dependency versions of the project next to a pnpm-lock.yaml file.
-func parsePnpmLock(data []byte) (lockedVersions, error) {
+// parsePnpmLock returns the direct dependency versions of one project of a pnpm-lock.yaml file.
+func parsePnpmLock(data []byte, importer string) (lockedVersions, error) {
 	type pnpmProject struct {
 		Dependencies    map[string]pnpmDependency `yaml:"dependencies"`
 		DevDependencies map[string]pnpmDependency `yaml:"devDependencies"`
@@ -145,9 +186,14 @@ func parsePnpmLock(data []byte) (lockedVersions, error) {
 		return lockedVersions{}, err
 	}
 
+	projects := []pnpmProject{lock.Importers[importer]}
+	if importer == "." {
+		projects = []pnpmProject{lock.pnpmProject, lock.Importers["."]}
+	}
+
 	versions := map[string]string{}
 
-	for _, project := range []pnpmProject{lock.pnpmProject, lock.Importers["."]} {
+	for _, project := range projects {
 		for _, dependencies := range []map[string]pnpmDependency{project.Dependencies, project.DevDependencies} {
 			for name, dependency := range dependencies {
 				// Remove the peer dependencies suffix, such as "1.0.0(react@18.2.0)" or "1.0.0_react@18.2.0"
@@ -164,11 +210,12 @@ func parsePnpmLock(data []byte) (lockedVersions, error) {
 }
 
 // parseYarnLock returns the resolved version of each dependency descriptor of a yarn.lock file.
+// Yarn records the descriptors of every workspace project in a single lock file, so they are all returned.
 // It supports both Yarn classic (v1) and Yarn Berry (v2+) lock files, whose entries look like:
 //
 //	"axios@^1.0.0", axios@^1.1.0:     |  "axios@npm:^1.0.0, axios@npm:^1.1.0":
 //	  version "1.2.6"                 |    version: 1.2.6
-func parseYarnLock(data []byte) (lockedVersions, error) {
+func parseYarnLock(data []byte, _ string) (lockedVersions, error) {
 	versions := map[string]string{}
 	var descriptors []string
 
