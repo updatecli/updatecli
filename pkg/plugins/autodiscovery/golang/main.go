@@ -1,6 +1,7 @@
 package golang
 
 import (
+	"errors"
 	"fmt"
 	"path"
 	"strings"
@@ -9,6 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/vulnerability"
 )
 
 // Spec defines the parameters which can be provided to the Golang autodiscovery builder.
@@ -54,6 +56,24 @@ type Spec struct {
 	// Age defines the minimum or maximum age of a release to be considered valid.
 	// It accepts a duration string (e.g., `24h`, `7d`, `1w`).
 	Age age.Spec `yaml:",omitempty"`
+	// Vulnerability switches the autodiscovery to security updates, based on the OSV database (https://osv.dev).
+	// Each Go module is updated to the lowest version without known vulnerabilities,
+	// and left untouched when it has none.
+	//
+	// example:
+	//  ```
+	//    vulnerability:
+	//      minseverity: high
+	//      ignore:
+	//        - GO-2025-3503
+	//  ```
+	//
+	// remark:
+	//   * Only security updates are generated, routine updates require a separate manifest.
+	//   * It is mutually exclusive with age, versionfilter and onlygoversion.
+	//   * The Go version and indirect modules are not covered.
+	//   * Labels, such as "security", are set on the action used by the manifest.
+	Vulnerability *vulnerability.Spec `yaml:",omitempty"`
 }
 
 // Golang holds all information needed to generate golang manifest.
@@ -89,6 +109,10 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Golang, error) {
 	// Validate only rules
 	if err := s.Only.Validate(); err != nil {
 		return Golang{}, fmt.Errorf("invalid only spec: %w", err)
+	}
+
+	if err := s.validateVulnerability(); err != nil {
+		return Golang{}, err
 	}
 
 	newFilter := s.VersionFilter
@@ -134,6 +158,31 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Golang, error) {
 
 	return g, nil
 
+}
+
+// validateVulnerability checks the vulnerability spec and the settings it can't be combined with.
+func (s Spec) validateVulnerability() error {
+	if s.Vulnerability == nil {
+		return nil
+	}
+
+	if err := s.Vulnerability.Validate(); err != nil {
+		return fmt.Errorf("invalid vulnerability spec: %w", err)
+	}
+
+	if s.Age.Minimum != "" || s.Age.Maximum != "" {
+		return errors.New("age can't be combined with vulnerability, use a separate manifest for routine updates")
+	}
+
+	if !s.VersionFilter.IsZero() {
+		return errors.New("versionfilter can't be combined with vulnerability, the version is the lowest one without known vulnerabilities")
+	}
+
+	if (s.OnlyGoVersion != nil && *s.OnlyGoVersion) || s.Only.isGoVersionOnly() {
+		return errors.New("onlygoversion can't be combined with vulnerability, Go version security updates are not supported")
+	}
+
+	return nil
 }
 
 func (n Golang) DiscoverManifests() ([][]byte, error) {

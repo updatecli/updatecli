@@ -1,0 +1,29 @@
+name: "Bump Golang modules with known vulnerabilities"
+scms:
+  default:
+    kind: github
+    spec:
+      owner: updatecli-test
+      repository: updatecli
+      branch: e2e-tests-golang
+
+actions:
+  default:
+    kind: github/pullrequest
+    scmid: default
+    spec:
+      labels:
+        - "dependencies"
+        - "security"
+
+autodiscovery:
+  scmid: default
+  actionid: default
+  groupby: individual
+  crawlers:
+    golang:
+      vulnerability:
+        #minseverity: moderate
+        minseverity: high
+      only:
+        - path: go.mod
