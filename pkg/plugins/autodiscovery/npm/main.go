@@ -1,6 +1,7 @@
 package npm
 
 import (
+	"errors"
 	"fmt"
 	"path"
 	"strings"
@@ -9,6 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/vulnerability"
 )
 
 // Spec defines the parameters which can be provided to the NPM builder.
@@ -73,6 +75,27 @@ type Spec struct {
 	// By default, `minimum` is set to `3d` so Updatecli doesn't suggest a package version
 	// published less than three days ago. Specifying an empty `age: {}` disables that behavior.
 	Age *age.Spec `yaml:",omitempty"`
+	// Vulnerability switches the autodiscovery to security updates, based on the OSV database (https://osv.dev).
+	// A package is only updated when its current version has known vulnerabilities,
+	// to the lowest version without any.
+	//
+	// example:
+	//  ```
+	//    vulnerability:
+	//      minseverity: high
+	//      ignore:
+	//        - GHSA-jr5f-v2jv-69x6
+	//  ```
+	//
+	// remark:
+	//   * Only security updates are generated, routine updates require a separate manifest.
+	//   * It is mutually exclusive with age, versionfilter and ignoreversionconstraints.
+	//   * The default minimum release age doesn't apply, a fixed version is suggested as soon as it is known.
+	//   * The current version is the exact version from package.json or, for a version constraint,
+	//     the version resolved in the package-lock.json, pnpm-lock.yaml or yarn.lock next to it,
+	//     or at the root of its workspace. Packages without an identifiable current version are ignored.
+	//   * Labels, such as "security", are set on the action used by the manifest.
+	Vulnerability *vulnerability.Spec `yaml:",omitempty"`
 }
 
 // Npm holds all information needed to generate npm manifest.
@@ -118,10 +141,18 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Npm, error) {
 		return Npm{}, fmt.Errorf("invalid only spec: %w", err)
 	}
 
+	if err := s.validateVulnerability(); err != nil {
+		return Npm{}, err
+	}
+
 	// By default, wait for a release to be old enough before suggesting it
 	releaseAge := age.Spec{Minimum: defaultMinimumReleaseAge}
-	if s.Age != nil {
+	switch {
+	case s.Age != nil:
 		releaseAge = *s.Age
+	case s.Vulnerability != nil:
+		// A fixed version is suggested as soon as it is known
+		releaseAge = age.Spec{}
 	}
 
 	// Validate the release age filter
@@ -168,6 +199,31 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Npm, error) {
 		releaseAge:              releaseAge,
 	}, nil
 
+}
+
+// validateVulnerability checks the vulnerability spec and the settings it can't be combined with.
+func (s Spec) validateVulnerability() error {
+	if s.Vulnerability == nil {
+		return nil
+	}
+
+	if err := s.Vulnerability.Validate(); err != nil {
+		return fmt.Errorf("invalid vulnerability spec: %w", err)
+	}
+
+	if s.Age != nil && !s.Age.IsZero() {
+		return errors.New("age can't be combined with vulnerability, use a separate manifest for routine updates")
+	}
+
+	if !s.VersionFilter.IsZero() {
+		return errors.New("versionfilter can't be combined with vulnerability, the version is the lowest one without known vulnerabilities")
+	}
+
+	if s.IgnoreVersionConstraints != nil {
+		return errors.New("ignoreversionconstraints can't be combined with vulnerability, the version is the lowest one without known vulnerabilities")
+	}
+
+	return nil
 }
 
 func (n Npm) DiscoverManifests() ([][]byte, error) {

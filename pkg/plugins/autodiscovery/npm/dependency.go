@@ -5,11 +5,14 @@ import (
 	"fmt"
 	"path"
 	"path/filepath"
+	"sort"
 	"strings"
 	"text/template"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/vulnerability"
 )
 
 type lockFileSupport struct {
@@ -62,6 +65,29 @@ func detectLockFileSupport(dir string) (lockFileSupport, bool) {
 	return support, false
 }
 
+// reportUnresolvedDependencies warns about the dependencies of a package.json skipped for lack of an
+// installed version, so a scan examining nothing can't be mistaken for one finding nothing.
+func (n Npm) reportUnresolvedDependencies(dependencies []string, packageJson string, locked lockedVersions) {
+	if len(dependencies) == 0 {
+		return
+	}
+
+	sort.Strings(dependencies)
+	skipped := strings.Join(dependencies, ", ")
+
+	if locked.lockFile == "" {
+		logrus.Warningf("no lock file found for %q, skipping its dependencies using a version constraint: %s", packageJson, skipped)
+		return
+	}
+
+	lockFile, err := filepath.Rel(n.rootDir, locked.lockFile)
+	if err != nil {
+		lockFile = locked.lockFile
+	}
+
+	logrus.Warningf("no version resolved in %q for some dependencies of %q, skipping: %s", lockFile, packageJson, skipped)
+}
+
 func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 
 	var manifests [][]byte
@@ -102,6 +128,21 @@ func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 			continue
 		}
 
+		// Vulnerabilities are checked against the installed versions, that lock files record for version constraints
+		var locked lockedVersions
+		var lockErr error
+		// unresolvedDependencies collects the dependencies dropped for lack of an installed version, so the
+		// user is told about them at once rather than getting a silently incomplete vulnerability report.
+		var unresolvedDependencies []string
+
+		if n.spec.Vulnerability != nil {
+			locked, lockErr = loadLockedVersions(filepath.Dir(foundFile), searchFromDir)
+			if lockErr != nil {
+				// Without the lock file, no dependency using a version constraint can be scanned
+				logrus.Warningf("%s: skipping the dependencies of %q using a version constraint", lockErr, relativeFoundFile)
+			}
+		}
+
 		getManifest := func(dependencies map[string]string, dependencyType string) {
 			if len(dependencies) == 0 {
 				logrus.Debugf("no NPM %s found in %q\n", dependencyType, foundFile)
@@ -130,80 +171,15 @@ func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 					dependencyName,
 					dependencyVersion)
 
-				sourceVersionFilterKind := "semver"
-				sourceVersionFilterPattern := dependencyVersion
-				sourceVersionFilterRegex := "*"
-
-				if isVersionConstraint && n.ignoreVersionConstraint {
-					sourceVersionFilterPattern = "*"
-
-					if !n.spec.VersionFilter.IsZero() && dependencyVersion != "latest" {
-						guessedVersion, err := convertSemverVersionConstraintToVersion(dependencyVersion)
-						if err != nil {
-							logrus.Debugf("converting version constraint to version: %s", err)
-							guessedVersion = ""
-						}
-						sourceVersionFilterKind = n.versionFilter.Kind
-						sourceVersionFilterPattern, err = n.versionFilter.GreaterThanPattern(guessedVersion)
-						sourceVersionFilterRegex = n.versionFilter.Regex
-						if err != nil {
-							logrus.Debugf("building version filter pattern: %s", err)
-							sourceVersionFilterPattern = "*"
-						}
-					}
-				}
-
-				if isVersionConstraint && !n.ignoreVersionConstraint && !n.spec.VersionFilter.IsZero() {
-					// User want to respect the version constraint defined in package.json
-					// but also want to apply a version filter on top of it.
-					// This is not supported at this time as we don't have a clear use case.
-					logrus.Warningf("NPM package %q from %q: Ignoring version filter as version constraint %q is defined and ignoreVersionConstraints is set to false", dependencyName, relativeFoundFile, dependencyVersion)
-					logrus.Warningf("NPM package %q from %q: If you want to apply a version filter, please set ignoreVersionConstraints to true", dependencyName, relativeFoundFile)
-				}
-
-				/*
-					Pattern order
-						1. Reuse version constraint defined from package.json
-						2. If no version constraint defined then convert the version to ">=x.y.z"
-						3. If no version constraint defined but versionfilter defined in the manifest
-						   then we use that version filter kind and pattern
-				*/
-
-				if !isVersionConstraint {
-					sourceVersionFilterPattern = ">=" + dependencyVersion
-
-					if !n.spec.VersionFilter.IsZero() {
-						sourceVersionFilterKind = n.versionFilter.Kind
-						sourceVersionFilterPattern, err = n.versionFilter.GreaterThanPattern(dependencyVersion)
-						sourceVersionFilterRegex = n.versionFilter.Regex
-						if err != nil {
-							logrus.Debugf("building version filter pattern: %s", err)
-							sourceVersionFilterPattern = "*"
-						}
-					}
-				}
-
-				tmpl, err := template.New("manifest").Parse(age.ManifestTemplate + manifestTemplate)
-				if err != nil {
-					logrus.Debugln(err)
-					continue
-				}
-
 				params := manifestTemplateParams{
-					ManifestName:               fmt.Sprintf("Bump %q package version", dependencyName),
-					SourceID:                   npmIdentifier,
-					SourceName:                 fmt.Sprintf("Get %q package version", dependencyName),
-					SourceKind:                 npmIdentifier,
-					SourceNPMName:              dependencyName,
-					SourceVersionFilterKind:    sourceVersionFilterKind,
-					SourceVersionFilterPattern: sourceVersionFilterPattern,
-					SourceVersionFilterRegex:   sourceVersionFilterRegex,
-					SourceNpmrcPath:            n.npmrcPath,
-					SourceURL:                  n.url,
-					SourceRegistryToken:        n.registryToken,
-					SourceAge:                  n.releaseAge,
-					TargetID:                   npmIdentifier,
-					TargetName:                 fmt.Sprintf("Bump %q package version to {{ source \"npm\" }}", dependencyName),
+					ManifestName:    fmt.Sprintf("Bump %q package version", dependencyName),
+					SourceID:        npmIdentifier,
+					SourceName:      fmt.Sprintf("Get %q package version", dependencyName),
+					SourceKind:      npmIdentifier,
+					SourceNPMName:   dependencyName,
+					SourceNpmrcPath: n.npmrcPath,
+					TargetID:        npmIdentifier,
+					TargetName:      fmt.Sprintf("Bump %q package version to {{ source \"npm\" }}", dependencyName),
 					// NPM package allows dot in package name which has a different meaning in Dasel query
 					// Therefor we must escape it for Dasel query to work
 					TargetKey:                fmt.Sprintf("%s.%s", dependencyType, strings.ReplaceAll(dependencyName, ".", `\.`)),
@@ -219,6 +195,92 @@ func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 					ScmID:                    n.scmID,
 				}
 
+				if n.spec.Vulnerability != nil {
+					currentVersion := dependencyVersion
+					if isVersionConstraint {
+						currentVersion = locked.version(dependencyName, dependencyVersion)
+					}
+
+					if _, err := semver.StrictNewVersion(currentVersion); err != nil {
+						logrus.Debugf("Ignoring NPM package %q from %q, as no installed version could be identified for %q\n", dependencyName, relativeFoundFile, dependencyVersion)
+						unresolvedDependencies = append(unresolvedDependencies, dependencyName)
+						continue
+					}
+
+					// The pipeline name contains the fixed version, so it can be used as pullrequest title
+					params.ManifestName = params.TargetName
+					params.SourceName = fmt.Sprintf("Get lowest %q package version without known vulnerabilities", dependencyName)
+					params.SourceKind = "vulnerability/osv"
+					params.Vulnerability = n.spec.Vulnerability
+					params.CurrentVersion = currentVersion
+				} else {
+					sourceVersionFilterKind := "semver"
+					sourceVersionFilterPattern := dependencyVersion
+					sourceVersionFilterRegex := "*"
+
+					if isVersionConstraint && n.ignoreVersionConstraint {
+						sourceVersionFilterPattern = "*"
+
+						if !n.spec.VersionFilter.IsZero() && dependencyVersion != "latest" {
+							guessedVersion, err := convertSemverVersionConstraintToVersion(dependencyVersion)
+							if err != nil {
+								logrus.Debugf("converting version constraint to version: %s", err)
+								guessedVersion = ""
+							}
+							sourceVersionFilterKind = n.versionFilter.Kind
+							sourceVersionFilterPattern, err = n.versionFilter.GreaterThanPattern(guessedVersion)
+							sourceVersionFilterRegex = n.versionFilter.Regex
+							if err != nil {
+								logrus.Debugf("building version filter pattern: %s", err)
+								sourceVersionFilterPattern = "*"
+							}
+						}
+					}
+
+					if isVersionConstraint && !n.ignoreVersionConstraint && !n.spec.VersionFilter.IsZero() {
+						// User want to respect the version constraint defined in package.json
+						// but also want to apply a version filter on top of it.
+						// This is not supported at this time as we don't have a clear use case.
+						logrus.Warningf("NPM package %q from %q: Ignoring version filter as version constraint %q is defined and ignoreVersionConstraints is set to false", dependencyName, relativeFoundFile, dependencyVersion)
+						logrus.Warningf("NPM package %q from %q: If you want to apply a version filter, please set ignoreVersionConstraints to true", dependencyName, relativeFoundFile)
+					}
+
+					/*
+						Pattern order
+							1. Reuse version constraint defined from package.json
+							2. If no version constraint defined then convert the version to ">=x.y.z"
+							3. If no version constraint defined but versionfilter defined in the manifest
+							   then we use that version filter kind and pattern
+					*/
+
+					if !isVersionConstraint {
+						sourceVersionFilterPattern = ">=" + dependencyVersion
+
+						if !n.spec.VersionFilter.IsZero() {
+							sourceVersionFilterKind = n.versionFilter.Kind
+							sourceVersionFilterPattern, err = n.versionFilter.GreaterThanPattern(dependencyVersion)
+							sourceVersionFilterRegex = n.versionFilter.Regex
+							if err != nil {
+								logrus.Debugf("building version filter pattern: %s", err)
+								sourceVersionFilterPattern = "*"
+							}
+						}
+					}
+
+					params.SourceVersionFilterKind = sourceVersionFilterKind
+					params.SourceVersionFilterPattern = sourceVersionFilterPattern
+					params.SourceVersionFilterRegex = sourceVersionFilterRegex
+					params.SourceURL = n.url
+					params.SourceRegistryToken = n.registryToken
+					params.SourceAge = n.releaseAge
+				}
+
+				tmpl, err := template.New("manifest").Parse(age.ManifestTemplate + vulnerability.ManifestTemplate + manifestTemplate)
+				if err != nil {
+					logrus.Debugln(err)
+					continue
+				}
+
 				manifest := bytes.Buffer{}
 				if err := tmpl.Execute(&manifest, params); err != nil {
 					logrus.Debugln(err)
@@ -231,6 +293,11 @@ func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 
 		getManifest(data.Dependencies, "dependencies")
 		getManifest(data.DevDependencies, "devDependencies")
+
+		// The lock file error already reported the dependencies it drops
+		if lockErr == nil {
+			n.reportUnresolvedDependencies(unresolvedDependencies, relativeFoundFile, locked)
+		}
 	}
 
 	logrus.Printf("%v manifests identified", len(manifests))
