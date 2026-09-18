@@ -2,7 +2,10 @@ package lock
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"net/http"
+	"sort"
 	"strings"
 
 	"github.com/go-viper/mapstructure/v2"
@@ -11,6 +14,7 @@ import (
 	terraformRegistryAddress "github.com/hashicorp/terraform-registry-address"
 	"github.com/minamijoyo/tfupdate/lock"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/httpclient"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/text"
 	terraformUtils "github.com/updatecli/updatecli/pkg/plugins/resources/terraform"
@@ -18,12 +22,29 @@ import (
 	"github.com/zclconf/go-cty/cty"
 )
 
+type openTofuVersionsResponse struct {
+	Versions []struct {
+		Version   string `json:"version"`
+		Platforms []struct {
+			OS   string `json:"os"`
+			Arch string `json:"arch"`
+		} `json:"platforms"`
+	} `json:"versions"`
+}
+
+type openTofuDownloadResponse struct {
+	Packages map[string]struct {
+		Hashes []string `json:"hashes"`
+	} `json:"packages"`
+}
+
 type TerraformLock struct {
 	spec             Spec
 	contentRetriever text.TextRetriever
 	files            map[string]file // map of file paths to file contents
 	lockIndex        lock.Index      // index is a cached index for updating dependency lock files.
 	provider         terraformRegistryAddress.Provider
+	httpClient       httpclient.HTTPClient
 }
 
 type file struct {
@@ -43,6 +64,7 @@ func New(spec interface{}) (*TerraformLock, error) {
 	newResource := &TerraformLock{
 		spec:             newSpec,
 		contentRetriever: &text.Text{},
+		httpClient:       httpclient.NewRetryClient(),
 	}
 
 	err = newResource.spec.Validate()
@@ -181,6 +203,14 @@ func (t *TerraformLock) Changelog(from, to string) *result.Changelogs {
 }
 
 func (t *TerraformLock) getProviderHashes(version string) ([]string, error) {
+	if t.provider.Hostname == "registry.opentofu.org" {
+		hashes, err := t.getOpenTofuProviderHashes(version)
+		if err == nil {
+			return hashes, nil
+		}
+		logrus.Warnf("Failed to fetch OpenTofu provider hashes directly: %s. Falling back to default method.", err)
+	}
+
 	pv, err := t.lockIndex.GetOrCreateProviderVersion(context.Background(), t.provider.ForDisplay(), version, t.spec.Platforms)
 	if err != nil {
 		return nil, fmt.Errorf("%s failed to query provider locks for provider: %q, version: %q, platforms: %q: %s",
@@ -193,6 +223,78 @@ func (t *TerraformLock) getProviderHashes(version string) ([]string, error) {
 	}
 
 	return pv.AllHashes(), nil
+}
+
+func (t *TerraformLock) getOpenTofuProviderHashes(version string) ([]string, error) {
+	scheme := "https"
+	if strings.HasPrefix(t.provider.Hostname, "127.0.0.1") || strings.HasPrefix(t.provider.Hostname, "localhost") {
+		scheme = "http"
+	}
+
+	urlVersions := fmt.Sprintf("%s://%s/v1/providers/%s/%s/versions", scheme, t.provider.Hostname, t.provider.Namespace, t.provider.Type)
+	req, err := http.NewRequestWithContext(context.Background(), "GET", urlVersions, nil)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := t.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status code %d fetching versions", resp.StatusCode)
+	}
+	var versionsRes openTofuVersionsResponse
+	if err := json.NewDecoder(resp.Body).Decode(&versionsRes); err != nil {
+		return nil, err
+	}
+
+	var targetOS, targetArch string
+	for _, v := range versionsRes.Versions {
+		if v.Version == version {
+			if len(v.Platforms) > 0 {
+				targetOS = v.Platforms[0].OS
+				targetArch = v.Platforms[0].Arch
+				break
+			}
+		}
+	}
+	if targetOS == "" || targetArch == "" {
+		return nil, fmt.Errorf("version %s or its platforms not found in registry", version)
+	}
+
+	urlDownload := fmt.Sprintf("%s://%s/v1/providers/%s/%s/%s/download/%s/%s", scheme, t.provider.Hostname, t.provider.Namespace, t.provider.Type, version, targetOS, targetArch)
+	reqDownload, err := http.NewRequestWithContext(context.Background(), "GET", urlDownload, nil)
+	if err != nil {
+		return nil, err
+	}
+	respDownload, err := t.httpClient.Do(reqDownload)
+	if err != nil {
+		return nil, err
+	}
+	defer respDownload.Body.Close()
+	if respDownload.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status code %d fetching download metadata", respDownload.StatusCode)
+	}
+	var downloadRes openTofuDownloadResponse
+	if err := json.NewDecoder(respDownload.Body).Decode(&downloadRes); err != nil {
+		return nil, err
+	}
+
+	var allHashes []string
+	for _, pkg := range downloadRes.Packages {
+		allHashes = append(allHashes, pkg.Hashes...)
+	}
+
+	sort.Strings(allHashes)
+	var uniqueHashes []string
+	for _, hash := range allHashes {
+		if len(uniqueHashes) == 0 || uniqueHashes[len(uniqueHashes)-1] != hash {
+			uniqueHashes = append(uniqueHashes, hash)
+		}
+	}
+
+	return uniqueHashes, nil
 }
 
 // ReportConfig returns a new configuration object with only the necessary fields
