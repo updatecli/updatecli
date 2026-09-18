@@ -2,6 +2,9 @@ package npm
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -28,7 +31,9 @@ func (l lockedVersions) version(name, constraint string) string {
 
 // loadLockedVersions returns the versions resolved by the lock file of a package.json directory.
 // Only the lock files whose package manager is available are read, as the other ones prevent any update.
-func loadLockedVersions(dir string, support lockFileSupport) lockedVersions {
+// A missing lock file returns no version and no error, while an unreadable or malformed one returns an
+// error, as silently ignoring it would drop every constrained dependency from the vulnerability report.
+func loadLockedVersions(dir string, support lockFileSupport) (lockedVersions, error) {
 	var lockFile string
 	var parse func([]byte) (lockedVersions, error)
 
@@ -40,24 +45,26 @@ func loadLockedVersions(dir string, support lockFileSupport) lockedVersions {
 	case support.yarn:
 		lockFile, parse = "yarn.lock", parseYarnLock
 	default:
-		return lockedVersions{}
+		return lockedVersions{}, nil
 	}
 
 	lockFile = filepath.Join(dir, lockFile)
 
 	data, err := os.ReadFile(lockFile)
-	if err != nil {
-		logrus.Debugf("reading lock file %q: %s", lockFile, err)
-		return lockedVersions{}
+	switch {
+	case errors.Is(err, fs.ErrNotExist):
+		logrus.Debugf("no lock file %q found", lockFile)
+		return lockedVersions{}, nil
+	case err != nil:
+		return lockedVersions{}, fmt.Errorf("reading lock file %q: %w", lockFile, err)
 	}
 
 	versions, err := parse(data)
 	if err != nil {
-		logrus.Debugf("parsing lock file %q: %s", lockFile, err)
-		return lockedVersions{}
+		return lockedVersions{}, fmt.Errorf("parsing lock file %q: %w", lockFile, err)
 	}
 
-	return versions
+	return versions, nil
 }
 
 // parsePackageLock returns the top-level package versions of a package-lock.json file.

@@ -2,6 +2,7 @@ package npm
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -215,4 +216,50 @@ func TestNormalizeYarnDescriptor(t *testing.T) {
 	} {
 		assert.Equal(t, expected, normalizeYarnDescriptor(descriptor), descriptor)
 	}
+}
+
+func TestLoadLockedVersions(t *testing.T) {
+	t.Run("no package manager supported", func(t *testing.T) {
+		versions, err := loadLockedVersions("testdata/npmlockfile", lockFileSupport{})
+		require.NoError(t, err)
+
+		assertLockedVersions(t, versions, []lockedVersionTest{
+			{name: "axios", constraint: "^1.0.0", expected: ""},
+		})
+	})
+
+	t.Run("existing lock file", func(t *testing.T) {
+		versions, err := loadLockedVersions("testdata/npmlockfile", lockFileSupport{npm: true})
+		require.NoError(t, err)
+
+		assertLockedVersions(t, versions, []lockedVersionTest{
+			{name: "axios", constraint: "^1.0.0", expected: "1.2.6"},
+		})
+	})
+
+	t.Run("missing lock file", func(t *testing.T) {
+		versions, err := loadLockedVersions(t.TempDir(), lockFileSupport{npm: true})
+		require.NoError(t, err)
+
+		assertLockedVersions(t, versions, []lockedVersionTest{
+			{name: "axios", constraint: "^1.0.0", expected: ""},
+		})
+	})
+
+	t.Run("malformed lock file", func(t *testing.T) {
+		dir := t.TempDir()
+		require.NoError(t, os.WriteFile(filepath.Join(dir, "package-lock.json"), []byte("{not json"), 0o600))
+
+		_, err := loadLockedVersions(dir, lockFileSupport{npm: true})
+		assert.ErrorContains(t, err, "parsing lock file")
+	})
+
+	t.Run("unreadable lock file", func(t *testing.T) {
+		dir := t.TempDir()
+		// A directory in place of the lock file fails to be read on every platform
+		require.NoError(t, os.Mkdir(filepath.Join(dir, "pnpm-lock.yaml"), 0o755))
+
+		_, err := loadLockedVersions(dir, lockFileSupport{pnpm: true})
+		assert.ErrorContains(t, err, "reading lock file")
+	})
 }

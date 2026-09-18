@@ -107,7 +107,13 @@ func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 		// Vulnerabilities are checked against the installed versions, that lock files record for version constraints
 		var locked lockedVersions
 		if n.spec.Vulnerability != nil {
-			locked = loadLockedVersions(filepath.Dir(foundFile), lockSupport)
+			var lockErr error
+			locked, lockErr = loadLockedVersions(filepath.Dir(foundFile), lockSupport)
+			if lockErr != nil {
+				// Without the lock file, no dependency using a version constraint can be scanned,
+				// so the user must know about it rather than getting a silently incomplete report.
+				logrus.Warningf("%s: skipping the dependencies of %q using a version constraint", lockErr, relativeFoundFile)
+			}
 		}
 
 		getManifest := func(dependencies map[string]string, dependencyType string) {
