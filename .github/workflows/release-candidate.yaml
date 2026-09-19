@@ -1,15 +1,22 @@
 ---
-name: Release
+# Publishes a release candidate: GitHub prerelease assets and release-candidate
+# tagged container images, and nothing else.
+#
+# Deliberately not a copy of release.yaml:
+#   * no GitHub App token, so nothing here can write to homebrew-updatecli
+#   * GITHUB_TOKEN is the only secret reaching GoReleaser, so the AUR key and
+#     the Mastodon, Bluesky and OpenCollective credentials are out of reach
+#   * no dispatch job, so website, updatecli-action and charts are left alone
+#
+# `make release.rc` skips the announce, aur and homebrew pipes, and
+# .goreleaser.yml keeps the floating `latest` tags off a prerelease.
+name: Release Candidate
 on:
   push:
     tags:
-      # Release candidates are handled by release-candidate.yaml. Negative
-      # patterns belong inside `tags`, as `tags-ignore` cannot be combined
-      # with it.
-      - "v*"
-      - "!v*-rc*"
-      - "!v*-alpha*"
-      - "!v*-beta*"
+      - "v*-rc*"
+      - "v*-alpha*"
+      - "v*-beta*"
 permissions: {}
 jobs:
   build:
@@ -56,16 +63,6 @@ jobs:
         uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
       - name: Install Syft
         uses: anchore/sbom-action/download-syft@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
-      - name: Generate access token
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
-        id: generate_token
-        with:
-          app-id: ${{ secrets.UPDATECLIBOT_RELEASE_APP_ID }}
-          private-key: ${{ secrets.UPDATECLIBOT_RELEASE_APP_PRIVKEY }}
-          owner: ${{ github.repository_owner }}
-          repositories: |
-            updatecli
-            homebrew-updatecli
       - name: Login to DockerHub
         uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0 # v4.4.0
         with:
@@ -80,17 +77,9 @@ jobs:
       - name: GoReleaser
         if: success()
         env:
-          AUR_KEY: ${{ secrets.AUR_KEY }}
-          COSIGN_PWD: ${{ secrets.COSIGN_PWD }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          HOMEBREW_TAP_GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
-          MASTODON_CLIENT_ID: ${{ secrets.MASTODON_CLIENT_ID }}
-          MASTODON_CLIENT_SECRET: ${{ secrets.MASTODON_CLIENT_SECRET }}
-          MASTODON_ACCESS_TOKEN: ${{ secrets.MASTODON_ACCESS_TOKEN }}
-          OPENCOLLECTIVE_TOKEN: ${{ secrets.OPENCOLLECTIVE_TOKEN }}
-          BLUESKY_APP_PASSWORD: ${{ secrets.BLUESKY_APP_PASSWORD }}
         run: |
-          make release
+          make release.rc
       - uses: actions/attest@a1948c3f048ba23858d222213b7c278aabede763 # v4.1.1
         if: ${{ always() }}
         with:
@@ -98,33 +87,3 @@ jobs:
       - name: Clean up
         run: |
           rm -f ${HOME}/.docker/config.json
-  dispatch:
-    needs: build
-    strategy:
-      matrix:
-        repositories: ["updatecli/website", "updatecli/updatecli-action", "updatecli/charts"]
-    runs-on: ubuntu-24.04
-    steps:
-      - name: Generate access token
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
-        id: generate_token
-        with:
-          app-id: ${{ secrets.UPDATECLIBOT_RELEASE_APP_ID }}
-          private-key: ${{ secrets.UPDATECLIBOT_RELEASE_APP_PRIVKEY }}
-          owner: ${{ github.repository_owner }}
-          repositories: |
-            website
-            updatecli-action
-            charts
-      - name: Repository Dispatch
-        uses: peter-evans/repository-dispatch@28959ce8df70de7be546dd1250a005dd32156697 # v4.0.1
-        with:
-          # Accepted:
-          # * PAT
-          # * Fine grained token
-          #   Required:
-          #     * contents: read & write
-          #     * metadata: read only
-          token: ${{ steps.generate_token.outputs.token }}
-          repository: ${{ matrix.repositories }}
-          event-type: updatecli-release

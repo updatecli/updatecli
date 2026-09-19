@@ -18,6 +18,9 @@ archives:
 
 aurs:
   - homepage: https://www.updatecli.io
+    # "auto" skips the upload when the tag carries a prerelease identifier, so a
+    # release candidate never reaches the AUR.
+    skip_upload: "auto"
     description: "A declarative update policy engine."
     maintainers:
       - "Olivier Vernin <olivier at vernin dot me>"
@@ -46,6 +49,9 @@ before:
 
 brews:
   - name: updatecli
+    # "auto" skips the upload when the tag carries a prerelease identifier, so a
+    # release candidate never reaches the Homebrew tap.
+    skip_upload: "auto"
     directory: Formula
     repository:
       owner: updatecli
@@ -196,10 +202,14 @@ docker_manifests:
       - "ghcr.io/updatecli/updatecli:{{ .Tag }}-amd64"
       - "ghcr.io/updatecli/updatecli:{{ .Tag }}-arm64"
   - name_template: "updatecli/updatecli:latest"
+    # "auto" keeps this floating tag pointing at the last non-prerelease.
+    skip_push: "auto"
     image_templates:
       - "updatecli/updatecli:{{ .Tag }}-amd64"
       - "updatecli/updatecli:{{ .Tag }}-arm64"
   - name_template: "ghcr.io/updatecli/updatecli:latest"
+    # "auto" keeps this floating tag pointing at the last non-prerelease.
+    skip_push: "auto"
     image_templates:
       - "ghcr.io/updatecli/updatecli:{{ .Tag }}-amd64"
       - "ghcr.io/updatecli/updatecli:{{ .Tag }}-arm64"
@@ -215,10 +225,14 @@ docker_manifests:
       - "ghcr.io/updatecli/updatecli:{{ .Tag }}-slim-amd64"
       - "ghcr.io/updatecli/updatecli:{{ .Tag }}-slim-arm64"
   - name_template: "updatecli/updatecli:latest-slim"
+    # "auto" keeps this floating tag pointing at the last non-prerelease.
+    skip_push: "auto"
     image_templates:
       - "updatecli/updatecli:{{ .Tag }}-slim-amd64"
       - "updatecli/updatecli:{{ .Tag }}-slim-arm64"
   - name_template: "ghcr.io/updatecli/updatecli:latest-slim"
+    # "auto" keeps this floating tag pointing at the last non-prerelease.
+    skip_push: "auto"
     image_templates:
       - "ghcr.io/updatecli/updatecli:{{ .Tag }}-slim-amd64"
       - "ghcr.io/updatecli/updatecli:{{ .Tag }}-slim-arm64"
@@ -262,6 +276,19 @@ nfpms:
         dst: /usr/share/doc/updatecli/copyright
         file_info:
           mode: 0644
+
+release:
+  # "auto" marks the GitHub release as a prerelease when the tag carries a
+  # semver prerelease identifier, for instance v1.0.0-rc.1. GitHub never
+  # resolves a prerelease as "latest".
+  prerelease: auto
+  # The changelog is delegated to release-drafter, so this header is the only
+  # body a release candidate gets. It renders empty for a final release.
+  header: |
+    {{ if .Prerelease }}> [!WARNING]
+    > `{{ .Tag }}` is a release candidate, published for testing.
+    > It is not covered by the stability guarantees described in COMPATIBILITY.md.
+    {{ end }}
 
 snapshot:
   name_template: "{{ .Tag }}-next"
