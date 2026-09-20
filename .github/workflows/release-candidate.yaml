@@ -1,22 +1,9 @@
 ---
-# Publishes a release candidate: GitHub prerelease assets and release-candidate
-# tagged container images, and nothing else.
-#
-# Deliberately not a copy of release.yaml:
-#   * no GitHub App token, so nothing here can write to homebrew-updatecli
-#   * GITHUB_TOKEN is the only secret reaching GoReleaser, so the AUR key and
-#     the Mastodon, Bluesky and OpenCollective credentials are out of reach
-#   * no dispatch job, so website, updatecli-action and charts are left alone
-#
-# `make release.rc` skips the announce, aur and homebrew pipes, and
-# .goreleaser.yml keeps the floating `latest` tags off a prerelease.
 name: Release Candidate
 on:
   push:
     tags:
-      - "v*-rc*"
-      - "v*-alpha*"
-      - "v*-beta*"
+      - "v[0-9]+.[0-9]+.[0-9]+-*"
 permissions: {}
 jobs:
   build:

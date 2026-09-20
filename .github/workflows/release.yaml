@@ -3,13 +3,7 @@ name: Release
 on:
   push:
     tags:
-      # Release candidates are handled by release-candidate.yaml. Negative
-      # patterns belong inside `tags`, as `tags-ignore` cannot be combined
-      # with it.
-      - "v*"
-      - "!v*-rc*"
-      - "!v*-alpha*"
-      - "!v*-beta*"
+      - "v[0-9]+.[0-9]+.[0-9]+"
 permissions: {}
 jobs:
   build:
@@ -102,7 +96,12 @@ jobs:
     needs: build
     strategy:
       matrix:
-        repositories: ["updatecli/website", "updatecli/updatecli-action", "updatecli/charts"]
+        repositories:
+          [
+            "updatecli/website",
+            "updatecli/updatecli-action",
+            "updatecli/charts",
+          ]
     runs-on: ubuntu-24.04
     steps:
       - name: Generate access token
