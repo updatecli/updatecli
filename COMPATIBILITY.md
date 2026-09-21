@@ -1,20 +1,17 @@
 # Versioning and stability
 
 Updatecli does not break your manifests on purpose. When something needs to change, the old
-syntax is deprecated and keeps working. It is never removed without a year of warning.
+syntax is deprecated and keeps working.
 
 ## Semantic versioning
 
-Updatecli uses [SemVer-style](https://semver.org/) version numbers with an extended compatibility policy. Deprecated manifest syntax and CLI flags may be removed in minor releases after at least 12 months of notice.
+Updatecli follows [semantic versioning](https://semver.org/).
 
 | Bump | Means |
 |---|---|
-| Minor | New plugins, new fields, new flags. May also drop a syntax that has been deprecated for over a year (see below). |
-| Patch | Bug fixes. |
-| Major | Reserved for a redesign of Updatecli itself. Routine deprecation removals do not need one. |
-
-Upgrading is safe as long as your manifests do not rely on syntax listed on the
-[deprecations page](https://www.updatecli.io/docs/help/deprecations/).
+| Patch | Bug fixes. Nothing is added, nothing is taken away. |
+| Minor | New plugins, new fields, new flags. Everything that worked before still works. |
+| Major | The only release allowed to remove a stable surface, rename it, or change what it means. |
 
 ## What is stable
 
@@ -30,10 +27,7 @@ keep working.
 
 ## What is not stable
 
-* **The Go code** (`github.com/updatecli/updatecli/pkg/...`). It is public because Go offers no
-  other way to structure a program, not because it is an API. Packages move and signatures
-  change in any release. If you import Updatecli as a library, pin an exact version and expect
-  work on every upgrade.
+* **The Go code** (`github.com/updatecli/updatecli/pkg/...`). This project is not a library, any Go code may change in any release.
 * **Anything behind `--experimental`.** It may change or be withdrawn at any time.
 * **Log and report output.** It is written for people to read, not for scripts to parse.
 
@@ -43,29 +37,22 @@ When a manifest key or a CLI flag is superseded:
 
 1. The old form keeps working and warns on every run, naming its replacement.
 2. It is listed on <https://www.updatecli.io/docs/help/deprecations/>.
-3. It stays supported for **at least 12 months** from that announcement.
 
-Once both conditions are met, meaning a year has passed and the deprecation is documented, the
-old form may be dropped in a regular release. A major version bump is not required for this, so
-the deprecation page is the page to watch.
+## Minimum Version
 
-`updatecli manifest upgrade --save` rewrites most deprecated syntax for you.
-
-## Pinning
-
-A manifest can declare the minimum version it needs, which turns a confusing failure on an
-older binary into a clear one:
+A manifest can declare the minimum version it needs using the key `version`.
 
 ```yaml
-name: Example
+name: This is an example manifest
 version: '0.118.0'
 sources:
   #...
 targets:
-  #...
+  #... 
 ```
 
 ## Found a break?
 
-If an upgrade breaks a manifest that worked before, it is a bug, not an intentional change.
-Please open an issue with the manifest, both versions, and the output of each.
+If an upgrade within a major version breaks a manifest that worked before, it is a bug,
+not an intentional change. Please open an issue with the manifest, both versions, and the
+output of each.
