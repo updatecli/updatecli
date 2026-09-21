@@ -131,6 +131,30 @@ var (
 			ExpectedOriginalVersion: "1.0b2",
 		},
 		{
+			// Constraint skips the pre-release in favor of the highest matching stable version.
+			Pep440: Pep440{
+				Constraint: ">=15,<16",
+			},
+			Versions:                []string{"14.0.0", "15.6.1", "15.7.0b1", "16.0.0"},
+			SortedVersions:          []string{"16.0.0", "15.7.0b1", "15.6.1", "14.0.0"},
+			ExpectedInitErr:         nil,
+			ExpectedSearchErr:       nil,
+			ExpectedParsedVersion:   "15.6.1",
+			ExpectedOriginalVersion: "15.6.1",
+		},
+		{
+			// Constraint falls back to the highest matching pre-release when no stable version matches.
+			Pep440: Pep440{
+				Constraint: ">2.0",
+			},
+			Versions:                []string{"2.0", "2.1.0b3", "2.1.0rc2"},
+			SortedVersions:          []string{"2.1.0rc2", "2.1.0b3", "2.0"},
+			ExpectedInitErr:         nil,
+			ExpectedSearchErr:       nil,
+			ExpectedParsedVersion:   "2.1.0rc2",
+			ExpectedOriginalVersion: "2.1.0rc2",
+		},
+		{
 			// Empty constraint behaves identically to wildcard: skips pre-releases.
 			Pep440: Pep440{
 				Constraint: "",

@@ -28,6 +28,10 @@ build.all: ## Build updatecli for "release" (tag or release and all OS/arch comb
 release: ## release generate a release
 	goreleaser release --clean --timeout=2h
 
+.PHONY: release.rc ## Create a new updatecli release candidate
+release.rc: ## release.rc generates a release candidate: GitHub prerelease assets and container images only
+	goreleaser release --clean --timeout=2h --skip=announce,aur,homebrew
+
 .PHONY: release.snapshot ## Create a new snapshot release without publishing assets
 release.snapshot: ## release.snapshot generate a snapshot release but do not published it (no tag, but all OS/arch combinations)
 	goreleaser release --snapshot --clean --skip=publish,sign

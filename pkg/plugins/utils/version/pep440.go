@@ -75,6 +75,15 @@ func (p *Pep440) Search(versions []string) error {
 		return fmt.Errorf("%s", err)
 	}
 
+	// A pre-release only qualifies once no stable version satisfies the constraint.
+	for _, v := range p.versions {
+		if specifiers.Check(v) && !v.IsPreRelease() {
+			p.FoundVersion.ParsedVersion = v.String()
+			p.FoundVersion.OriginalVersion = v.Original()
+			return nil
+		}
+	}
+
 	for _, v := range p.versions {
 		if specifiers.Check(v) {
 			p.FoundVersion.ParsedVersion = v.String()
