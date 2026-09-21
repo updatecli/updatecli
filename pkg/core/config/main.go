@@ -863,7 +863,7 @@ func (config *Config) ValidateManifestCompatibility() error {
 
 	// Ensure that the current updatecli version is compatible with the manifest
 	if !isCompatibleUpdatecliVersion {
-		return fmt.Errorf("pipeline %q requires Updatecli version greater than %q, skipping", config.Spec.Name, config.Spec.Version)
+		return fmt.Errorf("pipeline %q requires Updatecli version greater than or equal to %q, skipping", config.Spec.Name, config.Spec.Version)
 	}
 
 	return nil
