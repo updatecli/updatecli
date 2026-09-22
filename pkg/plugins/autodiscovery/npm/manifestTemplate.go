@@ -80,7 +80,7 @@ targets:
         kind: file/checksum
         spec:
           files:
-            - "package-lock.json"
+            - "{{ .TargetLockFilePrefix }}package-lock.json"
             - "package.json"
       environments:
         - name: PATH
@@ -109,7 +109,7 @@ targets:
         kind: file/checksum
         spec:
           files:
-            - "yarn.lock"
+            - "{{ .TargetLockFilePrefix }}yarn.lock"
             - "package.json"
       environments:
         - name: PATH
@@ -138,7 +138,7 @@ targets:
         kind: file/checksum
         spec:
           files:
-            - "pnpm-lock.yaml"
+            - "{{ .TargetLockFilePrefix }}pnpm-lock.yaml"
             - "package.json"
       environments:
         - name: PATH
@@ -176,9 +176,11 @@ type manifestTemplateParams struct {
 	TargetPnpmCleanupEnabled bool
 	TargetNPMCleanupEnabled  bool
 	TargetWorkdir            string
-	TargetNPMCommand         string
-	TargetYarnCommand        string
-	TargetPnpmCommand        string
-	File                     string
-	ScmID                    string
+	// TargetLockFilePrefix is the path from TargetWorkdir to the lock file directory, such as "../../" for a workspace project.
+	TargetLockFilePrefix string
+	TargetNPMCommand     string
+	TargetYarnCommand    string
+	TargetPnpmCommand    string
+	File                 string
+	ScmID                string
 }
