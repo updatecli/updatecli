@@ -355,6 +355,27 @@ func TestNormalizeYarnDescriptor(t *testing.T) {
 	}
 }
 
+func TestMatchWorkspacePattern(t *testing.T) {
+	for _, tt := range []struct {
+		pattern  string
+		importer string
+		expected bool
+	}{
+		{pattern: "packages/*", importer: "packages/app", expected: true},
+		{pattern: "packages/*", importer: "packages/group/app", expected: false},
+		{pattern: "packages/**", importer: "packages/app", expected: true},
+		{pattern: "packages/**", importer: "packages/group/app", expected: true},
+		{pattern: "packages/**/app", importer: "packages/app", expected: true},
+		{pattern: "packages/**/app", importer: "packages/group/app", expected: true},
+		{pattern: "packages/**/app", importer: "packages/group/lib", expected: false},
+		{pattern: "./apps/web", importer: "apps/web", expected: true},
+		{pattern: "apps/web", importer: "tools/foo", expected: false},
+	} {
+		assert.Equal(t, tt.expected, isWorkspace(filepath.Dir(writeRootPackageJson(t, `{"workspaces": ["`+tt.pattern+`"]}`)), tt.importer),
+			"%s matching %s", tt.pattern, tt.importer)
+	}
+}
+
 func TestLoadLockedVersions(t *testing.T) {
 	t.Run("lock file next to the package.json", func(t *testing.T) {
 		versions, err := loadLockedVersions("testdata/npmlockfile", "testdata/npmlockfile")

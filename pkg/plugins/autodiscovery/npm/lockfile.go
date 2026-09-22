@@ -312,12 +312,36 @@ func isWorkspace(dir, importer string) bool {
 	}
 
 	for _, pattern := range patterns {
-		if matched, err := path.Match(path.Clean(pattern), importer); err == nil && matched {
+		if matchWorkspacePattern(strings.Split(path.Clean(pattern), "/"), strings.Split(importer, "/")) {
 			return true
 		}
 	}
 
 	return false
+}
+
+// matchWorkspacePattern reports whether the segments of a project path match those of a workspace pattern,
+// where "**" matches any number of segments, as package managers expand workspaces with globstar support.
+func matchWorkspacePattern(pattern, segments []string) bool {
+	if len(pattern) == 0 {
+		return len(segments) == 0
+	}
+
+	if pattern[0] == "**" {
+		for i := 0; i <= len(segments); i++ {
+			if matchWorkspacePattern(pattern[1:], segments[i:]) {
+				return true
+			}
+		}
+		return false
+	}
+
+	if len(segments) == 0 {
+		return false
+	}
+
+	matched, err := path.Match(pattern[0], segments[0])
+	return err == nil && matched && matchWorkspacePattern(pattern[1:], segments[1:])
 }
 
 // normalizeYarnDescriptor removes the Yarn Berry "npm:" protocol, so "axios@npm:^1.0.0" matches
