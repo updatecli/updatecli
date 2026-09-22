@@ -2,8 +2,10 @@ package npm
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -29,9 +31,14 @@ func (l lockedVersions) version(name, constraint string) string {
 	return l.byName[name]
 }
 
+// errUnknownImporter reports a lock file that doesn't record the project it was looked up for,
+// such as the lock file of an unrelated project in a parent directory.
+var errUnknownImporter = errors.New("project not recorded in the lock file")
+
 // lockFileParser returns the versions a lock file resolved for one of the projects it records,
 // identified by its path relative to the lock file, such as "." or "packages/app".
-type lockFileParser func(data []byte, importer string) (lockedVersions, error)
+// It returns errUnknownImporter when the lock file doesn't record that project.
+type lockFileParser func(lockFile string, data []byte, importer string) (lockedVersions, error)
 
 // lockFiles associates the supported lock files with their parser, in the order they are looked up.
 var lockFiles = []struct {
@@ -63,7 +70,12 @@ func loadLockedVersions(dir, rootDir string) (lockedVersions, error) {
 		return lockedVersions{}, fmt.Errorf("reading lock file %q: %w", lockFile, err)
 	}
 
-	versions, err := parse(data, filepath.ToSlash(importer))
+	versions, err := parse(lockFile, data, filepath.ToSlash(importer))
+	if errors.Is(err, errUnknownImporter) {
+		// The lock file belongs to another project, so it says nothing about the versions installed for this one
+		logrus.Debugf("%q is not a project of lock file %q", dir, lockFile)
+		return lockedVersions{}, nil
+	}
 	if err != nil {
 		return lockedVersions{}, fmt.Errorf("parsing lock file %q: %w", lockFile, err)
 	}
@@ -74,6 +86,7 @@ func loadLockedVersions(dir, rootDir string) (lockedVersions, error) {
 
 // searchLockFile returns the closest lock file of a package.json directory, looking up to the root
 // directory the search started from, as a workspace only holds a lock file at its root.
+// A lock file found in a parent directory only applies if it records the project, which its parser checks.
 // The package manager doesn't have to be available to read the versions it resolved, unlike to update them.
 func searchLockFile(dir, rootDir string) (string, lockFileParser) {
 	dir, rootDir = filepath.Clean(dir), filepath.Clean(rootDir)
@@ -101,7 +114,7 @@ func searchLockFile(dir, rootDir string) (string, lockFileParser) {
 
 // parsePackageLock returns the package versions a package-lock.json file installed for a project,
 // either hoisted at its root or, for a workspace project, next to it.
-func parsePackageLock(data []byte, importer string) (lockedVersions, error) {
+func parsePackageLock(_ string, data []byte, importer string) (lockedVersions, error) {
 	type lockedPackage struct {
 		Version string `json:"version"`
 	}
@@ -115,6 +128,11 @@ func parsePackageLock(data []byte, importer string) (lockedVersions, error) {
 
 	if err := json.Unmarshal(data, &lock); err != nil {
 		return lockedVersions{}, err
+	}
+
+	// Workspace projects are recorded by path, since lockfileVersion 2
+	if _, found := lock.Packages[importer]; importer != "." && !found {
+		return lockedVersions{}, errUnknownImporter
 	}
 
 	versions := map[string]string{}
@@ -169,7 +187,7 @@ func (d *pnpmDependency) UnmarshalYAML(value *yaml.Node) error {
 }
 
 // parsePnpmLock returns the direct dependency versions of one project of a pnpm-lock.yaml file.
-func parsePnpmLock(data []byte, importer string) (lockedVersions, error) {
+func parsePnpmLock(_ string, data []byte, importer string) (lockedVersions, error) {
 	type pnpmProject struct {
 		Dependencies    map[string]pnpmDependency `yaml:"dependencies"`
 		DevDependencies map[string]pnpmDependency `yaml:"devDependencies"`
@@ -186,7 +204,12 @@ func parsePnpmLock(data []byte, importer string) (lockedVersions, error) {
 		return lockedVersions{}, err
 	}
 
-	projects := []pnpmProject{lock.Importers[importer]}
+	project, found := lock.Importers[importer]
+	if importer != "." && !found {
+		return lockedVersions{}, errUnknownImporter
+	}
+
+	projects := []pnpmProject{project}
 	if importer == "." {
 		projects = []pnpmProject{lock.pnpmProject, lock.Importers["."]}
 	}
@@ -210,12 +233,17 @@ func parsePnpmLock(data []byte, importer string) (lockedVersions, error) {
 }
 
 // parseYarnLock returns the resolved version of each dependency descriptor of a yarn.lock file.
-// Yarn records the descriptors of every workspace project in a single lock file, so they are all returned.
+// Yarn records the descriptors of every workspace project in a single lock file, so they are all returned
+// once the project is known to be a workspace of the lock file.
 // It supports both Yarn classic (v1) and Yarn Berry (v2+) lock files, whose entries look like:
 //
 //	"axios@^1.0.0", axios@^1.1.0:     |  "axios@npm:^1.0.0, axios@npm:^1.1.0":
 //	  version "1.2.6"                 |    version: 1.2.6
-func parseYarnLock(data []byte, _ string) (lockedVersions, error) {
+func parseYarnLock(lockFile string, data []byte, importer string) (lockedVersions, error) {
+	if importer != "." && !isYarnWorkspace(filepath.Dir(lockFile), importer) {
+		return lockedVersions{}, errUnknownImporter
+	}
+
 	versions := map[string]string{}
 	var descriptors []string
 
@@ -251,6 +279,43 @@ func parseYarnLock(data []byte, _ string) (lockedVersions, error) {
 	}
 
 	return lockedVersions{byDescriptor: versions}, nil
+}
+
+// isYarnWorkspace reports whether a project, identified by its path relative to a directory, matches one of
+// the workspaces declared by the package.json of that directory, as yarn.lock doesn't list workspaces.
+func isYarnWorkspace(dir, importer string) bool {
+	data, err := os.ReadFile(filepath.Join(dir, "package.json"))
+	if err != nil {
+		logrus.Debugf("reading workspaces of %q: %s", dir, err)
+		return false
+	}
+
+	var manifest struct {
+		Workspaces json.RawMessage `json:"workspaces"`
+	}
+	if err := json.Unmarshal(data, &manifest); err != nil || len(manifest.Workspaces) == 0 {
+		return false
+	}
+
+	// Workspaces are declared as a list of patterns, or in Yarn classic as an object holding them
+	var patterns []string
+	if err := json.Unmarshal(manifest.Workspaces, &patterns); err != nil {
+		var workspaces struct {
+			Packages []string `json:"packages"`
+		}
+		if err := json.Unmarshal(manifest.Workspaces, &workspaces); err != nil {
+			return false
+		}
+		patterns = workspaces.Packages
+	}
+
+	for _, pattern := range patterns {
+		if matched, err := path.Match(path.Clean(pattern), importer); err == nil && matched {
+			return true
+		}
+	}
+
+	return false
 }
 
 // normalizeYarnDescriptor removes the Yarn Berry "npm:" protocol, so "axios@npm:^1.0.0" matches
