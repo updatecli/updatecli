@@ -114,7 +114,7 @@ func searchLockFile(dir, rootDir string) (string, lockFileParser) {
 
 // parsePackageLock returns the package versions a package-lock.json file installed for a project,
 // either hoisted at its root or, for a workspace project, next to it.
-func parsePackageLock(_ string, data []byte, importer string) (lockedVersions, error) {
+func parsePackageLock(lockFile string, data []byte, importer string) (lockedVersions, error) {
 	type lockedPackage struct {
 		Version string `json:"version"`
 	}
@@ -130,8 +130,9 @@ func parsePackageLock(_ string, data []byte, importer string) (lockedVersions, e
 		return lockedVersions{}, err
 	}
 
-	// Workspace projects are recorded by path, since lockfileVersion 2
-	if _, found := lock.Packages[importer]; importer != "." && !found {
+	// Workspace projects are recorded by path, since lockfileVersion 2, as are local "file:" dependencies,
+	// which aren't installed through this lock file, so the project must also be a declared workspace
+	if _, found := lock.Packages[importer]; importer != "." && (!found || !isWorkspace(filepath.Dir(lockFile), importer)) {
 		return lockedVersions{}, errUnknownImporter
 	}
 
@@ -240,7 +241,7 @@ func parsePnpmLock(_ string, data []byte, importer string) (lockedVersions, erro
 //	"axios@^1.0.0", axios@^1.1.0:     |  "axios@npm:^1.0.0, axios@npm:^1.1.0":
 //	  version "1.2.6"                 |    version: 1.2.6
 func parseYarnLock(lockFile string, data []byte, importer string) (lockedVersions, error) {
-	if importer != "." && !isYarnWorkspace(filepath.Dir(lockFile), importer) {
+	if importer != "." && !isWorkspace(filepath.Dir(lockFile), importer) {
 		return lockedVersions{}, errUnknownImporter
 	}
 
@@ -281,9 +282,10 @@ func parseYarnLock(lockFile string, data []byte, importer string) (lockedVersion
 	return lockedVersions{byDescriptor: versions}, nil
 }
 
-// isYarnWorkspace reports whether a project, identified by its path relative to a directory, matches one of
-// the workspaces declared by the package.json of that directory, as yarn.lock doesn't list workspaces.
-func isYarnWorkspace(dir, importer string) bool {
+// isWorkspace reports whether a project, identified by its path relative to a directory, matches one of
+// the workspaces declared by the package.json of that directory, as lock files don't tell them apart
+// from other local projects, or, for yarn.lock, don't list them at all.
+func isWorkspace(dir, importer string) bool {
 	data, err := os.ReadFile(filepath.Join(dir, "package.json"))
 	if err != nil {
 		logrus.Debugf("reading workspaces of %q: %s", dir, err)

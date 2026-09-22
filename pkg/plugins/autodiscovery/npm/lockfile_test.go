@@ -23,6 +23,17 @@ func assertLockedVersions(t *testing.T, versions lockedVersions, tests []lockedV
 	}
 }
 
+// writeRootPackageJson writes a package.json to a temporary directory and returns the path of
+// a lock file next to it, so parsers can read the workspaces it declares.
+func writeRootPackageJson(t *testing.T, packageJson string) string {
+	t.Helper()
+
+	dir := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "package.json"), []byte(packageJson), 0o600))
+
+	return filepath.Join(dir, "package-lock.json")
+}
+
 func TestParsePackageLock(t *testing.T) {
 	t.Run("lockfileVersion 3 from testdata", func(t *testing.T) {
 		data, err := os.ReadFile("testdata/npmlockfile/package-lock.json")
@@ -98,7 +109,9 @@ func TestParsePackageLock(t *testing.T) {
 		})
 
 		t.Run("Workspace project", func(t *testing.T) {
-			versions, err := parsePackageLock("", lock, "packages/app")
+			lockFile := writeRootPackageJson(t, `{"workspaces": ["packages/*"]}`)
+
+			versions, err := parsePackageLock(lockFile, lock, "packages/app")
 			require.NoError(t, err)
 
 			assertLockedVersions(t, versions, []lockedVersionTest{
@@ -110,7 +123,17 @@ func TestParsePackageLock(t *testing.T) {
 		})
 
 		t.Run("Project outside of the workspace", func(t *testing.T) {
-			_, err := parsePackageLock("", lock, "tools/foo")
+			lockFile := writeRootPackageJson(t, `{"workspaces": ["packages/*"]}`)
+
+			_, err := parsePackageLock(lockFile, lock, "tools/foo")
+			assert.ErrorIs(t, err, errUnknownImporter)
+		})
+
+		t.Run("Local file dependency", func(t *testing.T) {
+			// npm records "file:" dependencies by path too, but they aren't installed through the lock file
+			lockFile := writeRootPackageJson(t, `{"dependencies": {"app": "file:packages/app"}}`)
+
+			_, err := parsePackageLock(lockFile, lock, "packages/app")
 			assert.ErrorIs(t, err, errUnknownImporter)
 		})
 	})
