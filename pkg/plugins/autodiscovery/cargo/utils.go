@@ -10,8 +10,8 @@ import (
 	sv "github.com/Masterminds/semver/v3"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/text"
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/dasel"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
 func isCargoUpgradeAvailable() bool {
@@ -122,7 +122,7 @@ func getCrateMetadata(rootDir string) (crateMetadata, error) {
 		ContentRetriever: &text.Text{},
 	}
 
-	err := tomlFile.Read(utils.Resolver{})
+	err := tomlFile.Read(pathresolver.Resolver{})
 
 	if err != nil {
 		return crate, err

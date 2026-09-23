@@ -8,11 +8,11 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
 // Source return a file content
-func (f *File) Source(_ context.Context, resolver utils.Resolver, resultSource *result.Source) error {
+func (f *File) Source(_ context.Context, pathResolver pathresolver.Resolver, resultSource *result.Source) error {
 	var validationErrors []string
 	var foundContent string
 
@@ -33,7 +33,7 @@ func (f *File) Source(_ context.Context, resolver utils.Resolver, resultSource *
 		return fmt.Errorf("validation error: the provided manifest configuration had the following validation errors:\n%s", strings.Join(validationErrors, "\n\n"))
 	}
 
-	if err := f.initFiles(resolver); err != nil {
+	if err := f.initFiles(pathResolver); err != nil {
 		return fmt.Errorf("init files: %w", err)
 	}
 

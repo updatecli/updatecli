@@ -6,11 +6,11 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
-func (g *Gitea) Source(_ context.Context, resolver utils.Resolver, resultSource *result.Source) error {
+func (g *Gitea) Source(_ context.Context, pathResolver pathresolver.Resolver, resultSource *result.Source) error {
 	versions, err := g.SearchTags()
 
 	if err != nil {

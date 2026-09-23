@@ -14,7 +14,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/text"
 	terraformUtils "github.com/updatecli/updatecli/pkg/plugins/resources/terraform"
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 	"github.com/zclconf/go-cty/cty"
 )
 
@@ -164,16 +164,14 @@ func (t *TerraformLock) Read() error {
 	return nil
 }
 
-// UpdateAbsoluteFilePath resolves every file of the t.files map against the resolver,
+// UpdateAbsoluteFilePath resolves every file of the t.files map against the path resolver,
 // leaving the path the user wrote available as originalFilePath for reporting.
-func (t *TerraformLock) UpdateAbsoluteFilePath(resolver utils.Resolver) error {
+func (t *TerraformLock) UpdateAbsoluteFilePath(pathResolver pathresolver.Resolver) error {
 	for filePath := range t.files {
 		f := t.files[filePath]
 
-		resolvedPath, err := resolver.Resolve(f.originalFilePath)
-		if err != nil {
-			return err
-		}
+		// Join, not Resolve: absolute and parent directory paths are allowed, even with an scm.
+		resolvedPath := pathResolver.Join(f.originalFilePath)
 
 		if resolvedPath != f.filePath {
 			logrus.Debugf("Relative path detected: changing from %q to %q", f.originalFilePath, resolvedPath)

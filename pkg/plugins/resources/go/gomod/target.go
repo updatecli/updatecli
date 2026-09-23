@@ -6,11 +6,11 @@ import (
 
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
 // Target updates a module version in a go.mod file
-func (g *GoMod) Target(_ context.Context, source string, scm scm.ScmHandler, resolver utils.Resolver, dryRun bool, resultTarget *result.Target) (err error) {
+func (g *GoMod) Target(_ context.Context, source string, scm scm.ScmHandler, pathResolver pathresolver.Resolver, dryRun bool, resultTarget *result.Target) (err error) {
 
 	version := source
 	if g.spec.Version != "" {
@@ -19,10 +19,8 @@ func (g *GoMod) Target(_ context.Context, source string, scm scm.ScmHandler, res
 
 	resultTarget.NewInformation = version
 
-	filename, err := resolver.Resolve(g.filename)
-	if err != nil {
-		return fmt.Errorf("invalid file path %q: %w", g.filename, err)
-	}
+	// Join, not Resolve: absolute and parent directory paths are allowed, even with an scm.
+	filename := pathResolver.Join(g.filename)
 
 	resultTarget.Information, resultTarget.NewInformation, resultTarget.Changed, err = g.setVersion(version, filename, dryRun)
 	if err != nil {

@@ -7,16 +7,16 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
-func (j *Json) Condition(_ context.Context, source string, scm scm.ScmHandler, resolver utils.Resolver) (pass bool, message string, err error) {
+func (j *Json) Condition(_ context.Context, source string, scm scm.ScmHandler, pathResolver pathresolver.Resolver) (pass bool, message string, err error) {
 	conditionResult := true
 	partialMessage := ""
 
 	for i := range j.contents {
 
-		if err := j.contents[i].Read(resolver); err != nil {
+		if err := j.contents[i].Read(pathResolver); err != nil {
 			return false, "", fmt.Errorf("reading json file: %w", err)
 		}
 

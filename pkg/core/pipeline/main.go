@@ -97,12 +97,7 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 		// Init Sources[id]
 		var err error
 
-		// avoid gosec G601: Reassign the loop iteration variable to a local variable so the pointer address is correct
-		scmConfig := scmConfig
-
-		resolveScmDirectory(&scmConfig, baseDir)
-
-		p.SCMs[id], err = scm.New(&scmConfig, config.Spec.PipelineID)
+		p.SCMs[id], err = newScm(scmConfig, baseDir, config.Spec.PipelineID)
 		if err != nil {
 			return err
 		}
@@ -703,10 +698,7 @@ func (p *Pipeline) Update() error {
 	for id, scmConfig := range p.Config.Spec.SCMs {
 		var err error
 
-		// avoid gosec G601: Reassign the loop iteration variable to a local variable so the pointer address is correct
-		scmConfig := scmConfig
-
-		p.SCMs[id], err = scm.New(&scmConfig, p.Config.Spec.PipelineID)
+		p.SCMs[id], err = newScm(scmConfig, p.Config.BaseDir(), p.Config.Spec.PipelineID)
 		if err != nil {
 			return err
 		}

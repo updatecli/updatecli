@@ -7,10 +7,10 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
-func (g *Stash) Condition(_ context.Context, source string, scm scm.ScmHandler, resolver utils.Resolver, resultCondition *result.Condition) error {
+func (g *Stash) Condition(_ context.Context, source string, scm scm.ScmHandler, pathResolver pathresolver.Resolver, resultCondition *result.Condition) error {
 
 	if scm != nil {
 		logrus.Warningf("scm not supported, ignoring")

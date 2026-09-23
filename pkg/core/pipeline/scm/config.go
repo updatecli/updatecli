@@ -68,7 +68,11 @@ func (c Config) Validate() error {
 
 // AutoGuess tries to fill the Config object receiver with the configuration auto-guessed from the provided directory
 // It only returns an error if it fails "hard" (can't guess SCM, etc.).
-func (c *Config) AutoGuess(configName, workingDir string, gitHandler gitgeneric.GitHandler) error {
+//
+// workingDir is the repository whose remotes are inspected, while directory becomes the
+// checkout directory of the guessed scm. An empty directory lets the scm use its own
+// temporary checkout.
+func (c *Config) AutoGuess(configName, workingDir, directory string, gitHandler gitgeneric.GitHandler) error {
 	remotes, err := gitHandler.RemoteURLs(workingDir)
 	if err != nil {
 		return err
@@ -103,7 +107,7 @@ func (c *Config) AutoGuess(configName, workingDir string, gitHandler gitgeneric.
 		autoguessSpec := github.Spec{
 			Repository: strings.TrimSuffix(slashEverywhereUrl[len(slashEverywhereUrl)-1], ".git"),
 			Owner:      slashEverywhereUrl[len(slashEverywhereUrl)-2],
-			Directory:  workingDir,
+			Directory:  directory,
 			Branch:     "main",
 		}
 
@@ -127,7 +131,7 @@ func (c *Config) AutoGuess(configName, workingDir string, gitHandler gitgeneric.
 	default:
 		autoguessSpec := git.Spec{
 			URL:       originRemoteURL,
-			Directory: workingDir,
+			Directory: directory,
 			Branch:    "main",
 		}
 

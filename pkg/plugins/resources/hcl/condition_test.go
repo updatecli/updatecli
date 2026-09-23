@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
 func TestCondition(t *testing.T) {
@@ -93,7 +93,7 @@ func TestCondition(t *testing.T) {
 
 			require.NoError(t, err)
 
-			gotResult, _, gotErr := h.Condition(context.Background(), tt.source, nil, utils.Resolver{})
+			gotResult, _, gotErr := h.Condition(context.Background(), tt.source, nil, pathresolver.Resolver{})
 
 			if tt.wantErr {
 				assert.Equal(t, tt.expectedErrorMsg.Error(), gotErr.Error())

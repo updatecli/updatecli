@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
@@ -23,7 +23,7 @@ func TestCondition(t *testing.T) {
 		d.ami.apiClient = mockDescribeImagesOutput{
 			Resp: d.mockedResponse,
 		}
-		got, _, gotErr := d.ami.Condition(context.Background(), "", nil, utils.Resolver{})
+		got, _, gotErr := d.ami.Condition(context.Background(), "", nil, pathresolver.Resolver{})
 
 		switch d.expectedError == nil {
 		case true:
@@ -60,7 +60,7 @@ func TestCondition(t *testing.T) {
 		},
 	}
 
-	got, _, gotErr := ami.Condition(context.Background(), imageID, nil, utils.Resolver{})
+	got, _, gotErr := ami.Condition(context.Background(), imageID, nil, pathresolver.Resolver{})
 
 	require.NoError(t, gotErr)
 	assert.Equal(t, true, got)

@@ -7,10 +7,10 @@ import (
 
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
-func (t *ToolVersions) Target(_ context.Context, source string, scm scm.ScmHandler, resolver utils.Resolver, dryRun bool, resultTarget *result.Target) error {
+func (t *ToolVersions) Target(_ context.Context, source string, scm scm.ScmHandler, pathResolver pathresolver.Resolver, dryRun bool, resultTarget *result.Target) error {
 
 	for i := range t.contents {
 		filename := t.contents[i].FilePath
@@ -21,7 +21,7 @@ func (t *ToolVersions) Target(_ context.Context, source string, scm scm.ScmHandl
 			return fmt.Errorf("URL scheme is not supported for toolversions target: %q", t.spec.File)
 		}
 
-		if err := t.contents[i].Read(resolver); err != nil {
+		if err := t.contents[i].Read(pathResolver); err != nil {
 			return fmt.Errorf("file %q does not exist", filename)
 		}
 

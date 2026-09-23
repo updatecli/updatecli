@@ -49,6 +49,7 @@ var (
 			// Showing templating diff may leak sensitive information such as credentials
 			config.GolangTemplatingDiff = true
 
+			e.Options.ManifestOptions.RelativePaths = config.RelativePathBase(relativePaths)
 			err = run("compose/show")
 			if err != nil {
 				logrus.Errorf("command failed: %s", err)
@@ -68,6 +69,7 @@ func init() {
 	composeShowCmd.Flags().StringArrayVar(&labels, "labels", []string{}, "Filter pipelines to apply by their labels, accepted as a comma separated list (key:value)")
 	composeShowCmd.Flags().StringArrayVar(&composeShowOnlyPolicyIDs, "only-policy-ids", []string{}, "Filter policies to apply by their policy IDs, accepted as a comma separated list")
 	composeShowCmd.Flags().StringArrayVar(&composeShowIgnoredPolicyIDs, "ignored-policy-ids", []string{}, "Filter policies to ignore by their policy IDs, accepted as a comma separated list")
+	addRelativePathsFlag(composeShowCmd, &relativePaths)
 
 	composeCmd.AddCommand(composeShowCmd)
 }

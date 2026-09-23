@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
 var (
@@ -232,7 +232,7 @@ func TestGetWorkingDir(t *testing.T) {
 			s, err := New(tt.spec)
 			require.NoError(t, err)
 
-			gotWorkingdir := s.getWorkingDirPath(utils.Resolver{BaseDir: tt.currentWorkingDir})
+			gotWorkingdir := s.getWorkingDirPath(pathresolver.Resolver{BaseDir: tt.currentWorkingDir})
 			assert.Equal(t, tt.expectedWorkingDir, gotWorkingdir)
 		})
 	}

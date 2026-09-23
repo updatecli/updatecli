@@ -5,19 +5,19 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
-// ResolvePath resolves FilePath against the resolver.
+// ResolvePath resolves FilePath against the path resolver.
 //
 // It is idempotent: the path written in the manifest is kept aside so that calling it
 // twice cannot join the base directory twice.
-func (f *FileContent) ResolvePath(resolver utils.Resolver) error {
+func (f *FileContent) ResolvePath(pathResolver pathresolver.Resolver) error {
 	if f.OriginalFilePath == "" {
 		f.OriginalFilePath = f.FilePath
 	}
 
-	resolvedPath, err := resolver.Resolve(f.OriginalFilePath)
+	resolvedPath, err := pathResolver.Resolve(f.OriginalFilePath)
 	if err != nil {
 		return err
 	}
@@ -28,9 +28,9 @@ func (f *FileContent) ResolvePath(resolver utils.Resolver) error {
 }
 
 // Read reads the content of a file after runtime validation
-func (f *FileContent) Read(resolver utils.Resolver) error {
+func (f *FileContent) Read(pathResolver pathresolver.Resolver) error {
 
-	if err := f.ResolvePath(resolver); err != nil {
+	if err := f.ResolvePath(pathResolver); err != nil {
 		return err
 	}
 

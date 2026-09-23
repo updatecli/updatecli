@@ -8,23 +8,23 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
 // Source returns the latest commit hash for the configured Git branch.
-func (gc *GitCommit) Source(_ context.Context, resolver utils.Resolver, resultSource *result.Source) error {
+func (gc *GitCommit) Source(_ context.Context, pathResolver pathresolver.Resolver, resultSource *result.Source) error {
 	var err error
 
-	gc.directory = resolver.Dir()
+	gc.directory = pathResolver.RepositoryDir()
 	if gc.spec.URL != "" {
 		gc.directory, err = gc.clone()
 		if err != nil {
 			return fmt.Errorf("cloning Git repository: %w", err)
 		}
 	} else if gc.spec.Path != "" {
-		gc.directory = resolver.Join(gc.spec.Path)
+		gc.directory = pathResolver.JoinManifest(gc.spec.Path)
 	}
 
 	if gc.directory == "" {

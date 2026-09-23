@@ -273,9 +273,7 @@ func (config *Config) Reset() {
 
 // BaseDir returns the directory the relative paths of this manifest resolve against.
 //
-// An empty value means they resolve against the process working directory, which is both
-// the historical behavior and what an autodiscovery generated manifest needs, as it has no
-// file on disk to be relative to.
+// An empty value, the default, means they resolve against the process working directory.
 func (config *Config) BaseDir() string {
 	if config.Spec.Options.RelativePaths != RelativePathBaseManifest {
 		return config.baseDir
@@ -317,9 +315,8 @@ func (config *Config) SetManifestID(seed string) {
 // New reads an updatecli configuration file.
 //
 // manifestDefaults holds the "options" a manifest inherits when it does not set them
-// itself. They are a separate parameter rather than a field of Option because Option is
-// about reading a file off disk, which is a different concern from how the pipeline that
-// file describes behaves.
+// itself. It is kept apart from Option, which only controls how the file is read from
+// disk.
 //
 //nolint:funlen
 func New(option Option, manifestDefaults ManifestOptions, pipelineIDFilters []string, pipelineLabels map[string]string) (configs []Config, err error) {

@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/text"
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
 func TestTarget(t *testing.T) {
@@ -165,7 +165,7 @@ func TestTarget(t *testing.T) {
 			}
 
 			gotResult := result.Target{}
-			gotErr := s.Target(context.Background(), tt.source, nil, utils.Resolver{}, tt.dryRun, &gotResult)
+			gotErr := s.Target(context.Background(), tt.source, nil, pathresolver.Resolver{}, tt.dryRun, &gotResult)
 			if tt.wantErr {
 				assert.Error(t, gotErr)
 				return

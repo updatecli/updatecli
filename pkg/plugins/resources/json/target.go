@@ -9,11 +9,11 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
 // Target updates a scm repository based on the modified yaml file.
-func (j *Json) Target(_ context.Context, source string, scm scm.ScmHandler, resolver utils.Resolver, dryRun bool, resultTarget *result.Target) error {
+func (j *Json) Target(_ context.Context, source string, scm scm.ScmHandler, pathResolver pathresolver.Resolver, dryRun bool, resultTarget *result.Target) error {
 
 	if len(j.spec.Value) == 0 {
 		j.spec.Value = source
@@ -39,7 +39,7 @@ func (j *Json) Target(_ context.Context, source string, scm scm.ScmHandler, reso
 			return fmt.Errorf("URL scheme is not supported for Json target: %q", j.spec.File)
 		}
 
-		if err := j.contents[i].Read(resolver); err != nil {
+		if err := j.contents[i].Read(pathResolver); err != nil {
 			return fmt.Errorf("loading json file %q: %w", filename, err)
 		}
 

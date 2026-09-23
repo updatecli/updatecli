@@ -5,8 +5,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/cargo"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -173,7 +173,7 @@ func TestCondition(t *testing.T) {
 				got.webClient = GetMockClient(tt.mockedUrl, tt.mockedToken, tt.mockedBody, tt.mockedHTTPStatusCode, tt.mockedHeaderFormat)
 			}
 
-			gotPass, _, gotErr := got.Condition(context.Background(), "", nil, utils.Resolver{})
+			gotPass, _, gotErr := got.Condition(context.Background(), "", nil, pathresolver.Resolver{})
 			if tt.expectedError {
 				assert.Error(t, gotErr)
 				return

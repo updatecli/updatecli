@@ -6,10 +6,10 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
-func (df *Dockerfile) Source(_ context.Context, resolver utils.Resolver, resultSource *result.Source) error {
+func (df *Dockerfile) Source(_ context.Context, pathResolver pathresolver.Resolver, resultSource *result.Source) error {
 	switch len(df.files) {
 	case 1:
 		//
@@ -21,10 +21,8 @@ func (df *Dockerfile) Source(_ context.Context, resolver utils.Resolver, resultS
 
 	// loop over the only file
 	for _, specFile := range df.files {
-		file, err := resolver.Resolve(specFile)
-		if err != nil {
-			return fmt.Errorf("invalid file path %q: %w", specFile, err)
-		}
+		// With an scm, an absolute path is read under the checkout.
+		file := pathResolver.JoinRooted(specFile)
 
 		if !df.contentRetriever.FileExists(file) {
 			return fmt.Errorf("the file %s does not exist", file)

@@ -16,7 +16,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
 // Source defines how a value is retrieved from a specific source
@@ -70,7 +70,7 @@ func (s *Source) Run(ctx context.Context, sourceCache *cache.SourceCache) (err e
 		}
 	}
 
-	cacheKey := cache.Key(s.Config.ResourceConfig, scmIdentity)
+	cacheKey := cache.Key(s.Config.ResourceConfig, scmIdentity, s.BaseDir)
 	cacheHit := false
 
 	if sourceCache != nil {
@@ -101,7 +101,7 @@ func (s *Source) Run(ctx context.Context, sourceCache *cache.SourceCache) (err e
 			}
 		}
 
-		err = source.Source(ctx, utils.NewResolver(scmHandler, s.BaseDir), s.Result)
+		err = source.Source(ctx, pathresolver.New(scmHandler, s.BaseDir), s.Result)
 		if err != nil {
 			s.Result.Result = result.FAILURE
 			return err

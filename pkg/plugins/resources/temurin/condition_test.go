@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
 func TestCondition(t *testing.T) {
@@ -165,7 +165,7 @@ func TestCondition(t *testing.T) {
 			sut.apiWebClient = mockedHttpClient
 			sut.apiWebRedirectionClient = mockedHttpClient
 
-			gotResult, _, gotErr := sut.Condition(context.Background(), tt.source, tt.scm, utils.NewResolver(tt.scm, ""))
+			gotResult, _, gotErr := sut.Condition(context.Background(), tt.source, tt.scm, pathresolver.New(tt.scm, ""))
 
 			if tt.wantErr != "" {
 				require.Error(t, gotErr)

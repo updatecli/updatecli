@@ -200,8 +200,11 @@ func (e *Engine) LoadAutoDiscovery(ctx context.Context, defaultEnabled bool) err
 				}
 
 				autodiscoveryGeneratedSCMs := maps.Keys(manifest.SCMs)
-				for scmId, sc := range p.SCMs {
-					manifest.SCMs[scmId] = *sc.Config
+				for scmId := range p.SCMs {
+					// Copy the raw scm configuration, with its directory pinned against this
+					// manifest's base directory: the generated manifest resolves its own
+					// paths from workDir, which must not apply to these scms a second time.
+					manifest.SCMs[scmId] = pipeline.PinScmDirectory(p.Config.Spec.SCMs[scmId], p.Config.BaseDir())
 				}
 
 				if actionConfig != nil {

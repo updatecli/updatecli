@@ -1,8 +1,8 @@
 // Package containment holds the cross-resource regression tests for path handling.
 //
-// It lives in its own package on purpose: it exercises resources through
-// resource.New, which is the code path a pipeline actually takes, and which
-// cannot be imported from inside any resource package without a cycle.
+// It is a separate package because it calls resources through resource.New,
+// the code path a pipeline takes, which no resource package can import without
+// a cycle.
 package containment
 
 import (
@@ -17,7 +17,7 @@ import (
 
 	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
 // escapingPaths returns the two ways a resource path can leave its working directory.
@@ -30,18 +30,27 @@ func escapingPaths(t *testing.T) map[string]string {
 	}
 }
 
-// containedKinds lists the file based resources and how to point them at a file, so a
-// kind added later is one table entry away from being covered.
-var containedKinds = []struct {
+// resourceKind is a file based resource and how to point it at a file.
+type resourceKind struct {
 	kind string
 	spec func(filePath string) interface{}
-}{
+}
+
+// containedKinds lists the file based resources whose paths must stay within the SCM
+// checkout, so a kind added later is one table entry away from being covered.
+var containedKinds = []resourceKind{
 	{kind: "json", spec: func(p string) interface{} { return map[string]interface{}{"file": p, "key": ".version"} }},
 	{kind: "toml", spec: func(p string) interface{} { return map[string]interface{}{"file": p, "key": "version"} }},
 	{kind: "yaml", spec: func(p string) interface{} { return map[string]interface{}{"file": p, "key": "$.version"} }},
 	{kind: "xml", spec: func(p string) interface{} { return map[string]interface{}{"file": p, "path": "/version"} }},
 	{kind: "file", spec: func(p string) interface{} { return map[string]interface{}{"file": p} }},
 	{kind: "toolversions", spec: func(p string) interface{} { return map[string]interface{}{"file": p, "key": "golang"} }},
+}
+
+// unconfinedKinds lists the file based resources that always accepted absolute and parent
+// directory paths with an SCM. Confining them would break existing manifests, which only a
+// major release may do.
+var unconfinedKinds = []resourceKind{
 	{kind: "hcl", spec: func(p string) interface{} { return map[string]interface{}{"file": p, "path": "resource.version"} }},
 	{kind: "bazelmod", spec: func(p string) interface{} { return map[string]interface{}{"file": p, "module": "rules_go"} }},
 	{kind: "systemd", spec: func(p string) interface{} {
@@ -61,14 +70,13 @@ var containedKinds = []struct {
 }
 
 // TestConditionPathContainment is the regression test for GHSA-hj4x-hm4v-7wpw across every
-// file based kind, not just the handful that had a test of their own.
+// file based kind.
 //
-// The check runs through Condition because every kind here implements it, while a few
-// (terraform/lock, terraform/provider) have no source stage.
+// The check runs through Condition because every kind here implements it.
 //
-// When Updatecli works from an SCM checkout, a path that leaves it — through an absolute
-// path or through ".." — must fail the pipeline rather than read an arbitrary file. The
-// path is often (attacker) controlled, e.g. templated from a source output.
+// When Updatecli works from an SCM checkout, a path that leaves it, whether absolute or
+// through "..", must fail the pipeline instead of reading an arbitrary file. An attacker
+// can often control that path, for example when it is templated from a source output.
 func TestConditionPathContainment(t *testing.T) {
 	for _, tt := range containedKinds {
 		t.Run(tt.kind, func(t *testing.T) {
@@ -87,13 +95,13 @@ func TestConditionPathContainment(t *testing.T) {
 
 					mockSCM := &scm.MockScm{WorkingDir: workingDir}
 
-					// A non empty source: a few kinds validate it before touching
-					// the filesystem, and the point here is to reach the path.
+					// A non empty source, because a few kinds validate it before
+					// touching the filesystem and this test must reach the path check.
 					_, _, gotErr := sut.Condition(
 						context.Background(),
 						"1.0.0",
 						mockSCM,
-						utils.NewResolver(mockSCM, ""))
+						pathresolver.New(mockSCM, ""))
 
 					require.Error(t, gotErr, "a path escaping the working directory must be rejected")
 					assert.True(t,
@@ -106,13 +114,11 @@ func TestConditionPathContainment(t *testing.T) {
 	}
 }
 
-// TestConditionLocalRunAcceptsAbsolutePath is the counterpart: without an SCM there is no
-// boundary, so an absolute spec.file is an ordinary local path.
-//
-// Every kind here used to accept one; json, toml, csv and toolversions started rejecting
-// it when containment began treating the process working directory as a boundary.
+// TestConditionLocalRunAcceptsAbsolutePath checks the opposite case: without an SCM there
+// is no boundary, so an absolute spec.file is an ordinary local path. The process working
+// directory must not act as a boundary.
 func TestConditionLocalRunAcceptsAbsolutePath(t *testing.T) {
-	for _, tt := range containedKinds {
+	for _, tt := range append(append([]resourceKind{}, containedKinds...), unconfinedKinds...) {
 		t.Run(tt.kind, func(t *testing.T) {
 			absentFilePath := filepath.Join(t.TempDir(), "does-not-exist.txt")
 
@@ -122,15 +128,52 @@ func TestConditionLocalRunAcceptsAbsolutePath(t *testing.T) {
 			})
 			require.NoError(t, err)
 
-			// The file does not exist, so an error is expected either way. What matters
-			// is that it is a "missing file" error and never a containment refusal.
-			_, _, gotErr := sut.Condition(context.Background(), "1.0.0", nil, utils.NewResolver(nil, ""))
+			// The file does not exist, so an error is expected. It must be a "missing
+			// file" error, never a containment refusal.
+			_, _, gotErr := sut.Condition(context.Background(), "1.0.0", nil, pathresolver.New(nil, ""))
 			if gotErr == nil {
 				return
 			}
 
 			assert.NotContains(t, gotErr.Error(), "is not allowed")
 			assert.NotContains(t, gotErr.Error(), "escapes the working directory")
+		})
+	}
+}
+
+// TestConditionUnconfinedKindsAcceptEscapingPath checks that the kinds which never enforced
+// the SCM boundary still accept absolute and parent directory paths with an SCM.
+func TestConditionUnconfinedKindsAcceptEscapingPath(t *testing.T) {
+	for _, tt := range unconfinedKinds {
+		t.Run(tt.kind, func(t *testing.T) {
+			for name, escapingPath := range escapingPaths(t) {
+				t.Run(name, func(t *testing.T) {
+					workingDir := filepath.Join(t.TempDir(), "checkout", "nested")
+					require.NoError(t, os.MkdirAll(workingDir, 0o700))
+
+					sut, err := resource.New(resource.ResourceConfig{
+						Kind: tt.kind,
+						Spec: tt.spec(escapingPath),
+					})
+					require.NoError(t, err)
+
+					mockSCM := &scm.MockScm{WorkingDir: workingDir}
+
+					// The file does not exist, so an error is expected. It must be a
+					// "missing file" error, never a containment refusal.
+					_, _, gotErr := sut.Condition(
+						context.Background(),
+						"1.0.0",
+						mockSCM,
+						pathresolver.New(mockSCM, ""))
+					if gotErr == nil {
+						return
+					}
+
+					assert.NotContains(t, gotErr.Error(), "is not allowed")
+					assert.NotContains(t, gotErr.Error(), "escapes the working directory")
+				})
+			}
 		})
 	}
 }

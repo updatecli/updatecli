@@ -9,11 +9,11 @@ import (
 
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
 // Target updates a scm repository based on the modified yaml file.
-func (x *XML) Target(_ context.Context, source string, scm scm.ScmHandler, resolver utils.Resolver, dryRun bool, resultTarget *result.Target) (err error) {
+func (x *XML) Target(_ context.Context, source string, scm scm.ScmHandler, pathResolver pathresolver.Resolver, dryRun bool, resultTarget *result.Target) (err error) {
 
 	if strings.HasPrefix(x.spec.File, "https://") ||
 		strings.HasPrefix(x.spec.File, "http://") {
@@ -27,7 +27,7 @@ func (x *XML) Target(_ context.Context, source string, scm scm.ScmHandler, resol
 
 	resultTarget.NewInformation = value
 
-	resourceFile, err := resolver.Resolve(x.spec.File)
+	resourceFile, err := pathResolver.Resolve(x.spec.File)
 	if err != nil {
 		return fmt.Errorf("invalid file path %q: %w", x.spec.File, err)
 	}

@@ -10,8 +10,8 @@ import (
 	das "github.com/tomwright/dasel"
 
 	"github.com/tomwright/dasel/storage"
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/dasel"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
 // csvContent is *** of the dasel FileContent
@@ -22,9 +22,9 @@ type csvContent struct {
 	comment     rune
 }
 
-func (c *csvContent) Read(resolver utils.Resolver) error {
+func (c *csvContent) Read(pathResolver pathresolver.Resolver) error {
 
-	if err := c.ResolvePath(resolver); err != nil {
+	if err := c.ResolvePath(pathResolver); err != nil {
 		return err
 	}
 

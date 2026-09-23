@@ -5,15 +5,13 @@ import (
 	"fmt"
 
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
 // Source reads the version of the specified module from MODULE.bazel
-func (b *Bazelmod) Source(_ context.Context, resolver utils.Resolver, resultSource *result.Source) error {
-	filePath, err := resolver.Resolve(b.spec.File)
-	if err != nil {
-		return fmt.Errorf("invalid file path %q: %w", b.spec.File, err)
-	}
+func (b *Bazelmod) Source(_ context.Context, pathResolver pathresolver.Resolver, resultSource *result.Source) error {
+	// Join, not Resolve: absolute and parent directory paths are allowed, even with an scm.
+	filePath := pathResolver.Join(b.spec.File)
 
 	// Check if file exists
 	if !b.contentRetriever.FileExists(filePath) {

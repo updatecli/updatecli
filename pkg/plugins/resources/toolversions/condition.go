@@ -6,17 +6,17 @@ import (
 	"strings"
 
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
-func (t *ToolVersions) Condition(_ context.Context, source string, scm scm.ScmHandler, resolver utils.Resolver) (pass bool, message string, err error) {
+func (t *ToolVersions) Condition(_ context.Context, source string, scm scm.ScmHandler, pathResolver pathresolver.Resolver) (pass bool, message string, err error) {
 	conditionResult := true
 
 	resultMessage := ""
 
 	for i := range t.contents {
 
-		if err := t.contents[i].Read(resolver); err != nil {
+		if err := t.contents[i].Read(pathResolver); err != nil {
 			return false, "", fmt.Errorf("reading toml file: %w", err)
 		}
 

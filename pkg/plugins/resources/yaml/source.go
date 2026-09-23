@@ -10,14 +10,14 @@ import (
 	"github.com/goccy/go-yaml/parser"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 	"github.com/vmware-labs/yaml-jsonpath/pkg/yamlpath"
 
 	"go.yaml.in/yaml/v3"
 )
 
 // Source return the latest version
-func (y *Yaml) Source(_ context.Context, resolver utils.Resolver, resultSource *result.Source) error {
+func (y *Yaml) Source(_ context.Context, pathResolver pathresolver.Resolver, resultSource *result.Source) error {
 	// By default workingDir is set to local directory
 	var filePath string
 
@@ -35,7 +35,7 @@ func (y *Yaml) Source(_ context.Context, resolver utils.Resolver, resultSource *
 		logrus.Warnf("Key 'Value' is not used by source YAML")
 	}
 
-	if err := y.initFiles(resolver); err != nil {
+	if err := y.initFiles(pathResolver); err != nil {
 		return fmt.Errorf("init files: %w", err)
 	}
 

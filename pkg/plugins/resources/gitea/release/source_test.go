@@ -7,8 +7,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
@@ -120,7 +120,7 @@ func TestSource(t *testing.T) {
 			require.NoError(t, gotErr)
 
 			gotResult := result.Source{}
-			gotErr = g.Source(context.Background(), utils.Resolver{}, &gotResult)
+			gotErr = g.Source(context.Background(), pathresolver.Resolver{}, &gotResult)
 
 			if tt.wantErr {
 				require.Error(t, gotErr)

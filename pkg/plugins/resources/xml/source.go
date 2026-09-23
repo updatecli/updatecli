@@ -6,13 +6,13 @@ import (
 
 	"github.com/beevik/etree"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
 // Source returns a value from a xml file
-func (x *XML) Source(_ context.Context, resolver utils.Resolver, resultSource *result.Source) error {
+func (x *XML) Source(_ context.Context, pathResolver pathresolver.Resolver, resultSource *result.Source) error {
 
-	resourceFile, err := resolver.Resolve(x.spec.File)
+	resourceFile, err := pathResolver.Resolve(x.spec.File)
 	if err != nil {
 		return fmt.Errorf("invalid file path %q: %w", x.spec.File, err)
 	}

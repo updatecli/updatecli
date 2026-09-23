@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
 func TestSource(t *testing.T) {
@@ -29,7 +29,7 @@ func TestSource(t *testing.T) {
 
 		gotResult := result.Source{}
 
-		err := d.ami.Source(context.Background(), utils.Resolver{}, &gotResult)
+		err := d.ami.Source(context.Background(), pathresolver.Resolver{}, &gotResult)
 
 		if !errors.Is(err, d.expectedError) {
 			t.Errorf("[%d] Wrong error:\nExpected Error:\t%v\nGot:\t\t%v\n",

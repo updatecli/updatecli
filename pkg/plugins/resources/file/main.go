@@ -9,6 +9,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/text"
 	"github.com/updatecli/updatecli/pkg/plugins/utils"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
 // Spec defines a specification for a "file" resource
@@ -178,7 +179,7 @@ func hasDuplicates(values []string) bool {
 }
 
 // initFiles initializes the f.files map
-func (f *File) initFiles(resolver utils.Resolver) error {
+func (f *File) initFiles(pathResolver pathresolver.Resolver) error {
 	f.files = make(map[string]fileMetadata)
 
 	// File as unique element of newResource.files
@@ -187,7 +188,7 @@ func (f *File) initFiles(resolver utils.Resolver) error {
 		var err error
 		switch f.spec.SearchPattern {
 		case true:
-			foundFiles, err = utils.FindFilesMatchingPathPattern(resolver.Dir(), f.spec.File)
+			foundFiles, err = utils.FindFilesMatchingPathPattern(pathResolver.Dir(), f.spec.File)
 			if err != nil {
 				return fmt.Errorf("unable to find file matching %q: %s", f.spec.File, err)
 			}
@@ -210,7 +211,7 @@ func (f *File) initFiles(resolver utils.Resolver) error {
 
 		switch f.spec.SearchPattern {
 		case true:
-			foundFiles, err = utils.FindFilesMatchingPathPattern(resolver.Dir(), specFile)
+			foundFiles, err = utils.FindFilesMatchingPathPattern(pathResolver.Dir(), specFile)
 			if err != nil {
 				return fmt.Errorf("unable to find files matching %q: %s", f.spec.File, err)
 			}
@@ -228,16 +229,16 @@ func (f *File) initFiles(resolver utils.Resolver) error {
 		}
 	}
 
-	return f.UpdateAbsoluteFilePath(resolver)
+	return f.UpdateAbsoluteFilePath(pathResolver)
 }
 
-// UpdateAbsoluteFilePath resolves every file of the f.files map against the resolver,
+// UpdateAbsoluteFilePath resolves every file of the f.files map against the path resolver,
 // leaving the path the user wrote available as originalPath for reporting.
-func (f *File) UpdateAbsoluteFilePath(resolver utils.Resolver) error {
+func (f *File) UpdateAbsoluteFilePath(pathResolver pathresolver.Resolver) error {
 	for filePath := range f.files {
 		file := f.files[filePath]
 
-		resolvedPath, err := resolver.Resolve(file.originalPath)
+		resolvedPath, err := pathResolver.Resolve(file.originalPath)
 		if err != nil {
 			return err
 		}

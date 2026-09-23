@@ -6,11 +6,11 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
 // Condition checks that a git branch exists
-func (gb *GitBranch) Condition(_ context.Context, source string, scm scm.ScmHandler, resolver utils.Resolver) (pass bool, message string, err error) {
+func (gb *GitBranch) Condition(_ context.Context, source string, scm scm.ScmHandler, pathResolver pathresolver.Resolver) (pass bool, message string, err error) {
 
 	if gb.spec.Path != "" && scm != nil {
 		logrus.Warningf("Path setting value %q is overriding the scm configuration (value %q)",
@@ -31,7 +31,7 @@ func (gb *GitBranch) Condition(_ context.Context, source string, scm scm.ScmHand
 		}
 
 	} else if gb.spec.Path != "" {
-		gb.directory = resolver.Join(gb.spec.Path)
+		gb.directory = pathResolver.JoinManifest(gb.spec.Path)
 	} else if scm != nil {
 		gb.directory = scm.GetDirectory()
 	}

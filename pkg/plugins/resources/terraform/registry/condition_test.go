@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
 func TestCondition(t *testing.T) {
@@ -108,7 +108,7 @@ func TestCondition(t *testing.T) {
 				},
 			}
 
-			gotResult, _, gotErr := got.Condition(context.Background(), tt.source, nil, utils.Resolver{})
+			gotResult, _, gotErr := got.Condition(context.Background(), tt.source, nil, pathresolver.Resolver{})
 			if tt.expectedError {
 				if assert.Error(t, gotErr) {
 					assert.Equal(t, tt.expectedErrorMsg.Error(), gotErr.Error())

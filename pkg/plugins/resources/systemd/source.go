@@ -5,14 +5,12 @@ import (
 	"fmt"
 
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
-func (s *Systemd) Source(_ context.Context, resolver utils.Resolver, sourceResult *result.Source) error {
-	filePath, err := resolver.Resolve(s.spec.File)
-	if err != nil {
-		return fmt.Errorf("invalid file path %q: %w", s.spec.File, err)
-	}
+func (s *Systemd) Source(_ context.Context, pathResolver pathresolver.Resolver, sourceResult *result.Source) error {
+	// Join, not Resolve: absolute and parent directory paths are allowed, even with an scm.
+	filePath := pathResolver.Join(s.spec.File)
 
 	_, matchingOpts, err := s.readOptions(filePath)
 	if err != nil {

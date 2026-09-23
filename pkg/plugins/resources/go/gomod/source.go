@@ -5,17 +5,15 @@ import (
 	"fmt"
 
 	"github.com/updatecli/updatecli/pkg/core/result"
-
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
 // Source returns the latest go module version
-func (g *GoMod) Source(_ context.Context, resolver utils.Resolver, resultSource *result.Source) error {
-	filename, err := resolver.Resolve(g.filename)
-	if err != nil {
-		return fmt.Errorf("invalid file path %q: %w", g.filename, err)
-	}
+func (g *GoMod) Source(_ context.Context, pathResolver pathresolver.Resolver, resultSource *result.Source) error {
+	// Join, not Resolve: absolute and parent directory paths are allowed, even with an scm.
+	filename := pathResolver.Join(g.filename)
 
+	var err error
 	g.foundVersion, err = g.version(filename)
 	if err != nil {
 		return fmt.Errorf("searching version: %w", err)

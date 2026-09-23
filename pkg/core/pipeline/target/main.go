@@ -15,7 +15,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
 var (
@@ -134,7 +134,7 @@ func (t *Target) Run(ctx context.Context, source string, o *Options) (err error)
 
 	// If no scm configuration provided then stop early
 	if t.Scm == nil {
-		err = target.Target(ctx, source, nil, utils.NewResolver(nil, t.BaseDir), o.DryRun, t.Result)
+		err = target.Target(ctx, source, nil, pathresolver.New(nil, t.BaseDir), o.DryRun, t.Result)
 		if err != nil {
 			failTargetRun()
 			return err
@@ -159,7 +159,7 @@ func (t *Target) Run(ctx context.Context, source string, o *Options) (err error)
 		return err
 	}
 
-	err = target.Target(ctx, source, s, utils.NewResolver(s, t.BaseDir), o.DryRun, t.Result)
+	err = target.Target(ctx, source, s, pathresolver.New(s, t.BaseDir), o.DryRun, t.Result)
 	if err != nil {
 		failTargetRun()
 		return err

@@ -11,14 +11,14 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/text"
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
 // Condition test if a file content matches the content provided via configuration.
 // If the configuration doesn't specify a value then it fall back to the source output
-func (f *File) Condition(_ context.Context, source string, scm scm.ScmHandler, resolver utils.Resolver) (pass bool, message string, err error) {
+func (f *File) Condition(_ context.Context, source string, scm scm.ScmHandler, pathResolver pathresolver.Resolver) (pass bool, message string, err error) {
 
-	if err := f.initFiles(resolver); err != nil {
+	if err := f.initFiles(pathResolver); err != nil {
 		return false, "", fmt.Errorf("init files: %w", err)
 	}
 

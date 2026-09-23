@@ -8,14 +8,14 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
 var (
 	ErrSpecVersionFilterRequireMultiple = errors.New("in the context of a source, parameter \"versionfilter\" and \"query\" must be used together")
 )
 
-func (c *CSV) Source(_ context.Context, resolver utils.Resolver, resultSource *result.Source) error {
+func (c *CSV) Source(_ context.Context, pathResolver pathresolver.Resolver, resultSource *result.Source) error {
 
 	if len(c.contents) > 1 {
 		return errors.New("source only supports one file")
@@ -31,7 +31,7 @@ func (c *CSV) Source(_ context.Context, resolver utils.Resolver, resultSource *r
 
 	sourceOutput := ""
 
-	if err := content.Read(resolver); err != nil {
+	if err := content.Read(pathResolver); err != nil {
 		return fmt.Errorf("reading csv file: %w", err)
 	}
 

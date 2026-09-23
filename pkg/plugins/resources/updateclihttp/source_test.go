@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
 const (
@@ -167,7 +167,7 @@ func TestSource(t *testing.T) {
 			}
 
 			got := result.Source{}
-			gotErr := sut.Source(context.Background(), utils.Resolver{BaseDir: tt.workingDir, Boundary: tt.workingDir}, &got)
+			gotErr := sut.Source(context.Background(), pathresolver.Resolver{BaseDir: tt.workingDir, Boundary: tt.workingDir}, &got)
 
 			if tt.wantErr != nil {
 				require.Error(t, gotErr)

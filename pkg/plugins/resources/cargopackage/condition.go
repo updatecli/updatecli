@@ -7,12 +7,12 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
 // Condition checks if a cargo package with a specific version is published
 // We assume that if we can't find the package version in the index, then it means it doesn't exist.
-func (cp *CargoPackage) Condition(ctx context.Context, source string, scm scm.ScmHandler, resolver utils.Resolver) (pass bool, message string, err error) {
+func (cp *CargoPackage) Condition(ctx context.Context, source string, scm scm.ScmHandler, pathResolver pathresolver.Resolver) (pass bool, message string, err error) {
 	if scm != nil {
 		path := scm.GetDirectory()
 		if cp.spec.Registry.RootDir != "" {
@@ -27,9 +27,9 @@ func (cp *CargoPackage) Condition(ctx context.Context, source string, scm scm.Sc
 		}
 		cp.registry.RootDir = path
 	} else if cp.registry.RootDir != "" {
-		// An empty RootDir means "no local registry checkout", so it must stay empty
-		// rather than be resolved to the base directory.
-		cp.registry.RootDir = resolver.Join(cp.registry.RootDir)
+		// An empty RootDir means "no local registry checkout", so it must not be
+		// resolved to the base directory.
+		cp.registry.RootDir = pathResolver.Join(cp.registry.RootDir)
 	}
 
 	versionToCheck := cp.spec.Version

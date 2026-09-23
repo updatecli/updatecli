@@ -10,10 +10,10 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
-func (g Stash) Target(ctx context.Context, source string, scm scm.ScmHandler, resolver utils.Resolver, dryRun bool, resultTarget result.Target) error {
+func (g Stash) Target(ctx context.Context, source string, scm scm.ScmHandler, pathResolver pathresolver.Resolver, dryRun bool, resultTarget result.Target) error {
 	if len(g.spec.Tag) == 0 {
 		g.spec.Tag = source
 	}

@@ -10,7 +10,7 @@ const (
 	// base and the one configured globally applies.
 	RelativePathBaseUndefined RelativePathBase = ""
 	// RelativePathBaseWorkingDirectory resolves relative paths against the directory
-	// updatecli was started from. This is the historical behavior and the default.
+	// updatecli was started from. This is the default.
 	RelativePathBaseWorkingDirectory RelativePathBase = "workingdirectory"
 	// RelativePathBaseManifest resolves relative paths against the directory holding the
 	// manifest that declared them, which makes a manifest relocatable.
@@ -20,10 +20,8 @@ const (
 // ManifestOptions groups the manifest level settings that change how Updatecli behaves,
 // as opposed to the keys describing what the pipeline is made of.
 //
-// It is named ManifestOptions rather than Options because config.Option already names the
-// options a caller passes to New, which are a different thing: how to read a manifest off
-// disk, not how the pipeline it describes behaves. The two barely overlap — "partialfiles"
-// is meaningless inside a manifest — so they stay separate types.
+// It is not called Options because config.Option already names the options that control
+// how a manifest is read from disk.
 type ManifestOptions struct {
 	// "relativepaths" defines what the relative paths of this manifest resolve against.
 	//
@@ -45,26 +43,29 @@ type ManifestOptions struct {
 	// ---
 	//
 	// remark:
-	// 	* it only affects resources that are not attached to an "scm". A resource with an
-	// 	  "scmid" always resolves its paths against the scm working directory.
+	// 	* a resource with an "scmid" resolves its file paths against the scm checkout,
+	// 	  whatever this setting says.
+	// 	* with "manifest", a relative scm "directory" also resolves from the manifest
+	// 	  directory, and so does the "path" of the gittag, gitbranch and gitcommit
+	// 	  resources, even when they have an "scmid".
+	// 	* with "manifest", autodiscovery without an scm searches the manifest directory,
+	// 	  and the "local" scm is guessed from the git repository holding the manifest. A
+	// 	  manifest outside a git repository cannot use "scmid: local".
 	// 	* it overrides the "--relative-paths" command line flag.
 	RelativePaths RelativePathBase `yaml:",omitempty" jsonschema:"enum=workingdirectory,enum=manifest"`
 }
 
 // Merge fills the settings the manifest left undefined with the ones configured globally.
 //
-// Each setting decides for itself: "relativepaths" lets the manifest override the command
-// line, while a setting that exists to prevent something (such as a future "dryrun") would
-// have to OR the two so the safer value always wins. That is why this is a method rather
-// than a plain struct assignment.
+// A value set in the manifest wins over the command line.
 func (o *ManifestOptions) Merge(defaults ManifestOptions) {
 	if o.RelativePaths == RelativePathBaseUndefined {
 		o.RelativePaths = defaults.RelativePaths
 	}
 }
 
-// Validate reports a setting Updatecli does not understand, rather than silently falling
-// back to the default.
+// Validate returns an error for a setting Updatecli does not understand, so a typo never
+// silently falls back to the default.
 func (o ManifestOptions) Validate() error {
 	switch o.RelativePaths {
 	case RelativePathBaseUndefined, RelativePathBaseWorkingDirectory, RelativePathBaseManifest:

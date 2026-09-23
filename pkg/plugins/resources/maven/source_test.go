@@ -8,8 +8,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/mavenmetadata"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
 func TestSource(t *testing.T) {
@@ -172,7 +172,7 @@ func TestSource(t *testing.T) {
 			}
 
 			gotResult := result.Source{}
-			gotErr := sut.Source(context.Background(), utils.Resolver{BaseDir: tt.workingDir, Boundary: tt.workingDir}, &gotResult)
+			gotErr := sut.Source(context.Background(), pathresolver.Resolver{BaseDir: tt.workingDir, Boundary: tt.workingDir}, &gotResult)
 			if tt.wantErr {
 				require.Error(t, gotErr)
 				return

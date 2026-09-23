@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
 func TestTarget(t *testing.T) {
@@ -99,7 +99,7 @@ func TestTarget(t *testing.T) {
 			require.NoError(t, err)
 
 			gotResult := result.Target{}
-			err = x.Target(context.Background(), "", nil, utils.Resolver{}, true, &gotResult)
+			err = x.Target(context.Background(), "", nil, pathresolver.Resolver{}, true, &gotResult)
 
 			if tt.wantErr {
 				assert.Equal(t, tt.expectedErrorMsg.Error(), err.Error())

@@ -12,7 +12,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/text"
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
 func TestFile_TargetMultiples(t *testing.T) {
@@ -803,7 +803,7 @@ func TestFile_TargetMultiples(t *testing.T) {
 			}
 
 			gotResultTarget := result.Target{}
-			gotErr := f.Target(context.Background(), tt.inputSourceValue, mockSCM, utils.NewResolver(mockSCM, ""), tt.dryRun, &gotResultTarget)
+			gotErr := f.Target(context.Background(), tt.inputSourceValue, mockSCM, pathresolver.New(mockSCM, ""), tt.dryRun, &gotResultTarget)
 
 			if tt.wantedErr {
 				assert.Error(t, gotErr)
@@ -978,7 +978,7 @@ func TestFile_TargetFromSCM(t *testing.T) {
 
 			gotResultTarget := result.Target{}
 
-			gotErr := f.Target(context.Background(), tt.inputSourceValue, tt.scm, utils.NewResolver(tt.scm, ""), tt.dryRun, &gotResultTarget)
+			gotErr := f.Target(context.Background(), tt.inputSourceValue, tt.scm, pathresolver.New(tt.scm, ""), tt.dryRun, &gotResultTarget)
 
 			if tt.wantedErr {
 				assert.Error(t, gotErr)
@@ -1112,7 +1112,7 @@ jdk_version = "11.0.12"`,
 			}
 
 			gotResultTarget := result.Target{}
-			err := f.Target(context.Background(), tt.inputSourceValue, nil, utils.Resolver{}, true, &gotResultTarget) // dry run
+			err := f.Target(context.Background(), tt.inputSourceValue, nil, pathresolver.Resolver{}, true, &gotResultTarget) // dry run
 			require.NoError(t, err, tt.description)
 
 			assert.Equal(t, tt.expectedInformation, gotResultTarget.Information,

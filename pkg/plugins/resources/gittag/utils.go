@@ -8,8 +8,8 @@ import (
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
 	"github.com/sirupsen/logrus"
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
 // listRemoteURLTags lists all tags from a remote git repository
@@ -59,7 +59,7 @@ func (gt *GitTag) listRemoteURLTags() ([]string, map[string]string, error) {
 // inside the provided age window.
 //
 // directory is the repository to read from when the spec names neither a URL nor a path.
-func (gt *GitTag) listRemoteDirectoryTags(directory string, tagAge age.Spec, resolver utils.Resolver) ([]string, map[string]string, error) {
+func (gt *GitTag) listRemoteDirectoryTags(directory string, tagAge age.Spec, pathResolver pathresolver.Resolver) ([]string, map[string]string, error) {
 	if gt.nativeGitHandler == nil {
 		return nil, nil, fmt.Errorf("nativeGitHandler is not initialized")
 	}
@@ -78,7 +78,7 @@ func (gt *GitTag) listRemoteDirectoryTags(directory string, tagAge age.Spec, res
 		}
 	}
 	if gt.spec.Path != "" {
-		gt.directory = resolver.Join(gt.spec.Path)
+		gt.directory = pathResolver.JoinManifest(gt.spec.Path)
 	}
 
 	if gt.directory == "" {

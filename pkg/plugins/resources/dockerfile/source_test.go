@@ -3,13 +3,15 @@ package dockerfile
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/text"
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
 func TestDockerfile_Source(t *testing.T) {
@@ -212,7 +214,7 @@ LABEL org.opencontainers.image.version=1.0.0
 				files:            tt.files,
 			}
 			gotResult := result.Source{}
-			gotErr = d.Source(context.Background(), utils.Resolver{}, &gotResult)
+			gotErr = d.Source(context.Background(), pathresolver.Resolver{}, &gotResult)
 
 			if tt.wantErr != nil {
 				assert.Error(t, gotErr)
@@ -224,4 +226,36 @@ LABEL org.opencontainers.image.version=1.0.0
 			assert.Equal(t, tt.expectedResult, gotResult.Information)
 		})
 	}
+}
+
+// TestDockerfile_SourceAbsolutePathWithScm checks that, with an scm, an absolute file is read
+// under the checkout and never from the host.
+func TestDockerfile_SourceAbsolutePathWithScm(t *testing.T) {
+	spec := Spec{
+		Instruction: map[string]interface{}{
+			"keyword": "LABEL",
+			"matcher": "org.opencontainers.image.version",
+		},
+	}
+	newParser, err := getParser(spec)
+	require.NoError(t, err)
+
+	checkout := filepath.Join(string(filepath.Separator)+"tmp", "checkout")
+	mockFile := text.MockTextRetriever{
+		Contents: map[string]string{
+			filepath.Join(checkout, "Dockerfile"): dockerfileFixture,
+		},
+	}
+
+	d := &Dockerfile{
+		spec:             spec,
+		contentRetriever: &mockFile,
+		parser:           newParser,
+		files:            []string{string(filepath.Separator) + "Dockerfile"},
+	}
+
+	gotResult := result.Source{}
+	err = d.Source(context.Background(), pathresolver.New(&scm.MockScm{WorkingDir: checkout}, ""), &gotResult)
+	require.NoError(t, err)
+	assert.Equal(t, "1.0.0", gotResult.Information)
 }

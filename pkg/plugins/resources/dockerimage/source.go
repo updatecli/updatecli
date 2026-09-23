@@ -9,10 +9,10 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
-func (di *DockerImage) Source(_ context.Context, resolver utils.Resolver, resultSource *result.Source) error {
+func (di *DockerImage) Source(_ context.Context, pathResolver pathresolver.Resolver, resultSource *result.Source) error {
 	repo, err := name.NewRepository(di.spec.Image)
 	if err != nil {
 		return fmt.Errorf("invalid repository %s: %w", di.spec.Image, err)

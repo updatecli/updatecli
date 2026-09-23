@@ -6,20 +6,18 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
-func (s *Systemd) Condition(_ context.Context, source string, scm scm.ScmHandler, resolver utils.Resolver) (pass bool, message string, err error) {
+func (s *Systemd) Condition(_ context.Context, source string, scm scm.ScmHandler, pathResolver pathresolver.Resolver) (pass bool, message string, err error) {
 	expected := s.spec.Value
 	if expected == "" {
 		// Override the default value with the source output when the `spec.value` is not set.
 		expected = source
 	}
 
-	filePath, err := resolver.Resolve(s.spec.File)
-	if err != nil {
-		return false, "", fmt.Errorf("invalid file path %q: %w", s.spec.File, err)
-	}
+	// Join, not Resolve: absolute and parent directory paths are allowed, even with an scm.
+	filePath := pathResolver.Join(s.spec.File)
 
 	_, matchingOpts, err := s.readOptions(filePath)
 	if err != nil {

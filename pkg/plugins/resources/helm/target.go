@@ -10,12 +10,12 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/yaml"
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
 // Target updates helm chart, it receives the default source value and a "dry-run" flag
 // then return if it changed something or failed
-func (c *Chart) Target(ctx context.Context, source string, scm scm.ScmHandler, resolver utils.Resolver, dryRun bool, resultTarget *result.Target) error {
+func (c *Chart) Target(ctx context.Context, source string, scm scm.ScmHandler, pathResolver pathresolver.Resolver, dryRun bool, resultTarget *result.Target) error {
 	var out bytes.Buffer
 	err := c.ValidateTarget()
 	if err != nil {
@@ -36,14 +36,14 @@ func (c *Chart) Target(ctx context.Context, source string, scm scm.ScmHandler, r
 		return err
 	}
 
-	err = yamlResource.Target(ctx, source, scm, resolver, dryRun, resultTarget)
+	err = yamlResource.Target(ctx, source, scm, pathResolver, dryRun, resultTarget)
 	if err != nil {
 		return fmt.Errorf("unable to update chart %s: %s", c.spec.Name, err)
 	}
 
-	chartPath := resolver.Join(c.spec.Name)
+	chartPath := pathResolver.Join(c.spec.Name)
 
-	err = c.MetadataUpdate(ctx, resultTarget.NewInformation, scm, resolver, dryRun, resultTarget)
+	err = c.MetadataUpdate(ctx, resultTarget.NewInformation, scm, pathResolver, dryRun, resultTarget)
 	if err != nil {
 		return fmt.Errorf("unable to update chart metadata: %s", err)
 	}

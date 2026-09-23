@@ -9,8 +9,8 @@ import (
 	"go.yaml.in/yaml/v3"
 )
 
-// TestConfig_BaseDir covers where the relative paths of a manifest resolve from, which is
-// the whole point of the "options.relativepaths" key.
+// TestConfig_BaseDir covers where the relative paths of a manifest resolve from, as set by
+// the "options.relativepaths" key.
 func TestConfig_BaseDir(t *testing.T) {
 	testdata := []struct {
 		name            string
@@ -142,8 +142,7 @@ func TestSpec_MarshalOmitsEmptyOptions(t *testing.T) {
 	assert.Contains(t, string(gotResult), "relativepaths: manifest")
 }
 
-// TestManifestOptions_Validate ensures a misspelled setting is reported rather than
-// silently falling back to the default.
+// TestManifestOptions_Validate ensures a misspelled setting is reported as an error.
 func TestManifestOptions_Validate(t *testing.T) {
 	testdata := []struct {
 		relativePaths RelativePathBase

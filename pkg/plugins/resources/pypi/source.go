@@ -5,11 +5,11 @@ import (
 	"fmt"
 
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
 // Source returns the latest matching PyPI package version.
-func (p *Pypi) Source(ctx context.Context, resolver utils.Resolver, resultSource *result.Source) error {
+func (p *Pypi) Source(ctx context.Context, pathResolver pathresolver.Resolver, resultSource *result.Source) error {
 	ver, _, err := p.getVersions(ctx)
 	if err != nil {
 		return err

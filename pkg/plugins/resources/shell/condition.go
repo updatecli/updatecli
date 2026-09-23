@@ -5,11 +5,11 @@ import (
 	"fmt"
 
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
 // Condition tests if the provided command (concatenated with the source) is executed with success
-func (s *Shell) Condition(_ context.Context, source string, scm scm.ScmHandler, resolver utils.Resolver) (pass bool, message string, err error) {
+func (s *Shell) Condition(_ context.Context, source string, scm scm.ScmHandler, pathResolver pathresolver.Resolver) (pass bool, message string, err error) {
 	// Ensure environment variable(s) are up to date
 	// either it already has a value specified, or it retrieves
 	// the value from the Updatecli process
@@ -29,7 +29,7 @@ func (s *Shell) Condition(_ context.Context, source string, scm scm.ScmHandler, 
 		Value: &conditionStageValue,
 	})
 
-	err = s.success.PreCommand(s.getWorkingDirPath(resolver))
+	err = s.success.PreCommand(s.getWorkingDirPath(pathResolver))
 	if err != nil {
 		return false, "", err
 	}
@@ -41,14 +41,14 @@ func (s *Shell) Condition(_ context.Context, source string, scm scm.ScmHandler, 
 
 	err = s.executeCommand(command{
 		Cmd: s.interpreter + " " + scriptFilename,
-		Dir: s.getWorkingDirPath(resolver),
+		Dir: s.getWorkingDirPath(pathResolver),
 		Env: env.ToStringSlice(),
 	})
 	if err != nil {
 		return false, "", fmt.Errorf("failed while running condition script - %s", err)
 	}
 
-	err = s.success.PostCommand(s.getWorkingDirPath(resolver))
+	err = s.success.PostCommand(s.getWorkingDirPath(pathResolver))
 	if err != nil {
 		return false, "", err
 	}

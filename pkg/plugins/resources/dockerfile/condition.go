@@ -7,19 +7,17 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
 // Condition test if the Dockerfile contains the correct key/value
-func (d *Dockerfile) Condition(_ context.Context, source string, scm scm.ScmHandler, resolver utils.Resolver) (pass bool, message string, err error) {
+func (d *Dockerfile) Condition(_ context.Context, source string, scm scm.ScmHandler, pathResolver pathresolver.Resolver) (pass bool, message string, err error) {
 	globalPass := true
 	descriptionList := []string{}
 
 	for _, relativeFile := range d.files {
-		file, err := resolver.Resolve(relativeFile)
-		if err != nil {
-			return false, "", fmt.Errorf("invalid file path %q: %w", relativeFile, err)
-		}
+		// Join, not Resolve: absolute and parent directory paths are allowed, even with an scm.
+		file := pathResolver.Join(relativeFile)
 
 		if !d.contentRetriever.FileExists(file) {
 			return false, "", fmt.Errorf("the file %s does not exist", file)

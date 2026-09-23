@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
@@ -120,7 +120,7 @@ func TestSource(t *testing.T) {
 			}
 
 			resultSource := &result.Source{}
-			err = b.Source(context.Background(), utils.Resolver{}, resultSource)
+			err = b.Source(context.Background(), pathresolver.Resolver{}, resultSource)
 
 			if tt.wantErr {
 				require.Error(t, err)
@@ -152,7 +152,7 @@ func TestSource_YankedVersions(t *testing.T) {
 	}
 
 	resultSource := &result.Source{}
-	err = b.Source(context.Background(), utils.Resolver{}, resultSource)
+	err = b.Source(context.Background(), pathresolver.Resolver{}, resultSource)
 	require.NoError(t, err)
 
 	// Should return 0.52.0 (latest), not 0.50.0 (yanked) or 0.51.0
@@ -215,7 +215,7 @@ func TestSource_SemanticVersionSorting(t *testing.T) {
 			}
 
 			resultSource := &result.Source{}
-			err = b.Source(context.Background(), utils.Resolver{}, resultSource)
+			err = b.Source(context.Background(), pathresolver.Resolver{}, resultSource)
 			require.NoError(t, err)
 
 			assert.Equal(t, result.SUCCESS, resultSource.Result)

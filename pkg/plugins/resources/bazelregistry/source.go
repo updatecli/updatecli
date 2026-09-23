@@ -5,12 +5,12 @@ import (
 	"fmt"
 
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
 // Source queries the Bazel Central Registry and returns the appropriate version
-func (b *Bazelregistry) Source(ctx context.Context, resolver utils.Resolver, resultSource *result.Source) error {
+func (b *Bazelregistry) Source(ctx context.Context, pathResolver pathresolver.Resolver, resultSource *result.Source) error {
 	resultSource.Result = result.FAILURE
 
 	// Fetch metadata from registry

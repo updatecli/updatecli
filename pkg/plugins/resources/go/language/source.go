@@ -5,11 +5,11 @@ import (
 	"fmt"
 
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
 // Source returns the latest go module version
-func (l *Language) Source(ctx context.Context, resolver utils.Resolver, resultSource *result.Source) error {
+func (l *Language) Source(ctx context.Context, pathResolver pathresolver.Resolver, resultSource *result.Source) error {
 
 	var err error
 

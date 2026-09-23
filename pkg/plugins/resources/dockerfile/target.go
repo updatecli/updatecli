@@ -9,11 +9,11 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
 // Target updates a targeted Dockerfile from source control management system
-func (d *Dockerfile) Target(_ context.Context, source string, scm scm.ScmHandler, resolver utils.Resolver, dryRun bool, resultTarget *result.Target) (err error) {
+func (d *Dockerfile) Target(_ context.Context, source string, scm scm.ScmHandler, pathResolver pathresolver.Resolver, dryRun bool, resultTarget *result.Target) (err error) {
 	// At the moment, this plugin does not return the currently used value
 	// This could be a useful improvement for the source
 	resultTarget.Information = "unknown"
@@ -24,10 +24,8 @@ func (d *Dockerfile) Target(_ context.Context, source string, scm scm.ScmHandler
 	changeDescriptions := []string{}
 
 	for _, relativeFile := range d.files {
-		file, err := resolver.Resolve(relativeFile)
-		if err != nil {
-			return fmt.Errorf("invalid file path %q: %w", relativeFile, err)
-		}
+		// Join, not Resolve: absolute and parent directory paths are allowed, even with an scm.
+		file := pathResolver.Join(relativeFile)
 
 		if file != relativeFile {
 			logrus.Debugf("Relative path detected: changing from %q to %q", relativeFile, file)

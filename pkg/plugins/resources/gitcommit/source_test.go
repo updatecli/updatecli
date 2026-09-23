@@ -11,9 +11,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
 type mockGitHandler struct {
@@ -122,7 +122,7 @@ func TestSource(t *testing.T) {
 			handler:  &mockGitHandler{hash: "abc123"},
 			wantHash: "abc123",
 			wantDir:  processWorkingDirectory(),
-			// spec.branch is empty, "HEAD" is only how the description spells it.
+			// spec.branch is empty; "HEAD" is only how the description spells it.
 			wantBranch: "",
 			wantDesc:   `Git commit "abc123" found for branch "HEAD"`,
 		},
@@ -187,7 +187,7 @@ func TestSource(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			resource := &GitCommit{spec: tt.spec, nativeGitHandler: tt.handler}
 			got := result.Source{}
-			err := resource.Source(context.Background(), utils.Resolver{BaseDir: tt.workingDir, Boundary: tt.workingDir}, &got)
+			err := resource.Source(context.Background(), pathresolver.Resolver{BaseDir: tt.workingDir, Boundary: tt.workingDir}, &got)
 			if tt.wantErr != "" {
 				require.Error(t, err)
 				assert.Contains(t, err.Error(), tt.wantErr)
@@ -213,4 +213,18 @@ func TestSource(t *testing.T) {
 			assert.Equal(t, tt.wantSearch, tt.handler.gotSearch)
 		})
 	}
+}
+
+// TestSourceManifestModeUsesProcessDirectory checks that, with manifest relative paths and no
+// scm, url or path, the repository is still the one holding the process working directory.
+// The manifest directory usually sits below the repository root, where git cannot open it.
+func TestSourceManifestModeUsesProcessDirectory(t *testing.T) {
+	handler := &mockGitHandler{hash: "abc123"}
+	resource := &GitCommit{nativeGitHandler: handler}
+
+	got := result.Source{}
+	err := resource.Source(context.Background(), pathresolver.New(nil, "updatecli.d"), &got)
+	require.NoError(t, err)
+
+	assert.Equal(t, processWorkingDirectory(), handler.gotDirectory)
 }

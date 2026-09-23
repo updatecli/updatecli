@@ -45,7 +45,9 @@ func (config *Config) EnsureLocalScm() error {
 	// Autoguess (localScmConfig is a copy of the config tree)
 	// The base directory is where the manifest expects its relative paths to resolve from,
 	// so it is also where the "local" scm must look for a repository.
-	if err := localScmConfig.AutoGuess(LOCALSCMIDENTIFIER, config.BaseDir(), config.gitHandler); err != nil {
+	// The checkout directory stays empty so the scm keeps working from its own clone
+	// instead of the user's working copy.
+	if err := localScmConfig.AutoGuess(LOCALSCMIDENTIFIER, config.BaseDir(), "", config.gitHandler); err != nil {
 		return err
 	}
 

@@ -5,15 +5,15 @@ import (
 	"fmt"
 
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
-func (h *Hcl) Source(_ context.Context, resolver utils.Resolver, resultSource *result.Source) error {
+func (h *Hcl) Source(_ context.Context, pathResolver pathresolver.Resolver, resultSource *result.Source) error {
 	if len(h.files) > 1 {
 		return fmt.Errorf("%s HCL source only supports one file", result.FAILURE)
 	}
 
-	if err := h.UpdateAbsoluteFilePath(resolver); err != nil {
+	if err := h.UpdateAbsoluteFilePath(pathResolver); err != nil {
 		return err
 	}
 

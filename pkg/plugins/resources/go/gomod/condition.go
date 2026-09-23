@@ -5,20 +5,18 @@ import (
 	"fmt"
 
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
 // Condition checks if a specific stable Golang version is published
-func (g *GoMod) Condition(_ context.Context, source string, scm scm.ScmHandler, resolver utils.Resolver) (pass bool, message string, err error) {
+func (g *GoMod) Condition(_ context.Context, source string, scm scm.ScmHandler, pathResolver pathresolver.Resolver) (pass bool, message string, err error) {
 	versionToCheck := g.spec.Version
 	if versionToCheck == "" {
 		versionToCheck = source
 	}
 
-	filename, err := resolver.Resolve(g.filename)
-	if err != nil {
-		return false, "", fmt.Errorf("invalid file path %q: %w", g.filename, err)
-	}
+	// Join, not Resolve: absolute and parent directory paths are allowed, even with an scm.
+	filename := pathResolver.Join(g.filename)
 
 	g.foundVersion, err = g.version(filename)
 	if err != nil {

@@ -1,4 +1,4 @@
-package utils
+package pathresolver
 
 import (
 	"fmt"
@@ -12,10 +12,8 @@ import (
 // Resolver tells a resource where its relative paths resolve from and, when Updatecli
 // works from an SCM checkout, the boundary those paths must stay within.
 //
-// Those two ideas used to be a single "working directory" argument, which is why a
-// relative path could only ever be understood as "relative to wherever updatecli was
-// started from". Keeping them apart is what allows a manifest to resolve its own paths
-// against its own directory without weakening the containment guarantee.
+// Keeping the two apart lets a manifest resolve paths against its own directory while
+// paths inside an SCM checkout stay contained.
 type Resolver struct {
 	// BaseDir is the directory relative paths resolve against.
 	// An empty value means the process working directory.
@@ -24,41 +22,45 @@ type Resolver struct {
 	// An empty value means there is no boundary, which is the case for a local run
 	// without an SCM checkout.
 	Boundary string
+	// ManifestDir is where relative paths resolve from when the SCM checkout does not
+	// apply to them: the directory of the manifest, or the process working directory
+	// when empty. It is set with or without an SCM.
+	ManifestDir string
 }
 
-// ScmDirectoryGetter is the only thing a resolver needs from an scm handler: where the
-// repository was checked out. It is declared here rather than imported from the pipeline
-// so this package stays a leaf, which is what lets every resource depend on it.
+// ScmDirectoryGetter is the part of an scm handler a path resolver needs: the directory
+// where the repository was checked out. It is declared here instead of imported from the
+// pipeline so that this package has no internal dependencies and every resource can use it.
 type ScmDirectoryGetter interface {
 	GetDirectory() (directory string)
 }
 
-// NewResolver builds the path resolver handed to a resource.
+// New builds the path resolver handed to a resource.
 //
 // With an scm, the checkout directory is both where relative paths resolve from and the
 // boundary they must stay within. Without one there is no boundary to enforce, and paths
 // resolve from baseDir: the directory of the manifest that declared them, or the process
 // working directory when baseDir is empty.
-func NewResolver(scmHandler ScmDirectoryGetter, baseDir string) Resolver {
+func New(scmHandler ScmDirectoryGetter, baseDir string) Resolver {
 	if scmHandler == nil {
-		return Resolver{BaseDir: baseDir}
+		return Resolver{BaseDir: baseDir, ManifestDir: baseDir}
 	}
 
 	scmDirectory := scmHandler.GetDirectory()
 
-	return Resolver{BaseDir: scmDirectory, Boundary: scmDirectory}
+	return Resolver{BaseDir: scmDirectory, Boundary: scmDirectory, ManifestDir: baseDir}
 }
 
 // Resolve turns a user provided path into the path Updatecli must read from or write to.
 //
-// http:// and https:// locations are returned unchanged, they are fetched over the network
-// rather than read from disk.
+// http:// and https:// locations are returned unchanged, since they are fetched over the
+// network.
 //
 // An absolute path is returned unchanged when there is no boundary, and rejected otherwise.
-// Rejecting instead of silently clamping is deliberate: within an SCM checkout, a path
-// resolving outside of it almost always means an upstream value (such as a {{ source }}
-// output) has been injected into a source/condition/target path, and the pipeline must fail
-// rather than read from or write to an attacker chosen location. See GHSA-hj4x-hm4v-7wpw.
+// Within an SCM checkout, a path that resolves outside of it almost always means an upstream
+// value (such as a {{ source }} output) was injected into a source, condition or target path.
+// The pipeline must then fail instead of reading from or writing to a location an attacker
+// chose, so the path is rejected, not clamped. See GHSA-hj4x-hm4v-7wpw.
 func (r Resolver) Resolve(path string) (string, error) {
 	resolvedPath := r.Join(path)
 
@@ -107,20 +109,42 @@ func (r Resolver) ResolveAll(paths []string) ([]string, error) {
 
 // Join resolves a path against the base directory without enforcing the boundary.
 //
-// It is meant for the locations Updatecli only needs in order to find something — a git
-// repository, a chart directory, the working directory of a shell command — as opposed to
-// the files it reads from or writes to, which go through Resolve. Those locations
-// legitimately sit outside of an SCM checkout.
+// It is meant for locations Updatecli only uses to find something, such as a git
+// repository, a chart directory or the working directory of a shell command. Those can
+// legitimately sit outside of an SCM checkout. Files Updatecli reads from or writes to go
+// through Resolve instead.
 //
-// It follows filepath.Join semantics, which means an empty path resolves to the base
-// directory itself rather than staying empty. A caller for which an empty value means
-// "unset" rather than "here" must therefore test for it before calling Join.
+// It follows filepath.Join semantics, so an empty path resolves to the base directory
+// itself. A caller for which an empty value means "unset" must test for it before calling
+// Join.
 func (r Resolver) Join(path string) string {
 	if r.BaseDir == "" || isRemoteLocation(path) || filepath.IsAbs(path) {
 		return path
 	}
 
 	return filepath.Join(r.BaseDir, path)
+}
+
+// JoinRooted is like Join, except that within an SCM checkout an absolute path is rooted at
+// the checkout: "/Dockerfile" becomes "<checkout>/Dockerfile".
+//
+// It is for the resources that always joined their path under the checkout: an absolute
+// path then can neither read a host file nor change which file an existing manifest reads.
+func (r Resolver) JoinRooted(path string) string {
+	if r.Boundary == "" || isRemoteLocation(path) || !filepath.IsAbs(path) {
+		return r.Join(path)
+	}
+
+	return filepath.Join(r.BaseDir, path)
+}
+
+// JoinManifest resolves a path against the manifest directory, ignoring any SCM checkout.
+//
+// It is meant for settings documented as overriding the scm, such as the "path" of the git
+// resources. They resolve from the manifest directory, or from the process working
+// directory by default.
+func (r Resolver) JoinManifest(path string) string {
+	return Resolver{BaseDir: r.ManifestDir}.Join(path)
 }
 
 // Dir returns the directory relative paths resolve against, falling back to the process
@@ -137,6 +161,15 @@ func (r Resolver) Dir() string {
 	}
 
 	return workingDirectory
+}
+
+// RepositoryDir returns the git repository a git resource reads from when it names neither
+// a url nor a path: the SCM checkout, or else the process working directory.
+//
+// Unlike Dir, it never falls back to the manifest directory. Git opens a repository from its
+// root only, and a manifest usually sits deeper in the repository, such as in updatecli.d.
+func (r Resolver) RepositoryDir() string {
+	return Resolver{BaseDir: r.Boundary}.Dir()
 }
 
 // isRemoteLocation reports whether a path is fetched over the network rather than read

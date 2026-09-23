@@ -66,8 +66,8 @@ func (e *Engine) detectManifests(i int) bool {
 //
 //nolint:funlen
 func (e *Engine) LoadConfigurations() error {
-	// Checked once here rather than per manifest, so a bad command line value is reported
-	// as a single clear error instead of once for every manifest it is merged into.
+	// Checked once here so that a bad command line value is reported once, instead of once
+	// for every manifest it is merged into.
 	if err := e.Options.ManifestOptions.Validate(); err != nil {
 		return fmt.Errorf("invalid manifest options: %w", err)
 	}

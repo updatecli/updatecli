@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/updatecli/updatecli/pkg/core/cmdoptions"
+	"github.com/updatecli/updatecli/pkg/core/config"
 	"github.com/updatecli/updatecli/pkg/core/engine/manifest"
 )
 
@@ -40,6 +41,7 @@ and does not fail the command unless '--strict' is specified.`,
 
 			e.Options.Config.DisableTemplating = manifestValidateDisableTemplating
 
+			e.Options.ManifestOptions.RelativePaths = config.RelativePathBase(relativePaths)
 			err := run("manifest/validate")
 			if err != nil {
 				logrus.Errorf("command failed: %s", err)
@@ -56,6 +58,7 @@ func init() {
 	manifestValidateCmd.Flags().StringArrayVar(&secretsFiles, "secrets", []string{}, "Sets secrets file uses for templating")
 	manifestValidateCmd.Flags().BoolVar(&manifestValidateDisableTemplating, "disable-templating", false, "Disable manifest templating")
 	manifestValidateCmd.Flags().BoolVar(&manifestValidateStrict, "strict", false, "Report warnings as errors")
+	addRelativePathsFlag(manifestValidateCmd, &relativePaths)
 
 	manifestCmd.AddCommand(manifestValidateCmd)
 }

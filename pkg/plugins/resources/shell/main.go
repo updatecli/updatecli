@@ -8,7 +8,7 @@ import (
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
 // Spec defines a specification for a "shell" resource
@@ -282,16 +282,16 @@ func (s *Shell) Changelog(from, to string) *result.Changelogs {
 //
 // spec.workdir is a location rather than a file Updatecli reads or writes, so it is
 // resolved against the base directory without being held inside the SCM boundary.
-func (s *Shell) getWorkingDirPath(resolver utils.Resolver) string {
+func (s *Shell) getWorkingDirPath(pathResolver pathresolver.Resolver) string {
 	if s.spec.WorkDir == "" {
-		return resolver.Dir()
+		return pathResolver.Dir()
 	}
 
 	if filepath.IsAbs(s.spec.WorkDir) {
 		return s.spec.WorkDir
 	}
 
-	return filepath.Join(resolver.Dir(), s.spec.WorkDir)
+	return filepath.Join(pathResolver.Dir(), s.spec.WorkDir)
 }
 
 // ReportConfig returns a new configuration object with only the necessary fields
