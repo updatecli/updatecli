@@ -6,17 +6,34 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/tomwright/dasel"
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
-// Read reads the content of a file after runtime validation
-func (f *FileContent) Read(rootDir string) error {
+// ResolvePath resolves FilePath against the path resolver.
+//
+// It is idempotent: the path written in the manifest is kept aside so that calling it
+// twice cannot join the base directory twice.
+func (f *FileContent) ResolvePath(pathResolver pathresolver.Resolver) error {
+	if f.OriginalFilePath == "" {
+		f.OriginalFilePath = f.FilePath
+	}
 
-	securePath, err := utils.SanitizeFilePathWithWorkingDirectory(f.FilePath, rootDir)
+	resolvedPath, err := pathResolver.Resolve(f.OriginalFilePath)
 	if err != nil {
 		return err
 	}
-	f.FilePath = securePath
+
+	f.FilePath = resolvedPath
+
+	return nil
+}
+
+// Read reads the content of a file after runtime validation
+func (f *FileContent) Read(pathResolver pathresolver.Resolver) error {
+
+	if err := f.ResolvePath(pathResolver); err != nil {
+		return err
+	}
 
 	if !f.ContentRetriever.FileExists(f.FilePath) {
 		return fmt.Errorf("file %q does not exist", f.FilePath)

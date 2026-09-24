@@ -7,10 +7,11 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
 // Condition checks that a git tag exists
-func (gt *GitTag) Condition(_ context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
+func (gt *GitTag) Condition(_ context.Context, source string, scm scm.ScmHandler, pathResolver pathresolver.Resolver) (pass bool, message string, err error) {
 
 	err = gt.Validate()
 	if err != nil {
@@ -46,7 +47,7 @@ func (gt *GitTag) Condition(_ context.Context, source string, scm scm.ScmHandler
 
 		// A condition checks whether a specific tag exists, so the age filter,
 		// which only narrows down which tag to pick, doesn't apply here.
-		tagsList, tags, err = gt.listRemoteDirectoryTags(gt.directory, age.Spec{})
+		tagsList, tags, err = gt.listRemoteDirectoryTags(gt.directory, age.Spec{}, pathResolver)
 		if err != nil {
 			return false, "", fmt.Errorf("listing local tags: %w", err)
 		}

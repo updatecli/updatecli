@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/text"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
 func ptrInt(i int) *int {
@@ -797,7 +798,7 @@ name: github
 
 			assert.NoError(t, err)
 
-			gotResult, _, gotErr := y.Condition(context.Background(), tt.inputSourceValue, scmHandler)
+			gotResult, _, gotErr := y.Condition(context.Background(), tt.inputSourceValue, scmHandler, pathresolver.New(scmHandler, ""))
 			if tt.isErrorWanted {
 				assert.Error(t, gotErr)
 				return
@@ -846,7 +847,7 @@ This workflow detects breaking changes in the OpenAPI specification.
 
 	done := make(chan error, 1)
 	go func() {
-		_, _, condErr := y.Condition(context.Background(), "", nil)
+		_, _, condErr := y.Condition(context.Background(), "", nil, pathresolver.Resolver{})
 		done <- condErr
 	}()
 

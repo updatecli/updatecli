@@ -1,6 +1,9 @@
 package cmd
 
-import "github.com/spf13/cobra"
+import (
+	"github.com/spf13/cobra"
+	"github.com/updatecli/updatecli/pkg/core/config"
+)
 
 // addDisableChangelogFlag registers the shared --disable-changelog flag on the
 // provided command, using the value from UPDATECLI_DISABLE_CHANGELOG as the
@@ -60,5 +63,17 @@ func addReportAPIFlag(cmd *cobra.Command) {
 		"reportAPI",
 		"",
 		"Set the report API URL where to publish pipeline reports",
+	)
+}
+
+// addRelativePathsFlag registers the shared --relative-paths flag on the provided command,
+// using the value from UPDATECLI_RELATIVE_PATHS as the default when the flag is not
+// explicitly passed. A manifest declaring "relativepaths" overrides it.
+func addRelativePathsFlag(cmd *cobra.Command, dest *string) {
+	cmd.Flags().StringVar(
+		dest,
+		"relative-paths",
+		getEnvStringOrDefault(RelativePathsEnvVar, string(config.RelativePathBaseWorkingDirectory)),
+		"What the relative paths of a manifest resolve against: \"workingdirectory\" or \"manifest\" (env: "+RelativePathsEnvVar+")",
 	)
 }

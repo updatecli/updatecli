@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
 // TestSource is an integration tests that test that retrieving source value effectively works
@@ -81,7 +82,7 @@ func TestSource(t *testing.T) {
 			require.NoError(t, err)
 
 			gotResult := result.Source{}
-			err = got.Source(context.Background(), "", &gotResult)
+			err = got.Source(context.Background(), pathresolver.Resolver{}, &gotResult)
 
 			switch tt.expectedError {
 			case true:

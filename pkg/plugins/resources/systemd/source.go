@@ -3,30 +3,14 @@ package systemd
 import (
 	"context"
 	"fmt"
-	"os"
-	"path/filepath"
 
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
-func (s *Systemd) Source(_ context.Context, workingDir string, sourceResult *result.Source) error {
-	filePath := s.spec.File
-
-	// By the default workingdir is set to the current working directory
-	// it would be better to have it empty by default but it must be changed in the
-	// source core codebase.
-	currentWorkingDirectory, err := os.Getwd()
-	if err != nil {
-		return fmt.Errorf("fail getting current working directory: %w", err)
-	}
-
-	if workingDir == currentWorkingDirectory {
-		workingDir = ""
-	}
-
-	if !filepath.IsAbs(filePath) {
-		filePath = filepath.Join(workingDir, filePath)
-	}
+func (s *Systemd) Source(_ context.Context, pathResolver pathresolver.Resolver, sourceResult *result.Source) error {
+	// Join, not Resolve: absolute and parent directory paths are allowed, even with an scm.
+	filePath := pathResolver.Join(s.spec.File)
 
 	_, matchingOpts, err := s.readOptions(filePath)
 	if err != nil {

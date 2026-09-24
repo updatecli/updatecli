@@ -66,6 +66,12 @@ func (e *Engine) detectManifests(i int) bool {
 //
 //nolint:funlen
 func (e *Engine) LoadConfigurations() error {
+	// Checked once here so that a bad command line value is reported once, instead of once
+	// for every manifest it is merged into.
+	if err := e.Options.ManifestOptions.Validate(); err != nil {
+		return fmt.Errorf("invalid manifest options: %w", err)
+	}
+
 	// Read every strategy files
 	errs := []error{}
 
@@ -104,6 +110,7 @@ func (e *Engine) LoadConfigurations() error {
 					DisableTemplating: e.Options.Config.DisableTemplating,
 					ValidateSchema:    e.Options.Config.ValidateSchema,
 				},
+				e.Options.ManifestOptions,
 				e.Options.PipelineIDs,
 				e.Options.Labels,
 			)

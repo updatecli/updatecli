@@ -18,6 +18,9 @@ var (
 type FileContent struct {
 	// FilePath defines the fullpath filename
 	FilePath string
+	// OriginalFilePath keeps the path as written in the manifest, so that resolving
+	// FilePath twice cannot join the base directory twice.
+	OriginalFilePath string
 	// ContentRetriever is an interface to manipulate raw files
 	ContentRetriever text.TextRetriever
 	// Entries contains the .tool-versions representation of the file

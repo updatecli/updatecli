@@ -11,6 +11,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/text"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/dasel"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
 func isCargoUpgradeAvailable() bool {
@@ -121,7 +122,7 @@ func getCrateMetadata(rootDir string) (crateMetadata, error) {
 		ContentRetriever: &text.Text{},
 	}
 
-	err := tomlFile.Read("")
+	err := tomlFile.Read(pathresolver.Resolver{})
 
 	if err != nil {
 		return crate, err

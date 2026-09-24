@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/config"
 	"github.com/updatecli/updatecli/pkg/core/engine/manifest"
 
 	"github.com/spf13/cobra"
@@ -31,6 +32,7 @@ var (
 
 			e.Options.Pipeline.Target.Clean = prepareClean
 
+			e.Options.ManifestOptions.RelativePaths = config.RelativePathBase(relativePaths)
 			err = run("pipeline/prepare")
 			if err != nil {
 				logrus.Errorf("command failed: %s", err)
@@ -49,6 +51,7 @@ func init() {
 	pipelinePrepareCmd.Flags().BoolVar(&disableTLS, "disable-tls", false, "Disable TLS verification like '--disable-tls=true'")
 	pipelinePrepareCmd.Flags().StringArrayVar(&pipelineIds, "pipeline-ids", []string{}, "Filter pipelines to apply by their pipeline IDs, accepted a comma separated list")
 	pipelinePrepareCmd.Flags().StringArrayVar(&labels, "labels", []string{}, "Filter pipelines to apply by their labels, accepted as a comma separated list (key:value)")
+	addRelativePathsFlag(pipelinePrepareCmd, &relativePaths)
 
 	pipelineCmd.AddCommand(pipelinePrepareCmd)
 }

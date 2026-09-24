@@ -104,6 +104,29 @@ func TestConfig_EnsureLocalScm(t *testing.T) {
 			},
 		},
 		{
+			name: "passing case with a base directory: the autoguessed scm keeps its own checkout",
+			config: &Config{
+				baseDir: "updatecli.d",
+				gitHandler: gitgeneric.MockGit{
+					Remotes: map[string]string{"origin": "https://localhost:2222/olblak/updatecli"},
+				},
+				Spec: Spec{
+					Actions: map[string]action.Config{
+						"default": {
+							ScmID: LOCALSCMIDENTIFIER,
+						},
+					},
+				},
+			},
+			wantLocalScm: scm.Config{
+				Kind: "git",
+				Spec: git.Spec{
+					URL:    "https://localhost:2222/olblak/updatecli",
+					Branch: "main",
+				},
+			},
+		},
+		{
 			name: "passing case with a custom local SCM specified merged with the autoguess",
 			config: &Config{
 				gitHandler: gitgeneric.MockGit{

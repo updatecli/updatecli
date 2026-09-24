@@ -3,28 +3,21 @@ package systemd
 import (
 	"context"
 	"fmt"
-	"path/filepath"
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
-func (s *Systemd) Condition(_ context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
+func (s *Systemd) Condition(_ context.Context, source string, scm scm.ScmHandler, pathResolver pathresolver.Resolver) (pass bool, message string, err error) {
 	expected := s.spec.Value
 	if expected == "" {
 		// Override the default value with the source output when the `spec.value` is not set.
 		expected = source
 	}
 
-	rootDir := ""
-	if scm != nil {
-		rootDir = scm.GetDirectory()
-	}
-
-	filePath := s.spec.File
-	if !filepath.IsAbs(filePath) {
-		filePath = filepath.Join(rootDir, filePath)
-	}
+	// Join, not Resolve: absolute and parent directory paths are allowed, even with an scm.
+	filePath := pathResolver.Join(s.spec.File)
 
 	_, matchingOpts, err := s.readOptions(filePath)
 	if err != nil {

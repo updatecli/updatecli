@@ -3,29 +3,22 @@ package bazelmod
 import (
 	"context"
 	"fmt"
-	"path/filepath"
 
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
 // Target updates the module version in MODULE.bazel file
-func (b *Bazelmod) Target(_ context.Context, source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
+func (b *Bazelmod) Target(_ context.Context, source string, scm scm.ScmHandler, pathResolver pathresolver.Resolver, dryRun bool, resultTarget *result.Target) error {
 	// Use source as the new version
 	newVersion := source
 	if newVersion == "" {
 		return fmt.Errorf("no version provided for target update")
 	}
 
-	rootDir := ""
-	if scm != nil {
-		rootDir = scm.GetDirectory()
-	}
-
-	filePath := b.spec.File
-	if !filepath.IsAbs(filePath) {
-		filePath = filepath.Join(rootDir, filePath)
-	}
+	// Join, not Resolve: absolute and parent directory paths are allowed, even with an scm.
+	filePath := pathResolver.Join(b.spec.File)
 
 	// Check if file exists
 	if !b.contentRetriever.FileExists(filePath) {

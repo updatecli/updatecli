@@ -55,21 +55,26 @@ type SCMIdentity struct {
 // regardless of how they are named or wired in different pipelines. The
 // resolved SCM URL+branch are included because the same SCMID label in two
 // pipelines can point at different repositories (issue #8522).
+//
+// BaseDir is included because relative paths resolve against it: two manifests with
+// "relativepaths: manifest" can declare the same spec and still read different files.
 type cacheKeyInput struct {
-	Kind string       `json:"kind"`
-	Spec any          `json:"spec"`
-	SCM  *SCMIdentity `json:"scm,omitempty"`
+	Kind    string       `json:"kind"`
+	Spec    any          `json:"spec"`
+	SCM     *SCMIdentity `json:"scm,omitempty"`
+	BaseDir string       `json:"basedir,omitempty"`
 }
 
 // Key computes a cache key from a ResourceConfig and, when bound to an SCM,
 // the resolved SCM identity. Pass scm=nil for sources that run without an SCM;
 // the omitempty tag on cacheKeyInput.SCM keeps the hash identical to the
-// pre-SCM form in that case. Returns empty string when hashing fails; callers
-// treat that as a cache miss.
+// pre-SCM form in that case. baseDir is the directory the source resolves its
+// relative paths against; an empty value, the default, leaves the hash unchanged
+// too. Returns empty string when hashing fails; callers treat that as a cache miss.
 //
 // Spec fields holding secrets are safe to include: only the SHA256 digest is
 // ever stored or logged.
-func Key(rc resource.ResourceConfig, scm *SCMIdentity) string {
+func Key(rc resource.ResourceConfig, scm *SCMIdentity, baseDir string) string {
 	// Validates the kind and spec before caching anything under this config.
 	if _, err := resource.New(rc); err != nil {
 		logrus.Debugf("source cache: failed to instantiate resource for key: %v", err)
@@ -77,9 +82,10 @@ func Key(rc resource.ResourceConfig, scm *SCMIdentity) string {
 	}
 
 	data, err := json.Marshal(cacheKeyInput{
-		Kind: rc.Kind,
-		Spec: rc.Spec,
-		SCM:  scm,
+		Kind:    rc.Kind,
+		Spec:    rc.Spec,
+		SCM:     scm,
+		BaseDir: baseDir,
 	})
 	if err != nil {
 		logrus.Debugf("source cache: failed to marshal config for key: %v", err)

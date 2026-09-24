@@ -6,15 +6,16 @@ import (
 
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
-func (h *Hcl) Condition(_ context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
+func (h *Hcl) Condition(_ context.Context, source string, scm scm.ScmHandler, pathResolver pathresolver.Resolver) (pass bool, message string, err error) {
 	if len(h.files) > 1 {
 		return false, "", fmt.Errorf("%s HCL condition only supports one file", result.FAILURE)
 	}
 
-	if scm != nil {
-		h.UpdateAbsoluteFilePath(scm.GetDirectory())
+	if err := h.UpdateAbsoluteFilePath(pathResolver); err != nil {
+		return false, "", err
 	}
 
 	if err := h.Read(); err != nil {

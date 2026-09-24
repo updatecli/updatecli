@@ -261,7 +261,7 @@ func TestAutoGuess(t *testing.T) {
 				Err:     tt.mockError,
 			}
 
-			gotErr := tt.configUnderTest.AutoGuess("default", tt.workingDir, gitHandler)
+			gotErr := tt.configUnderTest.AutoGuess("default", tt.workingDir, tt.workingDir, gitHandler)
 			if tt.wantErr {
 				require.Error(t, gotErr)
 				return

@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
@@ -320,7 +321,7 @@ func TestGitTag_Condition(t *testing.T) {
 				directory:        tt.directory,
 			}
 
-			gotPass, gotMessage, gotErr := gt.Condition(context.Background(), tt.source, nil)
+			gotPass, gotMessage, gotErr := gt.Condition(context.Background(), tt.source, nil, pathresolver.Resolver{})
 
 			if tt.wantErr {
 				assert.Error(t, gotErr)

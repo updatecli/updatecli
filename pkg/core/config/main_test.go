@@ -1006,7 +1006,7 @@ func TestNew(t *testing.T) {
 	}
 
 	for _, data := range dataset {
-		got, err := New(data.option, data.pipelineIDs, data.labels)
+		got, err := New(data.option, ManifestOptions{}, data.pipelineIDs, data.labels)
 
 		switch data.expectedError {
 		case nil:
@@ -1039,7 +1039,7 @@ labels:
 `), 0600)
 	require.NoError(t, err)
 
-	got, err := New(Option{ManifestFile: manifestPath}, nil, nil)
+	got, err := New(Option{ManifestFile: manifestPath}, ManifestOptions{}, nil, nil)
 	require.NoError(t, err)
 	require.Len(t, got, 1)
 
@@ -1062,7 +1062,7 @@ labels:
 `), 0600)
 	require.NoError(t, err)
 
-	got, err := New(Option{ManifestFile: manifestPath}, nil, nil)
+	got, err := New(Option{ManifestFile: manifestPath}, ManifestOptions{}, nil, nil)
 	require.NoError(t, err)
 	require.Len(t, got, 1)
 

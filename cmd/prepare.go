@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/config"
 	"github.com/updatecli/updatecli/pkg/core/engine/manifest"
 
 	"github.com/spf13/cobra"
@@ -35,6 +36,7 @@ var (
 
 			logrus.Warningln("Deprecated command, please instead use `updatecli pipeline prepare`")
 
+			e.Options.ManifestOptions.RelativePaths = config.RelativePathBase(relativePaths)
 			err = run("prepare")
 			if err != nil {
 				logrus.Errorf("command failed: %s", err)
@@ -53,4 +55,5 @@ func init() {
 	prepareCmd.Flags().BoolVar(&disableTLS, "disable-tls", false, "Disable TLS verification like '--disable-tls=true'")
 	prepareCmd.Flags().StringArrayVar(&pipelineIds, "pipeline-ids", []string{}, "Filter pipelines to apply by their pipeline IDs, accepted a comma separated list")
 	prepareCmd.Flags().StringArrayVar(&labels, "labels", []string{}, "Filter pipelines to apply by their labels, accepted as a comma separated list (key:value)")
+	addRelativePathsFlag(prepareCmd, &relativePaths)
 }
