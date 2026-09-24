@@ -10,44 +10,67 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
-// Spec defines the parameters uses to generate the precomit manifests
+/*
+"precommit" defines the specification for the pre-commit autodiscovery crawler.
+It searches ".pre-commit-config.yaml" files and generates manifests to update the hook repository revisions.
+*/
 type Spec struct {
-	// RootDir defines the root directory used to recursively search for npm packages.json
+	// "rootdir" defines the directory where the crawler starts searching for ".pre-commit-config.yaml" files.
+	//
+	// default:
+	//   the scm directory when "scmid" is set, otherwise the directory relative paths resolve from, by default the working directory.
+	//
+	// remark:
+	//   * a relative path is resolved from the default directory.
+	//   * an absolute path is used as is, instead of the scm directory.
+	//
 	RootDir string `yaml:",omitempty"`
-	// Ignore allows to specify rule to ignore autodiscovery a specific NPM based on a rule
+	// "ignore" defines rules to exclude matching hook repositories from the autodiscovery.
+	//
+	// remark:
+	//   * a hook repository is ignored when it matches at least one rule.
+	//
 	Ignore MatchingRules `yaml:",omitempty"`
-	// Only allows to specify rule to only autodiscover manifest for a specific NPM based on a rule
+	// "only" defines rules to restrict the autodiscovery to matching hook repositories.
+	//
+	// remark:
+	//   * a hook repository is kept only when it matches at least one rule.
+	//
 	Only MatchingRules `yaml:",omitempty"`
-	//  `versionfilter` provides parameters to specify the version pattern used when generating manifest.
+	// "versionfilter" defines the version filter used by the generated manifests.
 	//
-	//  kind - semver
-	//    versionfilter of kind `semver` uses semantic versioning as version filtering
-	//    pattern accepts one of:
-	//      `prerelease` - Updatecli tries to identify the latest prerelease whatever it means
-	//      `patch` - Updatecli only handles patch version update
-	//      `minor` - Updatecli handles patch AND minor version update
-	//      `minoronly` - Updatecli handles minor version only
-	//      `major` - Updatecli handles patch, minor, AND major version update
-	//      `majoronly` - Updatecli only handles major version update
-	//      `a version constraint` such as `>= 1.0.0`
+	// default:
+	//   kind "semver" with pattern "*", any version greater than or equal to the current one.
 	//
-	//  kind - regex
-	//    versionfilter of kind `regex` uses regular expression as version filtering
-	//    pattern accepts a valid regular expression
+	// remark:
+	//   * with kind "semver", "pattern" accepts:
+	//     * "prerelease": the latest prerelease of the current version.
+	//     * "patch": patch updates only.
+	//     * "minor": patch and minor updates.
+	//     * "minoronly": minor updates only.
+	//     * "major": patch, minor and major updates.
+	//     * "majoronly": major updates only.
+	//     * a version constraint, such as ">= 1.0.0".
+	//   * with kind "regex", "pattern" accepts a regular expression.
+	//   * when "rev" is not a version, such as a commit hash, the version is read from the comment next to it.
+	//   * more examples at https://www.updatecli.io/docs/core/versionfilter/
 	//
-	//  example:
-	//  ```
-	//    versionfilter:
-	//      kind: semver
-	//      pattern: minor
-	//  ```
+	// example:
+	//   ```
+	//   versionfilter:
+	//     kind: semver
+	//     pattern: minor
+	//   ```
 	//
-	//  and its type like regex, semver, or just latest.
-	//
-	//  More examples can be found at https://www.updatecli.io/docs/core/versionfilter/
 	VersionFilter version.Filter `yaml:",omitempty"`
-	// Digest provides parameters to specify if the generated manifest should use a digest instead of the branch or tag.
-	// This is equivalent to using the [`--freeze`](https://pre-commit.com/#pre-commit-autoupdate) option of precommit
+	// "digest" defines whether the generated manifests pin the commit hash instead of the tag.
+	//
+	// default:
+	//   false
+	//
+	// remark:
+	//   * it matches the "--freeze" option of "pre-commit autoupdate", see https://pre-commit.com/#pre-commit-autoupdate
+	//
 	Digest *bool `yaml:",omitempty"`
 }
 

@@ -8,16 +8,33 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// MatchingRule allows to specifies rules to identify manifest
+// MatchingRule defines a rule to select container images.
+// A rule matches when every field it sets matches.
+// Each rule must set at least one field.
 type MatchingRule struct {
-	// Path specifies a Nomad path pattern, the pattern requires to match all of name, not just a substring.
+	// "path" defines a Nomad file path pattern.
+	//
+	// remark:
+	//   * the pattern must match the whole path, not just a substring.
+	//   * the pattern follows the Go filepath.Match syntax, such as "*" or "?".
+	//
 	Path string
-	// Jobs specifies a list of Nomad job
+	// "jobs" defines the Nomad job names to match.
+	//
+	// remark:
+	//   * a job matches when its name equals one of the values.
+	//
 	Jobs []string
-	// Image specifies a list of docker image
+	// "images" defines the container image names to match.
+	//
+	// remark:
+	//   * an image matches when its name starts with one of the values.
+	//
 	Images []string
 }
 
+// MatchingRules defines a list of rules.
+// The list matches when at least one of its rules matches.
 type MatchingRules []MatchingRule
 
 // Validate checks that each matching rule has at least one non-empty field.

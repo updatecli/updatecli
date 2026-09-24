@@ -8,14 +8,29 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// MatchingRule allows to specifies rules to identify manifest
+// MatchingRule defines a rule to select pre-commit hook repositories.
+// A rule matches when every field it sets matches.
+// Each rule must set at least one field.
 type MatchingRule struct {
-	// Path specifies a .pre-commit-config.yaml path pattern, the pattern requires to match all of name, not just a substring.
+	// "path" defines a ".pre-commit-config.yaml" path pattern.
+	//
+	// remark:
+	//   * the pattern must match the whole path, not just a substring.
+	//   * the pattern follows the Go filepath.Match syntax, such as "*" or "?".
+	//
 	Path string
-	// Repos specifies the list of NPM packages to check
+	// "repos" defines the hook repositories to match, keyed by repository URL.
+	//
+	// remark:
+	//   * an empty value matches any revision.
+	//   * otherwise the value is a semantic version constraint, such as ">=1.0.0".
+	//   * when the revision or the constraint cannot be parsed, the value must equal the revision.
+	//
 	Repos map[string]string
 }
 
+// MatchingRules defines a list of rules.
+// The list matches when at least one of its rules matches.
 type MatchingRules []MatchingRule
 
 // Validate checks that each matching rule has at least one non-empty field.

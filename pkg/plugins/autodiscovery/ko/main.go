@@ -11,72 +11,111 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
-// Spec defines the parameters which can be provided to the Kubernetes builder.
+/*
+"ko" defines the specification for the Ko autodiscovery crawler.
+It searches Ko configuration files and generates manifests to update the base container images they use.
+*/
 type Spec struct {
-	// Auths provides a map of registry credentials where the key is the registry URL without scheme
-	Auths map[string]docker.InlineKeyChain `yaml:",omitempty"`
-	//	Digest provides parameters to specify if the generated manifest should use a digest on top of the tag.
-	Digest *bool `yaml:",omitempty"`
-	// Files allows to specify a list of Files to analyze.
+	// "auths" defines the registry credentials, keyed by registry host without scheme.
 	//
-	//  The pattern syntax is:
+	// remark:
+	//   * when empty, Updatecli uses the local OCI credentials, such as the Docker ones.
+	//
+	// example:
+	//   ```
+	//   auths:
+	//     "ghcr.io":
+	//       token: "xxx"
+	//     "index.docker.io":
+	//       username: "admin"
+	//       password: "password"
+	//   ```
+	//
+	Auths map[string]docker.InlineKeyChain `yaml:",omitempty"`
+	// "digest" defines whether the generated manifests pin the image digest in addition to the tag.
+	//
+	// default:
+	//   true
+	//
+	Digest *bool `yaml:",omitempty"`
+	// "files" defines the file name patterns the crawler searches for.
+	//
+	// The pattern syntax is:
+	//
 	// ```
 	//     pattern:
-	//       { term }
+	//         { term }
 	//     term:
-	//       '*'         matches any sequence of non-Separator characters
-	//       '?'         matches any single non-Separator character
-	//       '[' [ '^' ] { character-range } ']' character class (must be non-empty)
-	//       c           matches character c (c != '*', '?', '\\', '[')
-	//       '\\' c      matches character c
+	//         '*'         matches any sequence of non-Separator characters
+	//         '?'         matches any single non-Separator character
+	//         '[' [ '^' ] { character-range } ']'
+	//                     character class (must be non-empty)
+	//         c           matches character c (c != '*', '?', '\\', '[')
+	//         '\\' c      matches character c
 	//
-	//   character-range:
-	//   	c           matches character c (c != '\\', '-', ']')
-	//       '\\' c      matches character c
-	//       lo '-' hi   matches character c for lo <= c <= hi
+	//     character-range:
+	//         c           matches character c (c != '\\', '-', ']')
+	//         '\\' c      matches character c
+	//         lo '-' hi   matches character c for lo <= c <= hi
 	// ```
 	//
-	//      Match requires pattern to match all of name, not just a substring.
-	//      The only possible returned error is ErrBadPattern, when pattern
-	//      is malformed.
+	// default:
+	//   ```
+	//   - ".ko.yaml"
+	//   ```
 	//
-	//      On Windows, escaping is disabled. Instead, `\\` is treated as
-	//      path separator.
+	// remark:
+	//   * the pattern is matched against the file name only, not against its path.
+	//   * the pattern must match the whole name, not just a substring.
+	//   * on Windows, escaping is disabled and `\\` is treated as a path separator.
 	//
 	Files []string `yaml:",omitempty"`
-	// RootDir defines the root directory used to recursively search for Kubernetes files
+	// "rootdir" defines the directory where the crawler starts searching for Ko files.
+	//
+	// default:
+	//   the scm directory when "scmid" is set, otherwise the directory relative paths resolve from, by default the working directory.
+	//
+	// remark:
+	//   * a relative path is resolved from the default directory.
+	//   * an absolute path is used as is, instead of the scm directory.
+	//
 	RootDir string `yaml:",omitempty"`
-	// Ignore allows to specify rule to ignore autodiscovery a specific Kubernetes manifest based on a rule
+	// "ignore" defines rules to exclude matching container images from the autodiscovery.
+	//
+	// remark:
+	//   * a container image is ignored when it matches at least one rule.
+	//
 	Ignore MatchingRules `yaml:",omitempty"`
-	// Only allows to specify rule to only autodiscover manifest for a specific Kubernetes manifest based on a rule
+	// "only" defines rules to restrict the autodiscovery to matching container images.
+	//
+	// remark:
+	//   * a container image is kept only when it matches at least one rule.
+	//
 	Only MatchingRules `yaml:",omitempty"`
-	//  `versionfilter` provides parameters to specify the version pattern used when generating manifest.
+	// "versionfilter" defines the version filter used by the generated manifests.
 	//
-	//  kind - semver
-	//    versionfilter of kind `semver` uses semantic versioning as version filtering
-	//    pattern accepts one of:
-	//      `prerelease` - Updatecli tries to identify the latest prerelease whatever it means
-	//      `patch` - Updatecli only handles patch version update
-	//      `minor` - Updatecli handles patch AND minor version update
-	//      `minoronly` - Updatecli handles minor version only
-	//      `major` - Updatecli handles patch, minor, AND major version update
-	//      `majoronly` - Updatecli only handles major version update
-	//      `a version constraint` such as `>= 1.0.0`
+	// default:
+	//   kind "semver" with pattern ">=<current tag>", combined with a tag filter derived from the current tag.
 	//
-	//  kind - regex
-	//    versionfilter of kind `regex` uses regular expression as version filtering
-	//    pattern accepts a valid regular expression
+	// remark:
+	//   * with kind "semver", "pattern" accepts:
+	//     * "prerelease": the latest prerelease of the current version.
+	//     * "patch": patch updates only.
+	//     * "minor": patch and minor updates.
+	//     * "minoronly": minor updates only.
+	//     * "major": patch, minor and major updates.
+	//     * "majoronly": major updates only.
+	//     * a version constraint, such as ">= 1.0.0".
+	//   * with kind "regex", "pattern" accepts a regular expression.
+	//   * more examples at https://www.updatecli.io/docs/core/versionfilter/
 	//
-	//  example:
-	//  ```
-	//    versionfilter:
-	//      kind: semver
-	//      pattern: minor
-	//  ```
+	// example:
+	//   ```
+	//   versionfilter:
+	//     kind: semver
+	//     pattern: minor
+	//   ```
 	//
-	//  and its type like regex, semver, or just latest.
-	//
-	//  More examples can be found at https://www.updatecli.io/docs/core/versionfilter/
 	VersionFilter version.Filter `yaml:",omitempty"`
 }
 

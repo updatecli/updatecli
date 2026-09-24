@@ -8,17 +8,29 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// MatchingRule specifies a rule to include or exclude pyproject.toml dependencies.
+// MatchingRule defines a rule to select Python dependencies.
+// A rule matches when every field it sets matches.
+// Each rule must set at least one field.
 type MatchingRule struct {
-	// Path specifies a pyproject.toml path pattern. The pattern must match the full path,
-	// not just a substring. Wildcards accepted by filepath.Match are supported.
+	// "path" defines a "pyproject.toml" path pattern.
+	//
+	// remark:
+	//   * the pattern must match the whole path, not just a substring.
+	//   * the pattern follows the Go filepath.Match syntax, such as "*" or "?".
+	//
 	Path string `yaml:",omitempty"`
-	// Packages specifies the list of Python packages to match, keyed by package name.
-	// The value is a PEP 440 version specifier (e.g. ">=2.0,<3.0") or empty to match any version.
+	// "packages" defines the Python packages to match, keyed by package name.
+	//
+	// remark:
+	//   * an empty value matches any version.
+	//   * otherwise the value is a PEP 440 version specifier, such as ">=2.0,<3.0".
+	//   * when the version or the specifier cannot be parsed, the value must equal the version.
+	//
 	Packages map[string]string `yaml:",omitempty"`
 }
 
-// MatchingRules is a slice of MatchingRule.
+// MatchingRules defines a list of rules.
+// The list matches when at least one of its rules matches.
 type MatchingRules []MatchingRule
 
 // Validate checks that every rule has at least one non-empty field.

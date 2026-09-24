@@ -10,64 +10,84 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
-// Spec defines the parameters which can be provided to the argocd builder.
+/*
+"argocd" defines the specification for the ArgoCD autodiscovery crawler.
+It searches ArgoCD manifests and generates manifests to update the Helm charts they reference.
+*/
 type Spec struct {
-	// rootDir defines the root directory used to recursively search for ArgoCD manifest
+	// "rootdir" defines the directory where the crawler starts searching for ArgoCD manifests.
+	//
+	// default:
+	//   the scm directory when "scmid" is set, otherwise the directory relative paths resolve from, by default the working directory.
+	//
+	// remark:
+	//   * a relative path is resolved from the default directory.
+	//   * an absolute path is used as is, instead of the scm directory.
+	//
 	RootDir string `yaml:",omitempty"`
-	// ignore allows to specify rule to ignore autodiscovery a specific Argocd manifest based on a rule
+	// "ignore" defines rules to exclude matching Helm charts from the autodiscovery.
+	//
+	// remark:
+	//   * a Helm chart is ignored when it matches at least one rule.
+	//
 	Ignore MatchingRules `yaml:",omitempty"`
-	// only allows to specify rule to only autodiscover manifest for a specific ArgoCD manifest based on a rule
+	// "only" defines rules to restrict the autodiscovery to matching Helm charts.
+	//
+	// remark:
+	//   * a Helm chart is kept only when it matches at least one rule.
+	//
 	Only MatchingRules `yaml:",omitempty"`
-	//  `versionfilter` provides parameters to specify the version pattern used when generating manifest.
+	// "versionfilter" defines the version filter used by the generated manifests.
 	//
-	//  kind - semver
-	//    versionfilter of kind `semver` uses semantic versioning as version filtering
-	//    pattern accepts one of:
-	//      `prerelease` - Updatecli tries to identify the latest prerelease whatever it means
-	//      `patch` - Updatecli only handles patch version update
-	//      `minor` - Updatecli handles patch AND minor version update
-	//      `minoronly` - Updatecli handles minor version only
-	//      `major` - Updatecli handles patch, minor, AND major version update
-	//      `majoronly` - Updatecli only handles major version update
-	//      `a version constraint` such as `>= 1.0.0`
+	// default:
+	//   kind "semver" with pattern "*", the latest version.
 	//
-	//  kind - regex
-	//    versionfilter of kind `regex` uses regular expression as version filtering
-	//    pattern accepts a valid regular expression
+	// remark:
+	//   * with kind "semver", "pattern" accepts:
+	//     * "prerelease": the latest prerelease of the current version.
+	//     * "patch": patch updates only.
+	//     * "minor": patch and minor updates.
+	//     * "minoronly": minor updates only.
+	//     * "major": patch, minor and major updates.
+	//     * "majoronly": major updates only.
+	//     * a version constraint, such as ">= 1.0.0".
+	//   * with kind "regex", "pattern" accepts a regular expression.
+	//   * more examples at https://www.updatecli.io/docs/core/versionfilter/
 	//
-	//  example:
-	//  ```
-	//    versionfilter:
-	//      kind: semver
-	//      pattern: minor
-	//  ```
+	// example:
+	//   ```
+	//   versionfilter:
+	//     kind: semver
+	//     pattern: minor
+	//   ```
 	//
-	//  and its type like regex, semver, or just latest.
-	//
-	//  More examples can be found at https://www.updatecli.io/docs/core/versionfilter/
-
 	VersionFilter version.Filter `yaml:",omitempty"`
-	// Auths holds a map of registry credentials where the key is the registry host (domain[:port]) without scheme.
+	// "auths" defines the Helm repository credentials, keyed by repository host without scheme.
 	//
-	// Please be aware that only the host part of the URL is used to lookup for authentication credentials.
+	// remark:
+	//   * only the host part of the repository URL, such as "domain[:port]", is used to look up credentials.
 	//
-	// Example:
+	// example:
+	//   ```
+	//   auths:
+	//     "my-helm-repo.com":
+	//       token: "my-secret-token"
+	//     "my-second-helm-repo.com":
+	//       username: "username"
+	//       password: "my-secret-password"
+	//   ```
 	//
-	// ```
-	// auths:
-	//   "my-helm-repo.com":
-	//     token: "my-secret-token"
-	//   "my-second-helm-repo.com":
-	//     username: "username"
-	//     password: "my-secret-password"
-	// ```
 	Auths map[string]auth `yaml:",omitempty"`
 }
 
+// auth defines the credentials used to access a Helm repository.
 type auth struct {
+	// "username" defines the username used to authenticate with the Helm repository.
 	Username string `yaml:",omitempty"`
+	// "password" defines the password used to authenticate with the Helm repository.
 	Password string `yaml:",omitempty"`
-	Token    string `yaml:",omitempty"`
+	// "token" defines the token used to authenticate with the Helm repository.
+	Token string `yaml:",omitempty"`
 }
 
 // ArgoCD holds all information needed to generate argocd pipelines.

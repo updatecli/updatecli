@@ -8,16 +8,36 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// MatchingRule allows to specifies rules to identify manifest
+// MatchingRule defines a rule to select crates.
+// A rule matches when every field it sets matches.
+// Each rule must set at least one field.
 type MatchingRule struct {
-	// Path specifies a Cargo crate path pattern, the pattern requires to match all of name, not just a subpart of the path.
+	// "path" defines a "Cargo.toml" path pattern.
+	//
+	// remark:
+	//   * the pattern must match the whole path, not just a substring.
+	//   * the pattern follows the Go filepath.Match syntax, such as "*" or "?".
+	//
 	Path string `yaml:",omitempty"`
-	// Crates specifies the list of Cargo crates to check
+	// "crates" defines the crates to match, keyed by crate name.
+	//
+	// remark:
+	//   * an empty value matches any version.
+	//   * otherwise the value is a semantic version constraint, such as ">=1.0.0".
+	//   * when the version or the constraint cannot be parsed, the value must equal the version.
+	//
 	Crates map[string]string `yaml:",omitempty"`
-	// Registries specifies the list of Cargo registries to check
+	// "registries" defines the Cargo registry names to match.
+	//
+	// remark:
+	//   * the registry name is the "registry" key of a dependency in "Cargo.toml".
+	//   * a registry name must be identical to one of the entries.
+	//
 	Registries []string `yaml:",omitempty"`
 }
 
+// MatchingRules defines a list of rules.
+// The list matches when at least one of its rules matches.
 type MatchingRules []MatchingRule
 
 // Validate checks that each matching rule has at least one non-empty field.

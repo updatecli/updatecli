@@ -8,24 +8,39 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// MatchingRule allows specifying rules to identify manifests
+// MatchingRule defines a rule to select Bazel modules.
+// A rule matches when every field it sets matches.
+// Each rule must set at least one field.
 type MatchingRule struct {
-	// `path` specifies a `MODULE.bazel` path pattern, the pattern requires to match all of name, not just a substring.
-	Path string
-	// `modules` specifies a map of modules, the key is module name as seen in the `MODULE.bazel`,
-	// the value is an optional semver version constraint.
+	// "path" defines a "MODULE.bazel" path pattern.
 	//
-	// examples:
-	// ```
-	// - modules:
-	//   # Ignoring module updates for this module
-	//   rules_go:
-	//   # Ignore module updates for this version
-	//   gazelle: "1.x"
-	// ```
+	// remark:
+	//   * the pattern must match the whole path, not just a substring.
+	//   * the pattern follows the Go filepath.Match syntax, such as "*" or "?".
+	//
+	Path string
+	// "modules" defines the Bazel modules to match, keyed by module name as written in "MODULE.bazel".
+	//
+	// remark:
+	//   * an empty value matches any version.
+	//   * otherwise the value is a semantic version constraint, such as ">=1.0.0".
+	//   * when the version or the constraint cannot be parsed, the value must equal the version.
+	//   * a module name cannot be empty.
+	//
+	// example:
+	//   ```
+	//   - modules:
+	//       # match any version of this module
+	//       rules_go:
+	//       # match only the versions of this module satisfying the constraint
+	//       gazelle: "1.x"
+	//   ```
+	//
 	Modules map[string]string
 }
 
+// MatchingRules defines a list of rules.
+// The list matches when at least one of its rules matches.
 type MatchingRules []MatchingRule
 
 // Validate checks that each matching rule has at least one non-empty field.
