@@ -24,135 +24,146 @@ const (
 )
 
 /*
-Spec defines a specification for an "helmchart" resource
-parsed from an updatecli manifest file
+"helmchart" defines the specification for manipulating Helm charts.
+It can be used as a "source", a "condition", or a "target".
 */
 type Spec struct {
-	/*
-		file defines the Helm Chart file to update.
-		the path must be relative to chart root directory
-		the chart name is defined by the parameter "name"
-
-		compatible:
-			* source
-			* condition
-			* target
-
-		default:
-			default set to "values.yaml"
-	*/
+	// "file" defines the chart file to update.
+	//
+	// compatible:
+	//   * target
+	//
+	// default:
+	//   values.yaml
+	//
+	// remark:
+	//   * the path is relative to the chart root directory.
+	//   * the chart directory is defined by "name".
+	//
 	File string `yaml:",omitempty"`
-	/*
-		key defines the yamlpath query used for retrieving value from a YAML document
-
-		compatible:
-			* target
-
-		example:
-			* key: $.image.tag
-			* key: $.images[0].tag
-
-		remark:
-			* key is a simpler version of yamlpath accepts keys.
-
-	*/
+	// "key" defines the yamlpath query used to retrieve the value from the yaml file.
+	//
+	// compatible:
+	//   * target
+	//
+	// remark:
+	//   * "key" is required in a target.
+	//   * "key" is a simpler version of yamlpath.
+	//
+	// example:
+	//   * key: $.image.tag
+	//   * key: $.images[0].tag
+	//
 	Key string `yaml:",omitempty"`
-	/*
-		name defines the Chart name path like 'stable/chart'.
-
-		compatible:
-			* source
-			* condition
-			* target
-
-		example:
-			* name: stable/chart
-
-		remark:
-			* when used with a scm, the name must be the relative path from the scm repository root directory
-			  with such as "stable/chart"
-	*/
+	// "name" defines the chart name, or the chart path such as "stable/chart".
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//   * target
+	//
+	// remark:
+	//   * in a target, "name" is the chart directory path. When used with an scm,
+	//     it is relative to the scm repository root directory, such as "stable/chart".
+	//
+	// example:
+	//   * name: stable/chart
+	//
 	Name string `yaml:",omitempty"`
-	/*
-		skippackaging defines if a Chart should be packaged or not.
-
-		compatible:
-			* target
-
-		default: false
-	*/
+	// "skippackaging" defines whether the chart dependencies update is skipped.
+	//
+	// compatible:
+	//   * target
+	//
+	// default:
+	//   false
+	//
 	SkipPackaging bool `yaml:",omitempty"`
-	/*
-		url defines the Chart location URL.
-
-		compatible:
-			* source
-			* condition
-
-		example:
-			* index.yaml
-			* file://./index.yaml
-			* https://github.com/updatecli/charts.git
-			* oci://ghcr.io/olblak/charts/
-
-	*/
+	// "url" defines the chart repository location.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//
+	// remark:
+	//   * the schemes "https://", "http://", "oci://" and "file://" are supported.
+	//   * a url without scheme is read as a local path.
+	//   * "index.yaml" is appended when the url does not end with it.
+	//
+	// example:
+	//   * url: index.yaml
+	//   * url: file://./index.yaml
+	//   * url: https://github.com/updatecli/charts.git
+	//   * url: oci://ghcr.io/olblak/charts/
+	//
 	URL string `yaml:",omitempty"`
-	/*
-		value is the value associated with a yamlpath query.
-
-		compatible:
-			* condition
-			* target
-	*/
+	// "value" defines the value associated with the yamlpath query.
+	//
+	// compatible:
+	//   * target
+	//
+	// default:
+	//   the output of the associated source.
+	//
 	Value string `yaml:",omitempty"`
-	/*
-		version defines the Chart version. It is used by condition to check if a version exists on the registry.
-
-		compatible:
-			* condition
-	*/
+	// "version" defines the chart version to check on the registry.
+	//
+	// compatible:
+	//   * condition
+	//
+	// default:
+	//   the output of the associated source.
+	//
 	Version string `yaml:",omitempty"`
-	/*
-		versionIncrement defines if a Chart changes, triggers, or not, a Chart version update, accepted values is a comma separated list of "none,major,minor,patch,auto".
-
-		compatible:
-			* target
-
-		default:
-			default set to "minor"
-
-		remark:
-			when multiple pipelines update the same chart, the versionIncrement will be applied multiple times.
-			more information on https://github.com/updatecli/updatecli/issues/693
-	*/
+	// "versionincrement" defines how the chart version is bumped when the chart changes.
+	//
+	// compatible:
+	//   * target
+	//
+	// default:
+	//   minor
+	//
+	// remark:
+	//   * accepted values are a comma separated list of "major", "minor" and "patch",
+	//     or one of "auto" or "none" on its own.
+	//   * "none" disables the chart version update.
+	//   * "auto" bumps the part of the chart version matching the part that changed in the updated value.
+	//   * when several pipelines update the same chart, the increment is applied several times.
+	//     More information on https://github.com/updatecli/updatecli/issues/693
+	//
+	// example:
+	//   * versionincrement: patch
+	//   * versionincrement: major,minor
+	//
 	VersionIncrement string `yaml:",omitempty"`
-	/*
-		AppVersion defines if a Chart changes, triggers, or not, a Chart AppVersion update.
-		The value is retrieved from the source input.
-
-		compatible:
-			* target
-
-		default
-			false
-	*/
+	// "appversion" defines whether the chart "appVersion" is updated.
+	//
+	// compatible:
+	//   * target
+	//
+	// default:
+	//   false
+	//
+	// remark:
+	//   * the value is retrieved from the source output.
+	//   * the "appVersion" field is only updated when the chart metadata already holds it.
+	//
 	AppVersion bool `yaml:",omitempty"`
-	/*
-		versionfilter provides parameters to specify version pattern and its type like 'regex', 'semver', or just 'latest'.
-
-		compatible:
-			* source
-
-		default:
-			semver
-
-		remark:
-			* Helm chart uses semver by default.
-	*/
+	// "versionfilter" defines the version pattern and its kind, such as "regex", "semver" or "latest".
+	//
+	// compatible:
+	//   * source
+	//
+	// default:
+	//   semver
+	//
 	VersionFilter version.Filter `yaml:",omitempty"`
-	/*
-		credentials defines the credentials used to authenticate with OCI registries
-	*/
+	// InlineKeyChain defines the credentials used to authenticate with the chart repository.
+	//
+	// remark:
+	//   * they are used with OCI registries.
+	//   * "username" and "password" are also used for basic authentication with an http or https repository.
+	//
 	docker.InlineKeyChain `yaml:",inline" mapstructure:",squash"`
 }
 

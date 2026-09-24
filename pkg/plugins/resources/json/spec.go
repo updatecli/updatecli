@@ -9,100 +9,122 @@ import (
 )
 
 /*
-"json"  defines the specification for manipulating "json" files.
+"json" defines the specification for manipulating json files.
+It can be used as a "source", a "condition", or a "target".
 */
 type Spec struct {
-	// engine defines the engine used to manipulate the json file.
+	// "engine" defines the engine used to manipulate the json file.
 	//
 	// compatible:
 	//   * source
 	//   * condition
 	//   * target
-
-	// default:
-	//   * "dasel/v1" is the default engine used to manipulate json files
 	//
-	// accepted values:
-	//   * "dasel/v1" for dasel v1 engine
-	//   * "dasel/v2" for dasel v2 engine
-	//   * "dasel/v3" for dasel v3 engine
-	//   * "dasel" for the latest dasel engine which is currently dasel v3
+	// default:
+	//   dasel/v1
+	//
+	// remark:
+	//   * accepted values are "dasel/v1", "dasel/v2", "dasel/v3" and "dasel".
+	//   * "dasel" selects the latest dasel engine, currently "dasel/v3".
+	//   * "dasel/v1" and "dasel/v2" are deprecated in favour of "dasel/v3".
+	//
+	// example:
+	//   * engine: dasel/v3
+	//
 	Engine *string `yaml:",omitempty"`
-	// file defines the Json file path to interact with.
+	// "file" defines the path of the json file to use.
 	//
 	// compatible:
-	//    * source
-	//    * condition
-	//    * target
-
-	// 	remark:
-	//    * "file" and "files" are mutually exclusive
-	//    * scheme "https://", "http://", and "file://" are supported in path for source and condition
+	//   * source
+	//   * condition
+	//   * target
+	//
+	// remark:
+	//   * "file" and "files" are mutually exclusive.
+	//   * the schemes "https://", "http://" and "file://" are supported in a source or a condition.
+	//
+	// example:
+	//   * file: package.json
+	//   * file: https://nodejs.org/dist/index.json
+	//
 	File string `yaml:",omitempty"`
-	// files defines the list of Json files path to interact with.
+	// "files" defines the list of json file paths to use.
 	//
 	// compatible:
 	//   * condition
 	//   * target
-
+	//
 	// remark:
-	//   * "file" and "files" are mutually exclusive
-	//   * scheme "https://", "http://", and "file://" are supported in path for source and condition
+	//   * "file" and "files" are mutually exclusive.
+	//   * the schemes "https://", "http://" and "file://" are supported in a condition.
+	//
 	Files []string `yaml:",omitempty"`
-	// key defines the Jsonpath key to manipulate.
+	// "key" defines the json key path to use.
 	//
 	// compatible:
-	//  * source
-	// 	* condition
-	// 	* target
+	//   * source
+	//   * condition
+	//   * target
 	//
 	// remark:
-	// 	* key is a simpler version of Jsonpath accepts keys.
-	// 	* key accepts Dasel query, more information on https://github.com/tomwright/dasel
-	//  * key accepts values based on the engine used
+	//   * "key" or "query" is required.
+	//   * "key" accepts a dasel query matching the selected engine,
+	//     more information on https://github.com/tomwright/dasel
 	//
 	// example:
-	// 	* key: $.name
-	// 	* key: name
-	// 	* file: https://nodejs.org/dist/index.json
-	// 	  key: .(lts!=false).version
+	//   * key: $.name
+	//   * key: name
+	//   * file: https://nodejs.org/dist/index.json
+	//     key: .(lts!=false).version
+	//
 	Key string `yaml:",omitempty"`
-	// value defines the Jsonpath key value to manipulate. Default to source output.
+	// "value" defines the value associated with the json key.
 	//
 	// compatible:
-	//  * condition
-	// 	* target
+	//   * condition
+	//   * target
 	//
 	// default:
-	// 	when used for a condition or a target, the default value is the output of the source.
+	//   the output of the associated source.
+	//
 	Value string `yaml:",omitempty"`
-	// query defines the Jsonpath query to manipulate. It accepts advanced Dasel v1 query
-	// this parameter is now deprecated in Dasel v2 and replaced by the parameter "key".
+	// "query" defines an advanced dasel v1 query returning several values.
 	//
 	// compatible:
-	// 	* source
-	// 	* condition
-	// 	* target
-	//
-	// example:
-	// 	* query: .name
-	// 	* query: ".[*].tag_name"
+	//   * source
+	//   * condition
+	//   * target
 	//
 	// remark:
-	// 	* query accepts Dasel query, more information on https://github.com/tomwright/dasel
+	//   * "query" is only used by the "dasel/v1" engine. The engines "dasel/v2"
+	//     and "dasel/v3" require "key" instead.
+	//   * in a source, "query" and "versionfilter" must be used together.
+	//   * "query" accepts a dasel query, more information on https://github.com/tomwright/dasel
+	//
+	// example:
+	//   * query: .name
+	//   * query: ".[*].tag_name"
+	//
 	Query string `yaml:",omitempty"`
-	// versionfilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
-	// more information on https://www.updatecli.io/docs/core/versionfilter/
+	// "versionfilter" defines the version pattern and its kind, such as "regex", "semver" or "latest".
 	//
 	// compatible:
-	// 	* source
-
+	//   * source
+	//
+	// remark:
+	//   * with the "dasel/v1" engine, "versionfilter" and "query" must be used together.
+	//   * more information on https://www.updatecli.io/docs/core/versionfilter/
+	//
 	VersionFilter version.Filter `yaml:",omitempty"`
-	// multiple allows to retrieve multiple values from a query. *Deprecated* Please look at query parameter to achieve similar objective
+	// "multiple" retrieves several values from a query.
 	//
 	// compatible:
-	// 	* condition
-	// 	* target
+	//   * condition
+	//   * target
+	//
+	// deprecated:
+	//   * use "query" instead. A "key" combined with "multiple" is converted to "query".
+	//
 	Multiple bool `yaml:",omitempty" jsonschema:"-"`
 }
 

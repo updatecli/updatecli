@@ -22,22 +22,91 @@ var (
 	MavenCentralRepository string = "https://repo1.maven.org/maven2/"
 )
 
-// Spec defines a specification for a "maven" resource
-// parsed from an updatecli manifest file
+/*
+"maven" defines the specification for retrieving Maven artifact versions.
+It can be used as a "source" or a "condition".
+*/
 type Spec struct {
-	// Deprecated, please specify the Maven url in the repository
+	// "url" defines the Maven repository base url.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//
+	// deprecated:
+	//   * set the full url in "repository" instead. "url" is prefixed to "repository".
+	//
 	URL string `yaml:",omitempty"`
-	// Specifies the maven repository url + name
+	// "repository" defines the Maven repository url, including the repository name.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//
+	// remark:
+	//   * "repository" and "repositories" are mutually exclusive. When both are set, "repositories" is ignored.
+	//   * "https://" is added when the url has no scheme.
+	//   * Maven Central is not queried when "repository" is set.
+	//
+	// example:
+	//   * repository: https://repo.jenkins-ci.org/releases
+	//
 	Repository string `yaml:",omitempty"`
-	// Repositories specifies a list of Maven repository where to look for version. Order matter, version is retrieve from the first repository with the last one being Maven Central.
+	// "repositories" defines the list of Maven repositories where to look for versions.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//
+	// default:
+	//   Maven Central
+	//
+	// remark:
+	//   * "repository" and "repositories" are mutually exclusive.
+	//   * order matters: the version is retrieved from the first repository that returns one.
+	//   * Maven Central is added as the last repository unless the list already holds it.
+	//   * "https://" is added when a url has no scheme.
+	//
+	// example:
+	//   * repositories:
+	//     - https://repo.jenkins-ci.org/releases
+	//     - https://repo1.maven.org/maven2
+	//
 	Repositories []string `yaml:",omitempty"`
-	// Specifies the maven artifact groupID
+	// "groupid" defines the Maven artifact groupId.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//
+	// example:
+	//   * groupid: org.jenkins-ci.main
+	//
 	GroupID string `yaml:",omitempty"`
-	// Specifies the maven artifact artifactID
+	// "artifactid" defines the Maven artifact artifactId.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//
+	// example:
+	//   * artifactid: jenkins-war
+	//
 	ArtifactID string `yaml:",omitempty"`
-	// Specifies the maven artifact version
+	// "version" defines the Maven artifact version to check.
+	//
+	// compatible:
+	//   * condition
+	//
+	// default:
+	//   the output of the associated source.
+	//
 	Version string `yaml:",omitempty"`
-	// [S] VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
+	// "versionfilter" defines the version pattern and its kind, such as "regex", "semver" or "latest".
+	//
+	// compatible:
+	//   * source
+	//
 	VersionFilter version.Filter `yaml:",omitempty"`
 }
 

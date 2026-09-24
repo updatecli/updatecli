@@ -8,21 +8,46 @@ import (
 	stashscm "github.com/updatecli/updatecli/pkg/plugins/scms/stash"
 )
 
-// Spec defines settings used to interact with Bitbucket Server pullrequest
-// It's a mapping of user input from a Updatecli manifest and it shouldn't modified
+/*
+"stash/pullrequest" defines the specification for opening a pull request on a Bitbucket Server repository.
+*/
 type Spec struct {
 	client.Spec
-	// SourceBranch specifies the pullrequest source branch
+	// "sourcebranch" defines the pull request source branch.
+	//
+	// default:
+	//   the working branch of the associated scm.
+	//
 	SourceBranch string `yaml:",inline,omitempty"`
-	// TargetBranch specifies the pullrequest target branch
+	// "targetbranch" defines the pull request target branch.
+	//
+	// default:
+	//   the branch of the associated scm.
+	//
 	TargetBranch string `yaml:",inline,omitempty"`
-	// Owner specifies repository owner
+	// "owner" defines the repository owner.
+	//
+	// default:
+	//   the owner of the associated scm.
+	//
 	Owner string `yaml:",omitempty" jsonschema:"required"`
-	// Repository specifies the name of a repository for a specific owner
+	// "repository" defines the repository name.
+	//
+	// default:
+	//   the repository of the associated scm.
+	//
 	Repository string `yaml:",omitempty" jsonschema:"required"`
-	// Title defines the Bitbucket pullrequest title.
+	// "title" defines the pull request title.
+	//
+	// default:
+	//   the title of the action.
+	//
 	Title string `yaml:",inline,omitempty"`
-	// Body defines the Bitbucket pullrequest body
+	// "body" defines the pull request body.
+	//
+	// default:
+	//   a description generated from the pipeline report.
+	//
 	Body string `yaml:",inline,omitempty"`
 }
 

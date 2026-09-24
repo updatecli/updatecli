@@ -36,11 +36,23 @@ var (
 	}
 )
 
-// Environment is a struct containing information for an environment variable such as its name and its value
+// Environment defines an environment variable passed to the shell command.
 type Environment struct {
-	// Name defines the environment variable name
+	// "name" defines the environment variable name.
+	//
+	// remark:
+	//   * "name" is required.
+	//
 	Name string `yaml:",omitempty" jsonschema:"required"`
-	// Value defines the environment variable value
+	// "value" defines the environment variable value.
+	//
+	// default:
+	//   the value of the same variable in the Updatecli process environment.
+	//
+	// remark:
+	//   * when "value" is unset and the Updatecli process does not define the variable, an error is logged
+	//     and the variable is passed with an empty value.
+	//
 	Value *string `yaml:",omitempty"`
 }
 

@@ -8,7 +8,8 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-// Spec is an empty struct used as a placeholder for the jsonschema.
+// Spec defines the parameters of the "console/output" success criteria.
+// It takes no parameter and only exists for the json schema.
 type Spec struct {
 }
 
