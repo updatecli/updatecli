@@ -15,13 +15,34 @@ import (
 // failure, so callers are expected to skip rather than to fail.
 var ErrNoVersionMatchingAge = errors.New("no version matching the age filter")
 
-// Spec defines parameters to filter versions based on their release date
+// Spec defines how to filter versions based on their release date.
 type Spec struct {
-	// Minimum defines the minimum age of a release to be considered valid. It accepts a duration string (e.g., "24h", "7d", "3w", "1y").
-	// Accepted time units are "h" for hours, "d" for days, "w" for weeks, "mo" for months, and "y" for years. If no unit is provided, hours are assumed.
+	// "minimum" defines the minimum age a release must have to be considered.
+	//
+	// remark:
+	//   * accepted units are "d" for days, "w" for weeks, "mo" for months and "y" for years,
+	//     plus the Go duration units such as "h", "m" and "s".
+	//   * a unit is required.
+	//   * a month counts as 1/12 of a year and a year as 365 days.
+	//
+	// example:
+	//   * minimum: 24h
+	//   * minimum: 7d
+	//   * minimum: 3w
+	//
 	Minimum string `yaml:",omitempty"`
-	// Maximum defines the maximum age of a release to be considered valid. It accepts a duration string (e.g., "24h", "7d", "3w", "1y").
-	// Accepted time units are "h" for hours, "d" for days, "w" for weeks, "mo" for months, and "y" for years. If no unit is provided, hours are assumed.
+	// "maximum" defines the maximum age a release may have to be considered.
+	//
+	// remark:
+	//   * accepted units are "d" for days, "w" for weeks, "mo" for months and "y" for years,
+	//     plus the Go duration units such as "h", "m" and "s".
+	//   * a unit is required.
+	//   * a month counts as 1/12 of a year and a year as 365 days.
+	//
+	// example:
+	//   * maximum: 6mo
+	//   * maximum: 1y
+	//
 	Maximum string `yaml:",omitempty"`
 }
 
