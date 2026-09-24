@@ -20,31 +20,46 @@ const (
 	MinimumExpirationTime int64 = 600
 )
 
-// Spec defines the specification to authenticate with a GitHub App
+// Spec defines the GitHub App credentials used to authenticate with the GitHub API.
 type Spec struct {
-	// ClientID represents the GitHub App client ID
-	ClientID string `yaml:",omitempty"`
-	// PrivateKey represents a PEM encoded private key
-	// It is recommended to use PrivateKeyPath instead of PrivateKey
-	// to avoid putting sensitive information in the configuration file
-	// If both PrivateKey and PrivateKeyPath are set, PrivateKey takes precedence
-	PrivateKey string `yaml:",omitempty"`
-	// PrivateKeyPath represents the path to a PEM encoded private key
-	// If both PrivateKey and PrivateKeyPath are set, PrivateKey takes precedence
-	// It is recommended to use an environment variable to set the PrivateKeyPath value
-	// e.g. PrivateKeyPath: {{ requiredEnv "GITHUB_APP_PRIVATE_KEY_PATH" }}
-	// to avoid putting sensitive information in the configuration file
-	PrivateKeyPath string `yaml:",omitempty"`
-	// InstallationID represents the GitHub App installation ID
-	// It is the same ID that you can find in the GitHub endpoint:
-	// https://github.com/settings/installation/<ID>
-	InstallationID string `yaml:",omitempty"`
-	// Expiration represents the token expiration time in seconds
-	// The token is used during the entire execution of updatecli
-	// and should be valid for the entire duration of the run
-	// The minimum value is 600 seconds (10 minutes)
+	// "clientid" defines the GitHub App client ID.
 	//
-	// Default: 3600 (1 hour)
+	ClientID string `yaml:",omitempty"`
+	// "privatekey" defines the PEM encoded private key of the GitHub App.
+	//
+	// remark:
+	//   * "privatekey" or "privatekeypath" is required.
+	//   * when both are set, "privatekey" takes precedence.
+	//   * prefer "privatekeypath", to keep sensitive information out of the manifest.
+	//
+	PrivateKey string `yaml:",omitempty"`
+	// "privatekeypath" defines the path to a file holding the PEM encoded private key of the GitHub App.
+	//
+	// remark:
+	//   * "privatekey" or "privatekeypath" is required.
+	//   * when both are set, "privatekey" takes precedence.
+	//   * setting the value from an environment variable keeps sensitive information out of the manifest.
+	//
+	// example:
+	//   * privatekeypath: '{{ requiredEnv "GITHUB_APP_PRIVATE_KEY_PATH" }}'
+	//
+	PrivateKeyPath string `yaml:",omitempty"`
+	// "installationid" defines the GitHub App installation ID.
+	//
+	// remark:
+	//   * the value must be an integer.
+	//   * it is the ID shown in the URL https://github.com/settings/installation/<ID>
+	//
+	InstallationID string `yaml:",omitempty"`
+	// "expirationtime" defines the lifetime of the GitHub App token, in seconds.
+	//
+	// default:
+	//   3600
+	//
+	// remark:
+	//   * the token is used during the whole Updatecli run, so it must stay valid until the run ends.
+	//   * the minimum value is 600.
+	//
 	ExpirationTime string `yaml:",omitempty"`
 }
 

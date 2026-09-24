@@ -9,18 +9,20 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 )
 
-// GPGSpec defines the specification for manipulating gpg keys in the context of git commits.
+// GPGSpec defines the GPG key and passphrase used to sign git commits.
 type GPGSpec struct {
-	/*
-		signingKey defines the gpg key used to sign the commit message
-
-		default:
-			none
-	*/
+	// "signingkey" defines the armoured GPG private key used to sign commits.
+	//
+	// default:
+	//   empty, which means commits are not signed.
+	//
+	// remark:
+	//   * the value is the key content, not a key ID.
+	//   * a private key is sensitive, so avoid writing it in the manifest.
+	//
 	SigningKey string `yaml:",omitempty"`
-	/*
-		passphrase defines the gpg passphrase used to sign the commit message
-	*/
+	// "passphrase" defines the passphrase that unlocks "signingkey".
+	//
 	Passphrase string `yaml:",omitempty"`
 }
 

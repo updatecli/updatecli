@@ -8,195 +8,182 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github/app"
 )
 
-// Spec represents the configuration input
+/*
+"githubsearch" defines the specification for searching GitHub repositories.
+It generates one "github" scm for each matching branch of each repository returned by the search query.
+*/
 type Spec struct {
-	// Depth defines the depth used when cloning the git repository.
+	// "depth" defines the depth used when cloning the git repository.
 	//
-	// Default: disabled (full clone)
+	// default:
+	//   empty, which means a full clone.
 	//
-	// Remark:
-	//   When using a shallow clone (depth greater than 0), Updatecli is not able to retrieve the full git history.
-	//   This may cause some issues when Updatecli tries to push changes to the remote repository.
-	//   In that case, you may need to set the force option to true to force push changes to the remote repository.
+	// remark:
+	//   * a value greater than 0 creates a shallow clone, so Updatecli cannot see the full git history.
+	//     Pushing changes may then fail, in which case setting "force" to true may be needed.
+	//   * a negative value is rejected.
+	//
+	// example:
+	//   * depth: 1
+	//
 	Depth *int `yaml:",omitempty"`
-	// Limit defines the maximum number of repositories to return from the search query.
-	//
-	// compatible:
-	//   * scm
+	// "limit" defines the maximum number of GitHub scm generated from the search results.
 	//
 	// default:
 	//   10
 	//
 	// remark:
-	//   If limit is set to 0, all repositories matching the search query will be returned.
+	//   * 0 means no limit.
+	//   * one scm is generated for each matching branch of each repository,
+	//     so the limit counts repository branches, not repositories.
 	//
 	Limit *int `yaml:",omitempty"`
-	// Search defines the GitHub repository search query.
-	//
-	// compatible:
-	//   * scm
+	// "search" defines the GitHub repository search query.
 	//
 	// remark:
-	//   For more information about the search query syntax, please refer to the following documentation:
-	//   https://docs.githubz.com/en/search-github/searching-on-github/searching-for-repositories
+	//   * see https://docs.github.com/en/search-github/searching-on-github/searching-for-repositories
+	//     for the query syntax.
+	//
+	// example:
+	//   * search: org:updatecli topic:updatecli
 	//
 	Search string `yaml:",omitempty" jsonschema:"required"`
-	// "branch" defines the git branch to work on.
-	//
-	// compatible:
-	//   * scm
+	// "branch" defines a regular expression matching the git branches to work on.
 	//
 	// default:
 	//   ^main$
 	//
 	// remark:
-	//   depending on which resource references the GitHub scm, the behavior will be different.
+	//   * one GitHub scm is generated for each matching branch of each discovered repository.
+	//   * when a generated scm is used by a source or a condition, files are read from the matching branch.
+	//   * when a generated scm is used by a target, Updatecli pushes changes to a working branch
+	//     based on the matching branch, named "updatecli_<branch>_<pipelineid>" by default.
+	//   * set "workingbranch" to false to push changes directly to the matching branch.
 	//
-	//   If the scm is linked to a source or a condition (using scmid), the branch will be used to retrieve
-	//   file(s) from that branch.
+	// example:
+	//   * branch: ^main$
+	//   * branch: ^release/.*$
 	//
-	//   If the scm is linked to target then Updatecli creates a new "working branch" based on the branch value.
-	//   The working branch created by Updatecli looks like "updatecli_<pipelineID>".
-	//   The working branch can be disabled using the "workingBranch" parameter set to false.
 	Branch string `yaml:",omitempty"`
-	// WorkingBranchPrefix defines the prefix used to create a working branch.
-	//
-	// compatible:
-	//   * scm
+	// "workingbranchprefix" defines the prefix of the working branch name.
 	//
 	// default:
 	//   updatecli
 	//
 	// remark:
-	//   A working branch is composed of three components:
-	//   1. WorkingBranchPrefix
-	//   2. Target Branch
-	//   3. PipelineID
+	//   * the working branch name joins the prefix, the target branch and the pipeline ID,
+	//     separated by "workingbranchseparator".
+	//   * when set to an empty string, the name starts with the separator, for example "_main_<pipelineid>".
 	//
-	//   If WorkingBranchPrefix is set to '', then
-	//   the working branch will look like "<branch>_<pipelineID>".
 	WorkingBranchPrefix *string `yaml:",omitempty"`
-	// WorkingBranchSeparator defines the separator used to create a working branch.
-	//
-	// compatible:
-	//   * scm
+	// "workingbranchseparator" defines the separator between the parts of the working branch name.
 	//
 	// default:
-	//   "_"
+	//   _
+	//
 	WorkingBranchSeparator *string `yaml:",omitempty"`
 	// "directory" defines the local path where the git repository is cloned.
 	//
-	// compatible:
-	//   * scm
+	// default:
+	//   a directory under the Updatecli temporary directory, such as
+	//   "/tmp/updatecli/github/<owner>/<repository>" on Linux.
 	//
 	// remark:
-	//   Unless you know what you are doing, it is recommended to use the default value.
-	//   The reason is that Updatecli may automatically clean up the directory after a pipeline execution.
+	//   * keep the default value unless you have a good reason to change it,
+	//     as Updatecli may delete the directory after a pipeline run.
+	//   * the value is passed as is to every generated scm., so every repository then uses the same directory.
 	//
-	// default:
-	//   The default value is based on your local temporary directory like: (on Linux)
-	//   /tmp/updatecli/github/<owner>/<repository>
 	Directory string `yaml:",omitempty"`
-	// "email" defines the email used to commit changes.
-	//
-	// compatible:
-	//   * scm
+	// "email" defines the email address used to author commits.
 	//
 	// default:
-	//   default set to your global git configuration
-	Email string `yaml:",omitempty"`
-	// "token" specifies the credential used to authenticate with GitHub API.
+	//   updatecli-bot@updatecli.io
 	//
-	// compatible:
-	//  * scm
+	Email string `yaml:",omitempty"`
+	// "token" defines the token used to authenticate with the GitHub API.
 	//
 	// remark:
-	//  A token is a sensitive information, it's recommended to not set this value directly in the configuration file
-	//  but to use an environment variable or a SOPS file.
-	//
-	//  The value can be set to `{{ requiredEnv "GITHUB_TOKEN"}}` to retrieve the token from the environment variable `GITHUB_TOKEN`
-	//
-	//  or `{{ .github.token }}` to retrieve the token from a SOPS file.
-	//  For more information, about a SOPS file, please refer to the following documentation:
-	//  https://github.com/getsops/sops
+	//   * "token" and "app" are mutually exclusive.
+	//   * a token is sensitive, so avoid writing it in the manifest. Read it from an environment
+	//     variable with `{{ requiredEnv "GITHUB_TOKEN" }}`, or from a SOPS file with `{{ .github.token }}`.
+	//     See https://github.com/getsops/sops
+	//   * the environment variable UPDATECLI_GITHUB_TOKEN, or the UPDATECLI_GITHUB_APP_* environment
+	//     variables, take precedence over this value.
+	//   * when no credential is set, Updatecli falls back to the environment variable GITHUB_TOKEN.
 	//
 	Token string `yaml:",omitempty"`
-	// "url" specifies the default github url in case of GitHub enterprise
-	//
-	// compatible:
-	//   * scm
+	// "url" defines the GitHub URL, to use a GitHub Enterprise instance.
 	//
 	// default:
 	//   github.com
 	//
-	URL string `yaml:",omitempty"`
-	// "username" specifies the username used to authenticate with GitHub API.
+	// remark:
+	//   * the scheme "https://" is added when missing.
 	//
-	// compatible:
-	//   * scm
+	// example:
+	//   * url: github.example.com
+	//
+	URL string `yaml:",omitempty"`
+	// "username" defines the username used with the token to authenticate with the GitHub API.
 	//
 	// remark:
-	//  the token is usually enough to authenticate with GitHub API. Needed when working with GitHub private repositories.
+	//   * the token is usually enough on its own. A username may be needed for private repositories.
+	//
 	Username string `yaml:",omitempty"`
-	// "user" specifies the user associated with new git commit messages created by Updatecli
+	// "user" defines the name used to author commits.
 	//
-	// compatible:
-	//  * scm
+	// default:
+	//   updatecli-bot
+	//
 	User string `yaml:",omitempty"`
-	// "gpg" specifies the GPG key and passphrased used for commit signing
+	// "gpg" defines the GPG key and passphrase used to sign commits.
 	//
-	// compatible:
-	//   * scm
 	GPG sign.GPGSpec `yaml:",omitempty"`
-	// "force" is used during the git push phase to run `git push --force`.
-	//
-	// compatible:
-	//   * scm
+	// "force" defines whether Updatecli runs `git push --force` when pushing changes.
 	//
 	// default:
 	//   true
 	//
 	// remark:
-	//   When force is set to true, Updatecli also recreates the working branches that
-	//   diverged from their base branch.
-	Force *bool `yaml:",omitempty"`
-	// "commitMessage" is used to generate the final commit message.
+	//   * when true, Updatecli also recreates the working branches that diverged from their base branch.
 	//
-	// compatible:
-	//   * scm
+	Force *bool `yaml:",omitempty"`
+	// "commitmessage" defines the settings used to generate commit messages.
 	//
 	// remark:
-	//   it's worth mentioning that the commit message settings is applied to all targets linked to the same scm.
+	//   * the settings apply to every target using this scm.
+	//
 	CommitMessage commit.Commit `yaml:",omitempty"`
-	// "submodules" defines if Updatecli should checkout submodules.
+	// "submodules" defines whether Updatecli clones the git submodules of the repository.
 	//
-	// compatible:
-	//   * scm
+	// default:
+	//   true
 	//
-	// default: true
 	Submodules *bool `yaml:",omitempty"`
-	// "workingBranch" defines if Updatecli should use a temporary branch to work on.
-	// If set to `true`, Updatecli create a temporary branch to work on, based on the branch value.
+	// "workingbranch" defines whether Updatecli pushes changes to a temporary working branch
+	// based on "branch", instead of pushing to "branch" directly.
 	//
-	// compatible:
-	//  * scm
+	// default:
+	//   true
 	//
-	// default: true
 	WorkingBranch *bool `yaml:",omitempty"`
-	// "commitUsingApi" defines if Updatecli should use GitHub GraphQL API to create the commit.
-	// When set to `true`, a commit created from a GitHub action using the GITHUB_TOKEN will automatically be signed by GitHub.
-	// More info on https://github.com/updatecli/updatecli/issues/1914
+	// "commitusingapi" defines whether Updatecli creates commits with the GitHub GraphQL API instead of git.
 	//
-	// compatible:
-	//  * scm
+	// default:
+	//   false
 	//
-	// default: false
+	// remark:
+	//   * GitHub signs the commits created this way from a GitHub Actions workflow using the GITHUB_TOKEN.
+	//     See https://github.com/updatecli/updatecli/issues/1914
+	//
 	CommitUsingAPI *bool `yaml:",omitempty"`
-	// "app" specifies the GitHub App credentials used to authenticate with GitHub API.
-	// It is not compatible with the "token" and "username" fields.
-	// It is recommended to use the GitHub App authentication method for better security and granular permissions.
-	// For more information, please refer to the following documentation:
-	// https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/authenticating-as-a-github-app-installation
+	// "app" defines the GitHub App credentials used to authenticate with the GitHub API.
+	//
+	// remark:
+	//   * "app" and "token" are mutually exclusive, and "username" is ignored when "app" is set.
+	//   * a GitHub App gives better security and finer permissions than a personal token.
+	//   * see https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/authenticating-as-a-github-app-installation
+	//
 	App *app.Spec `yaml:",omitempty"`
 }
 
