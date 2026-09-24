@@ -1,109 +1,194 @@
 package temurin
 
+/*
+"temurin" defines the specification for retrieving Eclipse Temurin releases from the Adoptium API.
+It can be used as a "source" or a "condition".
+*/
 type Spec struct {
-	// ReleaseLine specifies the line of Temurin release to retrieve.
+	// "releaseline" defines the line of Temurin release to retrieve.
 	//
-	// default: "lts"
+	// compatible:
+	//   * source
+	//   * condition
 	//
-	// Allowed values:
-	// * "lts"
-	// * "feature"
+	// default:
+	//   lts
+	//
+	// remark:
+	//   * accepted values are "lts" and "feature".
+	//   * only used when neither "featureversion" nor "specificversion" is set.
+	//
+	// example:
+	//   * releaseline: feature
+	//
 	ReleaseLine string `yaml:",omitempty"`
-	// ReleaseType specifies the type of Temurin release to retrieve.
+	// "releasetype" defines the type of Temurin release to retrieve.
 	//
-	// default: "ga"
+	// compatible:
+	//   * source
+	//   * condition
 	//
-	// Allowed values:
-	// * "ga" (General Availability)
-	// * "ea" (Early Availability, e.g. nightly builds)
+	// default:
+	//   ga
+	//
+	// remark:
+	//   * accepted values are "ga" (general availability) and "ea" (early access, such as nightly builds).
+	//
+	// example:
+	//   * releasetype: ea
+	//
 	ReleaseType string `yaml:",omitempty"`
-	// FeatureVersion specifies the Major Java version to filter the Temurin release to retrieve.
+	// "featureversion" defines the major Java version used to filter the Temurin releases.
 	//
-	// default: undefined
+	// compatible:
+	//   * source
+	//   * condition
 	//
-	// Allowed values: integer number (8, 11, 17, 21, etc.)
+	// default:
+	//   the most recent release of the "releaseline".
+	//
+	// remark:
+	//   * accepted values are integers such as 8, 11, 17 or 21.
+	//   * "featureversion" and "specificversion" are mutually exclusive.
+	//
+	// example:
+	//   * featureversion: 21
+	//
 	FeatureVersion int `yaml:",omitempty"`
-	// Result specifies the type of value returned by the retrieved Temurin release.
+	// "result" defines the type of value returned from the retrieved Temurin release.
 	//
-	// default: "version"
+	// compatible:
+	//   * source
 	//
-	// Allowed values:
-	// * "version" (Version Name, e.g. the Temurin SCM release name)
-	// * "installer_url" (HTTP URL to the binary release/installer)
-	// * "checksum_url" (HTTP URL to the checksum file)
-	// * "signature_url" (HTTP URL to the signature file)
+	// default:
+	//   version
+	//
+	// remark:
+	//   * accepted values are:
+	//     * "version": the version name, which is the Temurin scm release name.
+	//     * "installer_url": the HTTP URL of the binary release or installer.
+	//     * "checksum_url": the HTTP URL of the checksum file.
+	//     * "signature_url": the HTTP URL of the signature file.
+	//
+	// example:
+	//   * result: installer_url
+	//
 	Result string `yaml:",omitempty"`
-	// Architecture specifies the CPU architecture (as defined by the Temurin API - https://api.adoptium.net/q/swagger-ui/#/Types)
-	// to filter the Temurin release to retrieve.
+	// "architecture" defines the CPU architecture used to filter the Temurin releases.
 	//
-	// default: "x64"
+	// compatible:
+	//   * source
+	//   * condition
 	//
-	// Allowed values:
-	// * "x64" (Intel/AMD 64 Bits)
-	// * "x86" (Intel/AMD 32 Bits)
-	// * "ppc64" (PowerPC 64 Bits)
-	// * "ppc64le" (PowerPC Little Endian 64 Bits)
-	// * "s390x" (IBM Z)
-	// * "aarch64" (ARM 64 Bits)
-	// * "arm" (ARM 32 Bits)
-	// * "sparcv9" (Sparc 64 Bits)
-	// * "riscv64" (RiscV 64 Bits)
+	// default:
+	//   x64
+	//
+	// remark:
+	//   * accepted values are defined by the Temurin API, see https://api.adoptium.net/q/swagger-ui/#/Types
+	//   * common values are:
+	//     * "x64" (Intel/AMD 64 bits)
+	//     * "x86" (Intel/AMD 32 bits)
+	//     * "ppc64" (PowerPC 64 bits)
+	//     * "ppc64le" (PowerPC little endian 64 bits)
+	//     * "s390x" (IBM Z)
+	//     * "aarch64" (ARM 64 bits)
+	//     * "arm" (ARM 32 bits)
+	//     * "sparcv9" (Sparc 64 bits)
+	//     * "riscv64" (RISC-V 64 bits)
+	//   * "architecture" and "platforms" are mutually exclusive.
+	//
+	// example:
+	//   * architecture: aarch64
+	//
 	Architecture string `yaml:",omitempty"`
-	// ImageType specifies the type of artifact to filter the Temurin release to retrieve.
+	// "imagetype" defines the type of artefact used to filter the Temurin releases.
 	//
-	// default: "jdk"
+	// compatible:
+	//   * source
+	//   * condition
 	//
-	// Allowed values:
-	// * "jdk"
-	// * "jre"
-	// * "testimage"
-	// * "debugimage"
-	// * "staticlibs"
-	// * "source
-	// * "sbom"
+	// default:
+	//   jdk
+	//
+	// remark:
+	//   * accepted values are "jdk", "jre", "testimage", "debugimage", "staticlibs", "source" and "sbom".
+	//
+	// example:
+	//   * imagetype: jre
+	//
 	ImageType string `yaml:",omitempty"`
-	// OperatingSystem specifies the Operating System (as defined by the Temurin API - https://api.adoptium.net/q/swagger-ui/#/Types)
-	// to filter the Temurin release to retrieve.
+	// "operatingsystem" defines the operating system used to filter the Temurin releases.
 	//
-	// default: "linux"
+	// compatible:
+	//   * source
+	//   * condition
 	//
-	// Allowed values:
-	// * "linux"
-	// * "windows"
-	// * "mac"
-	// * "solaris"
-	// * "aix"
-	// * "alpine-linux"
+	// default:
+	//   linux
+	//
+	// remark:
+	//   * accepted values are defined by the Temurin API, see https://api.adoptium.net/q/swagger-ui/#/Types
+	//   * common values are "linux", "windows", "mac", "solaris", "aix" and "alpine-linux".
+	//   * "operatingsystem" and "platforms" are mutually exclusive.
+	//
+	// example:
+	//   * operatingsystem: windows
+	//
 	OperatingSystem string `yaml:",omitempty"`
-	// SpecificVersion specifies the exact Temurin version to filter the Temurin release to retrieve.
-	// Ignores FeatureVersion when used.
+	// "specificversion" defines the exact Temurin version used to filter the Temurin releases.
 	//
-	// default: undefined
+	// compatible:
+	//   * source
+	//   * condition
 	//
-	// Allowed values: string (can be a semantic version, a JDK version or a Temurin release name)
+	// default:
+	//   empty
+	//
+	// remark:
+	//   * accepted values are a semantic version, a JDK version or a Temurin release name.
+	//   * "featureversion" and "specificversion" are mutually exclusive.
+	//   * in a condition, the source output overrides it unless "disablesourceinput" is set to true.
+	//
+	// example:
+	//   * specificversion: 17.0.2+8
+	//
 	SpecificVersion string `yaml:",omitempty"`
-	// Project specifies the project to filter the Temurin release to retrieve.
+	// "project" defines the project used to filter the Temurin releases.
 	//
-	// default: "jdk"
+	// compatible:
+	//   * source
+	//   * condition
 	//
-	// Allowed values:
-	// * "jdk" (default)
-	// * "valhalla"
-	// * "metropolis"
-	// * "jfr"
-	// * "shenandoah"
+	// default:
+	//   jdk
+	//
+	// remark:
+	//   * accepted values are "jdk", "valhalla", "metropolis", "jfr" and "shenandoah".
+	//
+	// example:
+	//   * project: valhalla
+	//
 	Project string `yaml:",omitempty"`
-	// Platforms is only valid within conditions. It specifies a collection of platforms as a filter for Temurin releases.
-	// Each platform must be a combination of an Operating System and a CPU architecture separated by the slash (`/`) character.
+	// "platforms" defines a list of platforms used to filter the Temurin releases.
 	//
-	// default: empty list (e.g. no filtering per platform).
+	// compatible:
+	//   * condition
 	//
-	// Allowed values: Any combination of Operating System and Architecture as defined by the Temurin API (https://api.adoptium.net/q/swagger-ui/#/Types):
-	// * `linux/x64`
-	// * `linux/aarch64`
-	// * `linux/s390x`
-	// * `alpine-linux/x64`
-	// * `windows/x64`
-	// ...
+	// default:
+	//   empty, so no filtering per platform.
+	//
+	// remark:
+	//   * each platform combines an operating system and a CPU architecture separated by a slash ("/").
+	//   * accepted operating systems and architectures are defined by the Temurin API, see https://api.adoptium.net/q/swagger-ui/#/Types
+	//   * "platforms" is mutually exclusive with "architecture" and "operatingsystem".
+	//
+	// example:
+	//   * platforms:
+	//     - linux/x64
+	//     - linux/aarch64
+	//     - linux/s390x
+	//     - alpine-linux/x64
+	//     - windows/x64
+	//
 	Platforms []string `yaml:",omitempty"`
 }

@@ -5,57 +5,82 @@ import (
 	"strings"
 )
 
-// Spec defines a specification for a "systemd" resource
-// parsed from an updatecli manifest file
+/*
+"systemd" defines the specification for manipulating systemd unit files.
+It can be used as a "source", a "condition", or a "target".
+*/
 type Spec struct {
-	// file specifies the systemd unit file path to manipulate
+	// "file" defines the path of the systemd unit file to manipulate.
 	//
 	// compatible:
-	//     * source
-	//     * condition
-	//     * target
+	//   * source
+	//   * condition
+	//   * target
 	//
 	// remark:
-	//     * supports absolute or relative path
+	//   * "file" is required.
+	//   * absolute and relative paths are supported.
+	//
+	// example:
+	//   * file: /etc/systemd/system/myapp.service
 	//
 	File string `yaml:",omitempty"`
-	// section specifies the unit file section to interact with, such as "Unit", "Service",
+	// "section" defines the unit file section to use, such as "Unit" or "Service".
 	//
 	// compatible:
-	//     * source
-	//     * condition
-	//     * target
+	//   * source
+	//   * condition
+	//   * target
+	//
+	// remark:
+	//   * "section" is required.
+	//
+	// example:
+	//   * section: Service
 	//
 	Section string `yaml:",omitempty"`
-	// option specifies the key within the section to read or update, such as "ExecStart".
+	// "option" defines the key within the section to read or update, such as "ExecStart".
 	//
 	// compatible:
-	//     * source
-	//     * condition
-	//     * target
+	//   * source
+	//   * condition
+	//   * target
+	//
+	// remark:
+	//   * "option" is required.
+	//
+	// example:
+	//   * option: ExecStart
 	//
 	Option string `yaml:",omitempty"`
-	// index specifies which matching option to read or update when the same option is defined multiple times.
-	// It starts at 0, so index 0 selects the first match, index 1 selects the second match, and so on.
-	// If unset then a condition or a target matches every occurrences.
+	// "index" defines which matching option to use when the same option is defined several times.
 	//
 	// compatible:
-	//     * source
-	//     * condition
-	//     * target
+	//   * source
+	//   * condition
+	//   * target
 	//
 	// default:
-	//     0
+	//   empty
+	//
+	// remark:
+	//   * it starts at 0, so index 0 selects the first match and index 1 the second.
+	//   * it must be greater than or equal to 0.
+	//   * when unset in a source, the first match is used.
+	//   * when unset in a condition or a target, every match is used.
+	//
+	// example:
+	//   * index: 0
 	//
 	Index *int `yaml:",omitempty"`
-	// value specifies the value for a specific option.
+	// "value" defines the value of the option.
 	//
 	// compatible:
-	//     * condition
-	//     * target
+	//   * condition
+	//   * target
 	//
 	// default:
-	//     When used from a condition or a target, the default value is set to the associated source output.
+	//   in a condition or a target, the output of the associated source.
 	//
 	Value string `yaml:",omitempty"`
 }

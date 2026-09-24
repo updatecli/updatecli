@@ -7,54 +7,55 @@ import (
 )
 
 /*
-"terraform/provider" defines the specification for manipulating providers in terraform files.
-It can be used as a "condition", or a "target".
+"terraform/provider" defines the specification for manipulating providers in Terraform files.
+It can be used as a "condition" or a "target".
 */
 type Spec struct {
-	/*
-		"file" defines the file path to interact with.
-
-		compatible:
-			* condition
-			* target
-
-		remark:
-			* "file" and "files" are mutually exclusive
-			* protocols "https://", "http://", and "file://" are supported in path for condition
-	*/
+	// "file" defines the path of the Terraform file to use.
+	//
+	// compatible:
+	//   * condition
+	//   * target
+	//
+	// remark:
+	//   * "file" and "files" are mutually exclusive.
+	//   * the schemes "https://", "http://" and "file://" are supported in a condition.
+	//
 	File string `yaml:",omitempty"`
-	/*
-		"files" defines the list of files path to interact with.
-
-		compatible:
-			* condition
-			* target
-
-		remark:
-			* file and files are mutually exclusive
-			* when using as a condition only one file is supported
-			* protocols "https://", "http://", and "file://" are supported in file path for condition
-	*/
+	// "files" defines the list of Terraform file paths to use.
+	//
+	// compatible:
+	//   * condition
+	//   * target
+	//
+	// remark:
+	//   * "file" and "files" are mutually exclusive.
+	//   * a condition only supports one file.
+	//   * the schemes "https://", "http://" and "file://" are supported in a condition.
+	//
 	Files []string `yaml:",omitempty"`
-	/*
-		"value" is the value associated with a terraform provider.
-
-		compatible:
-			* condition
-			* target
-
-		default:
-			When used from a condition or a target, the default value is set to linked source output.
-	*/
+	// "value" defines the version of the Terraform provider.
+	//
+	// compatible:
+	//   * condition
+	//   * target
+	//
+	// default:
+	//   in a condition or a target, the output of the associated source.
+	//
 	Value string `yaml:",omitempty"`
-
-	/*
-		"provider" is the terraform provider you wish to update.
-
-		compatible:
-			* condition
-			* target
-	*/
+	// "provider" defines the name of the Terraform provider to update, as declared in the "required_providers" block.
+	//
+	// compatible:
+	//   * condition
+	//   * target
+	//
+	// remark:
+	//   * "provider" is required.
+	//
+	// example:
+	//   * provider: kubernetes
+	//
 	Provider string `yaml:",omitempty"`
 }
 

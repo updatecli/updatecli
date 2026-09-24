@@ -8,8 +8,12 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
+/*
+"toml" defines the specification for manipulating toml files.
+It can be used as a "source", a "condition", or a "target".
+*/
 type Spec struct {
-	// engine defines the engine used to manipulate the toml file.
+	// "engine" defines the engine used to manipulate the toml file.
 	//
 	// compatible:
 	//   * source
@@ -17,34 +21,118 @@ type Spec struct {
 	//   * target
 	//
 	// default:
-	//   * "dasel/v1" is the default engine used to manipulate toml files
+	//   dasel/v1
 	//
-	// accepted values:
-	//   * "dasel/v1" for dasel v1 engine
-	//   * "dasel/v2" for dasel v2 engine
-	//   * "dasel/v3" for dasel v3 engine
-	//   * "dasel" for the latest dasel engine which is currently dasel v3
+	// remark:
+	//   * accepted values are "dasel/v1", "dasel/v2", "dasel/v3" and "dasel".
+	//   * "dasel" selects the latest dasel engine, currently "dasel/v3".
+	//   * "dasel/v1" and "dasel/v2" are deprecated in favour of "dasel/v3".
+	//
+	// example:
+	//   * engine: dasel/v3
+	//
 	Engine *string `yaml:",omitempty"`
-	// [s][c][t] File specifies the toml file to manipulate
+	// "file" defines the path of the toml file to use.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//   * target
+	//
+	// remark:
+	//   * "file" and "files" are mutually exclusive.
+	//   * the schemes "https://", "http://" and "file://" are supported in a source or a condition.
+	//
+	// example:
+	//   * file: Cargo.toml
+	//
 	File string `yaml:",omitempty"`
-	// [c][t] Files specifies a list of Json file to manipulate
+	// "files" defines the list of toml file paths to use.
+	//
+	// compatible:
+	//   * condition
+	//   * target
+	//
+	// remark:
+	//   * "file" and "files" are mutually exclusive.
+	//   * the schemes "https://", "http://" and "file://" are supported in a condition.
+	//
 	Files []string `yaml:",omitempty"`
-	// [s][c][t] Query allows to used advanced query. Override the parameter key
+	// "query" defines an advanced dasel v1 query returning several values.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//   * target
+	//
+	// remark:
+	//   * "key" or "query" is required.
+	//   * "query" is only used by the "dasel/v1" engine. The engines "dasel/v2"
+	//     and "dasel/v3" require "key" instead.
+	//   * with the "dasel/v1" engine, "query" takes precedence over "key".
+	//   * in a source, "query" and "versionfilter" must be used together.
+	//   * "query" accepts a dasel query, more information on https://github.com/tomwright/dasel
+	//
 	Query string `yaml:",omitempty"`
-	// [s][c][t] Key specifies the query to retrieve an information from a toml file
+	// "key" defines the toml key path to use.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//   * target
+	//
+	// remark:
+	//   * "key" or "query" is required.
+	//   * "key" accepts a dasel query matching the selected engine,
+	//     more information on https://github.com/tomwright/dasel
+	//
+	// example:
+	//   * key: package.version
+	//
 	Key string `yaml:",omitempty"`
-	// [s][c][t] Value specifies the value for a specific key. Default to source output
+	// "value" defines the value associated with the toml key.
+	//
+	// compatible:
+	//   * condition
+	//   * target
+	//
+	// default:
+	//   the output of the associated source.
+	//
 	Value string `yaml:",omitempty"`
-	// [c][t] *Deprecated* Please look at query parameter to achieve similar objective
+	// "multiple" retrieves several values from a query.
+	//
+	// compatible:
+	//   * condition
+	//   * target
+	//
+	// deprecated:
+	//   * use "query" instead. A "key" combined with "multiple" is converted to "query".
+	//
 	Multiple bool `yaml:",omitempty" jsonschema:"-"`
-	// [s] VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
+	// "versionfilter" defines the version pattern and its kind, such as "regex", "semver" or "latest".
+	//
+	// compatible:
+	//   * source
+	//
+	// remark:
+	//   * with the "dasel/v1" engine, "versionfilter" and "query" must be used together.
+	//   * more information on https://www.updatecli.io/docs/core/versionfilter/
+	//
 	VersionFilter version.Filter `yaml:",omitempty"`
-	/*
-	  [t] CreateMissingKey allows non-existing keys. If the key does not exist, the key is created if AllowsMissingKey
-	  is true, otherwise an error is raised (the default).
-	  Only supported if Key is used.
-	  Not supported by the "dasel/v3" engine, which cannot create missing keys.
-	*/
+	// "createmissingkey" creates the key when the toml file does not hold it yet.
+	//
+	// compatible:
+	//   * target
+	//
+	// default:
+	//   false
+	//
+	// remark:
+	//   * when false, a missing key raises an error.
+	//   * only supported with "key".
+	//   * not supported by the "dasel/v3" engine, which cannot create missing keys.
+	//
 	CreateMissingKey bool `yaml:",omitempty"`
 }
 

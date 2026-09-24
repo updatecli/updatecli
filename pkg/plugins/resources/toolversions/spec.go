@@ -6,20 +6,71 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+/*
+"toolversions" defines the specification for manipulating .tool-versions files.
+It can be used as a "source", a "condition", or a "target".
+*/
 type Spec struct {
-	// [s][c][t] File specifies the .tool-versions file to manipulate
+	// "file" defines the path of the .tool-versions file to use.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//   * target
+	//
+	// remark:
+	//   * "file" and "files" are mutually exclusive.
+	//   * the schemes "https://" and "http://" are not supported in a target.
+	//
+	// example:
+	//   * file: .tool-versions
+	//
 	File string `yaml:",omitempty"`
-	// [c][t] Files specifies a list of .tool-versions file to manipulate
+	// "files" defines the list of .tool-versions file paths to use.
+	//
+	// compatible:
+	//   * condition
+	//   * target
+	//
+	// remark:
+	//   * "file" and "files" are mutually exclusive.
+	//
 	Files []string `yaml:",omitempty"`
-	// [s][c][t] Key specifies the query to retrieve an information from a .tool-versions file
+	// "key" defines the name of the tool to use.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//   * target
+	//
+	// remark:
+	//   * "key" is required.
+	//
+	// example:
+	//   * key: golang
+	//
 	Key string `yaml:",omitempty"`
-	// [s][c][t] Value specifies the value for a specific key. Default to source output
+	// "value" defines the version associated with the tool.
+	//
+	// compatible:
+	//   * condition
+	//   * target
+	//
+	// default:
+	//   the output of the associated source.
+	//
 	Value string `yaml:",omitempty"`
-	/*
-	  [t] CreateMissingKey allows non-existing keys. If the key does not exist, the key is created if AllowsMissingKey
-	  is true, otherwise an error is raised (the default).
-	  Only supported if Key is used
-	*/
+	// "createmissingkey" creates the key when the .tool-versions file does not hold it yet.
+	//
+	// compatible:
+	//   * target
+	//
+	// default:
+	//   false
+	//
+	// remark:
+	//   * when false, a missing key raises an error.
+	//
 	CreateMissingKey bool `yaml:",omitempty"`
 }
 
