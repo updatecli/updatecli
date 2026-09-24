@@ -7,7 +7,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/updatecli/updatecli/pkg/core/cmdoptions"
 	"github.com/updatecli/updatecli/pkg/core/config"
 	"github.com/updatecli/updatecli/pkg/core/engine/manifest"
 )
@@ -18,20 +17,13 @@ var (
 
 	manifestValidateCmd = &cobra.Command{
 		Use:   "validate",
-		Short: "**Experimental** validate manifest(s) against the Updatecli schema",
-		Long: `**Experimental** validate reports the manifest keys that do not match the
-Updatecli schema, such as a misspelled one, which Updatecli would otherwise silently
-ignore.
+		Short: "validate manifest(s) against the Updatecli schema",
+		Long: `validate reports the manifest keys that do not match the Updatecli schema,
+such as a misspelled one, which Updatecli would otherwise silently ignore.
 
 A deprecated keyword, or a key Updatecli cannot check reliably, is reported as a warning
 and does not fail the command unless '--strict' is specified.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			// TODO: To be removed once not experimental anymore
-			if !cmdoptions.Experimental {
-				logrus.Warningf("The 'manifest validate' command is experimental, please use the '--experimental' flag to enable it")
-				os.Exit(1)
-			}
-
 			e.Options.Manifests = append(e.Options.Manifests, manifest.Manifest{
 				Manifests:    manifestFiles,
 				Values:       valuesFiles,

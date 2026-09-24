@@ -8,4 +8,4 @@ set -eux
 ## In order for the Updatecli manifest to work, we must be at the root of the git repository
 pushd "$VENOM_VAR_rootpath"
 
-"$VENOM_VAR_binpath/updatecli" manifest validate --experimental --config e2e/updatecli.d/deprecated.d/
+"$VENOM_VAR_binpath/updatecli" manifest validate --config e2e/updatecli.d/deprecated.d/
