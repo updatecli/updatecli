@@ -57,6 +57,7 @@ type Spec struct {
 	//     or the variable name for "ARG" and "ENV".
 	//   * in the map form, the optional key "ignoreUnsetValue" set to true ignores instructions without a value.
 	//   * in the map form, a condition only checks that a matching instruction exists.
+	//   * the string form does not support a source, which returns an empty value.
 	//
 	// example:
 	// ```
@@ -73,6 +74,8 @@ type Spec struct {
 	//
 	// remark:
 	//   * it is only used when "instruction" is a string.
+	//   * the condition fails only when the instruction is missing.
+	//     A different value is reported in the logs but does not fail the condition.
 	//   * a target always uses the output of the associated source.
 	//
 	Value string `yaml:"value,omitempty"`
@@ -84,6 +87,7 @@ type Spec struct {
 	//   * target
 	//
 	// remark:
+	//   * it is only used when "instruction" is a map.
 	//   * when unset in a source, the last stage is used.
 	//   * when unset in a condition or a target, every stage is used.
 	//

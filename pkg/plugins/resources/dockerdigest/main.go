@@ -22,9 +22,6 @@ type Spec struct {
 	// compatible:
 	//   * source
 	//
-	// default:
-	//   linux/amd64
-	//
 	// remark:
 	//   * when unset, the source returns the digest of the image as stored in the registry,
 	//     which is the image index digest for a multi platform image.

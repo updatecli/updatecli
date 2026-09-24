@@ -39,10 +39,9 @@ Updatecli clones the repository, reads files from it, and commits and pushes the
 type Spec struct {
 	// "branch" defines the git branch to work on.
 	//
-	// default:
-	//   main
-	//
 	// remark:
+	//   * there is no default, so set it explicitly. Only the GitHub scm that Updatecli
+	//     generates from the local git repository uses "main" when it is unset.
 	//   * when the GitHub scm is used by a source or a condition, files are read from this branch.
 	//   * when the GitHub scm is used by a target, Updatecli pushes changes to a working branch
 	//     based on this branch, named "updatecli_<branch>_<pipelineid>" by default.

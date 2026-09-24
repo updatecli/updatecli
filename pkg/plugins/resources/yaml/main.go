@@ -124,7 +124,6 @@ type Spec struct {
 	// "value" defines the value associated with the yaml key.
 	//
 	// compatible:
-	//   * source
 	//   * condition
 	//   * target
 	//
@@ -163,6 +162,10 @@ type Spec struct {
 	//         '\\' c      matches character c
 	//         lo '-' hi   matches character c for lo <= c <= hi
 	// ```
+	//
+	// compatible:
+	//   * condition
+	//   * target
 	//
 	// default:
 	//   false

@@ -75,6 +75,8 @@ type Spec struct {
 	// remark:
 	//   * a pattern is matched against the file path relative to "rootdir", then against the file name.
 	//   * the pattern follows the Go filepath.Match syntax, such as "*" or "?".
+	//   * "**" is not recursive. It behaves like "*" and matches a single directory level,
+	//     so the default patterns find files directly under ".woodpecker" or one directory below it.
 	//
 	FileMatch []string `yaml:",omitempty"`
 	// "versionfilter" defines the version filter used by the generated manifests.

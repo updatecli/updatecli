@@ -68,7 +68,7 @@ type Spec struct {
 	// remark:
 	//   * "minimum" and "maximum" accept a duration string such as "24h", "7d", "3w", "1mo" or "1y".
 	//   * accepted units are "h" for hours, "d" for days, "w" for weeks, "mo" for months and "y" for years.
-	//     Hours are assumed when no unit is given.
+	//     A unit is required.
 	//   * when every release is filtered out by its age, the source is skipped instead of failing.
 	//
 	// example:

@@ -32,6 +32,8 @@ type MatchingRule struct {
 	//   * an empty value matches any version.
 	//   * otherwise the value is a semantic version constraint, such as ">=1.0.0".
 	//   * when the version or the constraint cannot be parsed, the value must equal the version.
+	//   * the Go version entry has no module name, so "modules" is not checked for it.
+	//     A rule that sets only "modules" therefore also matches the Go version.
 	//
 	// example:
 	//   * "github.com/updatecli/updatecli": "" matches any version of the module.

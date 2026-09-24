@@ -16,7 +16,12 @@ type MatchingRule struct {
 	//
 	// remark:
 	//   * an architecture must be identical to one of the entries.
-	//   * the architecture comes from the "platform" key of a service.
+	//   * the architecture is the middle part of the "platform" key of a service,
+	//     so "linux/amd64" gives "amd64". Entries must use that form, such as "amd64".
+	//   * a service without an architecture in its "platform" key is not checked against "archs".
+	//
+	// example:
+	//   * archs: ["amd64", "arm64"]
 	//
 	Archs []string
 	// "path" defines a Docker Compose file path pattern.

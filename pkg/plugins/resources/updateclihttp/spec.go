@@ -47,7 +47,8 @@ type Spec struct {
 	//   * condition
 	//
 	// default:
-	//   empty, so the condition only fails when the response status code is 404 or higher.
+	//   empty, so the condition fails when the response status code is between 404 and 499,
+	//   and returns an error when it is 500 or higher.
 	//
 	// remark:
 	//   * when set, the HTTP client does not follow redirects.

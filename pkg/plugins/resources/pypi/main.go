@@ -73,6 +73,7 @@ type Spec struct {
 	// remark:
 	//   * yanked releases are ignored.
 	//   * with the kind "latest", the version is the latest release reported by the registry.
+	//     The source fails when that release is yanked.
 	//   * with a kind other than "pep440", versions are normalised to semver and dev releases are ignored.
 	//
 	VersionFilter version.Filter `yaml:",omitempty"`

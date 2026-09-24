@@ -158,6 +158,8 @@ type Spec struct {
 	//
 	// remark:
 	//   * when true, Updatecli also recreates the working branches that diverged from their base branch.
+	//   * when "workingbranch" is false and "force" is not set, each generated Azure DevOps scm returns an error,
+	//     to avoid force pushing to "branch" by mistake. Set "force" explicitly to confirm the behavior.
 	//
 	Force *bool `yaml:",omitempty"`
 	// "commitmessage" defines the settings used to generate commit messages.
