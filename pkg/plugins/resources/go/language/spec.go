@@ -5,30 +5,56 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
-// Spec defines a specification for a "Golang" resource parsed from an updatecli manifest file
+/*
+"golang" defines the specification for retrieving Go releases.
+It can be used as a "source" or a "condition".
+*/
 type Spec struct {
-	// Version defines a specific golang version
+	// "version" defines the Go version to check.
 	//
-	// Compatible:
+	// compatible:
 	//   * condition
+	//
+	// default:
+	//   the output of the associated source.
+	//
+	// example:
+	//   * version: 1.23.0
 	//
 	Version string `yaml:",omitempty"`
-	// versionfilter provides parameters to specify version pattern and
-	// its type like regex, semver, or just latest.
+	// "versionfilter" defines the version pattern and its type, such as regex, semver or latest.
 	//
-	// Compatible:
+	// compatible:
 	//   * source
 	//
-	VersionFilter version.Filter `yaml:",omitempty"`
-	// age defines the minimum or maximum age of a release to be considered valid. It accepts a duration string (e.g., "24h", "7d").
+	// default:
+	//   kind: semver
+	//   pattern: "*"
 	//
-	// Compatible:
+	// example:
+	// ```
+	//   versionfilter:
+	//     kind: semver
+	//     pattern: "~1.23"
+	// ```
+	//
+	VersionFilter version.Filter `yaml:",omitempty"`
+	// "age" defines the minimum or maximum age of a release to be considered valid.
+	//
+	// compatible:
 	//   * source
 	//   * condition
 	//
-	// Remarks:
-	//   If age is specified, the Updatecli retrieves the release date of each Golang version from a git repository.
-	//   This has significant performance implications, as it requires fetching git tags and their associated commit dates.
-	//   Use wisely.
+	// remark:
+	//   * when set, Updatecli reads the release date of each Go version from the git repository
+	//     https://github.com/golang/go.git, using the commit date of each tag.
+	//   * fetching the git tags and their commit dates is slow, so use it with care.
+	//
+	// example:
+	// ```
+	//   age:
+	//     minimum: 7d
+	// ```
+	//
 	Age age.Spec `yaml:",omitempty"`
 }

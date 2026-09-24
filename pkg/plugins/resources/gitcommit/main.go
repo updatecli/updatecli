@@ -13,78 +13,98 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
 )
 
-// Spec defines a specification for a "gitcommit" resource.
+/*
+"gitcommit" defines the specification for retrieving and checking Git commit hashes.
+It can be used as a "source" or a "condition".
+*/
 type Spec struct {
-	// Path specifies a local Git repository path.
+	// "path" defines the path of the local Git repository.
 	//
 	// compatible:
 	//   * source
 	//   * condition
 	//
-	// remarks:
-	//   * Path overrides the working directory provided by an SCM configuration.
+	// remark:
+	//   * a relative path is resolved from the Updatecli manifest directory.
+	//   * "path" overrides the working directory provided by the scm configuration.
+	//   * "url" takes precedence over "path".
+	//
 	Path string `yaml:",omitempty"`
-	// Branch specifies the branch whose latest commit hash is returned.
+	// "branch" defines the branch whose latest commit hash is returned.
 	//
 	// compatible:
 	//   * source
 	//
 	// default:
-	//   The repository's current HEAD branch.
+	//   the current HEAD of the repository.
+	//
 	Branch string `yaml:",omitempty"`
-	// Age defines the minimum or maximum age of a commit to be considered valid.
-	// It accepts a duration string (e.g., "24h", "7d", "3w", "1y").
-	// The age of a commit is its committer date, and the newest commit of the branch
-	// falling inside that window is returned.
+	// "age" defines the minimum or maximum age of a commit to be considered valid.
 	//
 	// compatible:
 	//   * source
 	//
-	// remarks:
-	//   * The branch history is walked from its tip until a commit matches, so Depth
-	//     must be large enough to reach it.
-	Age age.Spec `yaml:",omitempty"`
-	// Hash specifies the commit hash checked by the condition.
-	//
-	// compatible:
-	//   * condition
-	//
-	// default:
-	//   The source output.
-	Hash string `yaml:",omitempty"`
-	// Depth limits the number of commits fetched from the Git repository.
-	//
-	// compatible:
-	//   * source
-	//   * condition
-	//
-	// default:
-	//   0 (no limit)
-	Depth *int `yaml:",omitempty"`
-	// URL specifies the Git repository URL to clone.
-	//
-	// compatible:
-	//   * source
-	//   * condition
+	// remark:
+	//   * "minimum" and "maximum" accept a duration string such as "24h", "7d", "3w" or "1y".
+	//   * the age of a commit is its committer date.
+	//   * the newest commit of the branch inside that window is returned.
+	//   * the branch history is walked from its tip until a commit matches,
+	//     so "depth" must be large enough to reach it.
+	//   * when no commit matches the age filter, the source is skipped.
 	//
 	// example:
-	//   * git@github.com:updatecli/updatecli.git
-	//   * https://github.com/updatecli/updatecli.git
+	// ```
+	//   age:
+	//     minimum: 7d
+	// ```
 	//
-	// remarks:
-	//   * URL overrides both Path and the working directory provided by an SCM configuration.
+	Age age.Spec `yaml:",omitempty"`
+	// "hash" defines the commit hash checked by the condition.
+	//
+	// compatible:
+	//   * condition
+	//
+	// default:
+	//   the output of the associated source.
+	//
+	Hash string `yaml:",omitempty"`
+	// "depth" limits the number of commits fetched from the Git repository.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//
+	// default:
+	//   0, which means no limit
+	//
+	Depth *int `yaml:",omitempty"`
+	// "url" defines the Git repository URL to clone.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//
+	// remark:
+	//   * "url" overrides "path" and the working directory provided by the scm configuration.
+	//
+	// example:
+	//   * url: git@github.com:updatecli/updatecli.git
+	//   * url: https://github.com/updatecli/updatecli.git
+	//
 	URL string `yaml:",omitempty"`
-	// Username specifies the username used with the HTTP protocol.
+	// "username" defines the username used with the HTTP protocol.
 	//
 	// compatible:
 	//   * source
 	//   * condition
+	//
 	Username string `yaml:",omitempty"`
-	// Password specifies the password used with the HTTP protocol.
+	// "password" defines the password used with the HTTP protocol.
 	//
 	// compatible:
 	//   * source
 	//   * condition
+	//
 	Password string `yaml:",omitempty"`
 }
 

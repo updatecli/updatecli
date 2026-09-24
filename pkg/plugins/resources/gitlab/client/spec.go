@@ -1,25 +1,34 @@
 package client
 
-// Spec defines a specification for a "GitLab" resource
-// parsed from an updatecli manifest file
+// Spec defines the settings used to connect to a GitLab instance.
 type Spec struct {
-	//  "url" defines the GitLab url to interact with
+	// "url" defines the GitLab url to interact with.
 	//
-	//  default:
-	//     "gitlab.com"
+	// default:
+	//   gitlab.com
+	//
+	// remark:
+	//   * "https://" is added when the url has no "http://" or "https://" scheme.
+	//
+	// example:
+	//   * url: gitlab.com
+	//   * url: https://gitlab.example.com
+	//
 	URL string `yaml:",omitempty"`
-	//  "username" defines the username used to authenticate with GitLab
+	// "username" defines the username used to authenticate with GitLab.
+	//
 	Username string `yaml:",omitempty"`
-	//  "token" defines the credential used to authenticate with GitLab
+	// "token" defines the credential used to authenticate with GitLab.
 	//
-	//  remark:
-	//    A token is a sensitive information, it's recommended to not set this value directly in the configuration file
-	//    but to use an environment variable or a SOPS file.
+	// remark:
+	//   * a token is sensitive information. Do not set it directly in the manifest,
+	//     use an environment variable or a SOPS file instead.
+	//   * `{{ requiredEnv "GITLAB_TOKEN" }}` retrieves the token from the environment variable `GITLAB_TOKEN`.
+	//   * `{{ .gitlab.token }}` retrieves the token from a SOPS file.
+	//   * for more information about SOPS files, see https://github.com/getsops/sops
 	//
-	//    The value can be set to `{{ requiredEnv "GITLAB_TOKEN"}}` to retrieve the token from the environment variable `GITLAB_TOKEN`
-	//	  or `{{ .gitlab.token }}` to retrieve the token from a SOPS file.
+	// example:
+	//   * token: '{{ requiredEnv "GITLAB_TOKEN" }}'
 	//
-	//	  For more information, about a SOPS file, please refer to the following documentation:
-	//    https://github.com/getsops/sops
 	Token string `yaml:",omitempty"`
 }

@@ -14,16 +14,60 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
-// Spec defines settings used to interact with Gitea release
+/*
+"gitea/tag" defines the specification for retrieving tags from a Gitea repository.
+It can be used as a "source" or a "condition".
+*/
 type Spec struct {
 	client.Spec `yaml:",inline,omitempty"`
-	// [S][C] Owner specifies repository owner
+	// "owner" defines the owner of the Gitea repository.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//
+	// example:
+	//   * owner: updatecli
+	//
 	Owner string `yaml:",omitempty" jsonschema:"required"`
-	// [S][C] Repository specifies the name of a repository for a specific owner
+	// "repository" defines the name of the Gitea repository for a specific owner.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//
+	// example:
+	//   * repository: updatecli
+	//
 	Repository string `yaml:",omitempty" jsonschema:"required"`
-	// [S][C] VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
+	// "versionfilter" defines the version pattern and kind used to select a tag.
+	//
+	// compatible:
+	//   * source
+	//
+	// default:
+	//   kind: latest
+	//
+	// remark:
+	//   * accepted kinds include "latest", "semver" and "regex".
+	//
+	// example:
+	//   * versionfilter:
+	//       kind: semver
+	//       pattern: "~1.2"
+	//
 	VersionFilter version.Filter `yaml:",omitempty"`
-	// [S] Tag defines the Gitea tag .
+	// "tag" defines the name of the tag to check.
+	//
+	// compatible:
+	//   * condition
+	//
+	// default:
+	//   the output of the associated source.
+	//
+	// example:
+	//   * tag: v1.0.0
+	//
 	Tag string `yaml:",omitempty"`
 }
 
