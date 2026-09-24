@@ -98,7 +98,7 @@ type Spec struct {
 	// ```
 	//   targets:
 	//     default:
-	//       name: 'doc: synchronise release note'
+	//       name: 'doc: synchronize release note'
 	//       kind: 'shell'
 	//       disablesourceinput: true
 	//       spec:

@@ -11,7 +11,7 @@ import (
 
 // GPGSpec defines the GPG key and passphrase used to sign git commits.
 type GPGSpec struct {
-	// "signingkey" defines the armoured GPG private key used to sign commits.
+	// "signingkey" defines the armored GPG private key used to sign commits.
 	//
 	// default:
 	//   empty, which means commits are not signed.

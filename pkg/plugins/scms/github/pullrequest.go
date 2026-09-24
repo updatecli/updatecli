@@ -185,7 +185,7 @@ type ActionSpec struct {
 	//   empty
 	//
 	// remark:
-	//   * a team uses the format "organization/team", and the token needs the organisation read permission.
+	//   * a team uses the format "organization/team", and the token needs the organization read permission.
 	//
 	Reviewers []string `yaml:",omitempty"`
 

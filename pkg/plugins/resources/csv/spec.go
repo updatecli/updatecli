@@ -26,7 +26,7 @@ type Spec struct {
 	// remark:
 	//   * accepted values are "dasel/v1", "dasel/v2", "dasel/v3" and "dasel".
 	//   * "dasel" is the latest dasel engine, currently dasel v3.
-	//   * "dasel/v1" and "dasel/v2" are deprecated in favour of "dasel/v3".
+	//   * "dasel/v1" and "dasel/v2" are deprecated in favor of "dasel/v3".
 	//
 	// example:
 	//   * engine: dasel/v3

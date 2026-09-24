@@ -101,7 +101,7 @@ type Spec struct {
 	//   * architecture: aarch64
 	//
 	Architecture string `yaml:",omitempty"`
-	// "imagetype" defines the type of artefact used to filter the Temurin releases.
+	// "imagetype" defines the type of artifact used to filter the Temurin releases.
 	//
 	// compatible:
 	//   * source

@@ -115,7 +115,7 @@ type Spec struct {
 	//
 	// default:
 	//   a directory under the Updatecli temporary directory, such as
-	//   "/tmp/updatecli/<sanitised url>" on Linux.
+	//   "/tmp/updatecli/<sanitized url>" on Linux.
 	//
 	// remark:
 	//   * keep the default value unless you have a good reason to change it,
@@ -130,7 +130,7 @@ type Spec struct {
 	// remark:
 	//   * when true, Updatecli also recreates the working branches that diverged from their base branch.
 	//   * when "force" is true and "workingbranch" is not set, the git scm returns an error,
-	//     to avoid force pushing to "branch" by mistake. Set "workingbranch" explicitly to confirm the behaviour.
+	//     to avoid force pushing to "branch" by mistake. Set "workingbranch" explicitly to confirm the behavior.
 	//
 	Force bool `yaml:",omitempty"`
 	// "commitmessage" defines the settings used to generate commit messages.
