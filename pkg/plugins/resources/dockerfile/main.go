@@ -11,64 +11,85 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/resources/dockerfile/types"
 )
 
-// Spec defines a specification for a "dockerfile" resource
-// parsed from an updatecli manifest file
+/*
+"dockerfile" defines the specification for manipulating Dockerfile instructions.
+It can be used as a "source", a "condition", or a "target".
+*/
 type Spec struct {
-	// file specifies the dockerimage file path to use and is incompatible with Files
-	//
-	// default: ""
+	// "file" defines the path of the Dockerfile.
 	//
 	// compatible:
-	// 	* source
-	// 	* condition
-	// 	* target
+	//   * source
+	//   * condition
+	//   * target
 	//
-	//  remark:
-	//    File is not compatible with Files. Only one of the two should be specified.
+	// remark:
+	//   * "file" and "files" are mutually exclusive.
+	//
+	// example:
+	//   * file: Dockerfile
+	//
 	File string `yaml:",omitempty"`
-	// Files specifies the dockerimage file path(s) to use and is incompatible with File
-	//
-	// default: []
+	// "files" defines the list of Dockerfile paths.
 	//
 	// compatible:
-	// 	* source
-	// 	* condition
-	// 	* target
+	//   * source
+	//   * condition
+	//   * target
 	//
-	//  remark:
-	//    Files is not compatible with File. Only one of the two should be specified.
+	// remark:
+	//   * "file" and "files" are mutually exclusive.
+	//   * a source accepts only one file.
+	//
 	Files []string `yaml:",omitempty"`
-	// Instruction specifies a DockerImage instruction such as ENV
-	// Instruction can be specified as a simple string or as a map with keyword and matcher keys.
+	// "instruction" defines the Dockerfile instruction to manipulate.
+	//
+	// It is either a string or a map with the keys "keyword" and "matcher".
 	//
 	// compatible:
-	// 	* source
-	// 	* condition
-	// 	* target
+	//   * source
+	//   * condition
+	//   * target
 	//
-	//  default: empty
+	// remark:
+	//   * in the map form, "keyword" accepts "FROM", "ARG", "ENV" or "LABEL", case insensitive.
+	//   * in the map form, "matcher" selects the instruction, such as the image name for "FROM"
+	//     or the variable name for "ARG" and "ENV".
+	//   * in the map form, the optional key "ignoreUnsetValue" set to true ignores instructions without a value.
+	//   * in the map form, a condition only checks that a matching instruction exists.
 	//
-	//  example:
-	//  ```yaml
-	//  instruction:
-	//    keyword: "FROM"
-	//    matcher: "alpine"
-	//  ```
+	// example:
+	// ```
+	//   instruction:
+	//     keyword: "FROM"
+	//     matcher: "alpine"
+	// ```
+	//
 	Instruction types.Instruction `yaml:"instruction,omitempty"`
-	// Value specifies the value for a specified Dockerfile instruction.
+	// "value" defines the expected value of the Dockerfile instruction.
 	//
 	// compatible:
-	// 	* source
-	// 	* condition
-	// 	* target
+	//   * condition
 	//
-	// default: source output
+	// remark:
+	//   * it is only used when "instruction" is a string.
+	//   * a target always uses the output of the associated source.
+	//
 	Value string `yaml:"value,omitempty"`
-	// Stage can be used to further refined the scope
-	// For Sources:
-	// - If not defined, the last stage will be considered
-	// For Condition and Targets:
-	// - If not defined, all stages will be considered
+	// "stage" defines the Dockerfile stage to consider.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//   * target
+	//
+	// remark:
+	//   * when unset in a source, the last stage is used.
+	//   * when unset in a condition or a target, every stage is used.
+	//
+	// example:
+	//   * stage: builder
+	//
 	Stage string `yaml:"stage,omitempty"`
 }
 

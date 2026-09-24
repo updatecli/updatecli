@@ -6,31 +6,42 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// Spec defines a specification for a "bazelmod" resource
-// parsed from an updatecli manifest file
+/*
+"bazelmod" defines the specification for manipulating a module version in a Bazel MODULE.bazel file.
+It can be used as a "source", a "condition", or a "target".
+*/
 type Spec struct {
-	// File specifies the path to the MODULE.bazel file
+	// "file" defines the path of the MODULE.bazel file.
 	//
 	// compatible:
 	//   * source
 	//   * condition
 	//   * target
 	//
+	// remark:
+	//   * it is required.
+	//   * a "file://" prefix is removed.
+	//
 	// example:
-	//   * MODULE.bazel
-	//   * path/to/MODULE.bazel
+	//   * file: MODULE.bazel
+	//   * file: path/to/MODULE.bazel
+	//
 	File string `yaml:",omitempty" jsonschema:"required"`
-	// Module specifies the Bazel module name to target
+	// "module" defines the name of the Bazel module, as set in its "bazel_dep" entry.
 	//
 	// compatible:
 	//   * source
 	//   * condition
 	//   * target
 	//
+	// remark:
+	//   * it is required.
+	//
 	// example:
-	//   * rules_go
-	//   * gazelle
-	//   * protobuf
+	//   * module: rules_go
+	//   * module: gazelle
+	//   * module: protobuf
+	//
 	Module string `yaml:",omitempty" jsonschema:"required"`
 }
 

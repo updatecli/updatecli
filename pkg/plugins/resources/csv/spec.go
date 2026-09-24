@@ -8,8 +8,12 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
+/*
+"csv" defines the specification for manipulating csv files.
+It can be used as a "source", a "condition", or a "target".
+*/
 type Spec struct {
-	// engine defines the engine used to manipulate the csv file.
+	// "engine" defines the engine used to manipulate the csv file.
 	//
 	// compatible:
 	//   * source
@@ -17,31 +21,118 @@ type Spec struct {
 	//   * target
 	//
 	// default:
-	//   * "dasel/v1" is the default engine used to manipulate csv files
+	//   dasel/v1
 	//
-	// accepted values:
-	//   * "dasel/v1" for dasel v1 engine
-	//   * "dasel/v2" for dasel v2 engine
-	//   * "dasel/v3" for dasel v3 engine
-	//   * "dasel" for the latest dasel engine which is currently dasel v3
+	// remark:
+	//   * accepted values are "dasel/v1", "dasel/v2", "dasel/v3" and "dasel".
+	//   * "dasel" is the latest dasel engine, currently dasel v3.
+	//   * "dasel/v1" and "dasel/v2" are deprecated in favour of "dasel/v3".
+	//
+	// example:
+	//   * engine: dasel/v3
+	//
 	Engine *string `yaml:",omitempty"`
-	// [s][c][t] File specifies the csv file
+	// "file" defines the path of the csv file.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//   * target
+	//
+	// remark:
+	//   * "file" and "files" are mutually exclusive.
+	//   * a "file://" prefix is removed.
+	//   * the schemes "https://" and "http://" are not supported in a target.
+	//
 	File string `yaml:",omitempty"`
-	// [c][t] Files specifies a list of Json file to manipulate
+	// "files" defines the list of csv file paths.
+	//
+	// compatible:
+	//   * condition
+	//   * target
+	//
+	// remark:
+	//   * "file" and "files" are mutually exclusive.
+	//
 	Files []string `yaml:",omitempty"`
-	// [s][c][t] Key specifies the csv query
+	// "key" defines the csv query.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//   * target
+	//
+	// remark:
+	//   * "key" or "query" is required.
+	//   * the engines "dasel/v2" and "dasel/v3" require "key" instead of "query".
+	//
 	Key string `yaml:",omitempty"`
-	// [s][c][t] Query allows to used advanced query. Override the parameter key
+	// "query" defines an advanced csv query, returning several results.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//   * target
+	//
+	// remark:
+	//   * it overrides "key".
+	//   * only supported by the engine "dasel/v1".
+	//   * with the engine "dasel/v1", "query" and "versionfilter" must be used together in a source.
+	//
 	Query string `yaml:",omitempty"`
-	// [s][c][t] Key specifies the csv value, default to source output
+	// "value" defines the csv value.
+	//
+	// compatible:
+	//   * condition
+	//   * target
+	//
+	// default:
+	//   the output of the associated source.
+	//
 	Value string `yaml:",omitempty"`
-	// [s][c][t] Comma specifies the csv separator character, default ","
+	// "comma" defines the csv separator character.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//   * target
+	//
+	// default:
+	//   ,
+	//
 	Comma rune `yaml:",omitempty"`
-	// [s][c][t] Comma specifies the csv comment character, default "#"
+	// "comment" defines the csv comment character.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//   * target
+	//
+	// default:
+	//   #
+	//
 	Comment rune `yaml:",omitempty"`
-	// [c][t] *Deprecated* Please look at query parameter to achieve similar objective
+	// "multiple" enables queries returning several results.
+	//
+	// compatible:
+	//   * condition
+	//   * target
+	//
+	// deprecated:
+	//   * use "query" instead.
+	//
 	Multiple bool `yaml:",omitempty" jsonschema:"-"`
-	// [s]VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
+	// "versionfilter" defines the version pattern and its kind, such as regex, semver or latest.
+	//
+	// compatible:
+	//   * source
+	//
+	// default:
+	//   kind: latest
+	//
+	// remark:
+	//   * with the engine "dasel/v1", "query" and "versionfilter" must be used together.
+	//
 	VersionFilter version.Filter `yaml:",omitempty"`
 }
 

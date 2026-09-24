@@ -2,11 +2,23 @@ package awsami
 
 import "fmt"
 
-// Filter represents the updatecli configuration describing AMI filters.
+// Filter defines an AMI filter used to narrow down the AMIs returned by the AWS API.
 type Filter struct {
-	// Name specifies a filter name.
+	// "name" defines the filter name.
+	//
+	// example:
+	//   * name: architecture
+	//
 	Name string `yaml:",omitempty"`
-	// Values specifies a filter value for a specific filter name.
+	// "values" defines the filter values.
+	//
+	// remark:
+	//   * several values are separated by a comma.
+	//
+	// example:
+	//   * values: x86_64
+	//   * values: "x86_64,arm64"
+	//
 	Values string `yaml:",omitempty"`
 }
 
