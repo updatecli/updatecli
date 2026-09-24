@@ -6,14 +6,15 @@ import (
 	"strings"
 
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 	"helm.sh/helm/v3/pkg/repo"
 )
 
 // Source return the latest version
-func (c *Chart) Source(ctx context.Context, workingDir string, resultSource *result.Source) error {
+func (c *Chart) Source(ctx context.Context, pathResolver pathresolver.Resolver, resultSource *result.Source) error {
 
 	if strings.HasPrefix(c.spec.URL, "oci://") {
-		return c.OCISource(workingDir, resultSource)
+		return c.OCISource(resultSource)
 	}
 
 	var index repo.IndexFile
@@ -25,7 +26,7 @@ func (c *Chart) Source(ctx context.Context, workingDir string, resultSource *res
 			return fmt.Errorf("getting repo index from url: %w", err)
 		}
 	} else {
-		index, err = c.GetRepoIndexFromFile(workingDir)
+		index, err = c.GetRepoIndexFromFile(pathResolver)
 		if err != nil {
 			return fmt.Errorf("getting repo index from file: %w", err)
 		}

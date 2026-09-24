@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
 func TestSource(t *testing.T) {
@@ -227,7 +228,7 @@ func TestSource(t *testing.T) {
 			sut.apiWebRedirectionClient = mockedHttpClient
 
 			got := result.Source{}
-			gotErr := sut.Source(context.Background(), tt.workingDir, &got)
+			gotErr := sut.Source(context.Background(), pathresolver.Resolver{BaseDir: tt.workingDir, Boundary: tt.workingDir}, &got)
 
 			if tt.wantErr != "" {
 				require.Error(t, gotErr)

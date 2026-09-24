@@ -10,8 +10,8 @@ import (
 	das "github.com/tomwright/dasel"
 
 	"github.com/tomwright/dasel/storage"
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/dasel"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
 // csvContent is *** of the dasel FileContent
@@ -22,13 +22,11 @@ type csvContent struct {
 	comment     rune
 }
 
-func (c *csvContent) Read(rootDir string) error {
+func (c *csvContent) Read(pathResolver pathresolver.Resolver) error {
 
-	securePath, err := utils.SanitizeFilePathWithWorkingDirectory(c.FilePath, rootDir)
-	if err != nil {
+	if err := c.ResolvePath(pathResolver); err != nil {
 		return err
 	}
-	c.FilePath = securePath
 
 	// Test at runtime if a file exist
 	if !c.ContentRetriever.FileExists(c.FilePath) {

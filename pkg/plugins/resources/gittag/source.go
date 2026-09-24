@@ -7,13 +7,14 @@ import (
 
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
 // Source returns the latest git tag based on create time
-func (gt *GitTag) Source(_ context.Context, workingDir string, resultSource *result.Source) error {
+func (gt *GitTag) Source(_ context.Context, pathResolver pathresolver.Resolver, resultSource *result.Source) error {
 	var err error
 
-	gt.directory = workingDir
+	gt.directory = pathResolver.RepositoryDir()
 
 	err = gt.Validate()
 	if err != nil {
@@ -31,7 +32,7 @@ func (gt *GitTag) Source(_ context.Context, workingDir string, resultSource *res
 		}
 
 	case false:
-		tagsList, tags, err = gt.listRemoteDirectoryTags(workingDir, gt.spec.Age)
+		tagsList, tags, err = gt.listRemoteDirectoryTags(gt.directory, gt.spec.Age, pathResolver)
 		if err != nil {
 			/*
 				Every published tag is still cooling down, which is an expected state of

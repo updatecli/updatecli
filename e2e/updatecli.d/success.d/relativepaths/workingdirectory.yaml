@@ -1,0 +1,15 @@
+name: Test relative paths resolved from the working directory
+pipelineid: e2e/relativepaths/workingdirectory
+
+# The default, spelled out: "ADOPTERS.md" resolves from where updatecli was
+# started, which is the root of the repository, not this directory.
+options:
+  relativepaths: workingdirectory
+
+conditions:
+  adopters:
+    name: Check that ADOPTERS.md is found from the working directory
+    kind: file
+    disablesourceinput: true
+    spec:
+      file: ADOPTERS.md

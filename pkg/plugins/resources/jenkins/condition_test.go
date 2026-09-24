@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/mavenmetadata"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
 func TestJenkins_Condition(t *testing.T) {
@@ -95,7 +96,7 @@ func TestJenkins_Condition(t *testing.T) {
 				mavenMetaHandler: tt.mockedMetadataHandler,
 			}
 
-			got, _, gotErr := sut.Condition(context.Background(), tt.source, nil)
+			got, _, gotErr := sut.Condition(context.Background(), tt.source, nil, pathresolver.Resolver{})
 			if tt.wantErr {
 				require.Error(t, gotErr)
 				return

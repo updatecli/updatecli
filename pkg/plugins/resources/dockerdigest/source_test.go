@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
 // TestSource tests the Source method using integration tests
@@ -90,7 +91,7 @@ func TestSource(t *testing.T) {
 
 			gotResult := result.Source{}
 
-			err = DockerDigest.Source(context.Background(), "", &gotResult)
+			err = DockerDigest.Source(context.Background(), pathresolver.Resolver{}, &gotResult)
 
 			if TestCases[i].expectedError {
 				assert.Error(t, err)

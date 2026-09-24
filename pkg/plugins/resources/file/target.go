@@ -15,19 +15,14 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/text"
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
 // Target creates or updates a file from a source control management system.
 // The default content is the value retrieved from source
-func (f *File) Target(_ context.Context, source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
+func (f *File) Target(_ context.Context, source string, scm scm.ScmHandler, pathResolver pathresolver.Resolver, dryRun bool, resultTarget *result.Target) error {
 
-	workDir := ""
-	if scm != nil {
-		workDir = scm.GetDirectory()
-	}
-
-	if err := f.initFiles(workDir); err != nil {
+	if err := f.initFiles(pathResolver); err != nil {
 		return fmt.Errorf("init files: %w", err)
 	}
 
@@ -66,7 +61,7 @@ func (f *File) Target(_ context.Context, source string, scm scm.ScmHandler, dryR
 	if len(f.spec.Template) > 0 {
 		// Contain the template path within the working directory so a source
 		// templated spec.template cannot be used to read arbitrary files.
-		templatePath, err := utils.SanitizeFilePathWithWorkingDirectory(f.spec.Template, workDir)
+		templatePath, err := pathResolver.Resolve(f.spec.Template)
 		if err != nil {
 			return fmt.Errorf("invalid template path %q: %w", f.spec.Template, err)
 		}

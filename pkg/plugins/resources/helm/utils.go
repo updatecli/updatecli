@@ -20,6 +20,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/yaml"
 	git "github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 	"helm.sh/helm/v3/pkg/action"
 	helm "helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/cli"
@@ -67,16 +68,15 @@ func (c *Chart) DependencyUpdate(out *bytes.Buffer, chartPath string) error {
 
 // GetRepoIndexFromFile loads an index file from a local file and does minimal validity checking.
 // It fails if API Version isn't set (ErrNoAPIVersion) or if the "unmarshal" operation fails.
-func (c *Chart) GetRepoIndexFromFile(rootDir string) (repo.IndexFile, error) {
+func (c *Chart) GetRepoIndexFromFile(pathResolver pathresolver.Resolver) (repo.IndexFile, error) {
 	URL := strings.TrimPrefix(c.spec.URL, "file://")
-
-	if rootDir != "" {
-		URL = filepath.Join(rootDir, URL)
-	}
 
 	if filepath.Base(URL) != "index.yaml" {
 		URL = filepath.Join(URL, "index.yaml")
 	}
+
+	// With an scm, an absolute file:// path is read under the checkout.
+	URL = pathResolver.JoinRooted(URL)
 
 	rawIndexFile, err := os.Open(URL)
 	if err != nil {
@@ -166,7 +166,7 @@ func (c *Chart) GetRepoIndexFromURL(ctx context.Context) (repo.IndexFile, error)
 }
 
 // MetadataUpdate updates a metadata if necessary and it bump the ChartVersion
-func (c *Chart) MetadataUpdate(ctx context.Context, source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
+func (c *Chart) MetadataUpdate(ctx context.Context, source string, scm scm.ScmHandler, pathResolver pathresolver.Resolver, dryRun bool, resultTarget *result.Target) error {
 	var err error
 
 	/*
@@ -197,9 +197,10 @@ func (c *Chart) MetadataUpdate(ctx context.Context, source string, scm scm.ScmHa
 		if err := yml.Unmarshal(data, &originChartMetadata); err != nil {
 			return fmt.Errorf("unmarshalling %q: %w", metadataFilename, err)
 		}
-
-		metadataFilename = filepath.Join(scm.GetDirectory(), metadataFilename)
 	}
+
+	// Read Chart.yaml from the directory the values file was written to.
+	metadataFilename = pathResolver.Join(metadataFilename)
 
 	file, err := os.Open(metadataFilename)
 	if err != nil {
@@ -218,7 +219,7 @@ func (c *Chart) MetadataUpdate(ctx context.Context, source string, scm scm.ScmHa
 	}
 
 	if len(currentChartMetadata.AppVersion) > 0 && c.spec.AppVersion {
-		if err := c.metadataYamlPathUpdate(ctx, "$.appVersion", source, scm, dryRun, resultTarget); err != nil {
+		if err := c.metadataYamlPathUpdate(ctx, "$.appVersion", source, scm, pathResolver, dryRun, resultTarget); err != nil {
 			return err
 		}
 	}
@@ -327,7 +328,7 @@ forLoop:
 		logrus.Debugf("Updating chart version from %q to %q", currentChartMetadata.Version, computedVersion)
 	}
 
-	if err := c.metadataYamlPathUpdate(ctx, "$.version", computedVersion, scm, dryRun, resultTarget); err != nil {
+	if err := c.metadataYamlPathUpdate(ctx, "$.version", computedVersion, scm, pathResolver, dryRun, resultTarget); err != nil {
 		return err
 	}
 
@@ -335,7 +336,7 @@ forLoop:
 }
 
 // metadataYamlPathUpdate updates the Chart.yaml
-func (c *Chart) metadataYamlPathUpdate(ctx context.Context, key string, value string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) error {
+func (c *Chart) metadataYamlPathUpdate(ctx context.Context, key string, value string, scm scm.ScmHandler, pathResolver pathresolver.Resolver, dryRun bool, resultTarget *result.Target) error {
 	yamlSpec := yaml.Spec{
 		File: filepath.Join(c.spec.Name, "Chart.yaml"),
 		Key:  key,
@@ -347,7 +348,7 @@ func (c *Chart) metadataYamlPathUpdate(ctx context.Context, key string, value st
 	}
 
 	metadataResultTarget := result.Target{}
-	if err := yamlResource.Target(ctx, value, scm, dryRun, &metadataResultTarget); err != nil {
+	if err := yamlResource.Target(ctx, value, scm, pathResolver, dryRun, &metadataResultTarget); err != nil {
 		return err
 	}
 

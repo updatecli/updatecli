@@ -6,14 +6,22 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
 // Source returns the latest npm package version
-func (cp CargoPackage) Source(ctx context.Context, workingDir string, resultSource *result.Source) error {
-	logrus.Debugf("Registry RootDir: %s, workingDir: %s", cp.registry.RootDir, workingDir)
-	if cp.isSCM {
-		// We are in a scm context, workingDir is holding the data
-		cp.registry.RootDir = workingDir
+func (cp CargoPackage) Source(ctx context.Context, pathResolver pathresolver.Resolver, resultSource *result.Source) error {
+	logrus.Debugf("Registry RootDir: %s, base directory: %s", cp.registry.RootDir, pathResolver.Dir())
+	switch cp.isSCM {
+	case true:
+		// With an scm, the registry data is in the checkout.
+		cp.registry.RootDir = pathResolver.Dir()
+	case false:
+		if cp.registry.RootDir != "" {
+			// An empty RootDir means "no local registry checkout", so it must not be
+			// resolved to the base directory.
+			cp.registry.RootDir = pathResolver.Join(cp.registry.RootDir)
+		}
 	}
 
 	version, _, err := cp.getVersions(ctx)

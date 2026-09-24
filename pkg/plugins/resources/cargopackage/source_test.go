@@ -7,6 +7,7 @@ import (
 
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/cargo"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -178,7 +179,7 @@ func TestSource(t *testing.T) {
 				got.webClient = GetMockClient(tt.mockedUrl, tt.mockedToken, tt.mockedBody, tt.mockedHTTPStatusCode, tt.mockedHeaderFormat)
 			}
 			gotResult := result.Source{}
-			err = got.Source(context.Background(), "", &gotResult)
+			err = got.Source(context.Background(), pathresolver.Resolver{}, &gotResult)
 			if tt.expectedError {
 				assert.Error(t, err)
 				return

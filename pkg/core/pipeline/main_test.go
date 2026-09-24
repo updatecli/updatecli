@@ -56,7 +56,7 @@ func TestRun(t *testing.T) {
 	for _, data := range testdata {
 		c, _ := config.New(config.Option{
 			ManifestFile: data.confPath,
-		}, []string{}, map[string]string{})
+		}, config.ManifestOptions{}, []string{}, map[string]string{})
 		p := Pipeline{}
 		_ = p.Init(&c[0], Options{
 			Target: target.Options{

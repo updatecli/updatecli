@@ -2,11 +2,14 @@ package helm
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
 func TestTarget(t *testing.T) {
@@ -342,7 +345,7 @@ func TestTarget(t *testing.T) {
 			require.NoError(t, err)
 
 			gotResult := result.Target{}
-			err = j.Target(context.Background(), tt.sourceInput, nil, true, &gotResult)
+			err = j.Target(context.Background(), tt.sourceInput, nil, pathresolver.Resolver{}, true, &gotResult)
 
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -354,4 +357,26 @@ func TestTarget(t *testing.T) {
 			assert.Equal(t, tt.expectedResultDescription, gotResult.Description)
 		})
 	}
+}
+
+// TestTargetWithBaseDir checks that, without an scm, the values file and Chart.yaml are both
+// resolved from the base directory rather than from the process working directory.
+func TestTargetWithBaseDir(t *testing.T) {
+	baseDir := t.TempDir()
+	require.NoError(t, os.CopyFS(filepath.Join(baseDir, "chart"), os.DirFS("testdata")))
+
+	j, err := New(Spec{
+		Name:             "chart",
+		File:             "values.yaml",
+		Key:              "$.otherVersion",
+		VersionIncrement: AUTO,
+	})
+	require.NoError(t, err)
+
+	gotResult := result.Target{}
+	err = j.Target(context.Background(), "1.2.3-rc1", nil, pathresolver.Resolver{BaseDir: baseDir}, true, &gotResult)
+	require.NoError(t, err)
+
+	assert.True(t, gotResult.Changed)
+	assert.Contains(t, gotResult.Description, `key "$.version" should be updated from "0.3.0" to "0.4.0"`)
 }

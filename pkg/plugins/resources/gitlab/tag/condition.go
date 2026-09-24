@@ -7,9 +7,10 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
-func (g *Gitlab) Condition(_ context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
+func (g *Gitlab) Condition(_ context.Context, source string, scm scm.ScmHandler, pathResolver pathresolver.Resolver) (pass bool, message string, err error) {
 	if scm != nil {
 		logrus.Warningf("scm is not supported for the GitLab tag condition, ignoring")
 	}

@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
 func TestCondition(t *testing.T) {
@@ -185,7 +186,7 @@ func TestCondition(t *testing.T) {
 				assert.Error(t, err)
 				return
 			}
-			gotResult, _, gotErr := got.Condition(context.Background(), "", nil)
+			gotResult, _, gotErr := got.Condition(context.Background(), "", nil, pathresolver.Resolver{})
 			require.NoError(t, gotErr)
 			assert.Equal(t, tt.expectedResult, gotResult)
 		})

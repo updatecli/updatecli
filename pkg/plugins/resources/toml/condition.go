@@ -7,21 +7,17 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
-func (t *Toml) Condition(_ context.Context, source string, scm scm.ScmHandler) (pass bool, message string, err error) {
+func (t *Toml) Condition(_ context.Context, source string, scm scm.ScmHandler, pathResolver pathresolver.Resolver) (pass bool, message string, err error) {
 	conditionResult := true
 
 	resultMessage := ""
 
-	rootDir := ""
-	if scm != nil {
-		rootDir = scm.GetDirectory()
-	}
-
 	for i := range t.contents {
 
-		if err := t.contents[i].Read(rootDir); err != nil {
+		if err := t.contents[i].Read(pathResolver); err != nil {
 			return false, "", fmt.Errorf("reading toml file: %w", err)
 		}
 

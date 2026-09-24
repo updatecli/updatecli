@@ -7,10 +7,11 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
 // Target creates and pushes a git tag based on the SCM configuration
-func (gb *GitBranch) Target(_ context.Context, source string, scm scm.ScmHandler, dryRun bool, resultTarget *result.Target) (err error) {
+func (gb *GitBranch) Target(_ context.Context, source string, scm scm.ScmHandler, pathResolver pathresolver.Resolver, dryRun bool, resultTarget *result.Target) (err error) {
 
 	if gb.spec.Path != "" && scm != nil {
 		logrus.Warningf("Path setting value %q is overriding the scm configuration (value %q)",
@@ -30,7 +31,7 @@ func (gb *GitBranch) Target(_ context.Context, source string, scm scm.ScmHandler
 			return err
 		}
 	} else if gb.spec.Path != "" {
-		gb.directory = gb.spec.Path
+		gb.directory = pathResolver.JoinManifest(gb.spec.Path)
 	} else if scm != nil {
 		gb.directory = scm.GetDirectory()
 	}
@@ -152,7 +153,7 @@ func (gt *GitBranch) target(dryRun bool, resultTarget *result.Target) error {
 		return nil
 	}
 
-	resultTarget.Changed, err = gt.nativeGitHandler.NewBranch(gt.branch, gt.spec.Path)
+	resultTarget.Changed, err = gt.nativeGitHandler.NewBranch(gt.branch, gt.directory)
 	if err != nil {
 		return err
 	}

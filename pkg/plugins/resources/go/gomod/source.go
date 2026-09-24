@@ -2,33 +2,18 @@ package gomod
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"os"
 
 	"github.com/updatecli/updatecli/pkg/core/result"
-
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
 // Source returns the latest go module version
-func (g *GoMod) Source(_ context.Context, workingDir string, resultSource *result.Source) error {
+func (g *GoMod) Source(_ context.Context, pathResolver pathresolver.Resolver, resultSource *result.Source) error {
+	// Join, not Resolve: absolute and parent directory paths are allowed, even with an scm.
+	filename := pathResolver.Join(g.filename)
+
 	var err error
-
-	// By the default workingdir is set to the current working directory
-	// it would be better to have it empty by default but it must be changed in the
-	// source core codebase.
-	currentWorkingDirectory, err := os.Getwd()
-	if err != nil {
-		return errors.New("fail getting current working directory")
-	}
-
-	filename := g.filename
-	// To merge File path with current working dire, unless file is an http url
-	if workingDir != currentWorkingDirectory {
-		filename = utils.JoinFilePathWithWorkingDirectoryPath(filename, workingDir)
-	}
-
 	g.foundVersion, err = g.version(filename)
 	if err != nil {
 		return fmt.Errorf("searching version: %w", err)

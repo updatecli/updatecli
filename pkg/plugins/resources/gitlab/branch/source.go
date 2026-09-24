@@ -7,10 +7,11 @@ import (
 
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
-func (g *Gitlab) Source(_ context.Context, workingDir string, resultSource *result.Source) error {
+func (g *Gitlab) Source(_ context.Context, pathResolver pathresolver.Resolver, resultSource *result.Source) error {
 	versions, err := g.SearchBranches(g.spec.Age)
 
 	if err != nil {

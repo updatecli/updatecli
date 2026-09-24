@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/text"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
 func TestDockerfile_Condition(t *testing.T) {
@@ -78,6 +79,46 @@ func TestDockerfile_Condition(t *testing.T) {
 			wantChanged: true,
 		},
 		{
+			name:             "Found FROM with an scm and an absolute file path",
+			inputSourceValue: "1.16",
+			spec: Spec{
+				Instruction: map[string]string{
+					"keyword": "FROM",
+					"matcher": "golang",
+				},
+			},
+			files: []string{"/opt/FROM.Dockerfile"},
+			mockTest: text.MockTextRetriever{
+				Contents: map[string]string{
+					"/opt/FROM.Dockerfile": dockerfileFixture,
+				},
+			},
+			scm: &scm.MockScm{
+				WorkingDir: "/tmp/checkout",
+			},
+			wantChanged: true,
+		},
+		{
+			name:             "Found FROM with an scm and a parent directory file path",
+			inputSourceValue: "1.16",
+			spec: Spec{
+				Instruction: map[string]string{
+					"keyword": "FROM",
+					"matcher": "golang",
+				},
+			},
+			files: []string{"../FROM.Dockerfile"},
+			mockTest: text.MockTextRetriever{
+				Contents: map[string]string{
+					"/tmp/FROM.Dockerfile": dockerfileFixture,
+				},
+			},
+			scm: &scm.MockScm{
+				WorkingDir: "/tmp/checkout",
+			},
+			wantChanged: true,
+		},
+		{
 			name:             "Not Found ARG with moby parser",
 			inputSourceValue: "golang:1.15",
 			spec: Spec{
@@ -118,7 +159,7 @@ func TestDockerfile_Condition(t *testing.T) {
 				files:            tt.files,
 			}
 
-			got, _, gotErr := d.Condition(context.Background(), tt.inputSourceValue, tt.scm)
+			got, _, gotErr := d.Condition(context.Background(), tt.inputSourceValue, tt.scm, pathresolver.New(tt.scm, ""))
 			if tt.wantErr != nil {
 				assert.Equal(t, tt.wantErr, gotErr)
 				return

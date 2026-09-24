@@ -1,10 +1,14 @@
 package dasel
 
 import (
+	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/core/text"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
 // TestFileContent_ReadPathContainment is the regression test for
@@ -29,7 +33,47 @@ func TestFileContent_ReadPathContainment(t *testing.T) {
 				DataType: "toml",
 				FilePath: tt.filePath,
 			}
-			assert.Error(t, f.Read(workingDir))
+			assert.Error(t, f.Read(pathresolver.Resolver{BaseDir: workingDir, Boundary: workingDir}))
 		})
 	}
+}
+
+// TestFileContent_ReadLocalRunAcceptsAbsolutePath checks that, without an SCM checkout, an
+// absolute spec.file is read as a local path. There is no boundary in that case, so the
+// process working directory must not act as one.
+func TestFileContent_ReadLocalRunAcceptsAbsolutePath(t *testing.T) {
+	absoluteFilePath := filepath.Join(t.TempDir(), "data.json")
+	require.NoError(t, os.WriteFile(absoluteFilePath, []byte(`{"version":"1.0.0"}`), 0o600))
+
+	f := FileContent{
+		DataType:         "json",
+		FilePath:         absoluteFilePath,
+		ContentRetriever: &text.Text{},
+	}
+
+	require.NoError(t, f.Read(pathresolver.Resolver{}))
+	assert.Equal(t, absoluteFilePath, f.FilePath)
+}
+
+// TestFileContent_ReadIsIdempotent guards the base directory from being joined twice: Read
+// mutates FilePath in place, so a second call must resolve from the manifest path again
+// rather than from the already resolved one.
+func TestFileContent_ReadIsIdempotent(t *testing.T) {
+	baseDir := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(baseDir, "data.json"), []byte(`{"version":"1.0.0"}`), 0o600))
+
+	f := FileContent{
+		DataType:         "json",
+		FilePath:         "data.json",
+		ContentRetriever: &text.Text{},
+	}
+
+	pathResolver := pathresolver.Resolver{BaseDir: baseDir}
+
+	require.NoError(t, f.Read(pathResolver))
+	firstFilePath := f.FilePath
+
+	require.NoError(t, f.Read(pathResolver))
+	assert.Equal(t, firstFilePath, f.FilePath)
+	assert.Equal(t, filepath.Join(baseDir, "data.json"), f.FilePath)
 }

@@ -2,24 +2,14 @@ package dockerfile
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"os"
-	"path/filepath"
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
-func (df *Dockerfile) Source(_ context.Context, workingDir string, resultSource *result.Source) error {
-	// By the default workingdir is set to the current working directory
-	// it would be better to have it empty by default but it must be changed in the
-	// source core codebase.
-	currentWorkingDirectory, err := os.Getwd()
-	if err != nil {
-		return errors.New("fail getting current working directory")
-	}
-
+func (df *Dockerfile) Source(_ context.Context, pathResolver pathresolver.Resolver, resultSource *result.Source) error {
 	switch len(df.files) {
 	case 1:
 		//
@@ -29,15 +19,10 @@ func (df *Dockerfile) Source(_ context.Context, workingDir string, resultSource 
 		return fmt.Errorf("validation error in sources of type 'dockerfile': the attributes `spec.files` can't contain more than one element for sources")
 	}
 
-	if workingDir == currentWorkingDirectory {
-		workingDir = ""
-	}
-
 	// loop over the only file
-	for _, file := range df.files {
-		if workingDir != "" {
-			file = filepath.Join(workingDir, file)
-		}
+	for _, specFile := range df.files {
+		// With an scm, an absolute path is read under the checkout.
+		file := pathResolver.JoinRooted(specFile)
 
 		if !df.contentRetriever.FileExists(file) {
 			return fmt.Errorf("the file %s does not exist", file)

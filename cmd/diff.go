@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/config"
 	"github.com/updatecli/updatecli/pkg/core/engine/manifest"
 
 	"github.com/spf13/cobra"
@@ -37,6 +38,7 @@ var (
 			e.Options.Pipeline.Target.DryRun = true
 			e.Options.Pipeline.DisableChangelog = disableChangelog
 			e.Options.Config.ValidateSchema = validateSchema
+			e.Options.ManifestOptions.RelativePaths = config.RelativePathBase(relativePaths)
 
 			logrus.Warningln("Deprecated command, please instead use `updatecli pipeline diff`")
 
@@ -62,6 +64,7 @@ func init() {
 
 	addDisableChangelogFlag(diffCmd, &disableChangelog)
 	addValidateSchemaFlag(diffCmd, &validateSchema)
+	addRelativePathsFlag(diffCmd, &relativePaths)
 	addExportReportToYAMLFlag(diffCmd, &exportReportToYAML)
 	addDisableUdashReportFlag(diffCmd, &disableUdashReport)
 }

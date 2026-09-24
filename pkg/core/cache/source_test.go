@@ -165,7 +165,7 @@ func TestKey_EmptyKind(t *testing.T) {
 	}
 
 	// Act
-	key := Key(rc, nil)
+	key := Key(rc, nil, "")
 
 	// Assert
 	assert.Equal(t, "", key)
@@ -194,8 +194,8 @@ func TestKey_SameConfigProducesSameKey(t *testing.T) {
 	}
 
 	// Act
-	key1 := Key(rc, nil)
-	key2 := Key(rc, nil)
+	key1 := Key(rc, nil, "")
+	key2 := Key(rc, nil, "")
 
 	// Assert
 	require.NotEmpty(t, key1)
@@ -209,8 +209,8 @@ func TestKey_SameSpecDifferentNamesShareKey(t *testing.T) {
 	rc1 := resource.ResourceConfig{Kind: "shell", Name: "name-a", Spec: spec}
 	rc2 := resource.ResourceConfig{Kind: "shell", Name: "name-b", Spec: spec}
 
-	key1 := Key(rc1, nil)
-	key2 := Key(rc2, nil)
+	key1 := Key(rc1, nil, "")
+	key2 := Key(rc2, nil, "")
 
 	require.NotEmpty(t, key1)
 	assert.Equal(t, key1, key2)
@@ -224,8 +224,8 @@ func TestKey_DifferentSpecsProduceDifferentKeys(t *testing.T) {
 	rc2 := resource.ResourceConfig{Kind: "shell", Name: "source-b", Spec: shellSpec("echo b")}
 
 	// Act
-	key1 := Key(rc1, nil)
-	key2 := Key(rc2, nil)
+	key1 := Key(rc1, nil, "")
+	key2 := Key(rc2, nil, "")
 
 	// Assert
 	require.NotEmpty(t, key1)
@@ -242,8 +242,8 @@ func TestKey_SameSpecDifferentSCMsProduceDifferentKeys(t *testing.T) {
 	scmA := &SCMIdentity{URL: "https://github.com/example/repo-a.git", Branch: "main"}
 	scmB := &SCMIdentity{URL: "https://github.com/example/repo-b.git", Branch: "main"}
 
-	keyA := Key(rc, scmA)
-	keyB := Key(rc, scmB)
+	keyA := Key(rc, scmA, "")
+	keyB := Key(rc, scmB, "")
 
 	require.NotEmpty(t, keyA)
 	require.NotEmpty(t, keyB)
@@ -257,8 +257,8 @@ func TestKey_NilSCMMatchesNilSCMSameSpec(t *testing.T) {
 	rc1 := resource.ResourceConfig{Kind: "shell", Name: "name-a", Spec: spec}
 	rc2 := resource.ResourceConfig{Kind: "shell", Name: "name-b", Spec: spec}
 
-	key1 := Key(rc1, nil)
-	key2 := Key(rc2, nil)
+	key1 := Key(rc1, nil, "")
+	key2 := Key(rc2, nil, "")
 
 	require.NotEmpty(t, key1)
 	assert.Equal(t, key1, key2)
@@ -279,8 +279,8 @@ func TestKey_SpecFieldOmittedFromReportConfigProducesDifferentKeys(t *testing.T)
 	rcA := resource.ResourceConfig{Kind: "shell", Name: "source-a", Spec: specA}
 	rcB := resource.ResourceConfig{Kind: "shell", Name: "source-b", Spec: specB}
 
-	keyA := Key(rcA, nil)
-	keyB := Key(rcB, nil)
+	keyA := Key(rcA, nil, "")
+	keyB := Key(rcB, nil, "")
 
 	require.NotEmpty(t, keyA)
 	require.NotEmpty(t, keyB)
@@ -289,7 +289,7 @@ func TestKey_SpecFieldOmittedFromReportConfigProducesDifferentKeys(t *testing.T)
 
 	// Identical full specs must still share a key, so caching keeps working.
 	rcA2 := resource.ResourceConfig{Kind: "shell", Name: "source-a-copy", Spec: specA}
-	assert.Equal(t, keyA, Key(rcA2, nil))
+	assert.Equal(t, keyA, Key(rcA2, nil, ""))
 }
 
 // TestKey_YAMLDecodedSpecIsDeterministic exercises the real pipeline shape:
@@ -317,9 +317,9 @@ spec:
   workdir: /repo-b
 `
 
-	keyA1 := Key(decode(t, docA), nil)
-	keyA2 := Key(decode(t, docA), nil)
-	keyB := Key(decode(t, docB), nil)
+	keyA1 := Key(decode(t, docA), nil, "")
+	keyA2 := Key(decode(t, docA), nil, "")
+	keyB := Key(decode(t, docB), nil, "")
 
 	require.NotEmpty(t, keyA1)
 	require.NotEmpty(t, keyB)
@@ -336,10 +336,28 @@ func TestKey_NilVsNonNilSCMProduceDifferentKeys(t *testing.T) {
 
 	scm := &SCMIdentity{URL: "https://github.com/example/repo-a.git", Branch: "main"}
 
-	keyNil := Key(rc, nil)
-	keySCM := Key(rc, scm)
+	keyNil := Key(rc, nil, "")
+	keySCM := Key(rc, scm, "")
 
 	require.NotEmpty(t, keyNil)
 	require.NotEmpty(t, keySCM)
 	assert.NotEqual(t, keyNil, keySCM)
+}
+
+// TestKey_SameSpecDifferentBaseDirsProduceDifferentKeys verifies that two manifests using
+// "relativepaths: manifest" do not share a cache entry: the same relative file names a
+// different file in each manifest directory.
+func TestKey_SameSpecDifferentBaseDirsProduceDifferentKeys(t *testing.T) {
+	rc := resource.ResourceConfig{Kind: "shell", Name: "source", Spec: shellSpec("cat VERSION")}
+
+	keyDefault := Key(rc, nil, "")
+	keyA := Key(rc, nil, "a")
+	keyB := Key(rc, nil, "b")
+
+	require.NotEmpty(t, keyDefault)
+	require.NotEmpty(t, keyA)
+	require.NotEmpty(t, keyB)
+	assert.NotEqual(t, keyA, keyB)
+	assert.NotEqual(t, keyDefault, keyA)
+	assert.Equal(t, keyA, Key(rc, nil, "a"))
 }

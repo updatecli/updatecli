@@ -11,7 +11,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/text"
-	"github.com/updatecli/updatecli/pkg/plugins/utils"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
 type Hcl struct {
@@ -138,15 +138,24 @@ func (h *Hcl) Read() error {
 	return nil
 }
 
-func (h *Hcl) UpdateAbsoluteFilePath(workDir string) {
+// UpdateAbsoluteFilePath resolves every file of the h.files map against the path resolver,
+// leaving the path the user wrote available as originalFilePath for reporting.
+func (h *Hcl) UpdateAbsoluteFilePath(pathResolver pathresolver.Resolver) error {
 	for filePath := range h.files {
-		if workDir != "" {
-			f := h.files[filePath]
-			f.filePath = utils.JoinFilePathWithWorkingDirectoryPath(f.originalFilePath, workDir)
-			logrus.Debugf("Relative path detected: changing from %q to absolute path from SCM: %q", f.originalFilePath, f.filePath)
-			h.files[filePath] = f
+		f := h.files[filePath]
+
+		// Join, not Resolve: absolute and parent directory paths are allowed, even with an scm.
+		resolvedPath := pathResolver.Join(f.originalFilePath)
+
+		if resolvedPath != f.filePath {
+			logrus.Debugf("Relative path detected: changing from %q to %q", f.originalFilePath, resolvedPath)
 		}
+
+		f.filePath = resolvedPath
+		h.files[filePath] = f
 	}
+
+	return nil
 }
 
 // Changelog returns the changelog for this resource, or an empty string if not supported
