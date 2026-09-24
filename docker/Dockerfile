@@ -4,7 +4,7 @@
 
 ## Goreleaser requires the "--platform" to handle multi-platform builds
 # hadolint ignore=DL3029
-FROM --platform=${BUILDPLATFORM} debian:stable-slim
+FROM --platform=${TARGETPLATFORM} debian:stable-slim
 
 LABEL maintainer="Olivier Vernin <me@olblak.com>, Damien DUPORTAL <damien.duportal@gmail.com>"
 
