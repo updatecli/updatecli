@@ -146,14 +146,14 @@ func (c *Compose) GetPolicies(disableTLS bool, onlyPolicyIDs, ignoredPolicyIDs [
 		logrus.Infof("\nInitializing policy: %q\n", c.spec.Policies[i].Name)
 
 		var policyManifest, policyValues, policySecrets []string
-		var err error
 
 		if c.spec.Policies[i].Policy != "" {
-			policyManifest, policyValues, policySecrets, err = registry.Pull(c.spec.Policies[i].Policy, disableTLS)
+			pulled, err := registry.Pull(c.spec.Policies[i].Policy, disableTLS)
 			if err != nil {
 				errs = append(errs, fmt.Errorf("pulling policy %q: %s", c.spec.Policies[i].Policy, err))
 				continue
 			}
+			policyManifest, policyValues, policySecrets = pulled.Manifests, pulled.Values, pulled.Secrets
 		}
 
 		policyManifest = append(policyManifest, c.spec.Policies[i].Config...)

@@ -33,6 +33,7 @@ var (
 	valuesFiles         []string
 	valuesInline        []string
 	secretsFiles        []string
+	assetsFiles         []string
 	policyReferences    []string
 	e                   engine.Engine
 	verbose             bool
@@ -267,6 +268,7 @@ func run(command string) error {
 			manifestFiles,
 			valuesFiles,
 			secretsFiles,
+			assetsFiles,
 			manifestPushPolicyReference,
 			disableTLS,
 			manifestPushPolicyFile,
@@ -370,14 +372,14 @@ func getPolicyFilesFromRegistry() error {
 	}
 
 	for _, policy := range policyReferences {
-		policyManifest, policyValues, policySecrets, err := registry.Pull(policy, disableTLS)
+		pulled, err := registry.Pull(policy, disableTLS)
 		if err != nil {
 			return err
 		}
 
-		manifestFiles = append(policyManifest, manifestFiles...)
-		valuesFiles = append(policyValues, valuesFiles...)
-		secretsFiles = append(policySecrets, secretsFiles...)
+		manifestFiles = append(pulled.Manifests, manifestFiles...)
+		valuesFiles = append(pulled.Values, valuesFiles...)
+		secretsFiles = append(pulled.Secrets, secretsFiles...)
 	}
 
 	return nil

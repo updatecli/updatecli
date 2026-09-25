@@ -20,18 +20,27 @@ import (
 	"oras.land/oras-go/v2/registry/remote/auth"
 )
 
+// PullResult lists the files of a policy pulled from a registry.
+type PullResult struct {
+	Manifests []string
+	Values    []string
+	Secrets   []string
+	// Assets are the extra files shipped with the policy, stored next to its manifests.
+	Assets []string
+}
+
 // Pull pulls an OCI image from a registry.
-func Pull(ociName string, disableTLS bool) (manifests []string, values []string, secrets []string, err error) {
+func Pull(ociName string, disableTLS bool) (result PullResult, err error) {
 
 	ref, err := registry.ParseReference(ociName)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("parse reference: %w", err)
+		return PullResult{}, fmt.Errorf("parse reference: %w", err)
 	}
 
 	if ref.Reference == ociLatestTag || ref.Reference == "" {
 		ref.Reference, err = getLatestTagSortedBySemver(ref.Registry+"/"+ref.Repository, disableTLS)
 		if err != nil {
-			return nil, nil, nil, fmt.Errorf("get latest tag sorted by semver: %w", err)
+			return PullResult{}, fmt.Errorf("get latest tag sorted by semver: %w", err)
 		}
 	}
 
@@ -40,7 +49,7 @@ func Pull(ociName string, disableTLS bool) (manifests []string, values []string,
 
 	repo, err := remote.NewRepository(ociName)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("new repository: %w", err)
+		return PullResult{}, fmt.Errorf("new repository: %w", err)
 	}
 
 	ctx = auth.AppendRepositoryScope(ctx, repo.Reference, auth.ActionPull)
@@ -52,18 +61,18 @@ func Pull(ociName string, disableTLS bool) (manifests []string, values []string,
 
 	// 2. Get credentials from the docker credential store
 	if err := getCredentialsFromDockerStore(repo); err != nil {
-		return nil, nil, nil, fmt.Errorf("credstore from docker: %w", err)
+		return PullResult{}, fmt.Errorf("credstore from docker: %w", err)
 	}
 
 	// 2.5 Get remote manifest digest
 	remoteManifestSpec, remoteManifestReader, err := oras.Fetch(ctx, repo, ref.String(), oras.DefaultFetchOptions)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("fetch: %w", err)
+		return PullResult{}, fmt.Errorf("fetch: %w", err)
 	}
 
 	remoteManifestData, err := content.ReadAll(remoteManifestReader, remoteManifestSpec)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("fetch remote content: %w", err)
+		return PullResult{}, fmt.Errorf("fetch remote content: %w", err)
 	}
 
 	// Create the policy root directory
@@ -71,7 +80,7 @@ func Pull(ociName string, disableTLS bool) (manifests []string, values []string,
 
 	fs, err := file.New(policyRootDir)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("create file store: %w", err)
+		return PullResult{}, fmt.Errorf("create file store: %w", err)
 	}
 	defer fs.Close()
 
@@ -79,55 +88,61 @@ func Pull(ociName string, disableTLS bool) (manifests []string, values []string,
 
 	// Fetch the remote manifest
 
-	remoteManifests, remoteValues, remoteSecrets, err := getUpdatecliFilesFromManifestLayers(remoteManifestData, policyRootDir)
+	result, err = getUpdatecliFilesFromManifestLayers(remoteManifestData, policyRootDir)
+	if err != nil {
+		return PullResult{}, fmt.Errorf("get media types from remote layers: %w", err)
+	}
 
-	manifests = remoteManifests
-	values = remoteValues
-	secrets = remoteSecrets
-
-	if isPolicyFilesExistLocally(policyRootDir, remoteManifests, remoteValues, remoteSecrets) {
+	if isPolicyFilesExistLocally(policyRootDir, result) {
 		logrus.Debugf("Policy %q already available in:\n\t* %s\n", ociName, policyRootDir)
 	} else {
 		logrus.Infof("Pulling Updatecli policy %q\n", ociName)
 
 		manifestDescriptor, err := oras.Copy(ctx, repo, ref.Reference, fs, ref.Reference, oras.DefaultCopyOptions)
 		if err != nil {
-			return nil, nil, nil, fmt.Errorf("copy: %w", err)
+			return PullResult{}, fmt.Errorf("copy: %w", err)
 		}
 
 		manifestData, err := content.FetchAll(ctx, fs, manifestDescriptor)
 		if err != nil {
-			return nil, nil, nil, fmt.Errorf("fetch manifest: %w", err)
+			return PullResult{}, fmt.Errorf("fetch manifest: %w", err)
 		}
 
-		manifests, values, secrets, err = getUpdatecliFilesFromManifestLayers(manifestData, policyRootDir)
+		result, err = getUpdatecliFilesFromManifestLayers(manifestData, policyRootDir)
 		if err != nil {
-			return nil, nil, nil, fmt.Errorf("get media types from layers: %w", err)
+			return PullResult{}, fmt.Errorf("get media types from layers: %w", err)
 		}
 	}
 
 	logrus.Debugf("Manifests:\n")
-	for _, manifest := range manifests {
+	for _, manifest := range result.Manifests {
 		logrus.Debugf("\t*%q\n", manifest)
 	}
 
-	if len(values) > 0 {
+	if len(result.Values) > 0 {
 		logrus.Debugf("Values:\n")
-		for _, value := range values {
+		for _, value := range result.Values {
 			logrus.Debugf("\t*%q\n", value)
 		}
 	}
 
-	if len(secrets) > 0 {
+	if len(result.Secrets) > 0 {
 		logrus.Debugf("Secrets:\n")
-		for _, secret := range secrets {
+		for _, secret := range result.Secrets {
 			logrus.Debugf("\t*%q\n", secret)
+		}
+	}
+
+	if len(result.Assets) > 0 {
+		logrus.Debugf("Assets:\n")
+		for _, asset := range result.Assets {
+			logrus.Debugf("\t*%q\n", asset)
 		}
 	}
 
 	logrus.Debugf("policy successfully pulled in %s", policyRootDir)
 
-	return manifests, values, secrets, nil
+	return result, nil
 }
 
 // getReferencePath returns the path to the file store for a given reference.
@@ -142,46 +157,44 @@ func getReferencePath(ref string) []string {
 	return refPath
 }
 
-// getUpdatecliFilesFromManifestLayers returns the list of manifests, values and secrets from an OCI manifest
-func getUpdatecliFilesFromManifestLayers(manifestData []byte, policyRootDir string) (
-	manifests []string, values []string, secrets []string, err error) {
+// getUpdatecliFilesFromManifestLayers returns the list of manifests, values, secrets and assets from an OCI manifest
+func getUpdatecliFilesFromManifestLayers(manifestData []byte, policyRootDir string) (result PullResult, err error) {
 
 	spec := spec.Manifest{}
 	err = json.Unmarshal(manifestData, &spec)
 	if err != nil {
-		return []string{}, []string{}, []string{}, fmt.Errorf("unmarshal manifest: %w", err)
+		return PullResult{}, fmt.Errorf("unmarshal manifest: %w", err)
 	}
 
 	for _, layer := range spec.Layers {
+		var files *[]string
 		switch layer.MediaType {
 		case updatecliManifestMediaType:
-			if title, ok := layer.Annotations["org.opencontainers.image.title"]; ok && title != "" {
-				manifests = append(manifests, filepath.Join(policyRootDir, title))
-			}
-
+			files = &result.Manifests
 		case updatecliValueMediaType:
-			if title, ok := layer.Annotations["org.opencontainers.image.title"]; ok && title != "" {
-				values = append(values, filepath.Join(policyRootDir, title))
-			}
-
+			files = &result.Values
 		case updatecliSecretMediaType:
-			if title, ok := layer.Annotations["org.opencontainers.image.title"]; ok && title != "" {
-				secrets = append(secrets, filepath.Join(policyRootDir, title))
-			}
-
+			files = &result.Secrets
+		case updatecliAssetMediaType:
+			files = &result.Assets
 		default:
 			logrus.Warningf("unknown media type: %q\n", layer.MediaType)
+			continue
+		}
+
+		if title, ok := layer.Annotations["org.opencontainers.image.title"]; ok && title != "" {
+			*files = append(*files, filepath.Join(policyRootDir, title))
 		}
 	}
 
-	return manifests, values, secrets, nil
+	return result, nil
 }
 
 /*
 isPolicyFilesExistLocally returns true if the policy files are already available locally.
 note it does not check if the files are up to date, only if they exist locally.
 */
-func isPolicyFilesExistLocally(policyRootDir string, manifests, values, secrets []string) bool {
+func isPolicyFilesExistLocally(policyRootDir string, files PullResult) bool {
 
 	errs := []error{}
 
@@ -211,9 +224,10 @@ func isPolicyFilesExistLocally(policyRootDir string, manifests, values, secrets 
 		}
 	}
 
-	isFileExist(manifests)
-	isFileExist(values)
-	isFileExist(secrets)
+	isFileExist(files.Manifests)
+	isFileExist(files.Values)
+	isFileExist(files.Secrets)
+	isFileExist(files.Assets)
 
 	if len(errs) > 0 {
 		for i := range errs {

@@ -49,115 +49,124 @@ func TestPushPullPolicy(t *testing.T) {
 
 	testData := []struct {
 		name                      string
-		toPushPolicyName          []string
 		toPushPolicyFile          string
-		toPushManifestFiles       []string
-		toPushValueFiles          []string
-		toPushSecretFiles         []string
-		toPushFileStore           string
 		expectedPullManifestFiles []string
 		expectedPullValuesFiles   []string
 		expectedPullSecretsFiles  []string
-		disableTLS                bool
-		overwrite                 bool
+		expectedPullAssetsFiles   []string
+		toPushFileStore           string
+		pushData                  PushData
 	}{
 		{
 			name:                      "Validate that we can push and pull a policy using the latest tag, even thought the tag is ignored",
-			toPushPolicyName:          []string{fmt.Sprintf("localhost:%d/myrepo:latest", port.Num())},
-			disableTLS:                true,
-			toPushPolicyFile:          "testdata/Policy.yaml",
-			toPushManifestFiles:       []string{"testdata/venom.yaml"},
-			toPushValueFiles:          []string{"testdata/values.yaml"},
-			toPushSecretFiles:         []string{"testdata/secrets.yaml"},
 			expectedPullManifestFiles: []string{"testdata/venom.yaml"},
 			expectedPullValuesFiles:   []string{"testdata/values.yaml"},
 			expectedPullSecretsFiles:  []string{"testdata/secrets.yaml"},
+			pushData: PushData{
+				PolicyReferenceNames: []string{fmt.Sprintf("localhost:%d/myrepo:latest", port.Num())},
+				PolicyMetadataFile:   "testdata/Policy.yaml",
+				DisableTLS:           true,
+				ManifestsFiles:       []string{"testdata/venom.yaml"},
+				ValuesFiles:          []string{"testdata/values.yaml"},
+				SecretsFiles:         []string{"testdata/secrets.yaml"},
+			},
+			toPushFileStore: ".",
 		},
 		{
 			name:                      "Validate that we can push and pull a policy without tag",
-			toPushPolicyName:          []string{fmt.Sprintf("localhost:%d/myrepo", port.Num())},
-			disableTLS:                true,
-			toPushPolicyFile:          "testdata/Policy.yaml",
-			toPushManifestFiles:       []string{"testdata/venom.yaml"},
-			toPushValueFiles:          []string{"testdata/values.yaml"},
-			toPushSecretFiles:         []string{"testdata/secrets.yaml"},
 			expectedPullManifestFiles: []string{"testdata/venom.yaml"},
 			expectedPullValuesFiles:   []string{"testdata/values.yaml"},
 			expectedPullSecretsFiles:  []string{"testdata/secrets.yaml"},
+			pushData: PushData{
+				PolicyReferenceNames: []string{fmt.Sprintf("localhost:%d/myrepo", port.Num())},
+				PolicyMetadataFile:   "testdata/Policy.yaml",
+				DisableTLS:           true,
+				ManifestsFiles:       []string{"testdata/venom.yaml"},
+				ValuesFiles:          []string{"testdata/values.yaml"},
+				SecretsFiles:         []string{"testdata/secrets.yaml"},
+			},
+			toPushFileStore: ".",
 		},
 		{
 			name:                      "Validate that we can push and pull a policy without tag from a different file store",
-			toPushPolicyName:          []string{fmt.Sprintf("localhost:%d/myrepo", port.Num())},
-			disableTLS:                true,
-			toPushPolicyFile:          "testdata/Policy.yaml",
-			toPushManifestFiles:       []string{"testdata/venom.yaml"},
-			toPushValueFiles:          []string{"testdata/values.yaml"},
-			toPushSecretFiles:         []string{"testdata/secrets.yaml"},
 			expectedPullManifestFiles: []string{"testdata/venom.yaml"},
 			expectedPullValuesFiles:   []string{"testdata/values.yaml"},
 			expectedPullSecretsFiles:  []string{"testdata/secrets.yaml"},
 			toPushFileStore:           ".",
+			pushData: PushData{
+				PolicyReferenceNames: []string{fmt.Sprintf("localhost:%d/myrepo", port.Num())},
+				PolicyMetadataFile:   "testdata/Policy.yaml",
+				DisableTLS:           true,
+				ManifestsFiles:       []string{"testdata/venom.yaml"},
+				ValuesFiles:          []string{"testdata/values.yaml"},
+				SecretsFiles:         []string{"testdata/secrets.yaml"},
+			},
+		},
+		{
+			name:                      "Validate that we can push and pull a policy with assets",
+			expectedPullManifestFiles: []string{"testdata/venom.yaml"},
+			expectedPullValuesFiles:   []string{"testdata/values.yaml"},
+			expectedPullSecretsFiles:  []string{"testdata/secrets.yaml"},
+			expectedPullAssetsFiles:   []string{"testdata/asset.sh"},
+			toPushFileStore:           ".",
+			pushData: PushData{
+				PolicyReferenceNames: []string{fmt.Sprintf("localhost:%d/myrepo-assets", port.Num())},
+				DisableTLS:           true,
+				PolicyMetadataFile:   "testdata/Policy.yaml",
+				AssetsFiles:          []string{"testdata/asset.sh"},
+				ManifestsFiles:       []string{"testdata/venom.yaml"},
+				ValuesFiles:          []string{"testdata/values.yaml"},
+				SecretsFiles:         []string{"testdata/secrets.yaml"},
+			},
 		},
 	}
 
 	for _, data := range testData {
 
 		t.Run(data.name, func(t *testing.T) {
-			err = Push(
-				data.toPushPolicyFile,
-				data.toPushManifestFiles,
-				data.toPushValueFiles,
-				data.toPushSecretFiles,
-				data.toPushPolicyName,
-				data.disableTLS,
-				data.toPushFileStore,
-				data.overwrite)
+			err = Push(data.pushData)
 			require.NoError(t, err)
 
-			err = Push(
-				data.toPushPolicyFile,
-				data.toPushManifestFiles,
-				data.toPushValueFiles,
-				data.toPushSecretFiles,
-				data.toPushPolicyName,
-				data.disableTLS,
-				data.toPushFileStore,
-				data.overwrite)
+			err = Push(data.pushData)
 			require.NoError(t, err)
 
-			gotManifests, gotValues, gotSecrets, err := Pull(
-				data.toPushPolicyName[0],
-				data.disableTLS,
+			got, err := Pull(
+				data.pushData.PolicyReferenceNames[0],
+				data.pushData.DisableTLS,
 			)
 			require.NoError(t, err)
 
-			expectedManifest, expectedValues, expectedSecrets, err := sanitizeDirPath(
-				data.toPushPolicyName[0],
-				data.disableTLS,
-				data.expectedPullManifestFiles,
-				data.expectedPullValuesFiles,
-				data.expectedPullSecretsFiles,
+			expected, err := sanitizeDirPath(
+				data.pushData.PolicyReferenceNames[0],
+				data.pushData.DisableTLS,
+				PullResult{
+					Manifests: data.expectedPullManifestFiles,
+					Values:    data.expectedPullValuesFiles,
+					Secrets:   data.expectedPullSecretsFiles,
+					Assets:    data.expectedPullAssetsFiles,
+				},
 			)
 			require.NoError(t, err)
 
-			require.Equal(t, expectedManifest, gotManifests)
-			require.Equal(t, expectedValues, gotValues)
-			require.Equal(t, expectedSecrets, gotSecrets)
+			require.Equal(t, expected, got)
+			for _, asset := range got.Assets {
+				require.FileExists(t, asset)
+			}
 		})
 	}
 }
 
-func sanitizeDirPath(policyRef string, disableTLS bool, manifestFiles, valuesFiles, secretsFiles []string) ([]string, []string, []string, error) {
+func sanitizeDirPath(policyRef string, disableTLS bool, files PullResult) (PullResult, error) {
 
 	ref, err := registry.ParseReference(policyRef)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("parse reference: %w", err)
+		return PullResult{}, fmt.Errorf("parse reference: %w", err)
 	}
 
 	if ref.Reference == ociLatestTag || ref.Reference == "" {
 		ref.Reference, err = getLatestTagSortedBySemver(ref.Registry+"/"+ref.Repository, disableTLS)
 		if err != nil {
-			return nil, nil, nil, fmt.Errorf("get latest tag sorted by semver: %w", err)
+			return PullResult{}, fmt.Errorf("get latest tag sorted by semver: %w", err)
 		}
 	}
 
@@ -166,7 +175,7 @@ func sanitizeDirPath(policyRef string, disableTLS bool, manifestFiles, valuesFil
 
 	repo, err := remote.NewRepository(policyRef)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("new repository: %w", err)
+		return PullResult{}, fmt.Errorf("new repository: %w", err)
 	}
 
 	ctx = auth.AppendRepositoryScope(ctx, repo.Reference, auth.ActionPull, auth.ActionPush)
@@ -177,14 +186,14 @@ func sanitizeDirPath(policyRef string, disableTLS bool, manifestFiles, valuesFil
 
 	// 2. Get credentials from the docker credential store
 	if err := getCredentialsFromDockerStore(repo); err != nil {
-		return nil, nil, nil, fmt.Errorf("ini repo settings: %w", err)
+		return PullResult{}, fmt.Errorf("ini repo settings: %w", err)
 	}
 
 	// 2.5 Get remote manifest digest
 
 	remoteManifestSpec, _, err := oras.Fetch(ctx, repo, ref.String(), oras.DefaultFetchOptions)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("fetch: %w", err)
+		return PullResult{}, fmt.Errorf("fetch: %w", err)
 	}
 
 	dirPath := []string{
@@ -200,9 +209,10 @@ func sanitizeDirPath(policyRef string, disableTLS bool, manifestFiles, valuesFil
 		}
 	}
 
-	addPrefix(manifestFiles)
-	addPrefix(valuesFiles)
-	addPrefix(secretsFiles)
+	addPrefix(files.Manifests)
+	addPrefix(files.Values)
+	addPrefix(files.Secrets)
+	addPrefix(files.Assets)
 
-	return manifestFiles, valuesFiles, secretsFiles, nil
+	return files, nil
 }
