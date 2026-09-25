@@ -26,6 +26,14 @@ func (e *Engine) PushToRegistry(manifests, valuesFiles, secretsFiles, assetsFile
 
 	PrintTitle("Registry")
 
+	// filepath.Rel needs both paths to be absolute, or both relative,
+	// so fileStore must be absolute before comparing it with absolute input paths.
+	absFileStore, err := filepath.Abs(fileStore)
+	if err != nil {
+		return fmt.Errorf("get absolute path of file store %q: %w", fileStore, err)
+	}
+	fileStore = absFileStore
+
 	// Every file is stored in the policy under its path relative to fileStore,
 	// so a manifest using "relativepaths: manifest" finds its assets at the
 	// same place once pulled.
@@ -63,7 +71,6 @@ func (e *Engine) PushToRegistry(manifests, valuesFiles, secretsFiles, assetsFile
 	manifests = append(manifests, manifestFiles...)
 	manifests = append(manifests, partialFiles...)
 
-	var err error
 	if manifests, err = relativeToFileStore(manifests); err != nil {
 		return fmt.Errorf("manifests: %w", err)
 	}
