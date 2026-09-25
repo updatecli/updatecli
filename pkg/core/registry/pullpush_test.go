@@ -110,7 +110,7 @@ func TestPushPullPolicy(t *testing.T) {
 			expectedPullAssetsFiles:   []string{"testdata/asset.sh"},
 			toPushFileStore:           ".",
 			pushData: PushData{
-				PolicyReferenceNames: []string{fmt.Sprintf("localhost:%d/myrepo", port.Num())},
+				PolicyReferenceNames: []string{fmt.Sprintf("localhost:%d/myrepo-assets", port.Num())},
 				DisableTLS:           true,
 				PolicyMetadataFile:   "testdata/Policy.yaml",
 				AssetsFiles:          []string{"testdata/asset.sh"},
@@ -130,39 +130,43 @@ func TestPushPullPolicy(t *testing.T) {
 			err = Push(data.pushData)
 			require.NoError(t, err)
 
-			gotManifests, gotValues, gotSecrets, err := Pull(
+			got, err := Pull(
 				data.pushData.PolicyReferenceNames[0],
 				data.pushData.DisableTLS,
 			)
 			require.NoError(t, err)
 
-			expectedManifest, expectedValues, expectedSecrets, err := sanitizeDirPath(
+			expected, err := sanitizeDirPath(
 				data.pushData.PolicyReferenceNames[0],
 				data.pushData.DisableTLS,
-				data.expectedPullManifestFiles,
-				data.expectedPullValuesFiles,
-				data.expectedPullSecretsFiles,
+				PullResult{
+					Manifests: data.expectedPullManifestFiles,
+					Values:    data.expectedPullValuesFiles,
+					Secrets:   data.expectedPullSecretsFiles,
+					Assets:    data.expectedPullAssetsFiles,
+				},
 			)
 			require.NoError(t, err)
 
-			require.Equal(t, expectedManifest, gotManifests)
-			require.Equal(t, expectedValues, gotValues)
-			require.Equal(t, expectedSecrets, gotSecrets)
+			require.Equal(t, expected, got)
+			for _, asset := range got.Assets {
+				require.FileExists(t, asset)
+			}
 		})
 	}
 }
 
-func sanitizeDirPath(policyRef string, disableTLS bool, manifestFiles, valuesFiles, secretsFiles []string) ([]string, []string, []string, error) {
+func sanitizeDirPath(policyRef string, disableTLS bool, files PullResult) (PullResult, error) {
 
 	ref, err := registry.ParseReference(policyRef)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("parse reference: %w", err)
+		return PullResult{}, fmt.Errorf("parse reference: %w", err)
 	}
 
 	if ref.Reference == ociLatestTag || ref.Reference == "" {
 		ref.Reference, err = getLatestTagSortedBySemver(ref.Registry+"/"+ref.Repository, disableTLS)
 		if err != nil {
-			return nil, nil, nil, fmt.Errorf("get latest tag sorted by semver: %w", err)
+			return PullResult{}, fmt.Errorf("get latest tag sorted by semver: %w", err)
 		}
 	}
 
@@ -171,7 +175,7 @@ func sanitizeDirPath(policyRef string, disableTLS bool, manifestFiles, valuesFil
 
 	repo, err := remote.NewRepository(policyRef)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("new repository: %w", err)
+		return PullResult{}, fmt.Errorf("new repository: %w", err)
 	}
 
 	ctx = auth.AppendRepositoryScope(ctx, repo.Reference, auth.ActionPull, auth.ActionPush)
@@ -182,14 +186,14 @@ func sanitizeDirPath(policyRef string, disableTLS bool, manifestFiles, valuesFil
 
 	// 2. Get credentials from the docker credential store
 	if err := getCredentialsFromDockerStore(repo); err != nil {
-		return nil, nil, nil, fmt.Errorf("ini repo settings: %w", err)
+		return PullResult{}, fmt.Errorf("ini repo settings: %w", err)
 	}
 
 	// 2.5 Get remote manifest digest
 
 	remoteManifestSpec, _, err := oras.Fetch(ctx, repo, ref.String(), oras.DefaultFetchOptions)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("fetch: %w", err)
+		return PullResult{}, fmt.Errorf("fetch: %w", err)
 	}
 
 	dirPath := []string{
@@ -205,9 +209,10 @@ func sanitizeDirPath(policyRef string, disableTLS bool, manifestFiles, valuesFil
 		}
 	}
 
-	addPrefix(manifestFiles)
-	addPrefix(valuesFiles)
-	addPrefix(secretsFiles)
+	addPrefix(files.Manifests)
+	addPrefix(files.Values)
+	addPrefix(files.Secrets)
+	addPrefix(files.Assets)
 
-	return manifestFiles, valuesFiles, secretsFiles, nil
+	return files, nil
 }

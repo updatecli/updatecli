@@ -33,7 +33,6 @@ type PushData struct {
 }
 
 // Push pushes updatecli manifest(s) as an OCI image to an OCI registry.
-// func Push(policyMetadataFile string, manifests []string, values []string, secrets []string, assets []string, policyReferenceNames []string, disableTLS bool, fileStore string, overwrite bool) error {
 func Push(p PushData) error {
 	var err error
 
