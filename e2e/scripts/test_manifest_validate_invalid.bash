@@ -11,7 +11,7 @@ set -ux
 ## In order for the Updatecli manifest to work, we must be at the root of the git repository
 pushd "$VENOM_VAR_rootpath" || exit 1
 
-"$VENOM_VAR_binpath/updatecli" manifest validate --experimental --config e2e/updatecli.d/invalid.d/
+"$VENOM_VAR_binpath/updatecli" manifest validate --config e2e/updatecli.d/invalid.d/
 
 if [[ $? -eq 0 ]]; then
   echo "ERROR: the invalid manifest should have been rejected"
