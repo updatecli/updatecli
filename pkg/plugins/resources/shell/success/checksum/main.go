@@ -10,8 +10,19 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
+// Spec defines the parameters of the "file/checksum" success criteria.
 type Spec struct {
-	// Files specifies the list of file that Updatecli monitors to identify state change
+	// "files" defines the list of files whose checksum Updatecli monitors to detect a change.
+	//
+	// remark:
+	//   * "files" is required.
+	//   * a relative path is joined to the command working directory.
+	//   * a change in any checksum means something changed.
+	//
+	// example:
+	//   * files:
+	//       - file.yaml
+	//
 	Files []string `yaml:",omitempty" jsonschema:"required"`
 }
 

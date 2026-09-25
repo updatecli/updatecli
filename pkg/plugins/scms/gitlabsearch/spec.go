@@ -8,165 +8,148 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git/sign"
 )
 
-// Spec represents the configuration input for the gitlabsearch SCM.
+/*
+"gitlabsearch" defines the specification for searching repositories in a GitLab group.
+It generates one "gitlab" scm for each matching branch of each repository found in the group.
+*/
 type Spec struct {
 	client.Spec `yaml:",inline,omitempty"`
-	// "group" defines the GitLab group (or subgroup) to search repositories in.
-	//
-	// compatible:
-	//   * scm
+	// "group" defines the GitLab group, or subgroup, to search repositories in.
 	//
 	// remark:
-	//   Supports nested groups using slash notation, e.g. "myorg/myteam".
+	//   * nested groups use the slash notation.
+	//
+	// example:
+	//   * group: myorg/myteam
 	//
 	Group string `yaml:",omitempty" jsonschema:"required"`
-	// "search" filters the repository list by name.
-	//
-	// compatible:
-	//   * scm
+	// "search" filters the repositories of the group by name.
 	//
 	// remark:
-	//   When omitted, all projects in the group are returned.
+	//   * when empty, every repository of the group is returned.
 	//
 	Search string `yaml:",omitempty"`
-	// "includeSubgroups" defines whether projects from subgroups should be included in the search results.
-	//
-	// compatible:
-	//   * scm
+	// "includesubgroups" defines whether repositories from subgroups are included in the search results.
 	//
 	// default:
 	//   true
 	//
 	IncludeSubgroups *bool `yaml:",omitempty"`
-	// Limit defines the maximum number of repositories to return.
-	//
-	// compatible:
-	//   * scm
+	// "limit" defines the maximum number of GitLab scm generated from the search results.
 	//
 	// default:
 	//   10
 	//
 	// remark:
-	//   If limit is set to 0, all repositories matching the query will be returned.
+	//   * 0 means no limit.
+	//   * one scm is generated for each matching branch of each repository,
+	//     so the limit counts repository branches, not repositories.
 	//
 	Limit *int `yaml:",omitempty"`
-	// "branch" defines the git branch to work on.
-	//
-	// compatible:
-	//   * scm
+	// "branch" defines a regular expression matching the git branches to work on.
 	//
 	// default:
 	//   ^main$
 	//
 	// remark:
-	//   The branch value is a regular expression used to match branches across the discovered repositories.
+	//   * one GitLab scm is generated for each matching branch of each discovered repository.
+	//   * when a generated scm is used by a source or a condition, files are read from the matching branch.
+	//   * when a generated scm is used by a target, Updatecli pushes changes to a working branch
+	//     based on the matching branch, named "updatecli_<branch>_<pipelineid>" by default.
+	//   * set "workingbranch" to false to push changes directly to the matching branch.
 	//
-	//   If the scm is linked to a source or a condition (using scmid), the branch will be used to retrieve
-	//   file(s) from that branch.
+	// example:
+	//   * branch: ^main$
+	//   * branch: ^release/.*$
 	//
-	//   If the scm is linked to a target then Updatecli creates a new "working branch" based on the branch value.
-	//   The working branch created by Updatecli looks like "updatecli_<pipelineID>".
-	//   The working branch can be disabled using the "workingBranch" parameter set to false.
 	Branch string `yaml:",omitempty"`
-	// WorkingBranchPrefix defines the prefix used to create a working branch.
-	//
-	// compatible:
-	//   * scm
+	// "workingbranchprefix" defines the prefix of the working branch name.
 	//
 	// default:
 	//   updatecli
 	//
 	// remark:
-	//   A working branch is composed of three components:
-	//   1. WorkingBranchPrefix
-	//   2. Target Branch
-	//   3. PipelineID
+	//   * the working branch name joins the prefix, the target branch and the pipeline ID,
+	//     separated by "workingbranchseparator".
+	//   * when set to an empty string, the name starts with the separator, for example "_main_<pipelineid>".
 	//
-	//   If WorkingBranchPrefix is set to '', then
-	//   the working branch will look like "<branch>_<pipelineID>".
 	WorkingBranchPrefix *string `yaml:",omitempty"`
-	// WorkingBranchSeparator defines the separator used to create a working branch.
-	//
-	// compatible:
-	//   * scm
+	// "workingbranchseparator" defines the separator between the parts of the working branch name.
 	//
 	// default:
-	//   "_"
+	//   _
+	//
 	WorkingBranchSeparator *string `yaml:",omitempty"`
 	// "directory" defines the local path where the git repository is cloned.
 	//
-	// compatible:
-	//   * scm
+	// default:
+	//   a directory under the Updatecli temporary directory, such as
+	//   "/tmp/updatecli/gitlab/<owner>/<repository>" on Linux.
 	//
 	// remark:
-	//   Unless you know what you are doing, it is recommended to use the default value.
-	//   The reason is that Updatecli may automatically clean up the directory after a pipeline execution.
+	//   * keep the default value unless you have a good reason to change it,
+	//     as Updatecli may delete the directory after a pipeline run.
+	//   * the value is passed as is to every generated scm., so every repository then uses the same directory.
 	//
-	// default:
-	//   The default value is based on your local temporary directory like: (on Linux)
-	//   /tmp/updatecli/gitlab/<owner>/<repository>
 	Directory string `yaml:",omitempty"`
-	// Depth defines the depth used when cloning the git repository.
-	//
-	// Default: disabled (full clone)
-	//
-	// Remark:
-	//   When using a shallow clone (depth greater than 0), Updatecli is not able to retrieve the full git history.
-	//   This may cause some issues when Updatecli tries to push changes to the remote repository.
-	//   In that case, you may need to set the force option to true to force push changes to the remote repository.
-	Depth *int `yaml:",omitempty"`
-	// "email" defines the email used to commit changes.
-	//
-	// compatible:
-	//   * scm
+	// "depth" defines the depth used when cloning the git repository.
 	//
 	// default:
-	//   default set to your global git configuration
+	//   empty, which means a full clone.
+	//
+	// remark:
+	//   * a value greater than 0 creates a shallow clone, so Updatecli cannot see the full git history.
+	//     Pushing changes may then fail, in which case setting "force" to true may be needed.
+	//   * a negative value is rejected.
+	//
+	// example:
+	//   * depth: 1
+	//
+	Depth *int `yaml:",omitempty"`
+	// "email" defines the email address used to author commits.
+	//
+	// default:
+	//   updatecli-bot@updatecli.io
+	//
 	Email string `yaml:",omitempty"`
-	// "user" specifies the user associated with new git commit messages created by Updatecli
+	// "user" defines the name used to author commits.
 	//
-	// compatible:
-	//  * scm
+	// default:
+	//   updatecli-bot
+	//
 	User string `yaml:",omitempty"`
-	// "gpg" specifies the GPG key and passphrase used for commit signing
+	// "gpg" defines the GPG key and passphrase used to sign commits.
 	//
-	// compatible:
-	//   * scm
 	GPG sign.GPGSpec `yaml:",omitempty"`
-	// "force" is used during the git push phase to run `git push --force`.
-	//
-	// compatible:
-	//   * scm
+	// "force" defines whether Updatecli runs `git push --force` when pushing changes.
 	//
 	// default:
 	//   true
 	//
 	// remark:
-	//   When force is set to true, Updatecli also recreates the working branches that
-	//   diverged from their base branch.
-	Force *bool `yaml:",omitempty"`
-	// "commitMessage" is used to generate the final commit message.
+	//   * when true, Updatecli also recreates the working branches that diverged from their base branch.
+	//   * when "workingbranch" is false and "force" is not set, each generated GitLab scm returns an error,
+	//     to avoid force pushing to "branch" by mistake. Set "force" explicitly to confirm the behavior.
 	//
-	// compatible:
-	//   * scm
+	Force *bool `yaml:",omitempty"`
+	// "commitmessage" defines the settings used to generate commit messages.
 	//
 	// remark:
-	//   it's worth mentioning that the commit message settings is applied to all targets linked to the same scm.
+	//   * the settings apply to every target using this scm.
+	//
 	CommitMessage commit.Commit `yaml:",omitempty"`
-	// "submodules" defines if Updatecli should checkout submodules.
+	// "submodules" defines whether Updatecli clones the git submodules of the repository.
 	//
-	// compatible:
-	//   * scm
+	// default:
+	//   true
 	//
-	// default: true
 	Submodules *bool `yaml:",omitempty"`
-	// "workingBranch" defines if Updatecli should use a temporary branch to work on.
-	// If set to `true`, Updatecli create a temporary branch to work on, based on the branch value.
+	// "workingbranch" defines whether Updatecli pushes changes to a temporary working branch
+	// based on "branch", instead of pushing to "branch" directly.
 	//
-	// compatible:
-	//  * scm
+	// default:
+	//   true
 	//
-	// default: true
 	WorkingBranch *bool `yaml:",omitempty"`
 }
 

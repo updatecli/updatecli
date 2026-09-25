@@ -12,125 +12,196 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
-// Spec defines a specification for a "file" resource
-// parsed from an updatecli manifest file
+/*
+"file" defines the specification for manipulating any text file.
+It can be used as a "source", a "condition", or a "target".
+*/
 type Spec struct {
-	//   `file` contains the file path
+	// "file" defines the path of the file to use.
 	//
-	//   compatible:
-	//       * source
-	//       * condition
-	//       * target
+	// compatible:
+	//   * source
+	//   * condition
+	//   * target
 	//
-	//   remarks:
-	//       * `file` is incompatible with `files`
-	//       * feel free to look at searchpattern attribute to search for files matching a pattern
+	// remark:
+	//   * "file" and "files" are mutually exclusive.
+	//   * set "searchpattern" to treat the path as a pattern.
+	//   * a URL such as "https://" is not supported in a target.
+	//
+	// example:
+	//   * file: README.md
+	//
 	File string `yaml:",omitempty"`
-	//   `files` contains the file path(s)
+	// "files" defines the list of file paths to use.
 	//
-	//   compatible:
-	//       * condition
-	//       * target
+	// compatible:
+	//   * source
+	//   * condition
+	//   * target
 	//
-	//   remarks:
-	//       * `files` is incompatible with `file`
-	//       * feel free to look at searchpattern attribute to search for files matching a pattern
+	// remark:
+	//   * "file" and "files" are mutually exclusive.
+	//   * in a source, "files" accepts at most one entry.
+	//   * duplicated entries are rejected.
+	//   * set "searchpattern" to treat each path as a pattern.
+	//   * a URL such as "https://" is not supported in a target.
+	//
+	// example:
+	//   * files:
+	//     - README.md
+	//     - docs/README.md
+	//
 	Files []string `yaml:",omitempty"`
-	//   `line` contains the line of the file(s) to manipulate
+	// "line" defines the line number of the file to manipulate.
 	//
-	//   compatible:
-	//       * source
-	//       * condition
-	//       * target
+	// compatible:
+	//   * source
+	//   * condition
+	//   * target
+	//
+	// default:
+	//   0, which means the whole file
+	//
+	// remark:
+	//   * the first line of the file is line 1.
+	//   * "line" cannot be negative.
+	//   * "line" is mutually exclusive with "forcecreate", "matchpattern", "replacepattern" and "template".
+	//   * "line" cannot be used when "files" holds more than one entry.
+	//
+	// example:
+	//   * line: 3
+	//
 	Line int `yaml:",omitempty"`
-	//   `content` specifies the content to manipulate
+	// "content" defines the content to compare with, or to write to, the file.
 	//
-	//   compatible:
-	//       * source
-	//       * condition
-	//       * target
+	// compatible:
+	//   * condition
+	//   * target
+	//
+	// default:
+	//   the output of the associated source.
+	//
+	// remark:
+	//   * "content" and "replacepattern" are mutually exclusive.
+	//   * "content" and "template" are mutually exclusive.
+	//   * in a condition, "content" cannot be used together with a "sourceid".
+	//
 	Content string `yaml:",omitempty"`
-	//   `forcecreate` defines if nonexistent file(s) should be created
+	// "forcecreate" creates the file when it does not exist.
 	//
-	//   compatible:
-	//       * target
+	// compatible:
+	//   * target
+	//
+	// default:
+	//   false
+	//
+	// remark:
+	//   * "forcecreate" and "line" are mutually exclusive.
+	//
 	ForceCreate bool `yaml:",omitempty"`
-	//   `matchpattern` specifies the regexp pattern to match on the file(s)
+	// "matchpattern" defines the regular expression matched against the file content.
 	//
-	//   compatible:
-	//       * source
-	//       * condition
-	//       * target
+	// compatible:
+	//   * source
+	//   * condition
+	//   * target
 	//
-	//   remarks:
-	//       * For targets: Capture groups (parentheses) in the pattern automatically extract
-	//         the current value for changelog generation
-	//       * Without capture groups, changelogs show generic "unknown" version changes
-	//       * With capture groups, changelogs show actual version changes (e.g., "1.24.5" → "1.25.1")
-	//       * Example: `"version":\s*"([\d\.]+)"` captures version numbers for changelogs
-	//       * Supports full Go regexp syntax
+	// remark:
+	//   * it supports the full Go regular expression syntax.
+	//   * "matchpattern" is mutually exclusive with "line" and "template".
+	//   * in a source, the output is every matching string, one per line.
+	//   * in a target, capture groups (parentheses) extract the current value for the changelog.
+	//     Without a capture group, the changelog shows a generic "unknown" version change.
+	//     With one, it shows the actual change, such as "1.24.5" to "1.25.1".
+	//
+	// example:
+	//   * matchpattern: '"version":\s*"([\d\.]+)"'
+	//
 	MatchPattern string `yaml:",omitempty"`
-	//   `replacepattern` specifies the regexp replace pattern to apply on the file(s) content
+	// "replacepattern" defines the regular expression replacement applied to the content matched by "matchpattern".
 	//
-	//   compatible:
-	//       * source
-	//       * condition
-	//       * target
+	// compatible:
+	//   * target
+	//
+	// default:
+	//   the output of the associated source, or "content" when set.
+	//
+	// remark:
+	//   * "replacepattern" is mutually exclusive with "content", "line" and "template".
+	//   * it only applies when "matchpattern" is set.
+	//
+	// example:
+	//   * replacepattern: '"version": "1.25.1"'
+	//
 	ReplacePattern string `yaml:",omitempty"`
-	//   `searchpattern` defines if the MatchPattern should be applied on the file(s) path
+	// "searchpattern" treats "file" and "files" as path patterns instead of exact paths.
 	//
-	//   If set to true, it modifies the behavior of the `file` and `files` attributes to search for files matching the pattern instead of searching for files with the exact name.
-	//   When looking for file path pattern, it requires pattern to match all of name, not just a substring.
+	// The pattern must match the whole path, not just a substring.
 	//
-	//   The pattern syntax is:
+	// The pattern syntax is:
 	//
-	//   ```
-	//       pattern:
-	//           { term }
-	//       term:
-	//           '*'         matches any sequence of non-Separator characters
-	//           '?'         matches any single non-Separator character
-	//           '[' [ '^' ] { character-range } ']'
-	//                       character class (must be non-empty)
-	//           c           matches character c (c != '*', '?', '\\', '[')
-	//           '\\' c      matches character c
+	// ```
+	//     pattern:
+	//         { term }
+	//     term:
+	//         '*'         matches any sequence of non-Separator characters
+	//         '?'         matches any single non-Separator character
+	//         '[' [ '^' ] { character-range } ']'
+	//                     character class (must be non-empty)
+	//         c           matches character c (c != '*', '?', '\\', '[')
+	//         '\\' c      matches character c
 	//
-	//       character-range:
-	//           c           matches character c (c != '\\', '-', ']')
-	//           '\\' c      matches character c
-	//           lo '-' hi   matches character c for lo <= c <= hi
-	//   ```
+	//     character-range:
+	//         c           matches character c (c != '\\', '-', ']')
+	//         '\\' c      matches character c
+	//         lo '-' hi   matches character c for lo <= c <= hi
+	// ```
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//   * target
+	//
+	// default:
+	//   false
+	//
+	// remark:
+	//   * combined with "matchpattern", files whose content does not match are ignored instead of failing.
+	//
 	SearchPattern bool `yaml:",omitempty"`
-	//   `template` specifies the path to a Go template file to render with source values
+	// "template" defines the path of a Go template file rendered to produce the file content.
 	//
-	//   compatible:
-	//       * target
+	// compatible:
+	//   * target
 	//
-	//   remarks:
-	//       * When using template, the source value is passed as `.source` in the template context
-	//       * All Go template functions from sprig are available
-	//       * The template file is read and rendered at execution time
-	//       * `template` is mutually exclusive with `content`, `line`, `matchpattern`, and `replacepattern`
+	// remark:
+	//   * the source value is available as ".source" in the template.
+	//   * every sprig template function is available.
+	//   * the template file is read and rendered at execution time.
+	//   * "template" is mutually exclusive with "content", "line", "matchpattern" and "replacepattern".
 	//
-	//   example:
-	//       template: "path/to/template.tmpl"
+	// example:
+	//   * template: path/to/template.tmpl
+	//
 	Template string `yaml:",omitempty"`
+	// "templatedata" defines additional data passed to the template.
 	//
-	//	`templateData` specifies additional data to pass to the template
+	// compatible:
+	//   * target
 	//
-	//	compatible:
-	//	    * target
+	// remark:
+	//   * each entry is available as a field of the template context.
+	//   * "templatedata" requires "template".
+	//   * the key "source" is reserved and ignored.
 	//
-	//	remarks:
-	//	    * When using template, the data specified here is passed as additional fields in the template context
-	//	    * All Go template functions from sprig are available
-	//	    * The template file is read and rendered at execution time
-	//	    * `templateData` is optional
+	// example:
+	// ```
+	//   templatedata:
+	//     key1: value1
+	//     key2: value2
+	// ```
 	//
-	//	example:
-	//	    templateData:
-	//	        key1: "value1"
-	//	        key2: "value2"
 	TemplateData map[string]interface{} `yaml:",omitempty"`
 }
 

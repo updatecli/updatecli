@@ -26,44 +26,126 @@ const (
 	Kind = "azuredevops"
 )
 
-// Spec defines settings used to interact with Azure DevOps Git repositories.
+/*
+"azuredevops" defines the specification for an Azure DevOps git repository used as an scm.
+Updatecli clones the repository, reads files from it, and commits and pushes the changes made by targets.
+*/
 type Spec struct {
 	azdoclient.Spec `yaml:",inline,omitempty"`
-	// "commitMessage" is used to generate the final commit message.
+	// "commitmessage" defines the settings used to generate commit messages.
+	//
+	// remark:
+	//   * the settings apply to every target using this scm.
+	//
 	CommitMessage commit.Commit `yaml:",omitempty"`
 	// "directory" defines the local path where the git repository is cloned.
+	//
+	// default:
+	//   a directory under the Updatecli temporary directory, such as
+	//   "/tmp/updatecli/azuredevops/<project>/<repository>" on Linux.
+	//
+	// remark:
+	//   * keep the default value unless you have a good reason to change it,
+	//     as Updatecli may delete the directory after a pipeline run.
+	//
 	Directory string `yaml:",omitempty"`
-	// Depth defines the depth used when cloning the git repository.
+	// "depth" defines the depth used when cloning the git repository.
+	//
+	// default:
+	//   empty, which means a full clone.
+	//
+	// remark:
+	//   * a value greater than 0 creates a shallow clone, so Updatecli cannot see the full git history.
+	//     Pushing changes may then fail, in which case setting "force" to true may be needed.
+	//   * a negative value is rejected.
+	//
+	// example:
+	//   * depth: 1
+	//
 	Depth *int `yaml:",omitempty"`
-	// SingleBranch defines if Updatecli should only clone/fetch the configured branch
-	// instead of every branch, tag, and other ref on the remote.
+	// "singlebranch" defines whether Updatecli clones and fetches only the configured branch,
+	// instead of every branch, tag and other reference of the remote.
 	//
-	// Default: false (fetch everything)
+	// default:
+	//   false
 	//
-	// Remark:
-	//   Enabling this option can drastically speed up operations on repositories with a large
-	//   number of branches, tags, or other refs, since Updatecli skips the reconciliation
-	//   fetch that otherwise mirrors every ref from the remote.
-	//   As a trade-off, Updatecli may not detect an already published working branch in some
-	//   edge cases, which could result in a duplicate pull request being created.
+	// remark:
+	//   * enabling it can make operations much faster on repositories with many branches, tags
+	//     or other references, because Updatecli skips the fetch that mirrors every remote reference.
+	//   * in some edge cases, Updatecli may then miss a working branch that was already pushed,
+	//     and open a duplicate pull request.
+	//
 	SingleBranch *bool `yaml:",omitempty"`
-	// "email" defines the email used to commit changes.
+	// "email" defines the email address used to author commits.
+	//
+	// default:
+	//   updatecli-bot@updatecli.io
+	//
 	Email string `yaml:",omitempty"`
-	// "force" is used during the git push phase to run `git push --force`.
+	// "force" defines whether Updatecli runs `git push --force` when pushing changes.
+	//
+	// default:
+	//   true
+	//
+	// remark:
+	//   * when true, Updatecli also recreates the working branches that diverged from their base branch.
+	//   * when "workingbranch" is false and "force" is not set, the Azure DevOps scm returns an error,
+	//     to avoid force pushing to "branch" by mistake. Set "force" explicitly to confirm the behavior.
+	//
 	Force *bool `yaml:",omitempty"`
-	// "gpg" specifies the GPG key and passphrased used for commit signing.
+	// "gpg" defines the GPG key and passphrase used to sign commits.
+	//
 	GPG sign.GPGSpec `yaml:",omitempty"`
-	// "user" specifies the user associated with new git commit messages created by Updatecli.
+	// "user" defines the name used to author commits.
+	//
+	// default:
+	//   updatecli-bot
+	//
 	User string `yaml:",omitempty"`
 	// "branch" defines the git branch to work on.
+	//
+	// default:
+	//   main
+	//
+	// remark:
+	//   * when the Azure DevOps scm is used by a source or a condition, files are read from this branch.
+	//   * when the Azure DevOps scm is used by a target, Updatecli pushes changes to a working branch
+	//     based on this branch, named "updatecli_<branch>_<pipelineid>" by default.
+	//   * set "workingbranch" to false to push changes directly to this branch.
+	//
+	// example:
+	//   * branch: main
+	//
 	Branch string `yaml:",omitempty"`
-	// WorkingBranchPrefix defines the prefix used to create a working branch.
+	// "workingbranchprefix" defines the prefix of the working branch name.
+	//
+	// default:
+	//   updatecli
+	//
+	// remark:
+	//   * the working branch name joins the prefix, the target branch and the pipeline ID,
+	//     separated by "workingbranchseparator".
+	//   * when set to an empty string, the name starts with the separator, for example "_main_<pipelineid>".
+	//
 	WorkingBranchPrefix *string `yaml:",omitempty"`
-	// WorkingBranchSeparator defines the separator used to create a working branch.
+	// "workingbranchseparator" defines the separator between the parts of the working branch name.
+	//
+	// default:
+	//   _
+	//
 	WorkingBranchSeparator *string `yaml:",omitempty"`
-	// "submodules" defines if Updatecli should checkout submodules.
+	// "submodules" defines whether Updatecli clones the git submodules of the repository.
+	//
+	// default:
+	//   true
+	//
 	Submodules *bool `yaml:",omitempty"`
-	// "workingBranch" defines if Updatecli should use a temporary branch to work on.
+	// "workingbranch" defines whether Updatecli pushes changes to a temporary working branch
+	// based on "branch", instead of pushing to "branch" directly.
+	//
+	// default:
+	//   true
+	//
 	WorkingBranch *bool `yaml:",omitempty"`
 }
 

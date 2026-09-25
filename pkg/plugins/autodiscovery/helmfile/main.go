@@ -11,43 +11,70 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
-// Spec defines the Helmfile parameters.
+/*
+"helmfile" defines the specification for the Helmfile autodiscovery crawler.
+It searches Helmfile files and generates manifests to update their Helm chart releases.
+*/
 type Spec struct {
-	// rootdir defines the root directory used to recursively search for Helmfile manifest
+	// "rootdir" defines the directory where the crawler starts searching for Helmfile files.
+	//
+	// default:
+	//   the scm directory when "scmid" is set, otherwise the directory relative paths resolve from, by default the working directory.
+	//
+	// remark:
+	//   * a relative path is resolved from the default directory.
+	//   * an absolute path is used as is, instead of the scm directory.
+	//
 	RootDir string `yaml:",omitempty"`
-	// Ignore allows to specify rule to ignore `autodiscovery` a specific Helmfile based on a rule
+	// "ignore" defines rules to exclude matching releases from the autodiscovery.
+	//
+	// remark:
+	//   * a release is ignored when it matches at least one rule.
+	//
 	Ignore MatchingRules `yaml:",omitempty"`
-	// Only allows to specify rule to only `autodiscovery` manifest for a specific Helmfile based on a rule
+	// "only" defines rules to restrict the autodiscovery to matching releases.
+	//
+	// remark:
+	//   * a release is kept only when it matches at least one rule.
+	//
 	Only MatchingRules `yaml:",omitempty"`
-	// Auths provides a map of registry credentials where the key is the registry URL without scheme
+	// "auths" defines the Helm repository credentials, keyed by repository host without scheme.
+	//
+	// remark:
+	//   * only "token" is used.
+	//
+	// example:
+	//   ```
+	//   auths:
+	//     "my-helm-repo.com":
+	//       token: "xxx"
+	//   ```
+	//
 	Auths map[string]docker.InlineKeyChain `yaml:",omitempty"`
-	//  `versionfilter` provides parameters to specify the version pattern used when generating manifest.
+	// "versionfilter" defines the version filter used by the generated manifests.
 	//
-	//  kind - semver
-	//    versionfilter of kind `semver` uses semantic versioning as version filtering
-	//    pattern accepts one of:
-	//      `prerelease` - Updatecli tries to identify the latest prerelease whatever it means
-	//      `patch` - Updatecli only handles patch version update
-	//      `minor` - Updatecli handles patch AND minor version update
-	//      `minoronly` - Updatecli handles minor version only
-	//      `major` - Updatecli handles patch, minor, AND major version update
-	//      `majoronly` - Updatecli only handles major version update
-	//      `a version constraint` such as `>= 1.0.0`
+	// default:
+	//   kind "semver" with pattern "*", the latest version.
 	//
-	//  kind - regex
-	//    versionfilter of kind `regex` uses regular expression as version filtering
-	//    pattern accepts a valid regular expression
+	// remark:
+	//   * with kind "semver", "pattern" accepts:
+	//     * "prerelease": the latest prerelease of the current version.
+	//     * "patch": patch updates only.
+	//     * "minor": patch and minor updates.
+	//     * "minoronly": minor updates only.
+	//     * "major": patch, minor and major updates.
+	//     * "majoronly": major updates only.
+	//     * a version constraint, such as ">= 1.0.0".
+	//   * with kind "regex", "pattern" accepts a regular expression.
+	//   * more examples at https://www.updatecli.io/docs/core/versionfilter/
 	//
-	//  example:
-	//  ```
-	//    versionfilter:
-	//      kind: semver
-	//      pattern: minor
-	//  ```
+	// example:
+	//   ```
+	//   versionfilter:
+	//     kind: semver
+	//     pattern: minor
+	//   ```
 	//
-	//  and its type like regex, semver, or just latest.
-	//
-	//  More examples can be found at https://www.updatecli.io/docs/core/versionfilter/
 	VersionFilter version.Filter `yaml:",omitempty"`
 }
 

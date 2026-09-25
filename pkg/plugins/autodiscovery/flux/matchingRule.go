@@ -8,24 +8,38 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// MatchingRule allows to specifies rules to identify manifest
+// MatchingRule defines a rule to select artifacts.
+// A rule matches when every field it sets matches.
+// Each rule must set at least one field.
 type MatchingRule struct {
-	// Path specifies a Flux filepath pattern, the pattern requires to match all of name, not just a subpart of the path.
+	// "path" defines a Flux manifest path pattern.
+	//
+	// remark:
+	//   * the pattern must match the whole path, not just a substring.
+	//   * the pattern follows the Go filepath.Match syntax, such as "*" or "?".
+	//
 	Path string
-	// Repositories specifies the list of Helm Chart repository to check
+	// "repositories" defines the Helm repository URLs to match.
+	//
+	// remark:
+	//   * a repository URL must be identical to one of the entries.
+	//   * an OCIRepository artifact has no Helm repository, so a rule setting "repositories" never matches it.
+	//
 	Repositories []string
-	// Artifacts specifies the list of artifacts to check
+	// "artifacts" defines the artifacts to match, keyed by artifact name.
 	//
-	// The key is the artifact name and the value is the artifact version
+	// remark:
+	//   * an artifact is the Helm chart of a HelmRelease, or the artifact of an OCIRepository.
+	//   * an OCIRepository artifact name is its URL without the "oci://" prefix.
+	//   * an empty value matches any version.
+	//   * otherwise the value is a semantic version constraint, such as ">=1.0.0".
+	//   * when the version or the constraint cannot be parsed, the value must equal the version.
 	//
-	// An artifact can be a Helm Chart when used in the context of Helmrelease
-	// or an OCIRepository when used in the context of OCIRepository
-	//
-	// If the value is empty, then the artifact name is enough to match
-	// If the value is a valid semver constraint, then the artifact version must match the constraint
 	Artifacts map[string]string
 }
 
+// MatchingRules defines a list of rules.
+// The list matches when at least one of its rules matches.
 type MatchingRules []MatchingRule
 
 // Validate checks that each matching rule has at least one non-empty field.

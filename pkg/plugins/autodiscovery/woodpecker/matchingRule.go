@@ -8,15 +8,27 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// MatchingRule allows to specify rules to identify manifests
+// MatchingRule defines a rule to select container images.
+// A rule matches when every field it sets matches.
+// Each rule must set at least one field.
 type MatchingRule struct {
-	// Path specifies a Woodpecker workflow path pattern, the pattern requires to match all of name, not just a substring.
+	// "path" defines a Woodpecker workflow file path pattern.
+	//
+	// remark:
+	//   * the pattern must match the whole path, not just a substring.
+	//   * the pattern follows the Go filepath.Match syntax, such as "*" or "?".
+	//
 	Path string
-	// Images specifies a list of docker images
+	// "images" defines the container images to match.
+	//
+	// remark:
+	//   * an image matches when its name starts with one of the values.
+	//
 	Images []string
 }
 
-// MatchingRules is a slice of MatchingRule
+// MatchingRules defines a list of rules.
+// The list matches when at least one of its rules matches.
 type MatchingRules []MatchingRule
 
 // Validate checks that each matching rule has at least one non-empty field.

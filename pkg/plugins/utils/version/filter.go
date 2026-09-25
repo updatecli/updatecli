@@ -42,32 +42,97 @@ var SupportedKind []string = []string{
 	PEP440VERSIONKIND,
 }
 
-// ReplaceAll defines a regex replacement that is applied to version strings before filtering.
-// This allows transforming versions (e.g., replacing underscores with dots) before regex extraction.
+// ReplaceAll defines a regular expression replacement applied to each version before filtering.
 type ReplaceAll struct {
-	// Pattern specifies the regex pattern to match for replacement
+	// "pattern" defines the regular expression matching the text to replace.
+	//
+	// example:
+	//   * pattern: "_"
+	//
 	Pattern string `yaml:",omitempty"`
-	// Replacement specifies the replacement string (supports $1, $2, etc. for captured groups)
+	// "replacement" defines the text replacing each match of "pattern".
+	//
+	// remark:
+	//   * capture groups can be referenced with $1, $2, and so on.
+	//
+	// example:
+	//   * replacement: "."
+	//
 	Replacement string `yaml:",omitempty"`
 }
 
-// Filter defines parameters to apply different kind of version matching based on a list of versions
+// Filter defines how to select one version from a list of versions.
 type Filter struct {
-	// specifies the version kind such as semver, regex, or latest
+	// "kind" defines the versioning scheme used to select a version.
+	//
+	// default:
+	//   latest
+	//
+	// remark:
+	//   * accepted values are "latest", "semver", "regex", "regex/semver", "time", "regex/time", "lex" and "pep440".
+	//   * "latest" returns the last version of the list.
+	//   * "lex" sorts the versions lexicographically and returns the last one.
+	//   * "pep440" follows https://peps.python.org/pep-0440/
+	//
+	// example:
+	//   * kind: semver
+	//
 	Kind string `yaml:",omitempty"`
-	// specifies the version pattern according the version kind
-	// for semver, it is a semver constraint
-	// for regex, it is a regex pattern
-	// for time, it is a date format
+	// "pattern" defines the version pattern, according to "kind".
+	//
+	// default:
+	//   * latest: "latest"
+	//   * semver and pep440: "*"
+	//   * regex: ".*"
+	//   * time and regex/time: "2006-01-02"
+	//
+	// remark:
+	//   * for "latest", "latest" returns the last version, any other value must match a version exactly.
+	//   * for "semver" and "regex/semver", it is a semantic versioning constraint.
+	//   * for "pep440", it is a pep440 version specifier.
+	//   * for "regex", it is a regular expression.
+	//   * for "time" and "regex/time", it is a Go date layout.
+	//   * ignored by "lex".
+	//
+	// example:
+	//   * pattern: ~1.2
+	//   * pattern: ">=1.0.0 <2.0.0"
+	//   * pattern: ^v\d+\.\d+\.\d+$
+	//
 	Pattern string `yaml:",omitempty"`
-	// strict enforce strict versioning rule.
-	// Only used for semantic versioning at this time
+	// "strict" enforces strict semantic versioning rules when parsing versions.
+	//
+	// default:
+	//   false
+	//
+	// remark:
+	//   * only used by the kinds "semver" and "regex/semver".
+	//
 	Strict bool `yaml:",omitempty"`
-	// specifies the regex pattern, used for regex/semver and regex/time.
-	// Output of the first capture group will be used.
+	// "regex" defines the regular expression extracting the version from each entry.
+	//
+	// remark:
+	//   * only used by the kinds "regex/semver" and "regex/time".
+	//   * the value of the first capture group is used as the version.
+	//
+	// example:
+	//   * regex: ^v(\d+\.\d+\.\d+)$
+	//
 	Regex string `yaml:",omitempty"`
-	// replaceAll applies a regex replacement to version strings before filtering.
-	// This is useful for transforming versions (e.g., curl-8_15_0 to curl-8.15.0) before regex extraction.
+	// "replaceall" applies a regular expression replacement to each version before filtering.
+	//
+	// remark:
+	//   * only used by the kinds "regex", "regex/semver" and "regex/time".
+	//   * the replacement runs before "pattern" or "regex" is evaluated.
+	//
+	// example:
+	//   ```
+	//   replaceall:
+	//     pattern: "_"
+	//     replacement: "."
+	//   ```
+	//   turns "curl-8_15_0" into "curl-8.15.0".
+	//
 	ReplaceAll ReplaceAll `yaml:",omitempty"`
 }
 

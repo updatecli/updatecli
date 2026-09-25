@@ -11,71 +11,101 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
-// Spec defines a specification for a "dockerimage" resource
-// parsed from an updatecli manifest file
+/*
+"dockerimage" defines the specification for retrieving container image tags from a registry.
+It can be used as a "source" or a "condition".
+*/
 type Spec struct {
-	// architectures specifies a list of architectures to check container images for (conditions only)
+	// "architectures" defines the list of platforms the container image must exist for.
 	//
 	// compatible:
-	//   * condition
 	//   * source
-	//
-	// example: windows/amd64, linux/arm64, linux/arm64/v8
-	//
-	// default: linux/amd64
+	//   * condition
 	//
 	// remark:
-	//   If an architecture is undefined, Updatecli retrieves the digest of the image index
-	//   which can be used regardless of the architecture.
-	//   But if an architecture is specified then Updatecli retrieves a specific image digest.
-	//   More information on https://github.com/updatecli/updatecli/issues/1603
+	//   * "architecture" and "architectures" are mutually exclusive.
+	//   * a platform is written "<architecture>" or "<os>/<architecture>[/<variant>]".
+	//     The os defaults to "linux".
+	//   * a source only checks the first platform of the list.
+	//   * a condition checks every platform of the list.
+	//   * when unset, Updatecli checks the image index, which applies to every platform.
+	//     When set, Updatecli checks the image for that specific platform.
+	//     More information on https://github.com/updatecli/updatecli/issues/1603
+	//
+	// example:
+	// ```
+	//   architectures:
+	//     - windows/amd64
+	//     - linux/arm64
+	//     - linux/arm64/v8
+	// ```
+	//
 	Architectures []string `yaml:",omitempty"`
-	// architecture specifies the container image architecture such as `amd64`
+	// "architecture" defines the platform the container image must exist for.
 	//
 	// compatible:
-	//   * condition
 	//   * source
-	//
-	// example: windows/amd64, linux/arm64, linux/arm64/v8
-	//
-	// default: linux/amd64
+	//   * condition
 	//
 	// remark:
-	//   If an architecture is undefined, Updatecli retrieves the digest of the image index
-	//   which can be used regardless of the architecture.
-	//   But if an architecture is specified then Updatecli retrieves a specific image digest.
-	//   More information on https://github.com/updatecli/updatecli/issues/1603
+	//   * "architecture" and "architectures" are mutually exclusive.
+	//   * a platform is written "<architecture>" or "<os>/<architecture>[/<variant>]".
+	//     The os defaults to "linux".
+	//   * when unset, Updatecli checks the image index, which applies to every platform.
+	//     When set, Updatecli checks the image for that specific platform.
+	//     More information on https://github.com/updatecli/updatecli/issues/1603
+	//
+	// example:
+	//   * architecture: amd64
+	//   * architecture: windows/amd64
+	//   * architecture: linux/arm64/v8
+	//
 	Architecture string `yaml:",omitempty"`
-	// image specifies the container image such as `updatecli/updatecli`
+	// "image" defines the container image name.
 	//
 	// compatible:
-	//   * condition
 	//   * source
+	//   * condition
+	//
+	// example:
+	//   * image: updatecli/updatecli
+	//   * image: ghcr.io/updatecli/updatecli
+	//
 	Image string `yaml:",omitempty"`
-	// tag specifies the container image tag such as `latest`
+	// "tag" defines the container image tag to check.
 	//
 	// compatible:
 	//   * condition
 	//
-	// default: latest
+	// default:
+	//   the output of the associated source.
+	//
+	// example:
+	//   * tag: latest
+	//   * tag: v0.1.0
+	//
 	Tag                   string `yaml:",omitempty"`
 	docker.InlineKeyChain `yaml:",inline" mapstructure:",squash"`
-	// versionfilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
+	// "versionfilter" defines the version pattern and its kind, such as regex, semver or latest.
 	//
 	// compatible:
 	//   * source
 	//
 	// default:
 	//   kind: latest
+	//
 	VersionFilter version.Filter `yaml:",omitempty"`
-	// tagfilter allows to restrict tags retrieved from a remote registry by using a regular expression.
+	// "tagfilter" defines a regular expression restricting the tags retrieved from the registry.
 	//
 	// compatible:
 	//   * source
 	//
-	// example: ^v\d*(\.\d*){2}-alpine$
+	// remark:
+	//   * it is applied before "versionfilter".
 	//
-	// default: none
+	// example:
+	//   * tagfilter: ^v\d*(\.\d*){2}-alpine$
+	//
 	TagFilter string `yaml:",omitempty"`
 }
 

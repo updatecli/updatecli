@@ -12,40 +12,55 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
 )
 
-// Spec defines a specification for a Bitbucket Server resource
-// parsed from an updatecli manifest file
+// Spec defines the settings used to connect to a Bitbucket Server API.
 type Spec struct {
-	// "url" specifies the default stash url in case of Bitbucket Server
+	// "url" defines the Bitbucket Server url.
+	//
+	// remark:
+	//   * "url" is required.
+	//   * "https://" is added when the url has no scheme.
+	//
+	// example:
+	//   * url: bitbucket.example.com
+	//
 	URL string `yaml:",omitempty" jsonschema:"required"`
-	// "username" specifies the username used to authenticate with Bitbucket Server API
+	// "username" defines the username used to authenticate with the Bitbucket Server API.
+	//
+	// remark:
+	//   * when set, "token" is sent as the password of a basic authentication.
+	//
 	Username string `yaml:",omitempty"`
-	//  "token" specifies the credential used to authenticate with Bitbucket Server API
+	// "token" defines the credential used to authenticate with the Bitbucket Server API.
 	//
-	//  remark:
-	//    A token is a sensitive information, it's recommended to not set this value directly in the configuration file
-	//    but to use an environment variable or a SOPS file.
+	// remark:
+	//   * without "username", the token is sent as a bearer token.
+	//   * a token is sensitive information. Do not set it directly in the manifest,
+	//     use an environment variable or a SOPS file instead.
+	//   * the value can be set to `{{ requiredEnv "BITBUCKET_TOKEN"}}` to read the token
+	//     from the environment variable `BITBUCKET_TOKEN`, or to `{{ .bitbucket.token }}`
+	//     to read it from a SOPS file.
+	//   * more information about SOPS on https://github.com/getsops/sops
 	//
-	//    The value can be set to `{{ requiredEnv "BITBUCKET_TOKEN"}}` to retrieve the token from the environment variable `BITBUCKET_TOKEN`
-	//	  or `{{ .bitbucket.token }}` to retrieve the token from a SOPS file.
-	//
-	//	  For more information, about a SOPS file, please refer to the following documentation:
-	//    https://github.com/getsops/sops
 	Token string `yaml:",omitempty"`
-	//  "password" specifies the credential used to authenticate with Bitbucket Server API, it must be combined with "username"
+	// "password" defines the credential used to authenticate with the Bitbucket Server API.
 	//
-	//  remark:
-	//    A token is a sensitive information, it's recommended to not set this value directly in the configuration file
-	//    but to use an environment variable or a SOPS file.
+	// remark:
+	//   * it must be combined with "username".
+	//   * the Bitbucket Server client does not read "password" yet: set the credential
+	//     in "token" together with "username" for a basic authentication.
+	//   * a password is sensitive information. Do not set it directly in the manifest,
+	//     use an environment variable or a SOPS file instead.
+	//   * the value can be set to `{{ requiredEnv "BITBUCKET_PASSWORD"}}` to read it
+	//     from the environment variable `BITBUCKET_PASSWORD`, or to `{{ .bitbucket.password }}`
+	//     to read it from a SOPS file.
+	//   * more information about SOPS on https://github.com/getsops/sops
 	//
-	//    The value can be set to `{{ requiredEnv "BITBUCKET_TOKEN"}}` to retrieve the token from the environment variable `BITBUCKET_TOKEN`
-	//	  or `{{ .bitbucket.token }}` to retrieve the token from a SOPS file.
-	//
-	//	  For more information, about a SOPS file, please refer to the following documentation:
-	//    https://github.com/getsops/sops
 	Password string `yaml:",omitempty"`
-	// "owner" defines repository owner
+	// "owner" defines the repository owner.
+	//
 	Owner string `yaml:",omitempty" jsonschema:"required"`
-	// "repository" defines the name of a repository for a specific owner
+	// "repository" defines the repository name.
+	//
 	Repository string `yaml:",omitempty" jsonschema:"required"`
 }
 

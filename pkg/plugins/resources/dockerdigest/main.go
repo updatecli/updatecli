@@ -12,46 +12,83 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/docker"
 )
 
-// Spec defines a specification for a "dockerdigest" resource parsed from an updatecli manifest file
+/*
+"dockerdigest" defines the specification for retrieving a container image digest from a registry.
+It can be used as a "source" or a "condition".
+*/
 type Spec struct {
-	// architecture specifies the container image architecture such as `amd64`
+	// "architecture" defines the platform of the container image, as "<architecture>" or "<os>/<architecture>[/<variant>]".
 	//
 	// compatible:
-	// 	* source
-	// 	* condition
+	//   * source
 	//
-	// default: amd64
+	// remark:
+	//   * when unset, the source returns the digest of the image as stored in the registry,
+	//     which is the image index digest for a multi platform image.
+	//   * when set, the source returns the digest of the image matching the platform.
+	//   * the os defaults to "linux" when only the architecture is set.
+	//
+	// example:
+	//   * architecture: amd64
+	//   * architecture: linux/arm64
+	//   * architecture: linux/arm/v7
+	//
 	Architecture string `yaml:",omitempty"`
-	// image specifies the container image such as `updatecli/updatecli`
-	//
-	// example: `updatecli/updatecli`
+	// "image" defines the container image name.
 	//
 	// compatible:
-	// 	* source
-	// 	* condition
+	//   * source
+	//   * condition
+	//
+	// example:
+	//   * image: updatecli/updatecli
+	//   * image: ghcr.io/updatecli/updatecli
+	//
 	Image string `yaml:",omitempty" jsonschema:"required"`
-	// tag specifies the container image tag such as `latest`
+	// "tag" defines the container image tag.
 	//
 	// compatible:
-	// 	* source
-	// 	* condition
-	Tag string `yaml:",omitempty"`
-	// digest specifies the container image digest such as `sha256:ce782db15ab5491c6c6178da8431b3db66988ccd11512034946a9667846952a6`
-	//
-	// compatible:
-	// 	* condition
+	//   * source
 	//
 	// default:
-	// 	When used from a condition, the default value is set to the linked source output.
+	//   latest
+	//
+	// remark:
+	//   * a digest appended to the tag, as in "latest@sha256:...", is ignored.
+	//
+	// example:
+	//   * tag: latest
+	//   * tag: v0.1.0
+	//
+	Tag string `yaml:",omitempty"`
+	// "digest" defines the container image digest to check.
+	//
+	// compatible:
+	//   * condition
+	//
+	// default:
+	//   the output of the associated source.
+	//
+	// remark:
+	//   * it accepts "sha256:<digest>", "@sha256:<digest>" or "<tag>@sha256:<digest>".
+	//
+	// example:
+	//   * digest: sha256:ce782db15ab5491c6c6178da8431b3db66988ccd11512034946a9667846952a6
+	//
 	Digest                string `yaml:",omitempty"`
 	docker.InlineKeyChain `yaml:",inline" mapstructure:",squash"`
-	// hideTag specifies if the tag should be hidden from the digest
+	// "hidetag" removes the tag from the source output.
 	//
 	// compatible:
-	// 	* source
+	//   * source
 	//
 	// default:
-	// 	false
+	//   false
+	//
+	// remark:
+	//   * when false, the source returns "<tag>@sha256:<digest>".
+	//   * when true, the source returns "@sha256:<digest>".
+	//
 	HideTag bool `yaml:",omitempty"`
 }
 

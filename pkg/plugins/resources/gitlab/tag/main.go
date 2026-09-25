@@ -15,21 +15,64 @@ import (
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 )
 
-// Spec defines settings used to interact with GitLab release
+/*
+"gitlab/tag" defines the specification for retrieving tags from a GitLab repository.
+It can be used as a "source" or a "condition".
+*/
 type Spec struct {
 	client.Spec `yaml:",inline,omitempty"`
-	// [S][C] Owner specifies repository owner
+	// "owner" defines the owner of the GitLab repository.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//
+	// example:
+	//   * owner: updatecli
+	//
 	Owner string `yaml:",omitempty" jsonschema:"required"`
-	// [S][C] Repository specifies the name of a repository for a specific owner
+	// "repository" defines the name of the GitLab repository, for a specific owner.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//
+	// example:
+	//   * repository: updatecli
+	//
 	Repository string `yaml:",omitempty" jsonschema:"required"`
-	// [S][C] VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
+	// "versionfilter" defines the version pattern and kind used to select the tag, such as regex, semver or latest.
+	//
+	// compatible:
+	//   * source
+	//
+	// default:
+	//   kind: latest
+	//
 	VersionFilter version.Filter `yaml:",omitempty"`
-	// [S] Age defines the minimum or maximum age of a tag to be considered valid.
-	// It accepts a duration string (e.g., "24h", "7d", "3w", "1y").
-	// The age of a tag is its creation date, which GitLab reports as the tagger date
-	// of an annotated tag and as the commit date of a lightweight one.
+	// "age" defines the minimum or maximum age of a tag to be considered valid.
+	//
+	// compatible:
+	//   * source
+	//
+	// remark:
+	//   * it accepts a duration string such as "24h", "7d", "3w" or "1y".
+	//   * the age of a tag is its creation date, which GitLab reports as the tagger date
+	//     of an annotated tag and as the commit date of a lightweight one.
+	//   * when no tag matches the age filter yet, the source is skipped instead of failing.
+	//
 	Age age.Spec `yaml:",omitempty"`
-	// [S] Tag defines the GitLab tag .
+	// "tag" defines the name of the tag to look for.
+	//
+	// compatible:
+	//   * condition
+	//
+	// default:
+	//   the output of the associated source.
+	//
+	// example:
+	//   * tag: v1.0.0
+	//
 	Tag string `yaml:",omitempty"`
 }
 

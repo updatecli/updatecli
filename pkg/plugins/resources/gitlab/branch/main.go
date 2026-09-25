@@ -15,20 +15,63 @@ import (
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 )
 
-// Spec defines settings used to interact with GitLab release
+/*
+"gitlab/branch" defines the specification for retrieving branches from a GitLab repository.
+It can be used as a "source" or a "condition".
+*/
 type Spec struct {
 	client.Spec `yaml:",inline,omitempty"`
-	// [S][C] Owner specifies repository owner
+	// "owner" defines the owner of the GitLab repository.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//
+	// example:
+	//   * owner: updatecli
+	//
 	Owner string `yaml:",omitempty" jsonschema:"required"`
-	// [S][C] Repository specifies the name of a repository for a specific owner
+	// "repository" defines the name of the GitLab repository, for a specific owner.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//
+	// example:
+	//   * repository: updatecli
+	//
 	Repository string `yaml:",omitempty" jsonschema:"required"`
-	// [S] VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
+	// "versionfilter" defines the version pattern and kind used to select the branch, such as regex, semver or latest.
+	//
+	// compatible:
+	//   * source
+	//
+	// default:
+	//   kind: latest
+	//
 	VersionFilter version.Filter `yaml:",omitempty"`
-	// [S] Age defines the minimum or maximum age of a branch to be considered valid.
-	// It accepts a duration string (e.g., "24h", "7d", "3w", "1y").
-	// The age of a branch is the committer date of its latest commit.
+	// "age" defines the minimum or maximum age of a branch to be considered valid.
+	//
+	// compatible:
+	//   * source
+	//
+	// remark:
+	//   * it accepts a duration string such as "24h", "7d", "3w" or "1y".
+	//   * the age of a branch is the committer date of its latest commit.
+	//   * when no branch matches the age filter yet, the source is skipped instead of failing.
+	//
 	Age age.Spec `yaml:",omitempty"`
-	// [C] Branch specifies the branch name
+	// "branch" defines the name of the branch to look for.
+	//
+	// compatible:
+	//   * condition
+	//
+	// default:
+	//   the output of the associated source.
+	//
+	// example:
+	//   * branch: main
+	//
 	Branch string `yaml:",omitempty"`
 }
 

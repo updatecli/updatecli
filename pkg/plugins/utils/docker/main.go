@@ -7,52 +7,36 @@ import (
 	"github.com/google/go-containerregistry/pkg/authn"
 )
 
-// InlineKeyChain defines a keychain with OCI registry credentials
+// InlineKeyChain defines the credentials used to authenticate with an OCI registry.
 type InlineKeyChain struct {
-	/*
-		username specifies the container registry username to use for authentication.
-
-		compatible:
-			* source
-			* condition
-			* target
-
-		default:
-			by default credentials are fetch from the local environment such as `~/.docker/config.json`.
-
-		remark:
-			Not compatible with token
-	*/
+	// "username" defines the container registry username used for authentication.
+	//
+	// default:
+	//   credentials are retrieved from the local environment, such as `~/.docker/config.json`.
+	//
+	// remark:
+	//   * "username" requires "password".
+	//   * "token" cannot be combined with both "username" and "password".
+	//
 	Username string `yaml:",omitempty"`
-	/*
-		password specifies the container registry password to use for authentication. Not compatible with token
-
-		compatible:
-			* source
-			* condition
-			* target
-
-		default:
-			by default credentials are fetch from the local environment such as `~/.docker/config.json`.
-
-		remark:
-			Not compatible with token
-	*/
+	// "password" defines the container registry password used for authentication.
+	//
+	// default:
+	//   credentials are retrieved from the local environment, such as `~/.docker/config.json`.
+	//
+	// remark:
+	//   * "password" requires "username".
+	//   * "token" cannot be combined with both "username" and "password".
+	//
 	Password string `yaml:",omitempty"`
-	/*
-		token specifies the container registry token to use for authentication.
-
-		compatible:
-			* source
-			* condition
-			* target
-
-		default:
-			by default credentials are fetch from the local environment such as `~/.docker/config.json`.
-
-		remark:
-			Not compatible with username/password
-	*/
+	// "token" defines the container registry bearer token used for authentication.
+	//
+	// default:
+	//   credentials are retrieved from the local environment, such as `~/.docker/config.json`.
+	//
+	// remark:
+	//   * "token" cannot be combined with both "username" and "password".
+	//
 	Token string `yaml:",omitempty"`
 }
 

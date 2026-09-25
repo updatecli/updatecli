@@ -11,12 +11,41 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
-// Spec defines a specification for a "jenkins" resource
-// parsed from an updatecli manifest file
+/*
+"jenkins" defines the specification for retrieving Jenkins versions.
+It can be used as a "source" or a "condition".
+*/
 type Spec struct {
-	// [s][c] Defines the release name. It accepts "stable" or "weekly"
+	// "release" defines the Jenkins release line.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//
+	// default:
+	//   stable
+	//
+	// remark:
+	//   * accepted values are "stable" or "weekly".
+	//
+	// example:
+	//   * release: weekly
+	//
 	Release string `yaml:",omitempty"`
-	// [s][c] Defines a specific release version (condition only)
+	// "version" defines the Jenkins version to check.
+	//
+	// compatible:
+	//   * condition
+	//
+	// default:
+	//   the output of the associated source.
+	//
+	// remark:
+	//   * the version must match the release line set by "release".
+	//
+	// example:
+	//   * version: 2.440.1
+	//
 	Version string `yaml:",omitempty"`
 }
 

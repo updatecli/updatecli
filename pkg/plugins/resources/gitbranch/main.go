@@ -13,88 +13,127 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
-// Spec defines a specification for a "gitbranch" resource
-// parsed from an updatecli manifest file
+/*
+"gitbranch" defines the specification for manipulating Git branches.
+It can be used as a "source", a "condition", or a "target".
+*/
 type Spec struct {
-	// path contains the git repository path
+	// "path" defines the path of the local Git repository.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//   * target
+	//
+	// remark:
+	//   * a relative path is resolved from the Updatecli manifest directory.
+	//   * "path" overrides the working directory provided by the scm configuration.
+	//   * "url" takes precedence over "path".
+	//
 	Path string `yaml:",omitempty"`
-	// VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
+	// "versionfilter" defines the version pattern and its type, such as regex, semver, or latest.
 	//
-	//  compatible:
-	//    * source
-	//    * condition
-	//    * target
+	// compatible:
+	//   * source
+	//
 	VersionFilter version.Filter `yaml:",omitempty"`
-	// Age defines the minimum or maximum age of a branch to be considered valid.
-	// It accepts a duration string (e.g., "24h", "7d", "3w", "1y").
-	// The age of a branch is the date of its latest commit.
+	// "age" defines the minimum or maximum age of a branch to be considered valid.
 	//
-	//  compatible:
-	//    * source
+	// compatible:
+	//   * source
+	//
+	// remark:
+	//   * "minimum" and "maximum" accept a duration string such as "24h", "7d", "3w" or "1y".
+	//   * the age of a branch is the date of its latest commit.
+	//   * when the age filter discards every branch, the source is skipped.
+	//
+	// example:
+	// ```
+	//   age:
+	//     minimum: 7d
+	// ```
+	//
 	Age age.Spec `yaml:",omitempty"`
-	// branch specifies the branch name
+	// "branch" defines the Git branch name.
 	//
-	//  compatible:
-	//    * source
-	//    * condition
-	//    * target
+	// compatible:
+	//   * condition
+	//   * target
+	//
+	// default:
+	//   the output of the associated source.
+	//
 	Branch string `yaml:",omitempty"`
-	// Depth is used to limit the number of commits fetched from the git repository.
+	// "depth" limits the number of commits fetched from the Git repository.
 	//
 	// compatible:
-	//  * source
-	//  * condition
-	//  * target
+	//   * source
+	//   * condition
+	//   * target
 	//
-	//  default: 0 (no limit)
+	// default:
+	//   0, which means no limit
 	//
 	// remark:
-	//  * Updatecli won't be able to find branches that are not included in the fetched commits.
+	//   * Updatecli cannot find branches that are not included in the fetched commits.
+	//
 	Depth *int `yaml:",omitempty"`
-	// sourcebranch defines the branch name used as a source to create the new Git branch.
+	// "sourcebranch" defines the branch used as the starting point of the new Git branch.
 	//
 	// compatible:
-	//  * target
+	//   * target
 	//
 	// remark:
-	//  * sourcebranch is required when the scmid is not defined.
+	//   * "sourcebranch" is required when no "scmid" is set.
+	//
 	SourceBranch string `yaml:",omitempty"`
-	//	url specifies the git url to use for fetching Git Branches.
+	// "url" defines the Git repository URL to clone.
 	//
-	//	compatible:
-	//	  * source
-	//	  * condition
-	// 	  * target
+	// compatible:
+	//   * source
+	//   * condition
+	//   * target
 	//
-	//	example:
-	//	  * git@github.com:updatecli/updatecli.git
-	//	  * https://github.com/updatecli/updatecli.git
+	// remark:
+	//   * with the ssh protocol, the user must be allowed to clone the repository
+	//     with their local ssh configuration.
+	//   * "url" overrides "path" and the working directory provided by the scm configuration.
 	//
-	//	remarks:
-	//		when using the ssh protocol, the user must have the right to clone the repository
-	//		based on its local ssh configuration
+	// example:
+	//   * url: git@github.com:updatecli/updatecli.git
+	//   * url: https://github.com/updatecli/updatecli.git
+	//
 	URL string `yaml:",omitempty" jsonschema:"required"`
-	//	username specifies the username when using the HTTP protocol
+	// "username" defines the username used with the HTTP protocol.
 	//
-	//	compatible
-	//	  * source
-	//	  * condition
-	// 	  * target
+	// compatible:
+	//   * source
+	//   * condition
+	//   * target
+	//
 	Username string `yaml:",omitempty"`
-	//	password specifies the password when using the HTTP protocol
+	// "password" defines the password used with the HTTP protocol.
 	//
-	//	compatible:
-	//	  * source
-	// 	  * condition
-	// 	  * target
+	// compatible:
+	//   * source
+	//   * condition
+	//   * target
+	//
 	Password string `yaml:",omitempty"`
-	//  key of the tag object to retrieve.
+	// "key" defines which attribute of the branch the source returns.
 	//
-	//  Accepted values: ['name','hash'].
+	// compatible:
+	//   * source
 	//
-	//  Default: 'name'
-	//  Compatible:
-	//    * source
+	// default:
+	//   name
+	//
+	// remark:
+	//   * accepted values are "name", "hash" or empty.
+	//
+	// example:
+	//   * key: hash
+	//
 	Key string `yaml:",omitempty"`
 }
 

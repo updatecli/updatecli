@@ -13,21 +13,101 @@ var (
 	ErrWrongSortByValue error = errors.New("wrong value for key 'sortBy'")
 )
 
-// Spec contains the updatecli configuration provided by users.
+/*
+"aws/ami" defines the specification for retrieving an AWS AMI ID.
+It can be used as a "source" or a "condition".
+*/
 type Spec struct {
-	// accesskey specifies the aws access key which combined with `secretkey`, is one of the way to authenticate
+	// "accesskey" defines the AWS access key used to authenticate.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//
+	// remark:
+	//   * it is only used when "secretkey" is also set.
+	//   * when unset, the default AWS credential chain is used.
+	//
 	AccessKey string `yaml:",omitempty"`
-	// secretkey specifies the aws secret key which combined with `accesskey`, is one of the way to authenticate
+	// "secretkey" defines the AWS secret key used to authenticate.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//
+	// remark:
+	//   * it is only used when "accesskey" is also set.
+	//   * when unset, the default AWS credential chain is used.
+	//
 	SecretKey string `yaml:",omitempty"`
-	// Filters specifies a list of AMI filters
+	// "filters" defines the list of filters used to select AMIs.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//
+	// remark:
+	//   * at least one filter is required in a source.
+	//   * in a condition, when no "image-id" filter is set, the source output is used as the "image-id" filter.
+	//   * the accepted filter names are listed on
+	//     https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeImages.html
+	//
+	// example:
+	// ```
+	//   filters:
+	//     - name: "name"
+	//       values: "ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"
+	//     - name: "architecture"
+	//       values: "x86_64"
+	// ```
+	//
 	Filters Filters `yaml:",omitempty"`
-	// Region specifies the AWS region to use when looking for AMI
+	// "region" defines the AWS region used to look for AMIs.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//
+	// default:
+	//   us-east-1
+	//
+	// example:
+	//   * region: eu-west-1
+	//
 	Region string `yaml:",omitempty"`
-	// Endpoint specifies the AWS endpoint to use when looking for AMI
+	// "endpoint" defines the AWS endpoint used to look for AMIs.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//
+	// default:
+	//   https://ec2.<region>.amazonaws.com
+	//
 	Endpoint string `yaml:",omitempty"`
-	// Dryrun allows to Check whether you have the required permissions for the action.
+	// "dryrun" checks whether you have the required permissions for the action, without making the request.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//
+	// default:
+	//   false
+	//
 	DryRun bool `yaml:",omitempty"`
-	// Sortby specifies the order of AMI-ID that will be used to retrieve the last element such as `creationdateasc`
+	// "sortby" defines the order of the AMIs found, the last one being returned.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//
+	// remark:
+	//   * accepted values are "creationdateasc" and "creationdatedesc", case insensitive.
+	//   * when unset, the order returned by the AWS API is kept.
+	//
+	// example:
+	//   * sortby: creationdateasc
+	//
 	SortBy string `yaml:",omitempty"`
 }
 

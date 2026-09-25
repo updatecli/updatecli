@@ -8,16 +8,35 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// MatchingRule allows to specifies rules to identify manifest
+// MatchingRule defines a rule to select npm packages.
+// A rule matches when every field it sets matches.
+// Each rule must set at least one field.
 type MatchingRule struct {
-	// Path specifies a package.json path pattern, the pattern requires to match all of name, not just a substring.
+	// "path" defines a package.json path pattern.
+	//
+	// remark:
+	//   * the pattern must match the whole path, not just a substring.
+	//   * the pattern follows the Go filepath.Match syntax, such as "*" or "?".
+	//
 	Path string
-	// Packages specifies the list of NPM packages to check
+	// "packages" defines the npm packages to match, keyed by package name.
+	//
+	// remark:
+	//   * an empty value matches any version.
+	//   * otherwise the value is a semantic version constraint, such as ">=1.0.0".
+	//   * when the version or the constraint cannot be parsed, the value must equal the version.
+	//
 	Packages map[string]string
-	// HasVersionConstraint indicates whether the matching rule should match any version constraint or not.
+	// "hasversionconstraint" defines whether the package must be declared with a version constraint.
+	//
+	// example:
+	//   * hasversionconstraint: true
+	//
 	HasVersionConstraint *bool
 }
 
+// MatchingRules defines a list of rules.
+// The list matches when at least one of its rules matches.
 type MatchingRules []MatchingRule
 
 // Validate checks that each matching rule has at least one non-empty field.

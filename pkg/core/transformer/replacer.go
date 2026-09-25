@@ -1,14 +1,22 @@
 package transformer
 
-// Replacer is struct used to feed strings.Replacer
+// Replacer defines a text replacement.
 type Replacer struct {
-	// From defines the source value which need to be replaced
+	// "from" defines the text to replace.
+	//
+	// example:
+	//   * from: "_"
+	//
 	From string `yaml:",omitempty" jsonschema:"required"`
-	// To defines the "to what" a "from" value needs to be replaced
+	// "to" defines the text replacing "from".
+	//
+	// example:
+	//   * to: "."
+	//
 	To string `yaml:",omitempty" jsonschema:"required"`
 }
 
-// Replacers is an array of Replacer
+// Replacers defines a list of text replacements.
 type Replacers []Replacer
 
 // Unmarshal read a struct of Replacers then return a slice of string

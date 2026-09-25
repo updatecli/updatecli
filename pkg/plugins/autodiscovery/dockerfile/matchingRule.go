@@ -7,16 +7,34 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// MatchingRule allows to specifies rules to identify manifest
+// MatchingRule defines a rule to select container images.
+// A rule matches when every field it sets matches.
+// Each rule must set at least one field.
 type MatchingRule struct {
-	// Arch specifies a list of docker image architecture
+	// "archs" defines the image architectures to match.
+	//
+	// remark:
+	//   * an architecture must be identical to one of the entries.
+	//   * the architecture is the value of the "--platform" flag of a "FROM" instruction, such as "linux/amd64".
+	//
 	Archs []string
-	// Path specifies a Dockerfile path pattern, the pattern requires to match all of name, not just a substring.
+	// "path" defines a Dockerfile path pattern.
+	//
+	// remark:
+	//   * the pattern must match the whole path, not just a substring.
+	//   * the pattern follows the Go filepath.Match syntax, such as "*" or "?".
+	//
 	Path string
-	// Image specifies a list of docker image
+	// "images" defines the container images to match.
+	//
+	// remark:
+	//   * an image name, without its tag, must be identical to one of the entries.
+	//
 	Images []string
 }
 
+// MatchingRules defines a list of rules.
+// The list matches when at least one of its rules matches.
 type MatchingRules []MatchingRule
 
 // Validate checks that each matching rule has at least one non-empty field.

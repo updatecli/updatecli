@@ -11,70 +11,96 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
-// Spec defines the Updatecli parameters.
+/*
+"updatecli" defines the specification for the Updatecli autodiscovery crawler.
+It searches Updatecli compose files and generates manifests to update the policy versions they reference.
+*/
 type Spec struct {
-	// rootdir defines the root directory used to recursively search for Updatecli manifest
-	RootDir string `yaml:",omitempty"`
-	// Ignore allows to specify rule to ignore `autodiscovery` a specific Updatecli based on a rule
-	Ignore MatchingRules `yaml:",omitempty"`
-	// Only allows to specify rule to only `autodiscovery` manifest for a specific Updatecli based on a rule
-	Only MatchingRules `yaml:",omitempty"`
-	// Files allows to specify a list of Files to analyze.
+	// "rootdir" defines the directory where the crawler starts searching for Updatecli compose files.
 	//
-	//  The pattern syntax is:
+	// default:
+	//   the scm directory when "scmid" is set, otherwise the directory relative paths resolve from, by default the working directory.
+	//
+	// remark:
+	//   * a relative path is resolved from the default directory.
+	//   * an absolute path is used as is, instead of the scm directory.
+	//
+	RootDir string `yaml:",omitempty"`
+	// "ignore" defines rules to exclude matching policies from the autodiscovery.
+	//
+	// remark:
+	//   * a policy is ignored when it matches at least one rule.
+	//
+	Ignore MatchingRules `yaml:",omitempty"`
+	// "only" defines rules to restrict the autodiscovery to matching policies.
+	//
+	// remark:
+	//   * a policy is kept only when it matches at least one rule.
+	//
+	Only MatchingRules `yaml:",omitempty"`
+	// "files" defines the file name patterns the crawler searches for.
+	//
+	// The pattern syntax is:
+	//
 	// ```
 	//     pattern:
-	//       { term }
+	//         { term }
 	//     term:
-	//       '*'         matches any sequence of non-Separator characters
-	//       '?'         matches any single non-Separator character
-	//       '[' [ '^' ] { character-range } ']' character class (must be non-empty)
-	//       c           matches character c (c != '*', '?', '\\', '[')
-	//       '\\' c      matches character c
+	//         '*'         matches any sequence of non-Separator characters
+	//         '?'         matches any single non-Separator character
+	//         '[' [ '^' ] { character-range } ']'
+	//                     character class (must be non-empty)
+	//         c           matches character c (c != '*', '?', '\\', '[')
+	//         '\\' c      matches character c
 	//
-	//   character-range:
-	//   	c           matches character c (c != '\\', '-', ']')
-	//       '\\' c      matches character c
-	//       lo '-' hi   matches character c for lo <= c <= hi
+	//     character-range:
+	//         c           matches character c (c != '\\', '-', ']')
+	//         '\\' c      matches character c
+	//         lo '-' hi   matches character c for lo <= c <= hi
 	// ```
 	//
-	//      Match requires pattern to match all of name, not just a substring.
-	//      The only possible returned error is ErrBadPattern, when pattern
-	//      is malformed.
+	// default:
+	//   ```
+	//   - "update-compose.yaml"
+	//   - "updatecli-compose.yaml"
+	//   ```
 	//
-	//      On Windows, escaping is disabled. Instead, `\\` is treated as
-	//      path separator.
+	// remark:
+	//   * the pattern is matched against the file name only, not against its path.
+	//   * the pattern must match the whole file name, not just a substring.
+	//   * on Windows, escaping is disabled and `\\` is treated as a path separator.
 	//
 	Files []string `yaml:",omitempty"`
-	// Auths provides a map of registry credentials where the key is the registry URL without scheme
+	// "auths" defines the registry credentials, keyed by registry host without scheme.
+	//
+	// remark:
+	//   * not passed to the generated manifests yet, they use the local OCI credentials, such as the Docker ones.
+	//
 	Auths map[string]docker.InlineKeyChain `yaml:",omitempty"`
-	//  `versionfilter` provides parameters to specify the version pattern used when generating manifest.
+	// "versionfilter" defines the version filter used by the generated manifests.
 	//
-	//  kind - semver
-	//    versionfilter of kind `semver` uses semantic versioning as version filtering
-	//    pattern accepts one of:
-	//      `prerelease` - Updatecli tries to identify the latest prerelease whatever it means
-	//      `patch` - Updatecli only handles patch version update
-	//      `minor` - Updatecli handles patch AND minor version update
-	//      `minoronly` - Updatecli handles minor version only
-	//      `major` - Updatecli handles patch, minor, AND major version update
-	//      `majoronly` - Updatecli only handles major version update
-	//      `a version constraint` such as `>= 1.0.0`
+	// default:
+	//   kind "semver" with pattern "*", the latest version.
 	//
-	//  kind - regex
-	//    versionfilter of kind `regex` uses regular expression as version filtering
-	//    pattern accepts a valid regular expression
+	// remark:
+	//   * with kind "semver", "pattern" accepts:
+	//     * "prerelease": the latest prerelease of the current version.
+	//     * "patch": patch updates only.
+	//     * "minor": patch and minor updates.
+	//     * "minoronly": minor updates only.
+	//     * "major": patch, minor and major updates.
+	//     * "majoronly": major updates only.
+	//     * a version constraint, such as ">= 1.0.0".
+	//   * with kind "regex", "pattern" accepts a regular expression.
+	//   * more examples at https://www.updatecli.io/docs/core/versionfilter/
 	//
-	//  example:
-	//  ```
-	//    versionfilter:
-	//      kind: semver
-	//      pattern: minor
-	//  ```
+	// example:
+	//   ```
+	//   versionfilter:
+	//     kind: semver
+	//     pattern: minor
+	//   ```
 	//
-	//  and its type like regex, semver, or just latest.
-	//
-	//  More examples can be found at https://www.updatecli.io/docs/core/versionfilter/
 	VersionFilter version.Filter `yaml:",omitempty"`
 }
 

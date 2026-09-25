@@ -14,29 +14,41 @@ const (
 	tfWildcard = "updatecliswildcard"
 )
 
-// MatchingRule allows to specifies rules to identify manifest
+// MatchingRule defines a rule to select Terraform modules.
+// A rule matches when every field it sets matches.
 type MatchingRule struct {
-	// `path` specifies a terragrunt manifest path pattern, the pattern requires to match all of name, not just a substring.
+	// "path" defines a Terragrunt file path pattern.
+	//
+	// remark:
+	//   * the pattern must match the whole path, not just a substring.
+	//   * the pattern follows the Go filepath.Match syntax, such as "*" or "?".
+	//
 	Path string
-	/*
-		`modules` specifies a map of modules, the key is module url as seen in the different terragrunt manifests,
-		the value is an optional semver version constraint.
-
-		examples:
-		```
-		- providers:
-		  # Ignore modules update for a specific registry
-		  tfr://registry.opentofu.org:
-		  # Ignore modules updates for a very specific module
-		  tfr:///terraform-aws-modules/rdss/aws:
-		  registry.terraform.io/hashicorp/aws:
-		  # Ignore module updates for this version
-		  git@github.com:hashicorp/exampleLongNameForSorting.git: "1.x"
-		```
-	*/
+	// "modules" defines the Terraform modules to match, keyed by module source as written in the Terragrunt files.
+	//
+	// remark:
+	//   * a Git source matches every module whose source starts with it.
+	//   * a "tfr://" registry source can omit its trailing parts to match a whole registry or namespace.
+	//   * an empty value matches any version.
+	//   * otherwise the value is a semantic version constraint, such as ">=1.0.0".
+	//   * when the version or the constraint cannot be parsed, the value must equal the version.
+	//
+	// example:
+	//   ```
+	//   modules:
+	//     # ignore every module from a registry
+	//     tfr://registry.opentofu.org:
+	//     # ignore a specific module
+	//     tfr:///terraform-aws-modules/rdss/aws:
+	//     # ignore the versions matching this constraint
+	//     git@github.com:hashicorp/exampleLongNameForSorting.git: "1.x"
+	//   ```
+	//
 	Modules map[string]string
 }
 
+// MatchingRules defines a list of rules.
+// The list matches when at least one of its rules matches.
 type MatchingRules []MatchingRule
 
 // isMatchingRules checks for each matchingRule if parameters are matching rules and then return true or false.

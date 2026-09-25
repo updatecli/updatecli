@@ -24,36 +24,99 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
-// Spec defines a specification for an Npm package
-// parsed from an updatecli manifest file
+/*
+"npm" defines the specification for retrieving npm package versions.
+It can be used as a "source" or a "condition".
+*/
 type Spec struct {
-	// Defines the specific npm package name
-	Name string `yaml:",omitempty"`
-	// Defines a specific package version
-	Version string `yaml:",omitempty"`
-	// URL defines the registry url (defaults to `https://registry.npmjs.org/`)
-	URL string `yaml:",omitempty"`
-	// RegistryToken defines the token to use when connection to the registry
-	RegistryToken string `yaml:",omitempty"`
-	// VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
-	VersionFilter version.Filter `yaml:",omitempty"`
-	// NpmrcPath defines the path to the .npmrc file
-	NpmrcPath string `yaml:"npmrcpath,omitempty"`
-	// Age defines the minimum or maximum age of a release to be considered valid.
-	// It accepts a duration string (e.g., "24h", "7d", "3w", "1y").
+	// "name" defines the npm package name.
 	//
-	// Compatible:
+	// compatible:
 	//   * source
 	//   * condition
 	//
-	// Remarks:
-	//   The release dates are read from the `time` object returned by the npm registry,
-	//   so no extra API call is needed. Versions for which the registry doesn't report
-	//   a release date are ignored.
-	//   When `age` is combined with a `latest` versionfilter and the `latest` dist-tag is
-	//   too recent, Updatecli falls back to the most recently published non prerelease
-	//   version matching the age window, which may not be the highest semantic version.
-	//   Combine `age` with a `semver` versionfilter to control ordering.
+	// remark:
+	//   * "name" is required.
+	//
+	// example:
+	//   * name: axios
+	//   * name: "@updatecli/example"
+	//
+	Name string `yaml:",omitempty"`
+	// "version" defines the package version to check.
+	//
+	// compatible:
+	//   * condition
+	//
+	// default:
+	//   the output of the associated source.
+	//
+	Version string `yaml:",omitempty"`
+	// "url" defines the npm registry url.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//
+	// default:
+	//   https://registry.npmjs.org/
+	//
+	// remark:
+	//   * a scoped package uses the registry that the .npmrc file sets for its scope, if any.
+	//
+	URL string `yaml:",omitempty"`
+	// "registrytoken" defines the token used to authenticate with the registry set by "url".
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//
+	RegistryToken string `yaml:",omitempty"`
+	// "versionfilter" defines the version pattern and its kind, such as "regex", "semver" or "latest".
+	//
+	// compatible:
+	//   * source
+	//
+	// default:
+	//   latest
+	//
+	// remark:
+	//   * with the kind "latest", the version is the "latest" dist-tag of the package.
+	//
+	VersionFilter version.Filter `yaml:",omitempty"`
+	// "npmrcpath" defines the path of the .npmrc file.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//
+	// default:
+	//   $HOME/.npmrc
+	//
+	// remark:
+	//   * the default is also used when the file does not exist.
+	//   * registry tokens and scoped registries are read from this file.
+	//
+	NpmrcPath string `yaml:"npmrcpath,omitempty"`
+	// "age" defines the minimum or maximum age a release must have to be considered.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//
+	// remark:
+	//   * the release dates are read from the "time" object returned by the npm registry,
+	//     so no extra API call is needed. Versions without a release date are ignored.
+	//   * when "age" is combined with a "latest" versionfilter and the "latest" dist-tag is
+	//     too recent, Updatecli falls back to the most recently published non prerelease
+	//     version matching the age window, which may not be the highest semantic version.
+	//     Combine "age" with a "semver" versionfilter to control ordering.
+	//   * a source is skipped, not failed, when no version matches the age window yet.
+	//
+	// example:
+	//   * age:
+	//       minimum: 7d
+	//
 	Age age.Spec `yaml:",omitempty"`
 }
 

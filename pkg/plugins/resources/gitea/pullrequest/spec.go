@@ -4,96 +4,96 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/resources/gitea/client"
 )
 
-// Spec defines settings used to interact with Gitea pullrequest
-// It's a mapping of user input from a Updatecli manifest and it shouldn't modified
+/*
+"gitea/pullrequest" defines the specification for opening a pull request on a Gitea repository.
+It is used by an action to propose the changes made by the pipeline targets.
+*/
 type Spec struct {
 	client.Spec
-	/*
-		"sourcebranch" defines the branch name used as a source to create the Gitea pullrequest.
-
-		default:
-			"sourcebranch" inherits the value from the scm branch if a scm of kind "gitea" is specified by the action.
-
-		remark:
-			unless you know what you are doing, you shouldn't set this value and rely on the scmid to provide the sane default.
-	*/
+	// "sourcebranch" defines the branch name used as the source of the Gitea pull request.
+	//
+	// default:
+	//   the working branch of the scm, when the action uses a scm of kind "gitea".
+	//
+	// remark:
+	//   * unless you know what you are doing, do not set this value and rely on the scm to provide it.
+	//   * the Gitea scm creates and uses a working branch such as "updatecli_xxxx".
+	//
 	SourceBranch string `yaml:",inline,omitempty"`
-	/*
-		"targetbranch" defines the branch name used as a target to create the Gitea pullrequest.
-
-		default:
-			"targetbranch" inherits the value from the scm working branch if a scm of kind "gitea" is specified by the action.
-
-		remark:
-			unless you know what you are doing, you shouldn't set this value and rely on the scmid to provide the sane default.
-			the Gitea scm will create and use a working branch such as updatecli_xxxx
-	*/
+	// "targetbranch" defines the branch name used as the target of the Gitea pull request.
+	//
+	// default:
+	//   the branch of the scm, when the action uses a scm of kind "gitea".
+	//
+	// remark:
+	//   * unless you know what you are doing, do not set this value and rely on the scm to provide it.
+	//
 	TargetBranch string `yaml:",inline,omitempty"`
-	/*
-		"owner" defines the Gitea repository owner.
-
-		remark:
-			unless you know what you are doing, you shouldn't set this value and rely on the scmid to provide the sane default.
-	*/
+	// "owner" defines the owner of the Gitea repository.
+	//
+	// default:
+	//   the owner of the scm, when the action uses a scm of kind "gitea".
+	//
+	// remark:
+	//   * unless you know what you are doing, do not set this value and rely on the scm to provide it.
+	//
 	Owner string `yaml:",omitempty" jsonschema:"required"`
-	/*
-		"repository" defines the Gitea repository for a specific owner
-
-		remark:
-			unless you know what you are doing, you shouldn't set this value and rely on the scmid to provide the sane default.
-	*/
+	// "repository" defines the name of the Gitea repository for a specific owner.
+	//
+	// default:
+	//   the repository of the scm, when the action uses a scm of kind "gitea".
+	//
+	// remark:
+	//   * unless you know what you are doing, do not set this value and rely on the scm to provide it.
+	//
 	Repository string `yaml:",omitempty" jsonschema:"required"`
-	/*
-		"title" defines the Gitea pullrequest title
-
-		default:
-			A Gitea pullrequest title is defined by one of the following location (first match)
-				1. title is defined by the spec such as:
-
-					actions:
-						default:
-							kind: gitea/pullrequest
-							scmid: default
-							spec:
-								title: This is my awesome title
-
-				2. title is defined by the action such as:
-
-					actions:
-						default:
-							kind: gitea/pullrequest
-							scmid default
-							title: This is my awesome title
-
-				3. title is defined by the first associated target title
-
-				4. title is defined by the pipeline title
-
-		remark:
-			usually we prefer to go with option 2
-	*/
+	// "title" defines the title of the Gitea pull request.
+	//
+	// default:
+	//   the first match from the following list:
+	//   1. the "title" set in the action spec.
+	//   2. the "title" set in the action.
+	//   3. the title of the first associated target.
+	//   4. the title of the pipeline.
+	//
+	// remark:
+	//   * setting the title in the action (option 2) is usually preferred.
+	//
+	// example:
+	// ```
+	//   actions:
+	//     default:
+	//       kind: gitea/pullrequest
+	//       scmid: default
+	//       title: This is my title
+	// ```
+	//
 	Title string `yaml:",inline,omitempty"`
-	/*
-		"body" defines a custom body pullrequest.
-
-		default:
-			By default a pullrequest body is generated out of a pipeline execution.
-
-		remark:
-			Unless you know what you are doing, you shouldn't set this value and rely on the sane default.
-			"body" is useful to provide additional information when reviewing pullrequest, such as changelog url.
-	*/
+	// "body" defines a custom body for the pull request.
+	//
+	// default:
+	//   a body generated from the pipeline execution.
+	//
+	// remark:
+	//   * unless you know what you are doing, do not set this value and rely on the default.
+	//   * it is useful to give reviewers additional information, such as a changelog url.
+	//
 	Body string `yaml:",inline,omitempty"`
 
-	/*
-		"assignees" defines a list of assignees for the pull request.
-
-		default:
-			No assignees are set on the pull request.
-
-		remark:
-			You can use this to assign specific users to review the pull request.
-			Make sure the users you specify have access to the repository.
-	*/
+	// "assignees" defines the list of users assigned to the pull request.
+	//
+	// default:
+	//   no assignee.
+	//
+	// remark:
+	//   * each user must have access to the repository.
+	//
+	// example:
+	// ```
+	//   assignees:
+	//     - alice
+	//     - bob
+	// ```
+	//
 	Assignees []string `yaml:",omitempty"`
 }

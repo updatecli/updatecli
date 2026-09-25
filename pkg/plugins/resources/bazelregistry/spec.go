@@ -7,29 +7,40 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
-// Spec defines a specification for a "bazelregistry" resource
-// parsed from an updatecli manifest file
+/*
+"bazelregistry" defines the specification for retrieving a Bazel module version from a Bazel registry.
+It can be used as a "source" or a "condition".
+*/
 type Spec struct {
-	// Module specifies the Bazel module name to query from the registry
+	// "module" defines the name of the Bazel module to query from the registry.
 	//
 	// compatible:
 	//   * source
 	//   * condition
 	//
+	// remark:
+	//   * it is required.
+	//
 	// example:
-	//   * rules_go
-	//   * rules_python
-	//   * gazelle
+	//   * module: rules_go
+	//   * module: rules_python
+	//   * module: gazelle
+	//
 	Module string `yaml:",omitempty" jsonschema:"required"`
-	// VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
+	// "versionfilter" defines the version pattern and its kind, such as regex, semver or latest.
 	//
 	// compatible:
 	//   * source
 	//
 	// default:
 	//   kind: latest
+	//
+	// remark:
+	//   * yanked versions are ignored.
+	//   * with the default filter, the highest semantic version is returned.
+	//
 	VersionFilter version.Filter `yaml:",omitempty"`
-	// URL specifies the custom registry URL (defaults to Bazel Central Registry)
+	// "url" defines a custom registry URL.
 	//
 	// compatible:
 	//   * source
@@ -38,13 +49,14 @@ type Spec struct {
 	// default:
 	//   https://raw.githubusercontent.com/bazelbuild/bazel-central-registry/main/modules/{module}/metadata.json
 	//
-	// example:
-	//   * https://raw.githubusercontent.com/bazelbuild/bazel-central-registry/main/modules/{module}/metadata.json
-	//   * https://mycompany.com/bazel-registry/modules/{module}/metadata.json
+	// remark:
+	//   * the URL must contain the "{module}" placeholder, which is replaced with the module name.
+	//   * when unset, the official Bazel Central Registry is used.
 	//
-	// remarks:
-	//   * The URL must contain {module} placeholder which will be replaced with the module name
-	//   * If not specified, defaults to the official Bazel Central Registry
+	// example:
+	//   * url: https://raw.githubusercontent.com/bazelbuild/bazel-central-registry/main/modules/{module}/metadata.json
+	//   * url: https://mycompany.com/bazel-registry/modules/{module}/metadata.json
+	//
 	URL string `yaml:",omitempty"`
 }
 

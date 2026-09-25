@@ -4,74 +4,91 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
-// Spec defines the Terraform parameters.
+/*
+"terragrunt" defines the specification for the Terragrunt autodiscovery crawler.
+It searches Terragrunt ".hcl" files and generates manifests to update the Terraform module versions they reference.
+*/
 type Spec struct {
-	// `rootdir` defines the root directory from where looking for terragrunt configuration
+	// "rootdir" defines the directory where the crawler starts searching for Terragrunt ".hcl" files.
+	//
+	// default:
+	//   the scm directory when "scmid" is set, otherwise the directory relative paths resolve from, by default the working directory.
+	//
+	// remark:
+	//   * a relative path is resolved from the default directory.
+	//   * an absolute path is used as is, instead of the scm directory.
+	//
 	RootDir string `yaml:",omitempty"`
-	// `ignore` specifies rule to ignore `.terraform.lock.hcl` update.
+	// "ignore" defines rules to exclude matching Terraform modules from the autodiscovery.
+	//
+	// remark:
+	//   * a Terraform module is ignored when it matches at least one rule.
+	//
 	Ignore MatchingRules `yaml:",omitempty"`
-	// `only` specify required rule to restrict `.terraform.lock.hcl` update.
+	// "only" defines rules to restrict the autodiscovery to matching Terraform modules.
+	//
+	// remark:
+	//   * a Terraform module is kept only when it matches at least one rule.
+	//
 	Only MatchingRules `yaml:",omitempty"`
-	// `token` specifies the token to use for Git authentication when accessing private repositories.
-	// Works with any Git provider (GitHub, GitLab, Bitbucket, Gitea, etc.)
-	//
-	// compatible:
-	//   * autodiscovery
+	// "token" defines the token used for Git authentication when accessing private module repositories.
 	//
 	// default:
-	//   When not specified: No authentication (suitable for public repositories)
+	//   empty, no authentication, which suits public repositories.
 	//
 	// remark:
-	//   Must be explicitly set for private repositories.
-	//   Use template functions to read from environment: token: "{{ requiredEnv \"GITLAB_TOKEN\" }}"
+	//   * it works with any Git provider, such as GitHub, GitLab, Bitbucket or Gitea.
+	//   * it must be set for private repositories.
+	//   * it is only used for modules whose source is a Git repository.
+	//   * use a template function to read it from the environment, such as `{{ requiredEnv "GITLAB_TOKEN" }}`.
 	//
 	// example:
-	//   token: "ghp_xxxxxxxxxxxx"
-	//   token: "glpat-xxxxxxxxxxxx"
-	//   token: "{{ requiredEnv \"GITLAB_TOKEN\" }}"
+	//   * token: "ghp_xxxxxxxxxxxx"
+	//   * token: "glpat-xxxxxxxxxxxx"
+	//   * token: "{{ requiredEnv \"GITLAB_TOKEN\" }}"
+	//
 	Token *string `yaml:",omitempty"`
-	// `username` specifies the username to use for Git authentication when accessing private repositories.
-	// Works with any Git provider (GitHub, GitLab, Bitbucket, Gitea, etc.)
-	//
-	// compatible:
-	//   * autodiscovery
+	// "username" defines the username used for Git authentication when accessing private module repositories.
 	//
 	// default:
-	//   When not specified: "oauth2" (matches GitHub SCM plugin, required for go-git HTTP BasicAuth)
+	//   "oauth2", which matches the GitHub scm plugin and is required for go-git HTTP basic authentication.
 	//
 	// remark:
-	//   For token-based auth, the username is typically a placeholder (token identifies the user).
-	//   Common values: "oauth2" (default), "x-access-token", "git", or actual username.
-	//   Use template functions to read from environment: username: "{{ requiredEnv \"GIT_USERNAME\" }}"
+	//   * it works with any Git provider, such as GitHub, GitLab, Bitbucket or Gitea.
+	//   * it is only used when "token" is set.
+	//   * with a token, the username is usually a placeholder since the token identifies the user.
+	//   * common values are "oauth2", "x-access-token", "git", or a real username.
+	//   * use a template function to read it from the environment, such as `{{ requiredEnv "GIT_USERNAME" }}`.
 	//
 	// example:
-	//   username: "git"
-	//   username: "oauth2"
-	//   username: "{{ requiredEnv \"GIT_USERNAME\" }}"
+	//   * username: "git"
+	//   * username: "oauth2"
+	//   * username: "{{ requiredEnv \"GIT_USERNAME\" }}"
+	//
 	Username *string `yaml:",omitempty"`
-	/*
-		`versionfilter` provides parameters to specify the version pattern to use when generating manifest.
-
-		kind - semver
-			versionfilter of kind `semver` uses semantic versioning as version filtering
-			pattern accepts one of:
-				`patch` - patch only update patch version
-				`minor` - minor only update minor version
-				`major` - major only update major versions
-				`a version constraint` such as `>= 1.0.0`
-
-		kind - regex
-			versionfilter of kind `regex` uses regular expression as version filtering
-			pattern accepts a valid regular expression
-
-		example:
-		```
-			versionfilter:
-				kind: semver
-				pattern: minor
-		```
-
-		and its type like regex, semver, or just latest.
-	*/
+	// "versionfilter" defines the version filter used by the generated manifests.
+	//
+	// default:
+	//   kind "semver" with pattern "*", any version greater than or equal to the current one.
+	//
+	// remark:
+	//   * with kind "semver", "pattern" accepts:
+	//     * "prerelease": the latest prerelease of the current version.
+	//     * "patch": patch updates only.
+	//     * "minor": patch and minor updates.
+	//     * "minoronly": minor updates only.
+	//     * "major": patch, minor and major updates.
+	//     * "majoronly": major updates only.
+	//     * a version constraint, such as ">= 1.0.0".
+	//   * with kind "regex", "pattern" accepts a regular expression.
+	//   * more examples at https://www.updatecli.io/docs/core/versionfilter/
+	//
+	// example:
+	//   ```
+	//   versionfilter:
+	//     kind: semver
+	//     pattern: minor
+	//   ```
+	//
 	VersionFilter version.Filter `yaml:",omitempty"`
 }

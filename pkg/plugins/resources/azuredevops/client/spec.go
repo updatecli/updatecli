@@ -10,20 +10,52 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// Spec defines a specification for an Azure DevOps resource
-// parsed from an updatecli manifest file.
+// Spec defines the settings used to connect to an Azure DevOps repository.
 type Spec struct {
-	// Organization defines the Azure DevOps organization URL to interact with.
+	// "organization" defines the Azure DevOps organization name.
+	//
+	// remark:
+	//   * it is required.
+	//
+	// example:
+	//   * organization: updatecli
+	//
 	Organization string `yaml:",omitempty"`
-	// "url" defines the Azure DevOps organization URL to interact with.
+	// "url" defines the Azure DevOps server URL.
+	//
+	// default:
+	//   https://dev.azure.com
+	//
+	// remark:
+	//   * "https://" is added when the URL has no scheme.
+	//
+	// example:
+	//   * url: https://dev.azure.com
+	//
 	URL string `yaml:",omitempty"`
 	// "project" defines the Azure DevOps project containing the repository.
+	//
+	// example:
+	//   * project: updatecli
+	//
 	Project string `yaml:",omitempty" jsonschema:"required"`
 	// "repository" defines the Azure DevOps repository name.
+	//
+	// example:
+	//   * repository: website
+	//
 	Repository string `yaml:",omitempty" jsonschema:"required"`
 	// "username" defines the username used for git authentication.
+	//
+	// remark:
+	//   * when unset, the environment variable "UPDATECLI_AZURE_DEVOPS_USERNAME" is used.
+	//
 	Username string `yaml:",omitempty"`
-	// "token" specifies the personal access token used to authenticate with Azure DevOps.
+	// "token" defines the personal access token used to authenticate with Azure DevOps.
+	//
+	// remark:
+	//   * when unset, the environment variable "UPDATECLI_AZURE_DEVOPS_TOKEN" is used.
+	//
 	Token string `yaml:",omitempty"`
 }
 
