@@ -28,101 +28,120 @@ var (
 	defaultGitProviderURL       string   = "https://github.com"
 )
 
-// Spec defines the parameters which can be provided to the Action crawler.
+/*
+"github/action" defines the specification for the GitHub Action autodiscovery crawler.
+It searches workflow files and composite actions, and generates manifests to update the actions and Docker images they use.
+The "gitea/action" crawler uses the same specification.
+*/
 type Spec struct {
-	// files allows to specify the accepted Action workflow file name
-	//
-	// The pattern is matched against the file name only, not against its path, so a
-	// pattern such as ".github/workflows/*.yaml" never matches. The directory is
-	// constrained separately: a workflow file must sit directly inside a "workflows"
-	// directory whose parent is ".github", ".gitea", or ".forgejo".
+	// "files" defines the workflow file name patterns the crawler searches for.
 	//
 	// default:
-	// ```
-	//   - "*.yaml",
-	//   - "*.yml",
-	// ```
-	Files []string `yaml:",omitempty"`
-	// actions allows to specify the accepted Composite Action names
-	//
-	// A Composite Action is identified by an "action.yaml" or "action.yml" file, and the
-	// pattern is matched against the name of the directory containing it.
-	//
-	// default:
-	// ```
-	//   - "*",
-	// ```
-	Actions []string `yaml:",omitempty"`
-
-	// ignore allows to specify rule to ignore autodiscovery a specific GitHub action based on a rule
-	//
-	// default: empty
-	//
-	Ignore MatchingRules `yaml:",omitempty"`
-	// only allows to specify rule to only autodiscover manifest for a specific GitHub action based on a rule
-	//
-	// default: empty
-	//
-	Only MatchingRules `yaml:",omitempty"`
-	// rootDir allows to specify the root directory from where looking for GitHub Action
-	//
-	// default: empty
-	RootDir string `yaml:",omitempty"`
-	//  `versionfilter` provides parameters to specify the version pattern used when generating manifest.
-	//
-	//  kind - semver
-	//    versionfilter of kind `semver` uses semantic versioning as version filtering
-	//    pattern accepts one of:
-	//      `prerelease` - Updatecli tries to identify the latest prerelease whatever it means
-	//      `patch` - Updatecli only handles patch version update
-	//      `minor` - Updatecli handles patch AND minor version update
-	//      `minoronly` - Updatecli handles minor version only
-	//      `major` - Updatecli handles patch, minor, AND major version update
-	//      `majoronly` - Updatecli only handles major version update
-	//      `a version constraint` such as `>= 1.0.0`
-	//
-	//  kind - regex
-	//    versionfilter of kind `regex` uses regular expression as version filtering
-	//    pattern accepts a valid regular expression
-	//
-	//  example:
-	//  ```
-	//    versionfilter:
-	//      kind: semver
-	//      pattern: minor
-	//  ```
-	//
-	//  and its type like regex, semver, or just latest.
-	//
-	//  More examples can be found at https://www.updatecli.io/docs/core/versionfilter/
-	VersionFilter version.Filter `yaml:",omitempty"`
-	// age defines the minimum or maximum age of a release, tag, or branch to be considered valid.
-	// It accepts a duration string (e.g., "24h", "7d", "3w", "1y").
-	//
-	// It is the "dependency cooldown" knob: setting `minimum` keeps Updatecli from
-	// suggesting a version which has just been published.
-	//
-	// default: empty, no age filtering
+	//   ```
+	//   files:
+	//     - "*.yaml"
+	//     - "*.yml"
+	//   ```
 	//
 	// remark:
-	//  * the age filter is not applied to the Docker images referenced by a workflow.
+	//   * the pattern is matched against the file name only, not against its path, so a
+	//     pattern such as ".github/workflows/*.yaml" never matches.
+	//   * a workflow file must sit directly inside a "workflows" directory whose parent is
+	//     ".github", ".gitea", or ".forgejo".
+	//
+	Files []string `yaml:",omitempty"`
+	// "actions" defines the composite action name patterns the crawler searches for.
+	//
+	// default:
+	//   ```
+	//   actions:
+	//     - "*"
+	//   ```
+	//
+	// remark:
+	//   * a composite action is identified by an "action.yaml" or "action.yml" file, and the
+	//     pattern is matched against the name of the directory holding it.
+	//
+	Actions []string `yaml:",omitempty"`
+
+	// "ignore" defines rules to exclude matching actions or Docker images from the autodiscovery.
+	//
+	// remark:
+	//   * an action or Docker image is ignored when it matches at least one rule.
+	//
+	Ignore MatchingRules `yaml:",omitempty"`
+	// "only" defines rules to restrict the autodiscovery to matching actions or Docker images.
+	//
+	// remark:
+	//   * an action or Docker image is kept only when it matches at least one rule.
+	//
+	Only MatchingRules `yaml:",omitempty"`
+	// "rootdir" defines the directory where the crawler starts searching for workflow files and composite actions.
+	//
+	// default:
+	//   the scm directory when "scmid" is set, otherwise the directory relative paths resolve from, by default the working directory.
+	//
+	// remark:
+	//   * a relative path is resolved from the default directory.
+	//   * an absolute path is used as is, instead of the scm directory.
+	//
+	RootDir string `yaml:",omitempty"`
+	// "versionfilter" defines the version filter used by the generated manifests.
+	//
+	// default:
+	//   * for an action, kind "semver" with pattern "*", the latest version, when its reference is a semantic version, otherwise kind "latest".
+	//   * for a Docker image, kind "semver" with pattern ">=<current tag>", combined with a tag filter derived from the current tag.
+	//
+	// remark:
+	//   * with kind "semver", "pattern" accepts:
+	//     * "prerelease": the latest prerelease of the current version.
+	//     * "patch": patch updates only.
+	//     * "minor": patch and minor updates.
+	//     * "minoronly": minor updates only.
+	//     * "major": patch, minor and major updates.
+	//     * "majoronly": major updates only.
+	//     * a version constraint, such as ">= 1.0.0".
+	//   * with kind "regex", "pattern" accepts a regular expression.
+	//   * more examples at https://www.updatecli.io/docs/core/versionfilter/
 	//
 	// example:
-	// ```
+	//   ```
+	//   versionfilter:
+	//     kind: semver
+	//     pattern: minor
+	//   ```
+	//
+	VersionFilter version.Filter `yaml:",omitempty"`
+	// "age" defines the minimum or maximum age of a release, tag, or branch to be considered valid.
+	//
+	// It is the "dependency cooldown" setting: setting "minimum" keeps Updatecli from
+	// suggesting a version that has just been published.
+	//
+	// default:
+	//   empty, no age filtering.
+	//
+	// remark:
+	//   * it accepts a duration string, such as "24h", "7d", "3w" or "1y".
+	//   * the age filter is not applied to the Docker images referenced by a workflow.
+	//
+	// example:
+	//   ```
 	//   autodiscovery:
 	//     crawlers:
 	//       github/action:
 	//         age:
 	//           minimum: '7d'
-	// ```
+	//   ```
+	//
 	Age age.Spec `yaml:",omitempty"`
-	// Credentials allows to specify the credentials to use to authenticate to the git provider
-	// The ID of the credential must be the domain of the git provider to configure
+	// "credentials" defines the credentials used to authenticate with each git provider, keyed by git provider domain.
 	//
-	// default: empty
+	// remark:
+	//   * without an entry, "gitea.com", "codeberg.org" and "code.forgejo.org" use kind "gitea",
+	//     and any other domain uses kind "github" with the "github.com" credentials.
 	//
-	// examples:
-	// ```
+	// example:
+	//   ```
 	//   autodiscovery:
 	//     crawlers:
 	//       github/action:
@@ -133,15 +152,34 @@ type Spec struct {
 	//           "github.com":
 	//             kind: github
 	//             token: '{{ requiredEnv "GITHUB_TOKEN" }}'
-	// ```
-	Credentials map[string]gitProviderToken `yaml:",omitempty"`
-	// CredentialsDocker provides a map of registry credentials where the key is the registry URL without scheme
-	CredentialsDocker map[string]docker.InlineKeyChain `yaml:",omitempty"`
-	// Digest provides parameters to specify if the generated manifest should use a digest instead of the branch or tag.
+	//   ```
 	//
-	// Remark:
-	// 	- The digest is only supported for GitHub Action and docker image tag update.
-	//    Feel free to open an issue for the Gitea and Forgejo integration.
+	Credentials map[string]gitProviderToken `yaml:",omitempty"`
+	// "credentialsdocker" defines the registry credentials used for Docker images, keyed by registry host without scheme.
+	//
+	// remark:
+	//   * when empty, Updatecli uses the local OCI credentials, such as the Docker ones.
+	//
+	// example:
+	//   ```
+	//   credentialsdocker:
+	//     "ghcr.io":
+	//       token: "xxx"
+	//     "index.docker.io":
+	//       username: "admin"
+	//       password: "password"
+	//   ```
+	//
+	CredentialsDocker map[string]docker.InlineKeyChain `yaml:",omitempty"`
+	// "digest" defines whether the generated manifests pin the digest instead of the branch or tag.
+	//
+	// default:
+	//   true
+	//
+	// remark:
+	//   * digest pinning is supported for GitHub actions and Docker images, not yet for Gitea and Forgejo actions.
+	//   * when false, actions referenced by "main", "master" or "latest" are skipped.
+	//
 	Digest *bool `yaml:",omitempty"`
 }
 
@@ -171,27 +209,33 @@ type GitHubAction struct {
 	digest bool
 }
 
+// gitProviderToken defines the credentials used to authenticate with a git provider.
 type gitProviderToken struct {
-	// Kind defines the Kind of git provider to use
+	// "kind" defines the kind of git provider.
 	//
-	// accepted values: `['github','gitea','forgejo']`
+	// remark:
+	//   * accepted values are "github", "gitea" and "forgejo".
+	//
 	Kind string `yaml:",omitempty"`
-	// Token defines the Token to use to authenticate to the git provider
+	// "token" defines the token used to authenticate with the git provider.
 	//
-	// The default value depends on the action domain
-	// For `github.com`, the default value is set to first environment detected
-	//  1. `UPDATECLI_GITHUB_TOKEN`
-	//  2. `GITHUB_TOKEN`
+	// default:
+	//   * for kind "github", the "GITHUB_TOKEN" environment variable.
+	//   * for kind "gitea" or "forgejo", the first environment variable set among
+	//     "UPDATECLI_GITEA_TOKEN" and "GITEA_TOKEN".
 	//
-	// For `gitea.com` and `codeberg.org`, the default value is set to first environment detected
-	//  1. `UPDATECLI_GITHUB_TOKEN`
-	//  1. `GITEA_TOKEN`
+	// remark:
+	//   * for kind "github", the "UPDATECLI_GITHUB_TOKEN" environment variable and the GitHub App
+	//     environment variables take precedence over this setting.
+	//
 	Token string `yaml:",omitempty"`
-	// App defines the GitHub App credentials used to authenticate with GitHub API.
-	// It is not compatible with the `token` field.
-	// It is recommended to use the GitHub App authentication method for better security and granular permissions.
-	// For more information, please refer to the following documentation:
-	// https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/authenticating-as-a-github-app-installation
+	// "app" defines the GitHub App credentials used to authenticate with the GitHub API.
+	//
+	// remark:
+	//   * "token" takes precedence over "app" when both are set.
+	//   * a GitHub App is recommended for better security and more granular permissions.
+	//   * see https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/authenticating-as-a-github-app-installation
+	//
 	App *app.Spec `yaml:",omitempty"`
 }
 

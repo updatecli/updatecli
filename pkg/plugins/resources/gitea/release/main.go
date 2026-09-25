@@ -15,29 +15,127 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
-// Spec defines settings used to interact with Gitea release
+/*
+"gitea/release" defines the specification for manipulating releases of a Gitea repository.
+It can be used as a "source", a "condition", or a "target".
+*/
 type Spec struct {
 	client.Spec `yaml:",inline,omitempty"`
-	// [S][C][T] owner specifies the repository owner
+	// "owner" defines the owner of the Gitea repository.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//   * target
+	//
+	// example:
+	//   * owner: updatecli
+	//
 	Owner string `yaml:",omitempty" jsonschema:"required"`
-	// [S][C][T] repository specifies the name of a repository for a specific owner
+	// "repository" defines the name of the Gitea repository for a specific owner.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//   * target
+	//
+	// example:
+	//   * repository: updatecli
+	//
 	Repository string `yaml:",omitempty" jsonschema:"required"`
-	// [S] versionfilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
+	// "versionfilter" defines the version pattern and kind used to select a release tag.
+	//
+	// compatible:
+	//   * source
+	//
+	// default:
+	//   kind: latest
+	//
+	// remark:
+	//   * accepted kinds include "latest", "semver" and "regex".
+	//
+	// example:
+	//   * versionfilter:
+	//       kind: semver
+	//       pattern: "~1.2"
+	//
 	VersionFilter version.Filter `yaml:",omitempty"`
-	// [S] age defines the minimum or maximum age of a release to be considered valid.
-	// It accepts a duration string (e.g., "24h", "7d", "3w", "1y").
+	// "age" defines the minimum and maximum age of a release to be considered valid.
+	//
+	// compatible:
+	//   * source
+	//
+	// remark:
+	//   * "minimum" and "maximum" accept a duration string such as "24h", "7d", "3w", "1mo" or "1y".
+	//   * accepted units are "h" for hours, "d" for days, "w" for weeks, "mo" for months and "y" for years.
+	//     A unit is required.
+	//   * when every release is filtered out by its age, the source is skipped instead of failing.
+	//
+	// example:
+	//   * age:
+	//       minimum: 7d
+	//
 	Age age.Spec `yaml:",omitempty"`
-	// [T] title defines the Gitea release title.
+	// "title" defines the title of the Gitea release.
+	//
+	// compatible:
+	//   * target
+	//
+	// default:
+	//   the value of "tag".
+	//
 	Title string `yaml:",omitempty"`
-	// [C][T] tag defines the Gitea release tag.
+	// "tag" defines the tag of the Gitea release.
+	//
+	// compatible:
+	//   * condition
+	//   * target
+	//
+	// default:
+	//   the output of the associated source.
+	//
+	// example:
+	//   * tag: v1.0.0
+	//
 	Tag string `yaml:",omitempty"`
-	// [T] commitish defines the commit-ish such as `main`
+	// "commitish" defines the commit-ish used to create the release tag, such as a branch name or a commit sha.
+	//
+	// compatible:
+	//   * target
+	//
+	// default:
+	//   main
+	//
+	// example:
+	//   * commitish: main
+	//
 	Commitish string `yaml:",omitempty"`
-	// [T] description defines if the new release description
+	// "description" defines the description of the release.
+	//
+	// compatible:
+	//   * target
+	//
+	// remark:
+	//   * Updatecli appends a credit line to the description.
+	//
 	Description string `yaml:",omitempty"`
-	// [T] draft defines if the release is a draft release
+	// "draft" defines whether the release is a draft.
+	//
+	// compatible:
+	//   * target
+	//
+	// default:
+	//   false
+	//
 	Draft bool `yaml:",omitempty"`
-	// [T] prerelease defines if the release is a pre-release release
+	// "prerelease" defines whether the release is a pre-release.
+	//
+	// compatible:
+	//   * target
+	//
+	// default:
+	//   false
+	//
 	Prerelease bool `yaml:",omitempty"`
 }
 

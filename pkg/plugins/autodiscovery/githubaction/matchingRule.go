@@ -8,22 +8,33 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// MatchingRule allows to specifies rules to identify manifest
+// MatchingRule defines a rule to select actions and Docker images.
+// A rule matches when every field it sets matches.
+// Each rule must set at least one field.
 type MatchingRule struct {
-	// Path specifies a Flux filepath pattern, the pattern requires to match all of name, not just a subpart of the path.
+	// "path" defines a workflow or composite action file path pattern.
+	//
+	// remark:
+	//   * the pattern must match the whole path, not just a substring.
+	//   * the pattern follows the Go filepath.Match syntax, such as "*" or "?".
+	//
 	Path string
-	// Actions specifies the list of artifacts to check
+	// "actions" defines the actions and Docker images to match, keyed by name.
 	//
-	// The key is the artifact name and the value is the artifact version
+	// remark:
+	//   * for an action, the key is the action name, such as "actions/checkout".
+	//   * for a Docker image, the key is the image reference as written in the workflow, tag included,
+	//     such as "docker://alpine:3.18" for a step or "alpine:3.18" for a job container.
+	//   * an empty value matches any version.
+	//   * otherwise the value is a semantic version constraint, such as ">=1.0.0".
+	//   * when the version or the constraint cannot be parsed, the value must equal the reference,
+	//     such as a git branch, a git tag, or a Docker image tag.
 	//
-	// The artifact name must match the GitHub action name or the Docker image name.
-	// In case of a Docker image, it must have the prefix docker://
-	//
-	// If the value is empty, then the artifact name is enough to match
-	// If the value is a valid Git branch, Git tag, release, a Docker image tag , then the artifact version must match the constraint
 	Actions map[string]string
 }
 
+// MatchingRules defines a list of rules.
+// The list matches when at least one of its rules matches.
 type MatchingRules []MatchingRule
 
 // Validate checks that each matching rule has at least one non-empty field.

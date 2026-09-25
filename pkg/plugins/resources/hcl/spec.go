@@ -7,62 +7,63 @@ import (
 )
 
 /*
-"hcl"  defines the specification for manipulating "hcl" files.
+"hcl" defines the specification for manipulating hcl files.
 It can be used as a "source", a "condition", or a "target".
 */
 type Spec struct {
-	/*
-		"file" defines the hcl file path to interact with.
-
-		compatible:
-			* source
-			* condition
-			* target
-
-		remark:
-			* "file" and "files" are mutually exclusive
-			* protocols "https://", "http://", and "file://" are supported in path for source and condition
-	*/
+	// "file" defines the path of the hcl file to use.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//   * target
+	//
+	// remark:
+	//   * "file" and "files" are mutually exclusive.
+	//   * the schemes "https://", "http://" and "file://" are supported in a source or a condition.
+	//
+	// example:
+	//   * file: main.tf
+	//
 	File string `yaml:",omitempty"`
-	/*
-		"files" defines the list of hcl files path to interact with.
-
-		compatible:
-			* source
-			* condition
-			* target
-
-		remark:
-			* file and files are mutually exclusive
-			* when using as a source only one file is supported
-			* protocols "https://", "http://", and "file://" are supported in file path for source and condition
-	*/
+	// "files" defines the list of hcl file paths to use.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//   * target
+	//
+	// remark:
+	//   * "file" and "files" are mutually exclusive.
+	//   * in a source or a condition, "files" accepts only one entry.
+	//   * the schemes "https://", "http://" and "file://" are supported in a source or a condition.
+	//
 	Files []string `yaml:",omitempty"`
-	/*
-		"path" defines the hcl attribute path.
-
-		compatible:
-			* source
-			* condition
-			* target
-
-		example:
-			* path: resource.aws_instance.app_server.ami
-			* path: resource.helm_release.prometheus.version
-			* path: plugin.aws.version
-
-	*/
+	// "path" defines the hcl attribute path.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//   * target
+	//
+	// remark:
+	//   * "path" is required.
+	//
+	// example:
+	//   * path: resource.aws_instance.app_server.ami
+	//   * path: resource.helm_release.prometheus.version
+	//   * path: plugin.aws.version
+	//
 	Path string `yaml:",omitempty"`
-	/*
-		"value" is the value associated with a hcl path.
-
-		compatible:
-			* condition
-			* target
-
-		default:
-			When used from a condition or a target, the default value is set to linked source output.
-	*/
+	// "value" defines the value associated with the hcl path.
+	//
+	// compatible:
+	//   * condition
+	//   * target
+	//
+	// default:
+	//   the output of the associated source.
+	//
 	Value string `yaml:",omitempty"`
 }
 

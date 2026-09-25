@@ -9,102 +9,122 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
+/*
+"terraform/registry" defines the specification for retrieving Terraform provider or module versions from a Terraform registry.
+It can be used as a "source" or a "condition".
+*/
 type Spec struct {
-	/*
-		"type" defines the type registry request to look up.
-
-		compatible:
-			* source
-			* condition
-
-		Supported values: module, provider
-	*/
+	// "type" defines the type of registry object to look up.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//
+	// remark:
+	//   * "type" is required.
+	//   * accepted values are "module" and "provider".
+	//
+	// example:
+	//   * type: provider
+	//
 	Type string `yaml:",omitempty"`
-	/*
-		"hostname" the hostname of the provider or module.
-
-		compatible:
-			* source
-			* condition
-
-		remark:
-			* Optional
-			* Not allowed with rawstring.
-			* Applicable for module and provider.
-	*/
+	// "hostname" defines the hostname of the registry hosting the provider or module.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//
+	// default:
+	//   registry.terraform.io
+	//
+	// remark:
+	//   * "hostname" and "rawstring" are mutually exclusive.
+	//   * applies to modules and providers.
+	//
+	// example:
+	//   * hostname: app.terraform.io
+	//
 	Hostname string `yaml:",omitempty"`
-	/*
-		"namespace" the namespace of the provider or module
-
-		compatible:
-			* source
-			* condition
-
-		remark:
-			* Required unless using rawstring
-			* Not allowed with rawstring.
-			* Applicable for module and provider.
-	*/
+	// "namespace" defines the namespace of the provider or module.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//
+	// remark:
+	//   * required unless "rawstring" is set.
+	//   * "namespace" and "rawstring" are mutually exclusive.
+	//   * applies to modules and providers.
+	//
+	// example:
+	//   * namespace: hashicorp
+	//
 	Namespace string `yaml:",omitempty"`
-	/*
-		"name" the name of the provider or module.
-
-		compatible:
-			* source
-			* condition
-
-		remark:
-			* Required unless using rawstring
-			* Not allowed with rawstring.
-			* Applicable for module and provider.
-	*/
+	// "name" defines the name of the provider or module.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//
+	// remark:
+	//   * required unless "rawstring" is set.
+	//   * "name" and "rawstring" are mutually exclusive.
+	//   * applies to modules and providers.
+	//
+	// example:
+	//   * name: kubernetes
+	//
 	Name string `yaml:",omitempty"`
-	/*
-		"targetsystem" the target system for the module in registry
-
-		compatible:
-			* source
-			* condition
-
-		remark:
-			* Required for type module unless using rawstring
-			* Not allowed with rawstring
-			* Applicable for module.
-	*/
+	// "targetsystem" defines the target system of the module in the registry.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//
+	// remark:
+	//   * required for type "module" unless "rawstring" is set.
+	//   * "targetsystem" and "rawstring" are mutually exclusive.
+	//   * only applies to modules.
+	//
+	// example:
+	//   * targetsystem: aws
+	//
 	TargetSystem string `yaml:",omitempty"`
-
-	/*
-		"rawstring" provider reference to registry in single string.
-
-		compatible:
-			* source
-			* condition
-
-		Examples:
-			* hashicorp/kubernetes
-			* registry.terraform.io/hashicorp/kubernetes
-			* terraform-aws-modules/vpc/aws
-			* app.terraform.io/terraform-aws-modules/vpc/aws
-
-		remark:
-			* Applicable for module and provider.
-			* Not allowed with hostname, namespace, name, and targetsystem.
-	*/
+	// "rawstring" defines the provider or module reference in the registry as a single string.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//
+	// remark:
+	//   * applies to modules and providers.
+	//   * "rawstring" is mutually exclusive with "hostname", "namespace", "name" and "targetsystem".
+	//
+	// example:
+	//   * rawstring: hashicorp/kubernetes
+	//   * rawstring: registry.terraform.io/hashicorp/kubernetes
+	//   * rawstring: terraform-aws-modules/vpc/aws
+	//   * rawstring: app.terraform.io/terraform-aws-modules/vpc/aws
+	//
 	RawString string `yaml:",omitempty"`
-
-	/*
-		"version" defines a specific version to be used during condition check.
-
-		compatible:
-			* condition
-	*/
+	// "version" defines the version to check.
+	//
+	// compatible:
+	//   * condition
+	//
+	// default:
+	//   the output of the associated source.
+	//
 	Version string `yaml:",omitempty"`
-	/*
-		"versionfilter" provides parameters to specify version pattern and its type like regex, semver, or just latest.
-
-		compatible:
-			* source
-	*/
+	// "versionfilter" defines the filter used to select the version, such as a regex, semver or latest pattern.
+	//
+	// compatible:
+	//   * source
+	//
+	// default:
+	//   kind: semver
+	//   pattern: "*"
+	//
 	VersionFilter version.Filter `yaml:",omitempty"`
 }
 

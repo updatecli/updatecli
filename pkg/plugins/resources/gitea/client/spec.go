@@ -7,24 +7,36 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// Spec defines a specification for a "gitea" resource
-// parsed from an updatecli manifest file
+// Spec defines the settings used to connect to a Gitea instance.
+// It is shared by every "gitea" resource and by the "gitea/pullrequest" action.
 type Spec struct {
-	//  "url" defines the Gitea url to interact with
+	// "url" defines the Gitea url to interact with.
+	//
+	// remark:
+	//   * "https://" is added when the url has no "https://" or "http://" prefix.
+	//   * in a "gitea/pullrequest" action, the value is inherited from the scm when unset.
+	//
+	// example:
+	//   * url: gitea.com
+	//   * url: https://gitea.example.com
+	//
 	URL string `yaml:",omitempty" jsonschema:"required"`
-	//  "username" defines the username used to authenticate with Gitea API
+	// "username" defines the username used to authenticate with the Gitea API.
+	//
+	// remark:
+	//   * in a "gitea/pullrequest" action, the value is inherited from the scm when unset.
+	//
 	Username string `yaml:",omitempty"`
-	//  "token" specifies the credential used to authenticate with Gitea API
+	// "token" defines the credential used to authenticate with the Gitea API.
 	//
-	//  remark:
-	//    A token is a sensitive information, it's recommended to not set this value directly in the configuration file
-	//    but to use an environment variable or a SOPS file.
+	// remark:
+	//   * a token is sensitive information. Do not set it directly in the manifest.
+	//     Use an environment variable or a SOPS file instead.
+	//   * `{{ requiredEnv "GITEA_TOKEN" }}` retrieves the token from the environment variable "GITEA_TOKEN".
+	//   * `{{ .gitea.token }}` retrieves the token from a SOPS file.
+	//     See https://github.com/getsops/sops for more information about SOPS files.
+	//   * in a "gitea/pullrequest" action, the value is inherited from the scm when unset.
 	//
-	//    The value can be set to `{{ requiredEnv "GITEA_TOKEN"}}` to retrieve the token from the environment variable `GITHUB_TOKEN`
-	//	  or `{{ .gitea.token }}` to retrieve the token from a SOPS file.
-	//
-	//	  For more information, about a SOPS file, please refer to the following documentation:
-	//    https://github.com/getsops/sops
 	Token string `yaml:",omitempty"`
 }
 

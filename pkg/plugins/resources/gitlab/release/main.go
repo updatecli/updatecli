@@ -16,31 +16,115 @@ import (
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 )
 
-// Spec defines settings used to interact with GitLab release
+/*
+"gitlab/release" defines the specification for manipulating releases of a GitLab repository.
+It can be used as a "source", a "condition", or a "target".
+*/
 type Spec struct {
 	client.Spec `yaml:",inline,omitempty"`
-	// [S][C][T] Owner specifies repository owner
+	// "owner" defines the owner of the GitLab repository.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//   * target
+	//
+	// example:
+	//   * owner: updatecli
+	//
 	Owner string `yaml:",omitempty" jsonschema:"required"`
-	// [S][C][T]Repository specifies the name of a repository for a specific owner
+	// "repository" defines the name of the GitLab repository, for a specific owner.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//   * target
+	//
+	// example:
+	//   * repository: updatecli
+	//
 	Repository string `yaml:",omitempty" jsonschema:"required"`
-	// [S] VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
+	// "versionfilter" defines the version pattern and kind used to select the release, such as regex, semver or latest.
+	//
+	// compatible:
+	//   * source
+	//
+	// default:
+	//   kind: latest
+	//
 	VersionFilter version.Filter `yaml:",omitempty"`
-	// [S] Age defines the minimum or maximum age of a release to be considered valid.
-	// It accepts a duration string (e.g., "24h", "7d", "3w", "1y").
-	// The age of a release is the date at which it was released, or the date at which
-	// it was created for a release published without one.
+	// "age" defines the minimum or maximum age of a release to be considered valid.
+	//
+	// compatible:
+	//   * source
+	//
+	// remark:
+	//   * it accepts a duration string such as "24h", "7d", "3w" or "1y".
+	//   * the age of a release is its release date, or its creation date for a release
+	//     published without one.
+	//   * when no release matches the age filter yet, the source is skipped instead of failing.
+	//
 	Age age.Spec `yaml:",omitempty"`
-	// [T] Title defines the GitLab release title.
+	// "title" defines the title of the GitLab release.
+	//
+	// compatible:
+	//   * target
+	//
+	// default:
+	//   the value of "tag".
+	//
 	Title string `yaml:",omitempty"`
-	// [C][T] Tag defines the GitLab release tag.
+	// "tag" defines the tag of the GitLab release.
+	//
+	// compatible:
+	//   * condition
+	//   * target
+	//
+	// default:
+	//   the output of the associated source.
+	//
+	// example:
+	//   * tag: v1.0.0
+	//
 	Tag string `yaml:",omitempty"`
-	// [T] Commitish defines the commit-ish such as `main`
+	// "commitish" defines the commit-ish of the GitLab release, such as a branch name or a commit sha.
+	//
+	// compatible:
+	//   * target
+	//
+	// default:
+	//   main
+	//
+	// example:
+	//   * commitish: main
+	//
 	Commitish string `yaml:",omitempty"`
-	// [T] Description defines if the new release description
+	// "description" defines the description of the new GitLab release.
+	//
+	// compatible:
+	//   * target
+	//
+	// remark:
+	//   * Updatecli appends a credit line to the description.
+	//
 	Description string `yaml:",omitempty"`
-	// [T] Draft defines if the release is a draft release
+	// "draft" defines if the release is a draft release.
+	//
+	// compatible:
+	//   * target
+	//
+	// default:
+	//   false
+	//
 	Draft bool `yaml:",omitempty"`
-	// [T] Prerelease defines if the release is a pre-release release
+	// "prerelease" defines if the release is a pre-release.
+	//
+	// compatible:
+	//   * target
+	//
+	// default:
+	//   false
+	//
 	Prerelease bool `yaml:",omitempty"`
 }
 

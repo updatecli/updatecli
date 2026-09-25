@@ -8,16 +8,35 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// MatchingRule allows to specifies rules to identify manifest
+// MatchingRule defines a rule to select releases.
+// A rule matches when every field it sets matches.
+// Each rule must set at least one field.
 type MatchingRule struct {
-	// Path specifies a Helmfile chart path pattern, the pattern requires to match all of name, not just a subpart of the path.
+	// "path" defines a Helmfile file path pattern.
+	//
+	// remark:
+	//   * the pattern must match the whole path, not just a substring.
+	//   * the pattern follows the Go filepath.Match syntax, such as "*" or "?".
+	//
 	Path string
-	// Repositories specifies the list of Helm Chart repository to check
+	// "repositories" defines the Helm chart repository URLs to match.
+	//
+	// remark:
+	//   * a release matches when its repository URL equals one of the values.
+	//
 	Repositories []string
-	// Charts specifies the list of Helm Chart repository to check
+	// "charts" defines the charts to match, keyed by chart name.
+	//
+	// remark:
+	//   * an empty value matches any version.
+	//   * otherwise the value is a semantic version constraint, such as ">=1.0.0".
+	//   * when the version or the constraint cannot be parsed, the value must equal the version.
+	//
 	Charts map[string]string
 }
 
+// MatchingRules defines a list of rules.
+// The list matches when at least one of its rules matches.
 type MatchingRules []MatchingRule
 
 // Validate checks that each matching rule has at least one non-empty field.

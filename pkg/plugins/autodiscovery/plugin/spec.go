@@ -1,27 +1,46 @@
 package plugin
 
+/*
+Spec defines the specification for a Wasm autodiscovery plugin, used by a crawler whose name ends with ".wasm".
+The plugin runs in a sandbox and returns the manifests it generates.
+*/
 type Spec struct {
-	// Spec contains the plugin parameters.
-	// cfr the plugin documentation.
+	// "spec" defines the plugin parameters.
+	//
+	// remark:
+	//   * it is passed as is to the plugin, see the plugin documentation for the accepted keys.
+	//
 	Spec map[string]any `yaml:",omitempty"`
-	// AllowedPaths is a list of paths to be accessed from inside the plugin sandbox,
-	// a path can be either a plain path or a map from HOST_PATH:GUEST_PATH
+	// "allowedpaths" defines the paths the plugin can access from inside its sandbox.
 	//
-	// Example:
-	//   - .:/mnt
-	//   - /var/lib/updatecli:/data
+	// default:
+	//   ```
+	//   - ".:/mnt"
+	//   ```
 	//
-	// Default: [".:/mnt"]
+	// remark:
+	//   * a path is either a plain path or a "HOST_PATH:GUEST_PATH" mapping.
+	//   * a relative host path is resolved from the scm directory when "scmid" is set, otherwise from the directory relative paths resolve from, by default the working directory.
+	//   * by default, the plugin runs from "/mnt".
 	//
-	// Remark:
-	//   * Relative paths are considered relative to the Updatecli working directory.
-	//     If a scm root directory is set, relative paths are considered relative to the scm root directory.
-	//   * By default, the plugin runs from "/mnt"
+	// example:
+	//   ```
+	//   allowedpaths:
+	//     - .:/mnt
+	//     - /var/lib/updatecli:/data
+	//   ```
+	//
 	AllowedPaths *[]string `yaml:",omitempty"`
-	// AllowedHosts hold a list of allowed hosts for HTTP requests from the plugin sandbox
-	AllowHosts []string `yaml:",omitempty"`
-	// Timeout defines a maximum execution time for the plugin in seconds
+	// "allowhosts" defines the hosts the plugin can send HTTP requests to from inside its sandbox.
 	//
-	// Default: 300 seconds
+	AllowHosts []string `yaml:",omitempty"`
+	// "timeout" defines the maximum execution time of the plugin, in milliseconds.
+	//
+	// default:
+	//   60000
+	//
+	// remark:
+	//   * 0 disables the timeout.
+	//
 	Timeout *uint64 `yaml:",omitempty"`
 }

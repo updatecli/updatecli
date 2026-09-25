@@ -9,50 +9,66 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// MatchingRule allows to specifies rules to identify manifest
-// to update based on file path, module name, module version, go version and replace directive.
+// MatchingRule defines a rule to select Go modules or Go versions.
+// A rule matches when every field it sets matches.
+// Each rule must set at least one field.
 type MatchingRule struct {
-	// Path specifies a go.mod path pattern
-	// The pattern syntax is:
-	// pattern:
-	//     { term }
-	// term:
-	//     '*'         matches any sequence of non-Separator characters
-	//     '?'         matches any single non-Separator character
-	//     '[' [ '^' ] { character-range } ']'
-	//                 character class (must be non-empty)
-	//     c           matches character c (c != '*', '?', '\\', '[')
-	//     '\\' c      matches character c
+	// "path" defines a go.mod path pattern.
+	//
+	// remark:
+	//   * the pattern must match the whole path, not just a substring.
+	//   * the pattern follows the Go filepath.Match syntax, such as "*" or "?".
+	//
 	// example:
-	//   * 'go.mod' matches 'go.mod' in the current directory
-	//   * '*/go.mod' matches 'go.mod' in any first level subdirectory
+	//   * path: go.mod
+	//   * path: "*/go.mod"
+	//
 	Path string
-	// Modules specifies a list of module pattern.
-	// The module accepts regular expression for module name and semantic versioning constraint for module version.
-	// If module version is empty then any version is matching.
-	// Example:
-	//   * 'github.com/updatecli/updatecli': '' matches any version of the module github.com/updatecli/updatecli
-	//   * 'github.com/updatecli/updatecli': '1.0.0' matches only version 1.0.0 of the module github.com/updatecli/updatecli
-	//   * 'github.com/updatecli/updatecli': '>=1.0.0' matches any version greater than or equal to 1.0.0 of the module github.com/updatecli/updatecli
-	//   * 'github.com/.*': '>=1.0.0' matches any version greater than or equal to 1.0.0 of any module hosted under github.com
-	//   * 'github\.com\/updatecli\/updatecli': '>=1.0.0' matches any version greater than or equal to 1.
+	// "modules" defines the Go modules to match, keyed by module name.
+	//
+	// remark:
+	//   * the key is a regular expression matched against the module name.
+	//   * the expression is not anchored, so it also matches module names that contain it.
+	//   * an empty value matches any version.
+	//   * otherwise the value is a semantic version constraint, such as ">=1.0.0".
+	//   * when the version or the constraint cannot be parsed, the value must equal the version.
+	//   * the Go version entry has no module name, so "modules" is not checked for it.
+	//     A rule that sets only "modules" therefore also matches the Go version.
+	//
+	// example:
+	//   * "github.com/updatecli/updatecli": "" matches any version of the module.
+	//   * "github.com/updatecli/updatecli": "1.0.0" matches only version 1.0.0 of the module.
+	//   * "github.com/updatecli/updatecli": ">=1.0.0" matches version 1.0.0 or later of the module.
+	//   * "github.com/.*": ">=1.0.0" matches version 1.0.0 or later of any module hosted on github.com.
+	//
 	Modules map[string]string
-	// GoVersions specifies a list of version pattern.
-	// The version constraint must be a valid semantic version constraint.
-	// If GoVersion is empty then any version is matching.
-	// Example:
-	//   * '1.19.*' matches any 1.19.x version
-	//  * '>=1.20.0' matches any version greater than or equal to 1.20.0
-	//   * '<1.20.0' matches any version strictly less than 1.20.0
-	//   * '*' matches any version
+	// "goversion" defines a Go version constraint to match.
+	//
+	// remark:
+	//   * the value must be a valid semantic version constraint.
+	//   * when unset, any Go version matches.
+	//
+	// example:
+	//   * goversion: "1.19.*"
+	//   * goversion: ">=1.20.0"
+	//   * goversion: "<1.20.0"
+	//   * goversion: "*"
+	//
 	GoVersion string
-	// Replace indicates if the module is a replace directive.
-	// If Replace is nil then any module is matching.
-	// If Replace is true then only module with a replace directive is matching.
-	// If Replace is false then only module without a replace directive is matching.
+	// "replace" defines whether the module must come from a replace directive.
+	//
+	// default:
+	//   unset, any module matches.
+	//
+	// remark:
+	//   * true matches only modules with a replace directive.
+	//   * false matches only modules without a replace directive.
+	//
 	Replace *bool
 }
 
+// MatchingRules defines a list of rules.
+// The list matches when at least one of its rules matches.
 type MatchingRules []MatchingRule
 
 // Validate checks that each matching rule has at least one non-empty field.

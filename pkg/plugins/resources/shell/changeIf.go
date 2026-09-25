@@ -32,10 +32,19 @@ var (
 	}
 )
 
+// SpecChangedIf defines how Updatecli interprets the result of a shell command.
 type SpecChangedIf struct {
-	// Kind specifies the success criteria kind, accepted answer ["console/output","exitcode","file/checksum"]
+	// "kind" defines the kind of success criteria.
+	//
+	// default:
+	//   console/output
+	//
+	// remark:
+	//   * accepted values are "console/output", "exitcode" and "file/checksum".
+	//
 	Kind string `yaml:",omitempty"`
-	// Spec specifies the parameter for a specific success criteria kind
+	// "spec" defines the parameters of the selected success criteria kind.
+	//
 	Spec interface{} `yaml:",omitempty"`
 }
 

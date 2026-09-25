@@ -5,40 +5,82 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
-// Spec defines a specification for a "gomodule" resource
-// parsed from an updatecli manifest file
+/*
+"golang/module" defines the specification for retrieving Go module versions from a Go proxy.
+It can be used as a "source" or a "condition".
+*/
 type Spec struct {
-	// Proxy allows to override GO proxy similarly to GOPROXY environment variable.
-	// Proxy may have the schemes https, http. file is not supported at this time. If a URL has no scheme, https is assumed
-	// Compatible:
+	// "proxy" defines the Go proxy to query, similar to the GOPROXY environment variable.
+	//
+	// compatible:
 	//   * source
 	//   * condition
+	//
+	// default:
+	//   the GOPROXY environment variable when set, otherwise https://proxy.golang.org
+	//
+	// remark:
+	//   * the schemes "https://" and "http://" are supported. "file://" is not supported yet.
+	//   * a URL without a scheme uses https.
+	//   * several proxies can be listed, separated by commas.
+	//
+	// example:
+	//   * proxy: https://proxy.golang.org
 	//
 	Proxy string `yaml:",omitempty"`
-	// module specifies the name of the Golang module
+	// "module" defines the name of the Go module.
 	//
-	// Compatible:
+	// compatible:
 	//   * source
 	//   * condition
+	//
+	// example:
+	//   * module: github.com/sirupsen/logrus
 	//
 	Module string `yaml:",omitempty" jsonschema:"required"`
-	// version defines a specific package version to check
+	// "version" defines the module version to check.
 	//
-	// Compatible:
+	// compatible:
 	//   * condition
+	//
+	// default:
+	//   the output of the associated source.
+	//
+	// example:
+	//   * version: v1.9.3
 	//
 	Version string `yaml:",omitempty"`
-	// VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
+	// "versionfilter" defines the version pattern and its type, such as regex, semver or latest.
 	//
-	// Compatible:
+	// compatible:
 	//   * source
+	//
+	// default:
+	//   kind: semver
+	//   pattern: "*"
+	//
+	// example:
+	// ```
+	//   versionfilter:
+	//     kind: semver
+	//     pattern: "~1.9"
+	// ```
 	//
 	VersionFilter version.Filter `yaml:",omitempty"`
-	// Age defines the minimum or maximum age of a release to be considered valid. It accepts a duration string (e.g., "24h", "7d").
+	// "age" defines the minimum or maximum age of a release to be considered valid.
 	//
-	// Compatible:
+	// compatible:
 	//   * source
 	//   * condition
+	//
+	// remark:
+	//   * in a source, when every published version is discarded by the age filter, the source is skipped.
+	//
+	// example:
+	// ```
+	//   age:
+	//     minimum: 7d
+	// ```
 	//
 	Age age.Spec `yaml:",omitempty"`
 }

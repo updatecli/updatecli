@@ -13,66 +13,106 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/vulnerability"
 )
 
-// Spec defines the parameters which can be provided to the Golang autodiscovery builder.
+/*
+"golang" defines the specification for the Golang autodiscovery crawler.
+It searches go.mod files and generates manifests to update the Go version and the Go modules.
+*/
 type Spec struct {
-	// rootDir defines the root directory used to recursively search for golang go.mod
+	// "rootdir" defines the directory where the crawler starts searching for go.mod files.
+	//
+	// default:
+	//   the scm directory when "scmid" is set, otherwise the directory relative paths resolve from, by default the working directory.
+	//
+	// remark:
+	//   * a relative path is resolved from the default directory.
+	//   * an absolute path is used as is, instead of the scm directory.
+	//
 	RootDir string `yaml:",omitempty"`
-	// OnlyGoVersion allows to specify if the autodiscovery should only handle Go version specified in go.mod
+	// "onlygoversion" restricts the autodiscovery to the Go version defined in go.mod.
+	//
+	// default:
+	//   false
+	//
+	// remark:
+	//   * it cannot be combined with "vulnerability".
+	//
 	OnlyGoVersion *bool `yaml:",omitempty"`
-	// OnlyGoModule allows to specify if the autodiscovery should only handle Go module specified in go.mod
+	// "onlygomodule" restricts the autodiscovery to the Go modules defined in go.mod.
+	//
+	// default:
+	//   false
+	//
 	OnlyGoModule *bool `yaml:",omitempty"`
-	// ignore allows to specify `rule` to ignore autodiscovery a specific go.mod rule
+	// "ignore" defines rules to exclude matching Go modules or Go versions from the autodiscovery.
+	//
+	// remark:
+	//   * a Go module or Go version is ignored when it matches at least one rule.
+	//
 	Ignore MatchingRules `yaml:",omitempty"`
-	// `only` allows to specify rule to `only` autodiscover manifest for a specific golang rule
+	// "only" defines rules to restrict the autodiscovery to matching Go modules or Go versions.
+	//
+	// remark:
+	//   * a Go module or Go version is kept only when it matches at least one rule.
+	//   * when every rule sets "goversion" without "modules", only the Go version is updated.
+	//   * when every rule sets "modules" without "goversion", only the Go modules are updated.
+	//
 	Only MatchingRules `yaml:",omitempty"`
-	//  `versionfilter` provides parameters to specify the version pattern used when generating manifest.
+	// "versionfilter" defines the version filter used by the generated manifests.
 	//
-	//  kind - semver
-	//    versionfilter of kind `semver` uses semantic versioning as version filtering
-	//    pattern accepts one of:
-	//      `prerelease` - Updatecli tries to identify the latest prerelease whatever it means
-	//      `patch` - Updatecli only handles patch version update
-	//      `minor` - Updatecli handles patch AND minor version update
-	//      `minoronly` - Updatecli handles minor version only
-	//      `major` - Updatecli handles patch, minor, AND major version update
-	//      `majoronly` - Updatecli only handles major version update
-	//      `a version constraint` such as `>= 1.0.0`
+	// default:
+	//   kind "semver" with pattern "*", any version greater than or equal to the current one.
 	//
-	//  kind - regex
-	//    versionfilter of kind `regex` uses regular expression as version filtering
-	//    pattern accepts a valid regular expression
+	// remark:
+	//   * with kind "semver", "pattern" accepts:
+	//     * "prerelease": the latest prerelease of the current version.
+	//     * "patch": patch updates only.
+	//     * "minor": patch and minor updates.
+	//     * "minoronly": minor updates only.
+	//     * "major": patch, minor and major updates.
+	//     * "majoronly": major updates only.
+	//     * a version constraint, such as ">= 1.0.0".
+	//   * with kind "regex", "pattern" accepts a regular expression.
+	//   * more examples at https://www.updatecli.io/docs/core/versionfilter/
+	//   * a module using a pseudo version ignores the filter and is updated to the latest version.
+	//   * it cannot be combined with "vulnerability".
 	//
-	//  example:
-	//  ```
-	//    versionfilter:
-	//      kind: semver
-	//      pattern: minor
-	//  ```
+	// example:
+	//   ```
+	//   versionfilter:
+	//     kind: semver
+	//     pattern: minor
+	//   ```
 	//
-	//  and its type like regex, semver, or just latest.
-	//
-	//  More examples can be found at https://www.updatecli.io/docs/core/versionfilter/
 	VersionFilter version.Filter `yaml:",omitempty"`
-	// Age defines the minimum or maximum age of a release to be considered valid.
-	// It accepts a duration string (e.g., `24h`, `7d`, `1w`).
+	// "age" defines the minimum or maximum age of a release to be considered valid.
+	//
+	// default:
+	//   empty, no age filtering.
+	//
+	// remark:
+	//   * it accepts a duration string, such as "24h", "7d" or "1w".
+	//   * it cannot be combined with "vulnerability".
+	//
 	Age age.Spec `yaml:",omitempty"`
-	// Vulnerability switches the autodiscovery to security updates, based on the OSV database (https://osv.dev).
+	// "vulnerability" switches the autodiscovery to security updates, based on the OSV database (https://osv.dev).
+	//
 	// Each Go module is updated to the lowest version without known vulnerabilities,
 	// and left untouched when it has none.
 	//
-	// example:
-	//  ```
-	//    vulnerability:
-	//      minseverity: high
-	//      ignore:
-	//        - GO-2025-3503
-	//  ```
-	//
 	// remark:
-	//   * Only security updates are generated, routine updates require a separate manifest.
-	//   * It is mutually exclusive with age, versionfilter and onlygoversion.
-	//   * The Go version and indirect modules are not covered.
-	//   * Labels, such as "security", are set on the action used by the manifest.
+	//   * only security updates are generated, routine updates require a separate manifest.
+	//   * it cannot be combined with "age", "versionfilter" and "onlygoversion".
+	//   * the Go version and indirect modules are not covered.
+	//   * labels, such as "security", are set on the action used by the manifest.
+	//
+	// example:
+	//   ```
+	//   vulnerability:
+	//     minseverity: high
+	//     ignore:
+	//       - GO-2025-3503
+	//   ```
+	//
 	Vulnerability *vulnerability.Spec `yaml:",omitempty"`
 }
 

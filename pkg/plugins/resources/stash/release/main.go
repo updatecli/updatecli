@@ -13,26 +13,97 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
-// Spec defines settings used to interact with Bitbucket release
+/*
+"stash/release" defines the specification for managing releases of a Bitbucket Server repository.
+It can be used as a "source", a "condition", or a "target".
+*/
 type Spec struct {
 	client.Spec `yaml:",inline,omitempty"`
-	// [S][C][T] owner specifies repository owner
+	// "owner" defines the repository owner.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//   * target
+	//
+	// remark:
+	//   * "owner" is required.
+	//
 	Owner string `yaml:",omitempty" jsonschema:"required"`
-	// [S][C][T] repository specifies the name of a repository for a specific owner
+	// "repository" defines the repository name.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//   * target
+	//
+	// remark:
+	//   * "repository" is required.
+	//
 	Repository string `yaml:",omitempty" jsonschema:"required"`
-	// [S] versionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
+	// "versionfilter" defines the version pattern and its kind, such as "regex", "semver" or "latest".
+	//
+	// compatible:
+	//   * source
+	//
+	// default:
+	//   latest
+	//
 	VersionFilter version.Filter `yaml:",omitempty"`
-	// [T] title defines the Bitbucket release title.
+	// "title" defines the release title.
+	//
+	// compatible:
+	//   * target
+	//
+	// default:
+	//   the value of "tag".
+	//
 	Title string `yaml:",omitempty"`
-	// [C][T] tag defines the Bitbucket release tag.
+	// "tag" defines the release tag.
+	//
+	// compatible:
+	//   * condition
+	//   * target
+	//
+	// default:
+	//   in a target, the output of the associated source.
+	//
 	Tag string `yaml:",omitempty"`
-	// [T] commitish defines the commit-ish such as `main`
+	// "commitish" defines the commit-ish the release is created from.
+	//
+	// compatible:
+	//   * target
+	//
+	// default:
+	//   main
+	//
+	// example:
+	//   * commitish: main
+	//
 	Commitish string `yaml:",omitempty"`
-	// [T] description defines if the new release description
+	// "description" defines the release description.
+	//
+	// compatible:
+	//   * target
+	//
 	Description string `yaml:",omitempty"`
-	// [T] draft defines if the release is a draft release
+	// "draft" defines whether the release is a draft.
+	//
+	// compatible:
+	//   * target
+	//
+	// default:
+	//   false
+	//
 	Draft bool `yaml:",omitempty"`
-	// [T] prerelease defines if the release is a pre-release release
+	// "prerelease" defines whether the release is a prerelease.
+	//
+	// compatible:
+	//   * target
+	//
+	// default:
+	//   false
+	//
 	Prerelease bool `yaml:",omitempty"`
 }
 

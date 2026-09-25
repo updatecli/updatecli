@@ -8,14 +8,41 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// FindSubMatch is a struct used to feed regexp.findSubMatch
+// FindSubMatch defines a regular expression extracting a capture group from the value.
 type FindSubMatch struct {
-	// Pattern defines regular expression to use for retrieving a submatch
+	// "pattern" defines the regular expression applied to the value.
+	//
+	// remark:
+	//   * when nothing matches, the value becomes empty.
+	//
+	// example:
+	//   * pattern: 'v(\d+)\.(\d+)'
+	//
 	Pattern                string `yaml:",omitempty" jsonschema:"required"`
 	DeprecatedCaptureIndex int    `yaml:"captureIndex,omitempty" jsonschema:"-"`
-	// CaptureIndex defines which substring occurrence to retrieve. Note also that a value of `0` for `captureIndex` returns all submatches, and individual submatch indexes start at `1`.
+	// "captureindex" defines the capture group to return.
+	//
+	// default:
+	//   0
+	//
+	// remark:
+	//   * 0 returns the whole match, and capture groups start at 1.
+	//   * an index without a matching capture group returns an empty value.
+	//   * ignored when "capturepattern" is set.
+	//
+	// example:
+	//   * captureindex: 1
+	//
 	CaptureIndex int
-	// Uses the match group(s) to generate the output using \0, \1, \2, etc
+	// "capturepattern" defines a template building the value from the capture groups.
+	//
+	// remark:
+	//   * \0 is replaced by the whole match, \1 by the first capture group, \2 by the second, and so on.
+	//   * it takes precedence over "captureindex".
+	//
+	// example:
+	//   * capturepattern: \1.\2
+	//
 	CapturePattern string `yaml:",omitempty"`
 }
 

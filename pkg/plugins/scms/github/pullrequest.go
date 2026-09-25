@@ -75,141 +75,141 @@ type PullRequestApi struct {
 	Number       int32
 }
 
-// MergeSpec specifies merge behavior for a pull request
+// MergeSpec defines how Updatecli merges a pull request.
 type MergeSpec struct {
-	// strategy specifies the merge strategy: "client", "auto", or "manual" (default)
-	// client: merge immediately via GitHub API (no server-side automerge needed)
-	// auto: enable server-side auto-merge (requires branch protection rules)
-	// manual: do not merge automatically (default)
+	// "strategy" defines how the pull request is merged.
+	//
+	// default:
+	//   manual
+	//
+	// remark:
+	//   * accepted values are "client", "auto", "manual" or empty.
+	//   * "client" merges the pull request through the GitHub API, without GitHub auto-merge.
+	//   * "auto" enables GitHub auto-merge, which requires branch protection rules on the repository.
+	//   * "manual" and empty never merge the pull request.
+	//
 	Strategy string `yaml:",omitempty"`
-	// after specifies a minimum duration to wait before merging (e.g., "24h", "30m")
-	// The pull request will not be merged until it has been open for at least this duration.
+	// "after" defines how long the pull request must stay open before Updatecli merges it.
+	//
+	// default:
+	//   24h
+	//
+	// remark:
+	//   * only used with the strategy "client".
+	//   * the value is a Go duration, such as "30m" or "24h".
+	//
+	// example:
+	//   * after: 24h
+	//
 	After string `yaml:",omitempty"`
 }
 
-// ActionSpec specifies the configuration of an action of type "GitHub Pull Request"
+/*
+"github/pullrequest" defines the specification for opening and updating GitHub pull requests.
+It requires an scm of kind "github", which provides the repository and the working branch.
+*/
 type ActionSpec struct {
-	// automerge allows to enable/disable the automerge feature on new pullrequest
-	// deprecated since the field "merge.strategy" should now be used to specify the merge strategy and enable automerge with "auto" value.
-	//
-	// compatible:
-	//   * action
+	// "automerge" defines whether GitHub auto-merge is enabled on the pull request.
 	//
 	// default:
 	//   false
 	//
-	// deprecated: use merge.strategy: auto instead
-	AutoMerge *bool `yaml:",omitempty"`
-	// title allows to override the pull request title
+	// deprecated:
+	//   * use "merge.strategy" set to "auto" instead. When set, "automerge" overrides "merge.strategy".
 	//
-	// compatible:
-	//   * action
+	AutoMerge *bool `yaml:",omitempty"`
+	// "title" defines the pull request title.
 	//
 	// default:
-	//   The default title is fetch from the first following location:
-	//   1. The action title
-	//   2. The target title if only one target
-	//   3. The pipeline target
+	//   the first value found among:
+	//   1. the action title
+	//   2. the pipeline name
+	//   3. the title of the first target that has one
 	//
 	Title string `yaml:",omitempty"`
-	// description allows to prepend information to the pullrequest description.
-	//
-	// compatible:
-	//   * action
+	// "description" defines text added at the start of the pull request description.
 	//
 	// default:
 	//   empty
 	//
 	Description string `yaml:",omitempty"`
-	// labels specifies repository labels used for the Pull Request.
-	//
-	// compatible:
-	//   * action
+	// "labels" defines the repository labels added to the pull request.
 	//
 	// default:
-	//    empty
+	//   empty
 	//
 	// remark:
-	//   Labels must already exist on the repository
+	//   * the labels must already exist on the repository. Other labels are ignored.
 	//
 	Labels []string `yaml:",omitempty"`
-	// draft allows to set pull request in draft
-	//
-	// compatible:
-	//   * action
+	// "draft" defines whether the pull request is opened as a draft.
 	//
 	// default:
 	//   false
+	//
 	Draft bool `yaml:",omitempty"`
-	// maintainercannotmodify allows to specify if maintainer can modify pullRequest
-	//
-	// compatible:
-	//   * action
+	// "maintainercannotmodify" defines whether maintainers are prevented from modifying the pull request.
 	//
 	// default:
 	//   false
+	//
 	MaintainerCannotModify bool `yaml:",omitempty"`
-	// mergemethod allows to specifies what merge method is used to incorporate the pull request.
-	//
-	// compatible:
-	//   * action
+	// "mergemethod" defines the merge method used to merge the pull request.
 	//
 	// default:
-	//   ""
+	//   empty, which means the repository default.
 	//
 	// remark:
-	//   Accept "merge", "squash", "rebase", or ""
+	//   * accepted values are "merge", "squash", "rebase" or empty.
+	//
 	MergeMethod string `yaml:",omitempty"`
-	// usetitleforautomerge allows to specifies to use the Pull Request title as commit message when using auto merge,
-	//
-	// compatible:
-	//   * action
+	// "usetitleforautomerge" defines whether the pull request title is used as the commit message when merging.
 	//
 	// default:
-	//   ""
+	//   false
 	//
 	// remark:
-	//   Only works for "squash" or "rebase"
-	UseTitleForAutoMerge bool `yaml:",omitempty"`
-	// parent allows to specifies if a pull request should be sent to the parent of the current fork.
+	//   * only used with the "mergemethod" values "squash" and "rebase".
 	//
-	// compatible:
-	//   * action
+	UseTitleForAutoMerge bool `yaml:",omitempty"`
+	// "parent" defines whether the pull request is opened against the parent of the forked repository.
 	//
 	// default:
 	//   false
 	//
 	Parent bool `yaml:",omitempty"`
 
-	// Reviewers contains the list of assignee to add to the pull request
-	// compatible:
-	//   * action
-	//
-	// default: empty
-	//
-	// remark:
-	//   * if reviewer is a team, the format is "organization/team" and the token must have organization read permission.
-	Reviewers []string `yaml:",omitempty"`
-
-	// Assignees contains the list of assignee to add to the pull request
-	//
-	// default: empty
-	//
-	// remark:
-	//   * Please note that contrary to reviewers, assignees only accept GitHub usernames
-	Assignees []string `yaml:",omitempty"`
-	// merge configures automatic merge behavior for the pull request.
-	//
-	// compatible:
-	//   * action
+	// "reviewers" defines the users or teams requested to review the pull request.
 	//
 	// default:
-	//   strategy: manual (no automatic merge)
+	//   empty
+	//
+	// remark:
+	//   * a team uses the format "organization/team", and the token needs the organization read permission.
+	//
+	Reviewers []string `yaml:",omitempty"`
+
+	// "assignees" defines the users assigned to the pull request.
+	//
+	// default:
+	//   empty
+	//
+	// remark:
+	//   * unlike "reviewers", "assignees" only accepts GitHub usernames.
+	//
+	Assignees []string `yaml:",omitempty"`
+	// "merge" defines how Updatecli merges the pull request.
+	//
+	// default:
+	//   strategy manual, so the pull request is never merged.
 	//
 	// example:
+	// ```
 	//   merge:
-	//     strategy: client      # merge immediately via API (no server-side automerge needed)
-	//     after: 24h            # never merge before waiting 24h
+	//     strategy: client
+	//     after: 24h
+	// ```
+	//
 	Merge MergeSpec `yaml:",omitempty"`
 }
 

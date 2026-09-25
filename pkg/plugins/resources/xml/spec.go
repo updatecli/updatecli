@@ -3,48 +3,50 @@ package xml
 import "errors"
 
 /*
-"xml" defines the specification for manipulating "xml" files.
+"xml" defines the specification for manipulating xml files.
 It can be used as a "source", a "condition", or a "target".
 */
 type Spec struct {
-	/*
-		"file" define the xml file path to interact with.
-
-		compatible:
-			* source
-			* condition
-			* target
-
-		remark:
-			* scheme "https://", "http://", and "file://" are supported in path for source and condition
-	*/
+	// "file" defines the path of the xml file to use.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//   * target
+	//
+	// remark:
+	//   * "file" is required.
+	//   * the schemes "https://", "http://" and "file://" are supported in a source or a condition.
+	//
+	// example:
+	//   * file: pom.xml
+	//
 	File string `yaml:",omitempty"`
-	/*
-		"path" defines the xpath query used for retrieving value from a XML document
-
-		compatible:
-			* source
-			* condition
-			* target
-
-		example:
-			* path: "/project/parent/version"
-			* path: "//breakfast_menu/food[0]/name"
-			* path: "//book[@category='WEB']/title"
-	*/
+	// "path" defines the xpath query used to retrieve a value from the xml document.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//   * target
+	//
+	// remark:
+	//   * "path" is required.
+	//
+	// example:
+	//   * path: "/project/parent/version"
+	//   * path: "//breakfast_menu/food[0]/name"
+	//   * path: "//book[@category='WEB']/title"
+	//
 	Path string `yaml:",omitempty"`
-	/*
-		"value" is the value associated with a xpath query.
-
-		compatible:
-			* source
-			* condition
-			* target
-
-		default:
-			when used from a condition or a target, the default value is set to linked source output
-
-	*/
+	// "value" defines the value associated with the xpath query.
+	//
+	// compatible:
+	//   * condition
+	//   * target
+	//
+	// default:
+	//   the output of the associated source.
+	//
 	Value string `yaml:",omitempty"`
 }
 

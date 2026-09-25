@@ -10,56 +10,76 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
-// Spec defines the parameters which can be provided to the fleet builder.
+/*
+"rancher/fleet" defines the specification for the Rancher Fleet autodiscovery crawler.
+It searches Fleet bundle files, "fleet.yaml" and "fleet.yml", and generates manifests to update the Helm charts they reference.
+*/
 type Spec struct {
-	// Auths holds a map of string to string where the key is the registry URL and the value the token used for authentication
+	// "auths" defines the Helm repository credentials, keyed by repository host without scheme.
 	//
-	// Please be aware that only the host part of the URL is used to lookup for authentication token.
+	// remark:
+	//   * only the host part of the repository URL, such as "domain[:port]", is used to look up credentials.
 	//
-	// Example:
+	// example:
+	//   ```
+	//   auths:
+	//     "my-helm-repo.com":
+	//       token: "my-secret-token"
+	//   ```
 	//
-	// ```
-	// auths:
-	//   "my-helm-repo.com": "my-secret-token"
-	// ```
 	Auths map[string]auth `yaml:",omitempty"`
-	// RootDir defines the root directory used to recursively search for Fleet bundle
+	// "rootdir" defines the directory where the crawler starts searching for Fleet bundle files.
+	//
+	// default:
+	//   the scm directory when "scmid" is set, otherwise the directory relative paths resolve from, by default the working directory.
+	//
+	// remark:
+	//   * a relative path is resolved from the default directory.
+	//   * an absolute path is used as is, instead of the scm directory.
+	//
 	RootDir string `yaml:",omitempty"`
-	// Ignore allows to specify rule to ignore autodiscovery a specific Fleet bundle based on a rule
+	// "ignore" defines rules to exclude matching Helm charts from the autodiscovery.
+	//
+	// remark:
+	//   * a Helm chart is ignored when it matches at least one rule.
+	//
 	Ignore MatchingRules `yaml:",omitempty"`
-	// Only allows to specify rule to only autodiscover manifest for a specific Fleet bundle based on a rule
+	// "only" defines rules to restrict the autodiscovery to matching Helm charts.
+	//
+	// remark:
+	//   * a Helm chart is kept only when it matches at least one rule.
+	//
 	Only MatchingRules `yaml:",omitempty"`
-	//  `versionfilter` provides parameters to specify the version pattern used when generating manifest.
+	// "versionfilter" defines the version filter used by the generated manifests.
 	//
-	//  kind - semver
-	//    versionfilter of kind `semver` uses semantic versioning as version filtering
-	//    pattern accepts one of:
-	//      `prerelease` - Updatecli tries to identify the latest prerelease whatever it means
-	//      `patch` - Updatecli only handles patch version update
-	//      `minor` - Updatecli handles patch AND minor version update
-	//      `minoronly` - Updatecli handles minor version only
-	//      `major` - Updatecli handles patch, minor, AND major version update
-	//      `majoronly` - Updatecli only handles major version update
-	//      `a version constraint` such as `>= 1.0.0`
+	// default:
+	//   kind "semver" with pattern "*", the latest version.
 	//
-	//  kind - regex
-	//    versionfilter of kind `regex` uses regular expression as version filtering
-	//    pattern accepts a valid regular expression
+	// remark:
+	//   * with kind "semver", "pattern" accepts:
+	//     * "prerelease": the latest prerelease of the current version.
+	//     * "patch": patch updates only.
+	//     * "minor": patch and minor updates.
+	//     * "minoronly": minor updates only.
+	//     * "major": patch, minor and major updates.
+	//     * "majoronly": major updates only.
+	//     * a version constraint, such as ">= 1.0.0".
+	//   * with kind "regex", "pattern" accepts a regular expression.
+	//   * more examples at https://www.updatecli.io/docs/core/versionfilter/
 	//
-	//  example:
-	//  ```
-	//    versionfilter:
-	//      kind: semver
-	//      pattern: minor
-	//  ```
+	// example:
+	//   ```
+	//   versionfilter:
+	//     kind: semver
+	//     pattern: minor
+	//   ```
 	//
-	//  and its type like regex, semver, or just latest.
-	//
-	//  More examples can be found at https://www.updatecli.io/docs/core/versionfilter/
 	VersionFilter version.Filter `yaml:",omitempty"`
 }
 
+// auth defines the credentials used to access a Helm repository.
 type auth struct {
+	// "token" defines the token used to authenticate with the Helm repository.
 	Token string `yaml:",omitempty"`
 }
 

@@ -18,17 +18,64 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
-// Spec defines a specification for a PyPI package parsed from an updatecli manifest.
+/*
+"pypi" defines the specification for retrieving PyPI package versions.
+It can be used as a "source" or a "condition".
+*/
 type Spec struct {
-	// Name defines the PyPI package name.
+	// "name" defines the PyPI package name.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//
+	// remark:
+	//   * "name" is required.
+	//
+	// example:
+	//   * name: requests
+	//
 	Name string `yaml:",omitempty"`
-	// Version defines a specific package version for condition checks.
+	// "version" defines the package version to check.
+	//
+	// compatible:
+	//   * condition
+	//
+	// default:
+	//   the output of the associated source.
+	//
 	Version string `yaml:",omitempty"`
-	// URL defines the PyPI-compatible registry URL (defaults to https://pypi.org/).
+	// "url" defines the url of a PyPI compatible registry.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//
+	// default:
+	//   https://pypi.org/
+	//
 	URL string `yaml:",omitempty"`
-	// Token defines the Bearer token for private registries.
+	// "token" defines the bearer token used to authenticate with a private registry.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//
 	Token string `yaml:",omitempty"`
-	// VersionFilter provides parameters to specify version pattern and its type.
+	// "versionfilter" defines the version pattern and its kind, such as "pep440", "semver" or "latest".
+	//
+	// compatible:
+	//   * source
+	//
+	// default:
+	//   latest
+	//
+	// remark:
+	//   * yanked releases are ignored.
+	//   * with the kind "latest", the version is the latest release reported by the registry.
+	//     The source fails when that release is yanked.
+	//   * with a kind other than "pep440", versions are normalised to semver and dev releases are ignored.
+	//
 	VersionFilter version.Filter `yaml:",omitempty"`
 }
 

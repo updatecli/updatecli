@@ -7,46 +7,50 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
 )
 
-// Spec defines a specification for a Bitbucket Cloud resource
-// parsed from an updatecli manifest file
+// Spec defines the settings used to connect to a Bitbucket Cloud repository.
 type Spec struct {
-	// "username" specifies the username used to authenticate with Bitbucket Cloud API
+	// "username" defines the username used to authenticate with the Bitbucket Cloud API.
+	//
+	// remark:
+	//   * it is combined with "password".
+	//
 	Username string `yaml:",omitempty"`
-	//  "token" specifies the credential used to authenticate with Bitbucket Cloud API
+	// "token" defines the credential used to authenticate with the Bitbucket Cloud API.
 	//
-	//  The "token" is a repository or project access token with "pullrequest:write" scope.
+	// remark:
+	//   * it is a repository or project access token with the "pullrequest:write" scope.
+	//   * set either "token" or "password". When both are set, "token" is used.
+	//   * a token is sensitive information. Do not write it directly in the manifest,
+	//     use an environment variable or a SOPS file instead.
+	//   * `{{ requiredEnv "BITBUCKET_TOKEN" }}` reads the token from the environment variable "BITBUCKET_TOKEN".
+	//   * `{{ .bitbucket.token }}` reads the token from a SOPS file,
+	//     see https://github.com/getsops/sops
 	//
-	//  "token" and "password" are mutually exclusive
-	//
-	//  remark:
-	//    A token is a sensitive information, it's recommended to not set this value directly in the configuration file
-	//    but to use an environment variable or a SOPS file.
-	//
-	//    The value can be set to `{{ requiredEnv "BITBUCKET_TOKEN"}}` to retrieve the token from the environment variable `BITBUCKET_TOKEN`
-	//	  or `{{ .bitbucket.token }}` to retrieve the token from a SOPS file.
-	//
-	//	  For more information, about a SOPS file, please refer to the following documentation:
-	//    https://github.com/getsops/sops
 	Token string `yaml:",omitempty"`
-	//  "password" specifies the credential used to authenticate with Bitbucket Cloud API, it must be combined with "username"
+	// "password" defines the credential used to authenticate with the Bitbucket Cloud API.
 	//
-	//  The "password" should be app password with "pullrequest:write" scope.
+	// remark:
+	//   * it must be combined with "username".
+	//   * it should be an app password with the "pullrequest:write" scope.
+	//   * set either "token" or "password". When both are set, "token" is used.
+	//   * a password is sensitive information. Do not write it directly in the manifest,
+	//     use an environment variable or a SOPS file instead.
+	//   * `{{ requiredEnv "BITBUCKET_PASSWORD" }}` reads the password from the environment variable "BITBUCKET_PASSWORD".
+	//   * `{{ .bitbucket.password }}` reads the password from a SOPS file,
+	//     see https://github.com/getsops/sops
 	//
-	//  "token" and "password" are mutually exclusive
-	//
-	//  remark:
-	//    A password is a sensitive information, it's recommended to not set this value directly in the configuration file
-	//    but to use an environment variable or a SOPS file.
-	//
-	//    The value can be set to `{{ requiredEnv "BITBUCKET_PASSWORD"}}` to retrieve the token from the environment variable `BITBUCKET_PASSWORD`
-	//	  or `{{ .bitbucket.password }}` to retrieve the token from a SOPS file.
-	//
-	//	  For more information, about a SOPS file, please refer to the following documentation:
-	//    https://github.com/getsops/sops
 	Password string `yaml:",omitempty"`
-	// "owner" defines repository owner
+	// "owner" defines the repository owner.
+	//
+	// example:
+	//   * owner: updatecli
+	//
 	Owner string `yaml:",omitempty" jsonschema:"required"`
-	// "repository" defines the name of a repository for a specific owner
+	// "repository" defines the repository name.
+	//
+	// example:
+	//   * repository: website
+	//
 	Repository string `yaml:",omitempty" jsonschema:"required"`
 }
 

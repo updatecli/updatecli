@@ -11,64 +11,93 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
-// Spec is a struct fill from Updatecli manifest data and shouldn't be modified at runtime unless
-// For Fields that requires it, we can use the struct Dockerfile
-// Spec defines the parameters which can be provided to the Dockerfile crawler.
+/*
+"dockerfile" defines the specification for the Dockerfile autodiscovery crawler.
+It searches Dockerfiles and generates manifests to update the container images used by their "FROM" instructions.
+*/
 type Spec struct {
-	// digest provides parameters to specify if the generated manifest should use a digest on top of the tag.
+	// "digest" defines whether the generated manifests pin the image digest in addition to the tag.
+	//
+	// default:
+	//   true
+	//
 	Digest *bool `yaml:",omitempty"`
-	// RootDir defines the root directory used to recursively search for Helm Chart
+	// "rootdir" defines the directory where the crawler starts searching for Dockerfiles.
+	//
+	// default:
+	//   the scm directory when "scmid" is set, otherwise the directory relative paths resolve from, by default the working directory.
+	//
+	// remark:
+	//   * a relative path is resolved from the default directory.
+	//   * an absolute path is used as is, instead of the scm directory.
+	//
 	RootDir string `yaml:",omitempty"`
-	// Ignore allows to specify rule to ignore autodiscovery a specific Helm based on a rule
+	// "ignore" defines rules to exclude matching container images from the autodiscovery.
+	//
+	// remark:
+	//   * a container image is ignored when it matches at least one rule.
+	//
 	Ignore MatchingRules `yaml:",omitempty"`
-	// Only allows to specify rule to only autodiscover manifest for a specific Helm based on a rule
+	// "only" defines rules to restrict the autodiscovery to matching container images.
+	//
+	// remark:
+	//   * a container image is kept only when it matches at least one rule.
+	//
 	Only MatchingRules `yaml:",omitempty"`
-	// Auths provides a map of registry credentials where the key is the registry URL without scheme
-	// if empty, updatecli relies on OCI credentials such as the one used by Docker.
+	// "auths" defines the registry credentials, keyed by registry host without scheme.
+	//
+	// remark:
+	//   * when empty, Updatecli uses the local OCI credentials, such as the Docker ones.
 	//
 	// example:
-	//
-	// ```
-	// auths:
-	//   "ghcr.io":
-	//     token: "xxx"
-	//   "index.docker.io":
-	//     username: "admin"
-	//     password: "password"
-	// ```
+	//   ```
+	//   auths:
+	//     "ghcr.io":
+	//       token: "xxx"
+	//     "index.docker.io":
+	//       username: "admin"
+	//       password: "password"
+	//   ```
 	//
 	Auths map[string]docker.InlineKeyChain `yaml:",omitempty"`
-	// FileMatch allows to override default Dockerfile file matching.
-	// The pattern is matched against the file name only, not against its path.
-	// Default `["Dockerfile", "Dockerfile.*"]`
+	// "filematch" defines the file name patterns used to identify Dockerfiles.
+	//
+	// default:
+	//   ```
+	//   filematch:
+	//     - "Dockerfile"
+	//     - "Dockerfile.*"
+	//   ```
+	//
+	// remark:
+	//   * the pattern is matched against the file name only, not against its path.
+	//   * the pattern follows the Go filepath.Match syntax, such as "*" or "?".
+	//
 	FileMatch []string `yaml:",omitempty"`
-	//  `versionfilter` provides parameters to specify the version pattern used when generating manifest.
+	// "versionfilter" defines the version filter used by the generated manifests.
 	//
-	//  kind - semver
-	//    versionfilter of kind `semver` uses semantic versioning as version filtering
-	//    pattern accepts one of:
-	//      `prerelease` - Updatecli tries to identify the latest prerelease whatever it means
-	//      `patch` - Updatecli only handles patch version update
-	//      `minor` - Updatecli handles patch AND minor version update
-	//      `minoronly` - Updatecli handles minor version only
-	//      `major` - Updatecli handles patch, minor, AND major version update
-	//      `majoronly` - Updatecli only handles major version update
-	//      `a version constraint` such as `>= 1.0.0`
+	// default:
+	//   kind "semver" with pattern ">=<current tag>", combined with a tag filter derived from the current tag.
 	//
-	//  kind - regex
-	//    versionfilter of kind `regex` uses regular expression as version filtering
-	//    pattern accepts a valid regular expression
+	// remark:
+	//   * with kind "semver", "pattern" accepts:
+	//     * "prerelease": the latest prerelease of the current version.
+	//     * "patch": patch updates only.
+	//     * "minor": patch and minor updates.
+	//     * "minoronly": minor updates only.
+	//     * "major": patch, minor and major updates.
+	//     * "majoronly": major updates only.
+	//     * a version constraint, such as ">= 1.0.0".
+	//   * with kind "regex", "pattern" accepts a regular expression.
+	//   * more examples at https://www.updatecli.io/docs/core/versionfilter/
 	//
-	//  example:
-	//  ```
-	//    versionfilter:
-	//      kind: semver
-	//      pattern: minor
-	//  ```
+	// example:
+	//   ```
+	//   versionfilter:
+	//     kind: semver
+	//     pattern: minor
+	//   ```
 	//
-	//  and its type like regex, semver, or just latest.
-	//
-	//  More examples can be found at https://www.updatecli.io/docs/core/versionfilter/
 	VersionFilter version.Filter `yaml:",omitempty"`
 }
 

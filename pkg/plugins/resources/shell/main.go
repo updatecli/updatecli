@@ -11,19 +11,24 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
-// Spec defines a specification for a "shell" resource
-// parsed from an updatecli manifest file
+/*
+"shell" defines the specification for running a shell command.
+It can be used as a "source", a "condition", or a "target".
+*/
 type Spec struct {
-	// command specifies the shell command to execute by Updatecli
+	// "command" defines the shell command to run.
 	//
-	// default:
-	//   empty
+	// compatible:
+	//   * source
+	//   * condition
+	//   * target
 	//
 	// remark:
-	//   When the shell plugin is used in the context of condition, or target, the default source output is passed as an argument to the shell command.
-	//   for example the two following snippets are equivalent:
+	//   * "command" is required.
+	//   * in a condition or a target, the source output is appended to the command as its last argument.
+	//     The two following snippets are equivalent:
 	//
-	//   ---
+	// ```
 	//   targets:
 	//     default:
 	//       name: Example 2
@@ -31,7 +36,9 @@ type Spec struct {
 	//       sourceid: default
 	//       spec:
 	//         command: 'echo'
-	//   ---
+	// ```
+	//
+	// ```
 	//   targets:
 	//     default:
 	//       name: Example 2
@@ -39,108 +46,118 @@ type Spec struct {
 	//       disablesourceinput: true
 	//       spec:
 	//         command: 'echo {{ source "default"}}'
-	//   ---
-
+	// ```
+	//
 	Command string `yaml:",omitempty" jsonschema:"required"`
-	// environments allows to pass environment variable(s) to the shell script.
+	// "environments" defines the environment variables passed to the shell command.
 	//
-	//  default:
-	//     If environments is unset then it depends on the operating system.
-	//       - Windows: ["PATH","", "PSModulePath", "PSModuleAnalysisCachePath", "", "PATHEXT", "", "TEMP", "", "HOME", "", "USERPROFILE", "", "PROFILE"]
-	//       - Darwin/Linux: ["PATH", "", "HOME", "", "USER", "", "LOGNAME", "", "SHELL", "", "LANG", "", "LC_ALL"]
-	//
-	// remark:
-	//   For security reason, Updatecli doesn't pass the entire environment to the shell command but instead works
-	//   with an allow list of environment variables.
-	//
-	Environments *Environments `yaml:",omitempty"`
-	// ChangedIf defines how to interpret shell command execution.
-	// What a success means, what an error means, and what a warning would mean in the context of Updatecli.
-	//
-	// Please note that in the context of Updatecli,
-	//  - a success means nothing changed
-	//  - a warning means something changed
-	//  - an error means something went wrong
-	//
-	// Changedif can be of kind "exitcode", "console/output", or "file/checksum"
-	//
-	//   "console/output" (default)
-	//     Check the output of the command to identify if Updatecli should report a success, a warning, or an error.
-	//     If a target returns anything to stdout, Updatecli interprets it as a something changed, otherwise it's a success.
-	//
-	//     example:
-	//
-	//
-	//     ---
-	//     targets:
-	//       default:
-	//         name: 'doc: synchronize release note'
-	//         kind: 'shell'
-	//         disablesourceinput: true
-	//         spec:
-	//           command: 'releasepost --dry-run="$DRY_RUN" --config {{ .config }} --clean'
-	//     ---
-	//
-	//   "exitcode":
-	//     Check the exit code of the command to identify if Updatecli should report a success, a warning, or an error.
-	//
-	//     example:
-	//
-	//     ---
-	//     targets:
-	//       default:
-	//         name: 'doc: synchronize release note'
-	//         kind: 'shell'
-	//         disablesourceinput: true
-	//         spec:
-	//           command: 'releasepost --dry-run="$DRY_RUN" --config {{ .config }} --clean'
-	//           environments:
-	//             - name: 'GITHUB_TOKEN'
-	//             - name: 'PATH'
-	//           changedif:
-	//             kind: 'exitcode'
-	//             spec:
-	//               warning: 0
-	//               success: 1
-	//               failure: 2
-	//     ---
-	//
-	//
-	//   "file/checksum":
-	//     Check the checksum of file(s) to identify if Updatecli should report a success, a warning, or an error.
-	//
-	//     example:
-	//
-	//     ---
-	//     targets:
-	//       default:
-	//         disablesourceinput: true
-	//         name: Example of a shell command with a checksum success criteria
-	//         kind: shell
-	//         spec:
-	//           command: |
-	//     	  	   yq -i '.a.b[0].c = "cool"' file.yaml
-	//           changedif:
-	//             kind: file/checksum
-	//             spec:
-	//               files:
-	//                 - file.yaml
-	//     ---
-	//
-	//
-	//
-	ChangedIf SpecChangedIf `yaml:",omitempty" json:",omitempty"`
-	// Shell specifies which shell interpreter to use.
+	// compatible:
+	//   * source
+	//   * condition
+	//   * target
 	//
 	// default:
-	//   Depends on the operating system:
-	//     - Windows: "powershell"
-	//     - Darwin/Linux: "/bin/sh"
+	//   depends on the operating system:
+	//   * Windows: PATH, PSModulePath, PSModuleAnalysisCachePath, PATHEXT, TEMP, HOME, USERPROFILE, PROFILE
+	//   * Darwin/Linux: PATH, HOME, USER, LOGNAME, SHELL, LANG, LC_ALL
+	//
+	// remark:
+	//   * for security reasons, Updatecli does not pass its whole environment to the shell command.
+	//     It uses an allow list of environment variables instead.
+	//   * "DRY_RUN" is reserved and set by Updatecli, so it cannot be defined.
+	//   * "UPDATECLI_PIPELINE_STAGE" is set by Updatecli to the current stage.
+	//
+	// example:
+	//   * environments:
+	//       - name: PATH
+	//       - name: GITHUB_TOKEN
+	//
+	Environments *Environments `yaml:",omitempty"`
+	// "changedif" defines how Updatecli interprets the result of the shell command.
+	//
+	// In Updatecli, a success means nothing changed, a warning means something
+	// changed, and an error means something went wrong.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//   * target
+	//
+	// default:
+	//   console/output
+	//
+	// remark:
+	//   * accepted kinds are "console/output", "exitcode" and "file/checksum".
+	//   * "console/output" checks the command output. In a target, any output on
+	//     stdout means something changed, otherwise nothing changed.
+	//   * "exitcode" checks the command exit code.
+	//   * "file/checksum" checks the checksum of files before and after the command.
+	//
+	// example:
+	//
+	// ```
+	//   targets:
+	//     default:
+	//       name: 'doc: synchronize release note'
+	//       kind: 'shell'
+	//       disablesourceinput: true
+	//       spec:
+	//         command: 'releasepost --dry-run="$DRY_RUN" --config {{ .config }} --clean'
+	//         environments:
+	//           - name: 'GITHUB_TOKEN'
+	//           - name: 'PATH'
+	//         changedif:
+	//           kind: 'exitcode'
+	//           spec:
+	//             warning: 0
+	//             success: 1
+	//             failure: 2
+	// ```
+	//
+	// ```
+	//   targets:
+	//     default:
+	//       disablesourceinput: true
+	//       name: Example of a shell command with a checksum success criteria
+	//       kind: shell
+	//       spec:
+	//         command: |
+	//           yq -i '.a.b[0].c = "cool"' file.yaml
+	//         changedif:
+	//           kind: file/checksum
+	//           spec:
+	//             files:
+	//               - file.yaml
+	// ```
+	//
+	ChangedIf SpecChangedIf `yaml:",omitempty" json:",omitempty"`
+	// "shell" defines the shell interpreter used to run the command.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//   * target
+	//
+	// default:
+	//   depends on the operating system:
+	//   * Windows: "powershell.exe -executionpolicy remotesigned -File"
+	//   * Darwin/Linux: "/bin/sh"
 	//
 	Shell string `yaml:",omitempty"`
-	// workdir specifies the working directory path from where to execute the command. It defaults to the current context path (scm or current shell). Updatecli join the current path and the one specified in parameter if the parameter one contains a relative path.
+	// "workdir" defines the working directory from where the command runs.
 	//
-	// default: If a scmid is specified then the default
+	// compatible:
+	//   * source
+	//   * condition
+	//   * target
+	//
+	// default:
+	//   the scm checkout directory, or the manifest directory when no scm is set.
+	//
+	// remark:
+	//   * a relative path is joined to the default directory.
+	//   * an absolute path is used as is.
+	//
 	WorkDir string `yaml:",omitempty"`
 }
 

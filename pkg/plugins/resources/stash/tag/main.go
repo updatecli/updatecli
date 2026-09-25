@@ -13,16 +13,46 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
-// Spec defines settings used to interact with Bitbucket Server release
+/*
+"stash/tag" defines the specification for retrieving tags from a Bitbucket Server repository.
+It can be used as a "source" or a "condition".
+*/
 type Spec struct {
 	client.Spec `yaml:",inline,omitempty"`
-	// [S][C] Owner specifies repository owner
+	// "owner" defines the repository owner.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//
+	// remark:
+	//   * "owner" is required.
+	//
 	Owner string `yaml:",omitempty" jsonschema:"required"`
-	// [S][C] Repository specifies the name of a repository for a specific owner
+	// "repository" defines the repository name.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//
+	// remark:
+	//   * "repository" is required.
+	//
 	Repository string `yaml:",omitempty" jsonschema:"required"`
-	// [S][C] VersionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
+	// "versionfilter" defines the version pattern and its kind, such as "regex", "semver" or "latest".
+	//
+	// compatible:
+	//   * source
+	//
+	// default:
+	//   latest
+	//
 	VersionFilter version.Filter `yaml:",omitempty"`
-	// [S] Tag defines the Bitbucket tag .
+	// "tag" defines the tag name to check.
+	//
+	// compatible:
+	//   * condition
+	//
 	Tag string `yaml:",omitempty"`
 }
 

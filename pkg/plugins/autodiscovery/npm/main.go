@@ -13,88 +13,135 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/vulnerability"
 )
 
-// Spec defines the parameters which can be provided to the NPM builder.
+/*
+"npm" defines the specification for the npm autodiscovery crawler.
+It searches package.json files and generates manifests to update their npm packages.
+*/
 type Spec struct {
-	// RootDir defines the root directory used to recursively search for npm packages.json
+	// "rootdir" defines the directory where the crawler starts searching for package.json files.
+	//
+	// default:
+	//   the scm directory when "scmid" is set, otherwise the directory relative paths resolve from, by default the working directory.
+	//
+	// remark:
+	//   * a relative path is resolved from the default directory.
+	//   * an absolute path is used as is, instead of the scm directory.
+	//
 	RootDir string `yaml:",omitempty"`
-	// Ignore allows to specify rule to ignore autodiscovery a specific NPM based on a rule
+	// "ignore" defines rules to exclude matching npm packages from the autodiscovery.
+	//
+	// remark:
+	//   * a npm package is ignored when it matches at least one rule.
+	//
 	Ignore MatchingRules `yaml:",omitempty"`
-	// Only allows to specify rule to only autodiscover manifest for a specific NPM based on a rule
+	// "only" defines rules to restrict the autodiscovery to matching npm packages.
+	//
+	// remark:
+	//   * a npm package is kept only when it matches at least one rule.
+	//
 	Only MatchingRules `yaml:",omitempty"`
-	//  `versionfilter` provides parameters to specify the version pattern used when generating manifest.
+	// "versionfilter" defines the version filter used by the generated manifests.
 	//
-	//  kind - semver
-	//    versionfilter of kind `semver` uses semantic versioning as version filtering
-	//    pattern accepts one of:
-	//      `prerelease` - Updatecli tries to identify the latest prerelease whatever it means
-	//      `patch` - Updatecli only handles patch version update
-	//      `minor` - Updatecli handles patch AND minor version update
-	//      `minoronly` - Updatecli handles minor version only
-	//      `major` - Updatecli handles patch, minor, AND major version update
-	//      `majoronly` - Updatecli only handles major version update
-	//      `a version constraint` such as `>= 1.0.0`
+	// default:
+	//   * an exact version: kind "semver" with pattern ">=<current version>".
+	//   * a version constraint: kind "semver" with the constraint as pattern, or "*" when "ignoreversionconstraints" is true.
 	//
-	//  kind - regex
-	//    versionfilter of kind `regex` uses regular expression as version filtering
-	//    pattern accepts a valid regular expression
+	// remark:
+	//   * with kind "semver", "pattern" accepts:
+	//     * "prerelease": the latest prerelease of the current version.
+	//     * "patch": patch updates only.
+	//     * "minor": patch and minor updates.
+	//     * "minoronly": minor updates only.
+	//     * "major": patch, minor and major updates.
+	//     * "majoronly": major updates only.
+	//     * a version constraint, such as ">= 1.0.0".
+	//   * with kind "regex", "pattern" accepts a regular expression.
+	//   * more examples at https://www.updatecli.io/docs/core/versionfilter/
+	//   * it is ignored for a package declared with a version constraint, unless "ignoreversionconstraints" is true.
+	//   * it cannot be combined with "vulnerability".
 	//
-	//  example:
-	//  ```
-	//    versionfilter:
-	//      kind: semver
-	//      pattern: minor
-	//  ```
+	// example:
+	//   ```
+	//   versionfilter:
+	//     kind: semver
+	//     pattern: minor
+	//   ```
 	//
-	//  and its type like regex, semver, or just latest.
-	//
-	//  More examples can be found at https://www.updatecli.io/docs/core/versionfilter/
 	VersionFilter version.Filter `yaml:",omitempty"`
-	// IgnoreVersionConstraints indicates whether to respect version constraints defined in package.json or not.
-	// When set to true, Updatecli will ignore version constraints and update to the latest version available
-	// in the registry according to the specified version filter.
-	// Default is false.
+	// "ignoreversionconstraints" defines whether the version constraints set in package.json are ignored.
 	//
-	// Remark:
-	//  * If set to false, Updatecli will try to convert version constrains to valid semantic version
-	//    so we can use versionFilter to retrieve the last Major/Minor/Patch version but in case of complex version constraints, such as `>=1.0.0 <2.0.0`,
-	//    Updatecli will convert it to the first version it detects such as 1.0.0 in our example
+	// When true, a package declared with a version constraint is updated to the latest version
+	// accepted by "versionfilter", instead of the latest version accepted by the constraint.
+	//
+	// default:
+	//   false
+	//
+	// remark:
+	//   * when true and "versionfilter" is set, Updatecli converts the constraint to a version
+	//     so "versionfilter" can select the next patch, minor or major version. A complex constraint,
+	//     such as ">=1.0.0 <2.0.0", is converted to the first version it holds, 1.0.0 in this example.
+	//   * it cannot be combined with "vulnerability".
+	//
 	IgnoreVersionConstraints *bool `yaml:",omitempty"`
-	// NpmrcPath defines the path to the .npmrc file to use for all discovered packages.
-	// This will be propagated to all generated npm resource specs.
-	NpmrcPath string `yaml:"npmrcpath,omitempty"`
-	// URL defines the registry url (defaults to `https://registry.npmjs.org/`).
-	// This will be propagated to all generated npm resource specs.
-	URL string `yaml:",omitempty"`
-	// RegistryToken defines the token to use when connecting to the registry.
-	// This will be propagated to all generated npm resource specs.
-	RegistryToken string `yaml:",omitempty"`
-	// Age defines the minimum or maximum age of a release to be considered valid.
-	// It accepts a duration string (e.g., "24h", "7d", "3w", "1y").
-	// This will be propagated to all generated npm resource specs.
+	// "npmrcpath" defines the path of the .npmrc file used by every discovered package.
 	//
-	// By default, `minimum` is set to `3d` so Updatecli doesn't suggest a package version
-	// published less than three days ago. Specifying an empty `age: {}` disables that behavior.
+	// remark:
+	//   * it is propagated to the generated npm resources.
+	//
+	NpmrcPath string `yaml:"npmrcpath,omitempty"`
+	// "url" defines the npm registry url.
+	//
+	// default:
+	//   https://registry.npmjs.org/
+	//
+	// remark:
+	//   * it is propagated to the generated npm sources.
+	//
+	URL string `yaml:",omitempty"`
+	// "registrytoken" defines the token used to authenticate with the registry.
+	//
+	// remark:
+	//   * it is propagated to the generated npm sources.
+	//
+	RegistryToken string `yaml:",omitempty"`
+	// "age" defines the minimum or maximum age of a release to be considered valid.
+	//
+	// default:
+	//   ```
+	//   age:
+	//     minimum: 3d
+	//   ```
+	//
+	// remark:
+	//   * it accepts a duration string, such as "24h", "7d", "3w" or "1y".
+	//   * it is propagated to the generated npm sources.
+	//   * the default keeps Updatecli from suggesting a package version published less than three days ago.
+	//   * an empty "age: {}" disables the default.
+	//   * it cannot be combined with "vulnerability".
+	//
 	Age *age.Spec `yaml:",omitempty"`
-	// Vulnerability switches the autodiscovery to security updates, based on the OSV database (https://osv.dev).
+	// "vulnerability" switches the autodiscovery to security updates, based on the OSV database (https://osv.dev).
+	//
 	// A package is only updated when its current version has known vulnerabilities,
 	// to the lowest version without any.
 	//
-	// example:
-	//  ```
-	//    vulnerability:
-	//      minseverity: high
-	//      ignore:
-	//        - GHSA-jr5f-v2jv-69x6
-	//  ```
-	//
 	// remark:
-	//   * Only security updates are generated, routine updates require a separate manifest.
-	//   * It is mutually exclusive with age, versionfilter and ignoreversionconstraints.
-	//   * The default minimum release age doesn't apply, a fixed version is suggested as soon as it is known.
-	//   * The current version is the exact version from package.json or, for a version constraint,
+	//   * only security updates are generated, routine updates require a separate manifest.
+	//   * it cannot be combined with "age", "versionfilter" and "ignoreversionconstraints".
+	//   * the default minimum release age does not apply, a fixed version is suggested as soon as it is known.
+	//   * the current version is the exact version from package.json or, for a version constraint,
 	//     the version resolved in the package-lock.json, pnpm-lock.yaml or yarn.lock next to it,
 	//     or at the root of its workspace. Packages without an identifiable current version are ignored.
-	//   * Labels, such as "security", are set on the action used by the manifest.
+	//   * labels, such as "security", are set on the action used by the manifest.
+	//
+	// example:
+	//   ```
+	//   vulnerability:
+	//     minseverity: high
+	//     ignore:
+	//       - GHSA-jr5f-v2jv-69x6
+	//   ```
+	//
 	Vulnerability *vulnerability.Spec `yaml:",omitempty"`
 }
 

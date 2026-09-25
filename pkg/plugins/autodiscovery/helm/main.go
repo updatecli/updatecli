@@ -11,66 +11,120 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
-// Spec defines the Helm parameters.
+/*
+"helm" defines the specification for the Helm autodiscovery crawler.
+It searches Helm charts and generates manifests to update their chart dependencies and the container images set in their values files.
+*/
 type Spec struct {
-	// auths provides a map of registry credentials where the key is the registry URL without scheme
-	// if empty, updatecli relies on OCI credentials such as the one used by Docker.
+	// "auths" defines the registry credentials, keyed by registry host without scheme.
+	//
+	// remark:
+	//   * when empty, Updatecli uses the local OCI credentials, such as the Docker ones.
 	//
 	// example:
-	//
-	// ```
-	// auths:
-	//   "ghcr.io":
-	//     token: "xxx"
-	//   "index.docker.io":
-	//     username: "admin"
-	//     password: "password"
-	// ```
+	//   ```
+	//   auths:
+	//     "ghcr.io":
+	//       token: "xxx"
+	//     "index.docker.io":
+	//       username: "admin"
+	//       password: "password"
+	//   ```
 	//
 	Auths map[string]docker.InlineKeyChain `yaml:",omitempty"`
-	// digest provides a parameter to specify if the generated manifest should use a digest on top of the tag when updating container.
+	// "digest" defines whether the generated manifests pin the image digest in addition to the tag.
+	//
+	// default:
+	//   true
+	//
+	// remark:
+	//   * it applies to container images only.
+	//
 	Digest *bool `yaml:",omitempty"`
-	// ignorecontainer disables OCI container tag update when set to true
+	// "ignorecontainer" disables the container image updates.
+	//
+	// default:
+	//   false
+	//
 	IgnoreContainer bool `yaml:",omitempty"`
-	// ignorechartdependency disables Helm chart dependencies update when set to true
+	// "ignorechartdependency" disables the chart dependency updates.
+	//
+	// default:
+	//   false
+	//
 	IgnoreChartDependency bool `yaml:",omitempty"`
-	// Ignore specifies rule to ignore Helm chart update.
+	// "ignore" defines rules to exclude matching chart dependencies or container images from the autodiscovery.
+	//
+	// remark:
+	//   * a chart dependency or container image is ignored when it matches at least one rule.
+	//
 	Ignore MatchingRules `yaml:",omitempty"`
-	// rootdir defines the root directory used to recursively search for Helm Chart
+	// "rootdir" defines the directory where the crawler starts searching for Helm charts.
+	//
+	// default:
+	//   the scm directory when "scmid" is set, otherwise the directory relative paths resolve from, by default the working directory.
+	//
+	// remark:
+	//   * a relative path is resolved from the default directory.
+	//   * an absolute path is used as is, instead of the scm directory.
+	//
 	RootDir string `yaml:",omitempty"`
-	// only specify required rule(s) to restrict Helm chart update.
+	// "only" defines rules to restrict the autodiscovery to matching chart dependencies or container images.
+	//
+	// remark:
+	//   * a chart dependency or container image is kept only when it matches at least one rule.
+	//
 	Only MatchingRules `yaml:",omitempty"`
-	//  `versionfilter` provides parameters to specify the version pattern used when generating manifest.
+	// "versionfilter" defines the version filter used by the generated manifests.
 	//
-	//  kind - semver
-	//    versionfilter of kind `semver` uses semantic versioning as version filtering
-	//    pattern accepts one of:
-	//      `prerelease` - Updatecli tries to identify the latest prerelease whatever it means
-	//      `patch` - Updatecli only handles patch version update
-	//      `minor` - Updatecli handles patch AND minor version update
-	//      `minoronly` - Updatecli handles minor version only
-	//      `major` - Updatecli handles patch, minor, AND major version update
-	//      `majoronly` - Updatecli only handles major version update
-	//      `a version constraint` such as `>= 1.0.0`
+	// default:
+	//   * chart dependencies: kind "semver" with pattern "*", the latest version.
+	//   * container images: kind "semver" with pattern ">=<current tag>", combined with a tag filter derived from the current tag.
 	//
-	//  kind - regex
-	//    versionfilter of kind `regex` uses regular expression as version filtering
-	//    pattern accepts a valid regular expression
+	// remark:
+	//   * with kind "semver", "pattern" accepts:
+	//     * "prerelease": the latest prerelease of the current version.
+	//     * "patch": patch updates only.
+	//     * "minor": patch and minor updates.
+	//     * "minoronly": minor updates only.
+	//     * "major": patch, minor and major updates.
+	//     * "majoronly": major updates only.
+	//     * a version constraint, such as ">= 1.0.0".
+	//   * with kind "regex", "pattern" accepts a regular expression.
+	//   * more examples at https://www.updatecli.io/docs/core/versionfilter/
 	//
-	//  example:
-	//  ```
-	//    versionfilter:
-	//      kind: semver
-	//      pattern: minor
-	//  ```
+	// example:
+	//   ```
+	//   versionfilter:
+	//     kind: semver
+	//     pattern: minor
+	//   ```
 	//
-	//  and its type like regex, semver, or just latest.
-	//
-	//  More examples can be found at https://www.updatecli.io/docs/core/versionfilter/
 	VersionFilter version.Filter `yaml:",omitempty"`
-	// [target] Defines if a Chart should be packaged or not.
+	// "skippackaging" sets "skippackaging" on the generated helm targets.
+	//
+	// default:
+	//   false
+	//
+	// remark:
+	//   * see the "skippackaging" field of the helm resource.
+	//
 	SkipPackaging bool `yaml:",omitempty"`
-	// [target] Defines if a Chart changes, triggers, or not, a Chart version update, accepted values is a comma separated list of `none,major,minor,patch`
+	// "versionincrement" sets "versionincrement" on the generated helm targets.
+	//
+	// It defines how the chart version is bumped when the chart changes.
+	//
+	// default:
+	//   minor, the helm target default.
+	//
+	// remark:
+	//   * accepted values are a comma separated list of "major", "minor" and "patch",
+	//     or one of "auto" or "none" on its own.
+	//
+	// example:
+	//   * versionincrement: patch
+	//   * versionincrement: none
+	//
 	VersionIncrement string `yaml:",omitempty"`
 }
 

@@ -9,12 +9,37 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
+// Spec defines the parameters of the "exitcode" success criteria.
 type Spec struct {
-	// Warning defines the command exit code used by Updatecli to identify a change need. Default to 2 if no exitcode have been specified
+	// "warning" defines the exit code meaning that something changed.
+	//
+	// default:
+	//   2
+	//
+	// remark:
+	//   * only used in a target.
+	//   * the defaults apply only when "warning", "success" and "failure" are all unset or set to 0.
+	//
 	Warning int `yaml:",omitempty" jsonschema:"required"`
-	// Success defines the command exit code used by Updatecli to identify no changes are needed. Default to 0 if no exitcode have been specified
+	// "success" defines the exit code meaning that nothing changed.
+	//
+	// default:
+	//   0
+	//
+	// remark:
+	//   * the defaults apply only when "warning", "success" and "failure" are all unset or set to 0.
+	//   * "success" and "failure" must differ.
+	//
 	Success int `yaml:",omitempty" jsonschema:"required"`
-	// Failure defines the command exit code used by Updatecli to identify that something went wrong. Default to 1 if no exitcode have been specified
+	// "failure" defines the exit code meaning that something went wrong.
+	//
+	// default:
+	//   1
+	//
+	// remark:
+	//   * the defaults apply only when "warning", "success" and "failure" are all unset or set to 0.
+	//   * "success" and "failure" must differ.
+	//
 	Failure int `yaml:",omitempty" jsonschema:"required"`
 }
 

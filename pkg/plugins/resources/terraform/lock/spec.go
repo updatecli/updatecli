@@ -7,74 +7,84 @@ import (
 )
 
 /*
-"terraform/lock"  defines the specification for manipulating .terraform-lock.hcl files.
-It can be used as a "condition", or a "target".
+"terraform/lock" defines the specification for manipulating .terraform.lock.hcl files.
+It can be used as a "condition" or a "target".
 */
 type Spec struct {
-	/*
-		"file" defines the terraform lock file path to interact with.
-
-		compatible:
-			* condition
-			* target
-
-		remark:
-			* "file" and "files" are mutually exclusive
-			* protocols "https://", "http://", and "file://" are supported in path for condition
-	*/
+	// "file" defines the path of the Terraform lock file to use.
+	//
+	// compatible:
+	//   * condition
+	//   * target
+	//
+	// remark:
+	//   * "file" and "files" are mutually exclusive.
+	//   * the schemes "https://", "http://" and "file://" are supported in a condition.
+	//
 	File string `yaml:",omitempty"`
-	/*
-		"files" defines the list of terraform lock files path to interact with.
-
-		compatible:
-			* condition
-			* target
-
-		remark:
-			* file and files are mutually exclusive
-			* when using as a condition only one file is supported
-			* protocols "https://", "http://", and "file://" are supported in file path for condition
-	*/
+	// "files" defines the list of Terraform lock file paths to use.
+	//
+	// compatible:
+	//   * condition
+	//   * target
+	//
+	// remark:
+	//   * "file" and "files" are mutually exclusive.
+	//   * a condition only supports one file.
+	//   * the schemes "https://", "http://" and "file://" are supported in a condition.
+	//
 	Files []string `yaml:",omitempty"`
-	/*
-		"value" is the value associated with a terraform provider.
-
-		compatible:
-			* condition
-			* target
-
-		default:
-			When used from a condition or a target, the default value is set to linked source output.
-	*/
+	// "value" defines the version of the Terraform provider.
+	//
+	// compatible:
+	//   * condition
+	//   * target
+	//
+	// default:
+	//   in a condition or a target, the output of the associated source.
+	//
 	Value string `yaml:",omitempty"`
-
-	/*
-		"provider" is the terraform provider you wish to update, supports with or without registry url.
-
-		compatible:
-			* condition
-			* target
-	*/
+	// "provider" defines the Terraform provider to update.
+	//
+	// compatible:
+	//   * condition
+	//   * target
+	//
+	// remark:
+	//   * "provider" is required.
+	//   * it accepts a provider address with or without the registry hostname.
+	//
+	// example:
+	//   * provider: hashicorp/kubernetes
+	//   * provider: registry.terraform.io/hashicorp/kubernetes
+	//
 	Provider string `yaml:",omitempty"`
-
-	/*
-		"platforms" is the target platforms to request package checksums for.
-
-		compatible:
-			* condition
-			* target
-	*/
+	// "platforms" defines the target platforms to request package checksums for.
+	//
+	// compatible:
+	//   * condition
+	//   * target
+	//
+	// remark:
+	//   * "platforms" is required.
+	//
+	// example:
+	//   * platforms:
+	//     - linux_amd64
+	//     - darwin_arm64
+	//
 	Platforms []string `yaml:",omitempty"`
-
-	/*
-		"skipconstraints" will control whether the constraint in lock file is updated
-
-		compatible:
-			* condition
-			* target
-
-		NOTE: That turning this off can break the lockfile if version value source does not follow the constraints
-	*/
+	// "skipconstraints" defines whether the constraints of the lock file are left untouched.
+	//
+	// compatible:
+	//   * target
+	//
+	// default:
+	//   false
+	//
+	// remark:
+	//   * enabling it can break the lock file if the version from the source does not follow the constraints.
+	//
 	SkipConstraints bool `yaml:",omitempty"`
 }
 

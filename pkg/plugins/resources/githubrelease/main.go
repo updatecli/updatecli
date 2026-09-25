@@ -21,115 +21,156 @@ const (
 	KeyTitle             = "title"
 )
 
-// Spec defines a specification for a "gittag" resource
-// parsed from an updatecli manifest file
+/*
+"githubrelease" defines the specification for retrieving and checking GitHub releases.
+It can be used as a "source" or a "condition".
+*/
 type Spec struct {
-	// owner defines repository owner to interact with.
-	//
-	// required: true
-	//
-	// compatible:
-	//  * source
-	//  * condition
-	//
-	Owner string `yaml:",omitempty" jsonschema:"required"`
-	// repository defines the repository name to interact with.
-	//
-	// required: true
-	//
-	// compatible:
-	//  * source
-	//  * condition
-	//
-	Repository string `yaml:",omitempty" jsonschema:"required"`
-	// token defines the GitHub personal access token used to authenticate with.
-	//
-	// more information on https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens
-	//
-	// required: true
-	//
-	// compatible:
-	//  * source
-	//  * condition
-	//
-	Token string `yaml:",omitempty"`
-	// URL defines the default github url in case of GitHub enterprise.
-	//
-	// default: https://github.com
-	//
-	// compatible:
-	//  * source
-	//  * condition
-	URL string `yaml:",omitempty"`
-	// username defines the username used to authenticate with GitHub API.
-	//
-	// compatible:
-	//  * source
-	//  * condition
-	Username string `yaml:",omitempty"`
-	// versionFilter provides parameters to specify version pattern and its type like regex, semver, or just latest.
-	//
-	// default: latest
-	//
-	// compatible:
-	//  * source
-	//
-	VersionFilter version.Filter `yaml:",omitempty"`
-	// age defines the minimum or maximum age of a release to be considered valid.
-	// It accepts a duration string (e.g., "24h", "7d", "3w", "1y").
-	//
-	// compatible:
-	//  * source
-	//
-	// remark:
-	//  * the age filter cannot be applied to the git tag fallback used when a repository
-	//    doesn't publish any GitHub release.
-	//
-	Age age.Spec `yaml:",omitempty"`
-	// typeFilter specifies the GitHub Release type to retrieve before applying the versionfilter rule
-	//
-	// default:
-	//  * draft: false
-	//  * prerelease: false
-	//  * release: true
-	//  * latest: false
-	//
-	// compatible:
-	//  * source
-	// 	* condition
-	//
-	TypeFilter github.ReleaseType `yaml:",omitempty"`
-	// tag allows to check for a specific release tag, release tag hash, or release title depending on a the parameter key.
-	//
-	// compatible:
-	//   * condition
-	//
-	// default: source input
-	//
-	Tag string `yaml:",omitempty"`
-	// "key" defines the GitHub release information we are looking for.
-	// It accepts one of the following inputs:
-	//    * "name": returns the "latest" tag name
-	//    * "hash": returns the commit associated with the latest tag name
-	//    * "title": returns the latest release title
-	//
-	// accepted values:
-	//  * taghash
-	//  * tagname
-	//  * title
-	//  * hash (deprecated)
-	//  * name (deprecated)
-	//
-	// default: 'tagname'
+	// "owner" defines the owner of the GitHub repository.
 	//
 	// compatible:
 	//   * source
 	//   * condition
+	//
+	// remark:
+	//   * "owner" is required.
+	//
+	// example:
+	//   * owner: updatecli
+	//
+	Owner string `yaml:",omitempty" jsonschema:"required"`
+	// "repository" defines the name of the GitHub repository.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//
+	// remark:
+	//   * "repository" is required.
+	//
+	// example:
+	//   * repository: updatecli
+	//
+	Repository string `yaml:",omitempty" jsonschema:"required"`
+	// "token" defines the GitHub personal access token used to authenticate with the GitHub API.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//
+	// remark:
+	//   * the environment variable "UPDATECLI_GITHUB_TOKEN" takes precedence over "token".
+	//   * without "token" or "app", the environment variable "GITHUB_TOKEN" is used.
+	//   * without any credential, Updatecli sends unauthenticated requests, so operations
+	//     requiring authentication fail.
+	//   * more information on https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens
+	//
+	Token string `yaml:",omitempty"`
+	// "url" defines the GitHub URL, for GitHub Enterprise.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//
+	// default:
+	//   https://github.com
+	//
+	// remark:
+	//   * "https://" is added when the URL has no scheme.
+	//
+	URL string `yaml:",omitempty"`
+	// "username" defines the username used to authenticate with the GitHub API.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//
+	Username string `yaml:",omitempty"`
+	// "versionfilter" defines the version pattern and its type, such as regex, semver, or latest.
+	//
+	// compatible:
+	//   * source
+	//
+	// default:
+	//   latest
+	//
+	VersionFilter version.Filter `yaml:",omitempty"`
+	// "age" defines the minimum or maximum age of a release to be considered valid.
+	//
+	// compatible:
+	//   * source
+	//
+	// remark:
+	//   * "minimum" and "maximum" accept a duration string such as "24h", "7d", "3w" or "1y".
+	//   * when the age filter discards every release, the source is skipped.
+	//   * the age filter cannot be applied to the git tag fallback used when a repository
+	//     does not publish any GitHub release.
+	//
+	// example:
+	// ```
+	//   age:
+	//     minimum: 7d
+	// ```
+	//
+	Age age.Spec `yaml:",omitempty"`
+	// "typefilter" defines the GitHub release types to retrieve before applying "versionfilter".
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//
+	// default:
+	//   * draft: false
+	//   * prerelease: false
+	//   * release: true
+	//   * latest: false
+	//
+	// remark:
+	//   * when "draft", "prerelease" and "release" are all false, "release" is set to true.
+	//   * when "typefilter" is unset and the repository has no release, Updatecli falls back to git tags.
+	//
+	TypeFilter github.ReleaseType `yaml:",omitempty"`
+	// "tag" defines the release tag name, tag hash, or release title to check, depending on "key".
+	//
+	// compatible:
+	//   * condition
+	//
+	// default:
+	//   the output of the associated source.
+	//
+	Tag string `yaml:",omitempty"`
+	// "key" defines which release information Updatecli looks for.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//
+	// default:
+	//   tagname
+	//
+	// remark:
+	//   * accepted values are:
+	//     * "tagname": the release tag name
+	//     * "taghash": the commit hash of the release tag
+	//     * "title": the release title
+	//   * "name" is a deprecated alias of "tagname".
+	//   * "hash" is a deprecated alias of "taghash".
+	//
+	// example:
+	//   * key: taghash
+	//
 	Key string `yaml:",omitempty"`
-	// "app" specifies the GitHub App credentials used to authenticate with GitHub API.
-	// It is not compatible with the "token" and "username" fields.
-	// It is recommended to use the GitHub App authentication method for better security and granular permissions.
-	// For more information, please refer to the following documentation:
+	// "app" defines the GitHub App credentials used to authenticate with the GitHub API.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//
+	// remark:
+	//   * "app" is not compatible with "token" and "username".
+	//   * a GitHub App is the recommended authentication method, for better security and granular permissions.
+	//   * more information on https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/authenticating-as-a-github-app-installation
+	//
 	App *app.Spec `yaml:",omitempty"`
 }
 

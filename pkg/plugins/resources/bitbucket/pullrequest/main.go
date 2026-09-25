@@ -9,21 +9,49 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/scms/bitbucket"
 )
 
-// Spec defines settings used to interact with Bitbucket Server pullrequest
-// It's a mapping of user input from a Updatecli manifest and it shouldn't modified
+/*
+"bitbucket/pullrequest" defines the specification for opening or updating a Bitbucket Cloud pull request.
+*/
 type Spec struct {
 	client.Spec
-	// SourceBranch specifies the pullrequest source branch
+	// "sourcebranch" defines the branch the pull request merges from.
+	//
+	// default:
+	//   the working branch of the associated scm.
+	//
 	SourceBranch string `yaml:",inline,omitempty"`
-	// TargetBranch specifies the pullrequest target branch
+	// "targetbranch" defines the branch the pull request merges into.
+	//
+	// default:
+	//   the branch of the associated scm.
+	//
 	TargetBranch string `yaml:",inline,omitempty"`
-	// Owner specifies repository owner
+	// "owner" defines the repository owner.
+	//
+	// default:
+	//   the owner of the associated scm.
+	//
 	Owner string `yaml:",omitempty" jsonschema:"required"`
-	// Repository specifies the name of a repository for a specific owner
+	// "repository" defines the repository name.
+	//
+	// default:
+	//   the repository of the associated scm.
+	//
 	Repository string `yaml:",omitempty" jsonschema:"required"`
-	// Title defines the Bitbucket pullrequest title.
+	// "title" defines the pull request title.
+	//
+	// default:
+	//   the action title.
+	//
 	Title string `yaml:",inline,omitempty"`
-	// Body defines the Bitbucket pullrequest body
+	// "body" defines a custom pull request body.
+	//
+	// default:
+	//   a report of the changes made by Updatecli.
+	//
+	// remark:
+	//   * when set, it replaces the generated report.
+	//
 	Body string `yaml:",inline,omitempty"`
 }
 

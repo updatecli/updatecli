@@ -13,11 +13,11 @@ import (
 )
 
 /*
-"yaml"  defines the specification for manipulating "yaml" files.
+"yaml" defines the specification for manipulating yaml files.
 It can be used as a "source", a "condition", or a "target".
 */
 type Spec struct {
-	// DocumentIndex defines the index of the document to interact with in a multi-document yaml file.
+	// "documentindex" defines the index of the document to use in a multi document yaml file.
 	//
 	// compatible:
 	//   * source
@@ -27,201 +27,207 @@ type Spec struct {
 	// default:
 	//   empty
 	//
-	//  remark:
-	//   * when not set in the context of a source, the value will be retrieve from the first documents matching query.
-	//   * when not set in the context of a condition or a target, all documents will be evaluated by the query.
-	//   * When not set in the context of a target, all documents will be updated by the query.
+	// remark:
+	//   * when unset in a source, the value is retrieved from the first document matching the query.
+	//   * when unset in a condition or a target, every document is evaluated by the query.
 	//
 	// example:
 	//   * documentindex: 0
 	//   * documentindex: 1
 	//
 	DocumentIndex *int `yaml:",omitempty"`
-	//"engine" defines the engine to use to manipulate the yaml file.
+	// "engine" defines the library used to manipulate the yaml file.
 	//
-	//There is no one good Golang library to manipulate yaml files.
-	//And each one of them have has its pros and cons so we decided to allow this customization based on user's needs.
+	// No single Go library handles yaml well in every case, and each has its own strengths,
+	// so Updatecli lets you pick the one that suits your file.
 	//
-	//remark:
-	//  * Accepted value is one of "yamlpath", "go-yaml","default" or nothing
-	//  * go-yaml, "default" and "" are equivalent
+	// default:
+	//   go-yaml
+	//
+	// remark:
+	//   * accepted values are "yamlpath", "go-yaml", "default" or empty.
+	//   * "go-yaml", "default" and empty are equivalent.
+	//
 	Engine string `yaml:",omitempty"`
-	//"file" defines the yaml file path to interact with.
+	// "file" defines the path of the yaml file to use.
 	//
-	//compatible:
-	//  * source
-	//  * condition
-	//  * target
+	// compatible:
+	//   * source
+	//   * condition
+	//   * target
 	//
-	//remark:
-	//  * "file" and "files" are mutually exclusive
-	//  * scheme "https://", "http://", and "file://" are supported in path for source and condition
+	// remark:
+	//   * "file" and "files" are mutually exclusive.
+	//   * the schemes "https://", "http://" and "file://" are supported in a source or a condition.
 	//
 	File string `yaml:",omitempty"`
-	//"files" defines the list of yaml files path to interact with.
+	// "files" defines the list of yaml file paths to use.
 	//
-	//compatible:
-	//  * condition
-	//  * target
+	// compatible:
+	//   * condition
+	//   * target
 	//
-	//remark:
-	//  * file and files are mutually exclusive
-	//  * protocols "https://", "http://", and "file://" are supported in file path for source and condition
+	// remark:
+	//   * "file" and "files" are mutually exclusive.
+	//   * the schemes "https://", "http://" and "file://" are supported in a condition.
 	//
 	Files []string `yaml:",omitempty"`
-	//"key" defines the yaml keypath.
+	// "key" defines the yaml key path.
 	//
-	//compatible:
-	//  * source
-	//  * condition
-	//  * target
+	// compatible:
+	//   * source
+	//   * condition
+	//   * target
 	//
-	//remark:
-	//  * key is a simpler version of yamlpath accepts keys.
-	//  * as a target, a key that a document does not hold is an error, so that a
-	//    manifest never reports a success for an update it did not make. The same
-	//    rule applies to a wildcard such as `$.agents[*].name`: every position it
-	//    selects must hold the key, otherwise the target fails rather than updating
-	//    only some of them. Set "searchpattern" to update the positions holding the
-	//    key and tolerate the others.
-	//  * a recursive selector such as `$..name` cannot report a partial match: it
-	//    searches for the key itself, so it only ever selects the positions already
-	//    holding it, and never fails on the ones that do not.
+	// remark:
+	//   * "key" is a simpler version of yamlpath.
+	//   * in a target, a key that a document does not hold is an error, so that a
+	//     manifest never reports success for an update it did not make. The same
+	//     rule applies to a wildcard such as `$.agents[*].name`: every position it
+	//     selects must hold the key, otherwise the target fails instead of updating
+	//     only some of them. Set "searchpattern" to update the positions holding the
+	//     key and ignore the others.
+	//   * a recursive selector such as `$..name` cannot report a partial match: it
+	//     searches for the key itself, so it only selects the positions already
+	//     holding it and never fails on the others.
+	//   * a field path filtering on a key and value is not supported yet,
+	//     see https://github.com/goccy/go-yaml/issues/290
 	//
-	//example using default engine:
-	//  * key: $.name
-	//  * key: $.agent.name
-	//  * key: $.agents[0].name
-	//  * key: $.agents[*].name
-	//  * key: $.'agents.name'
-	//  * key: $.repos[?(@.repository == 'website')].owner" (require engine set to yamlpath)
-	//
-	//remark:
-	//  field path with key/value is not supported at the moment.
-	//  some help would be useful on https://github.com/goccy/go-yaml/issues/290
+	// example:
+	//   * key: $.name
+	//   * key: $.agent.name
+	//   * key: $.agents[0].name
+	//   * key: $.agents[*].name
+	//   * key: $.'agents.name'
+	//   * key: $.repos[?(@.repository == 'website')].owner (requires engine "yamlpath")
 	//
 	Key string `yaml:",omitempty"`
-	//"keys" defines multiple yaml keypaths to update with the same value.
+	// "keys" defines several yaml key paths to update with the same value.
 	//
-	//compatible:
-	//  * target
+	// compatible:
+	//   * target
 	//
-	//remark:
-	//  * keys is mutually exclusive with key.
-	//  * keys accepts the same syntax as key for each element.
-	//  * all keys will be updated with the same value.
-	//  * only available for target operations, not for source or condition.
+	// remark:
+	//   * "key" and "keys" are mutually exclusive.
+	//   * each entry accepts the same syntax as "key".
+	//   * every key is updated with the same value.
 	//
-	//example using default engine:
-	//  * keys:
-	//    - $.image.tag
-	//    - $.sidecar.tag
-	//  * keys:
-	//    - $.agents[0].version
-	//    - $.agents[1].version
+	// example:
+	//   * keys:
+	//     - $.image.tag
+	//     - $.sidecar.tag
+	//   * keys:
+	//     - $.agents[0].version
+	//     - $.agents[1].version
 	//
 	Keys []string `yaml:",omitempty"`
-	//value is the value associated with a yaml key.
+	// "value" defines the value associated with the yaml key.
 	//
-	//compatible:
-	//  * source
-	//  * condition
-	//  * target
+	// compatible:
+	//   * condition
+	//   * target
 	//
-	//default:
-	//	When used from a condition or a target, the default value is set to the associated source output.
+	// default:
+	//   in a condition or a target, the output of the associated source.
 	//
 	Value string `yaml:",omitempty"`
-	//keyonly allows to check only if a key exist and do not return an error otherwise
+	// "keyonly" checks only that the key exists, whatever its value.
 	//
-	//compatible:
-	//	* condition
+	// compatible:
+	//   * condition
 	//
-	//default:
-	//	false
+	// default:
+	//   false
 	//
 	KeyOnly bool `yaml:",omitempty"`
-	//searchpattern defines if the MatchPattern should be applied on the file(s) path
+	// "searchpattern" treats "file" and "files" as path patterns instead of exact paths.
 	//
-	//If set to true, it modifies the behavior of the `file` and `files` attributes to search for files matching the pattern instead of searching for files with the exact name.
-	//When looking for file path pattern, it requires pattern to match all of name, not just a substring.
+	// The pattern must match the whole path, not just a substring.
 	//
-	//The pattern syntax is:
+	// The pattern syntax is:
 	//
-	//```
-	//    pattern:
-	//        { term }
-	//    term:
-	//        '*'         matches any sequence of non-Separator characters
-	//        '?'         matches any single non-Separator character
-	//        '[' [ '^' ] { character-range } ']'
-	//                    character class (must be non-empty)
-	//        c           matches character c (c != '*', '?', '\\', '[')
-	//        '\\' c      matches character c
+	// ```
+	//     pattern:
+	//         { term }
+	//     term:
+	//         '*'         matches any sequence of non-Separator characters
+	//         '?'         matches any single non-Separator character
+	//         '[' [ '^' ] { character-range } ']'
+	//                     character class (must be non-empty)
+	//         c           matches character c (c != '*', '?', '\\', '[')
+	//         '\\' c      matches character c
 	//
-	//    character-range:
-	//        c           matches character c (c != '\\', '-', ']')
-	//        '\\' c      matches character c
-	//        lo '-' hi   matches character c for lo <= c <= hi
-	//```
+	//     character-range:
+	//         c           matches character c (c != '\\', '-', ']')
+	//         '\\' c      matches character c
+	//         lo '-' hi   matches character c for lo <= c <= hi
+	// ```
 	//
-	//remark:
-	//  * as a target, it also relaxes the requirement that the key exists: a file
-	//    that does not hold it is ignored instead of failing the target, and a
-	//    wildcard key updates the positions holding it rather than failing on the
-	//    ones that do not.
+	// compatible:
+	//   * condition
+	//   * target
+	//
+	// default:
+	//   false
+	//
+	// remark:
+	//   * in a target, it also relaxes the requirement that the key exists: a file
+	//     that does not hold it is ignored instead of failing the target, and a
+	//     wildcard key updates the positions holding it instead of failing on the
+	//     others.
 	//
 	SearchPattern bool `yaml:",omitempty"`
-	//"createmissingkey" allows creating the key when it does not exist yet in the yaml document.
+	// "createmissingkey" creates the key when the yaml document does not hold it yet.
 	//
-	//compatible:
-	//  * target
+	// compatible:
+	//   * target
 	//
-	//default:
-	//	false
+	// default:
+	//   false
 	//
-	//remark:
-	//  * missing intermediate keys are created as nested maps.
-	//  * the key is only created, never removed, and existing keys are left untouched.
-	//  * a missing sequence index such as `$.agents[0].name` cannot be created.
-	//  * a key selecting several nodes, such as `$.agents[*].tag` or `$..tag`,
-	//    is rejected: the key cannot be created under each selected node.
-	//  * not supported by the "yamlpath" engine.
-	//  * the yaml file itself must already exist.
+	// remark:
+	//   * missing intermediate keys are created as nested maps.
+	//   * the key is only ever created, never removed, and existing keys are left untouched.
+	//   * a missing sequence index such as `$.agents[0].name` cannot be created.
+	//   * a key selecting several nodes, such as `$.agents[*].tag` or `$..tag`,
+	//     is rejected because the key cannot be created under each selected node.
+	//   * not supported by the "yamlpath" engine.
+	//   * the yaml file itself must already exist.
 	//
-	//example:
-	//  * key: $.image.tag
-	//    createmissingkey: true
+	// example:
+	//   * key: $.image.tag
+	//     createmissingkey: true
 	//
 	CreateMissingKey bool `yaml:",omitempty"`
-	//"appendtoarray" appends the value as a new entry of the yaml sequence targeted by "key".
+	// "appendtoarray" appends the value as a new entry of the yaml sequence selected by "key".
 	//
-	//compatible:
-	//  * target
+	// compatible:
+	//   * target
 	//
-	//default:
-	//	false
+	// default:
+	//   false
 	//
-	//remark:
-	//  * the operation is idempotent, appending is skipped when the sequence already contains the value.
-	//  * combined with "createmissingkey", a missing sequence is created holding the value as its sole entry.
-	//  * "key" must target the sequence itself, not one of its entries.
-	//  * not supported by the "yamlpath" engine.
+	// remark:
+	//   * appending is skipped when the sequence already holds the value, so running it twice changes nothing.
+	//   * combined with "createmissingkey", a missing sequence is created with the value as its only entry.
+	//   * "key" must select the sequence itself, not one of its entries.
+	//   * not supported by the "yamlpath" engine.
 	//
-	//example:
-	//  * key: $.allowedTags
-	//    appendtoarray: true
+	// example:
+	//   * key: $.allowedTags
+	//     appendtoarray: true
 	//
 	AppendToArray bool `yaml:",omitempty"`
-	//comment defines a comment to add after the value.
+	// "comment" defines a comment added after the value.
 	//
-	//default: empty
+	// compatible:
+	//   * target
 	//
-	//compatible:
-	//  * target
+	// default:
+	//   empty
 	//
-	//remarks:
-	//  * Please note that the comment is added if the value is modified by Updatecli
+	// remark:
+	//   * the comment is only added when Updatecli changes the value.
 	//
 	Comment string `yaml:",omitempty"`
 }

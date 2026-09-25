@@ -7,21 +7,51 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// InlineKeyChain defines the credentials used to authenticate with a cargo registry.
 type InlineKeyChain struct {
-	// [A][S][C] Token specifies the cargo registry token to use for authentication.
+	// "token" defines the cargo registry token used for authentication.
+	//
 	Token string `yaml:",omitempty"`
-	// [A][S][C] HeaderFormat specifies the cargo registry header format to use for authentication (defaults to `Bearer`).
+	// "headerformat" defines the format of the Authorization header sent with "token".
+	//
+	// default:
+	//   Bearer %s
+	//
+	// remark:
+	//   * "%s" is replaced by the token.
+	//
+	// example:
+	//   * headerformat: "Token %s"
+	//
 	HeaderFormat string `yaml:"headerformat,omitempty"`
 }
 
+// Registry defines the cargo registry to query.
 type Registry struct {
-	// [A][S][C] Auth specifies the cargo registry auth to use for authentication.
+	// "auth" defines the credentials used to authenticate with the cargo registry.
+	//
 	Auth InlineKeyChain `yaml:",omitempty"`
-	// [A][S][C] URL specifies the cargo registry URL to use for authentication.
+	// "url" defines the URL of the cargo registry API.
+	//
+	// default:
+	//   https://crates.io/api/v1/crates, when neither "rootdir" nor a scm is set.
+	//
+	// remark:
+	//   * "url", "rootdir" and "scmid" are mutually exclusive.
+	//
 	URL string `yaml:",omitempty"`
-	// [A][S][C] RootDir specifies the cargo registry root directory to use as FS index.
+	// "rootdir" defines the local directory of a cargo registry index, used instead of the registry API.
+	//
+	// remark:
+	//   * "url", "rootdir" and "scmid" are mutually exclusive.
+	//
 	RootDir string `yaml:",omitempty"`
-	// [A] SCMID specifies the cargo registry scmId to use as FS index.
+	// "scmid" defines the scm holding the cargo registry index, used instead of the registry API.
+	//
+	// remark:
+	//   * only used by the cargo autodiscovery.
+	//   * "url", "rootdir" and "scmid" are mutually exclusive.
+	//
 	SCMID string `yaml:",omitempty"`
 }
 

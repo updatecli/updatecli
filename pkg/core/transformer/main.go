@@ -18,50 +18,172 @@ var (
 	ErrEmptyInput = errors.New("validation error: transformer input is empty")
 )
 
+// JsonMatch defines a query extracting a value from a json input.
 type JsonMatch struct {
+	// "key" defines the dasel query selecting the value in the json input.
+	//
+	// remark:
+	//   * the query uses the dasel v2 selector syntax.
+	//
+	// example:
+	//   * key: .version
+	//   * key: .tags.all()
+	//
 	Key string `yaml:",omitempty" jsonschema:"required"`
-	// If we don't find a match then return the following string or the input value
+	// "nomatchresult" defines the value returned when the query matches nothing.
+	//
+	// default:
+	//   empty, which makes the transformer fail when nothing matches.
+	//
+	// remark:
+	//   * "<input>" returns the transformer input.
+	//   * "<blank>" returns an empty value.
+	//   * any other value is returned as is.
+	//
 	NoMatchResult string `yaml:",omitempty"`
-	// If we find multiple matches, join them by this
+	// "joinmultiplematches" defines the separator used to join the results when the query matches several values.
+	//
+	// remark:
+	//   * it takes precedence over "multiplematchselector".
+	//   * when both are empty, several matches make the transformer fail.
+	//
+	// example:
+	//   * joinmultiplematches: ","
+	//
 	JoinMultipleMatches string `yaml:",omitempty"`
-	// If we find multiple matches, select the "first" or the "last"
+	// "multiplematchselector" defines which result to return when the query matches several values.
+	//
+	// remark:
+	//   * accepted values are "first", "last", or an index such as "[1]".
+	//   * a negative index counts from the end, so "[-1]" is the last result.
+	//   * when both "joinmultiplematches" and "multiplematchselector" are empty, several matches make the transformer fail.
+	//
+	// example:
+	//   * multiplematchselector: first
+	//   * multiplematchselector: "[0]"
+	//
 	MultipleMatchSelector string `yaml:",omitempty"`
 }
 
-// Transformer holds a transformer rule
+// Transformer defines a set of rules modifying a value.
+//
+// Within one transformer, the rules run in this order: addprefix, addsuffix,
+// trimprefix, trimsuffix, replacers, replacer, find, findsubmatch, semverinc,
+// quote, unquote and jsonmatch. An empty input makes the transformer fail.
 type Transformer struct {
-	// AddPrefix adds a prefix to the transformer input value
+	// "addprefix" defines a prefix added to the value.
+	//
+	// example:
+	//   * addprefix: v
+	//
 	AddPrefix           string `yaml:",omitempty"`
 	DeprecatedAddPrefix string `yaml:"addPrefix,omitempty" jsonschema:"-"`
-	// AddSuffix adds a suffix to the transformer input value
+	// "addsuffix" defines a suffix added to the value.
+	//
+	// example:
+	//   * addsuffix: -alpine
+	//
 	AddSuffix           string `yaml:",omitempty"`
 	DeprecatedAddSuffix string `yaml:"addSuffix,omitempty" jsonschema:"-"`
-	// TrimPrefix removes a prefix to the transformer input value
+	// "trimprefix" defines a prefix removed from the value.
+	//
+	// example:
+	//   * trimprefix: v
+	//
 	TrimPrefix           string `yaml:",omitempty"`
 	DeprecatedTrimPrefix string `yaml:"trimPrefix,omitempty" jsonschema:"-"`
-	// TrimSuffix removes the suffix from the transformer input value
+	// "trimsuffix" defines a suffix removed from the value.
+	//
+	// example:
+	//   * trimsuffix: -alpine
+	//
 	TrimSuffix           string `yaml:",omitempty"`
 	DeprecatedTrimSuffix string `yaml:"trimSuffix,omitempty" jsonschema:"-"`
-	// Replacers specifies a list of replacer instruction
+	// "replacers" defines a list of replacements applied to the value.
+	//
+	// remark:
+	//   * all replacements run in a single pass, so a replaced text is never replaced again.
+	//
+	// example:
+	//   ```
+	//   replacers:
+	//     - from: "_"
+	//       to: "."
+	//     - from: "v"
+	//       to: ""
+	//   ```
+	//
 	Replacers Replacers `yaml:",omitempty"`
-	// Replacer specifies what value needs to be changed and how
+	// "replacer" defines a single replacement applied to the value.
+	//
+	// example:
+	//   ```
+	//   replacer:
+	//     from: "_"
+	//     to: "."
+	//   ```
+	//
 	Replacer Replacer `yaml:",omitempty"`
-	// Find searches for a specific value if it exists and return false if it doesn't
+	// "find" defines a regular expression, and replaces the value with its first match.
+	//
+	// remark:
+	//   * when nothing matches, the value becomes empty.
+	//
+	// example:
+	//   * find: \d+\.\d+\.\d+
+	//
 	Find string `yaml:",omitempty"`
-	// Find searches for a specific value if it exists then return the value using regular expression
+	// "findsubmatch" defines a regular expression, and replaces the value with one of its capture groups.
+	//
+	// example:
+	//   ```
+	//   findsubmatch:
+	//     pattern: 'v(\d+)\.(\d+)'
+	//     captureindex: 1
+	//   ```
+	//
 	FindSubMatch           FindSubMatch `yaml:",omitempty"`
 	DeprecatedFindSubMatch interface{}  `yaml:"findSubMatch,omitempty" jsonschema:"-"`
-	JsonMatch              JsonMatch    `yaml:",omitempty"`
-	// SemvVerInc specifies a comma separated list semantic versioning component that needs to be upgraded.
+	// "jsonmatch" defines a query extracting a value from a json input.
+	//
+	// example:
+	//   ```
+	//   jsonmatch:
+	//     key: .version
+	//   ```
+	//
+	JsonMatch JsonMatch `yaml:",omitempty"`
+	// "semverinc" defines a comma separated list of semantic version components to increment.
+	//
+	// remark:
+	//   * accepted components are "major", "minor" and "patch", applied in the order given.
+	//   * the value must be a valid semantic version.
+	//   * spaces around the commas are not accepted.
+	//
+	// example:
+	//   * semverinc: patch
+	//   * semverinc: minor,patch
+	//
 	SemVerInc           string `yaml:",omitempty"`
 	DeprecatedSemVerInc string `yaml:"semverInc,omitempty" jsonschema:"-"`
-	// Quote add quote around the value
+	// "quote" wraps the value in double quotes.
+	//
+	// default:
+	//   false
+	//
+	// remark:
+	//   * special characters in the value are escaped, following Go string syntax.
+	//
 	Quote bool `yaml:",omitempty"`
-	// Unquote remove quotes around the value
+	// "unquote" removes the double quotes around the value.
+	//
+	// default:
+	//   false
+	//
 	Unquote bool `yaml:",omitempty"`
 }
 
-// Transformers defines a list of transformer applied in order
+// Transformers defines a list of transformers applied in order, each one receiving the output of the previous one.
 type Transformers []Transformer
 
 // Apply applies a single transformation based on a key
