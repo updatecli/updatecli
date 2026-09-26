@@ -30,13 +30,13 @@ jobs:
           df -h
       # https://github.com/actions/setup-go
       - name: Set up Go
-        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           cache: false
           go-version: 1.27.1
         id: go
       - name: Check out code into the Go module directory
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -48,7 +48,7 @@ jobs:
           # we always use the latest patch version.
           version: v2.13.2
           install-mode: "binary"
-      - uses: "pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271" # v6.0.9
+      - uses: "pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413" # v6.1.0
         with:
           version: "12.4.2"
           run_install: false
@@ -58,7 +58,7 @@ jobs:
           node-version: "26.8.2"
           package-manager-cache: false
       - name: Install uv
-        uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990 # v8.3.2
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
           version: "0.12.15"
           enable-cache: false
@@ -89,7 +89,7 @@ jobs:
         if: ${{ github.event_name == 'schedule' }}
       # Codecov should only be updated if make test is executed
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         if: ${{ github.event_name == 'schedule' }}
         with:
           fail_ci_if_error: false
