@@ -5,6 +5,7 @@ values:
 include:
   - updatecli/updatecli-compose.d/golang/major.yaml
   - updatecli/updatecli-compose.d/golang/minor.yaml
+  - updatecli/updatecli-compose.d/golang/vulnerability.yaml
 
 policies:
   - name: Local Updatecli Policies
