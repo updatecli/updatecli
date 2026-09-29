@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/config"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/source"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
@@ -54,4 +55,43 @@ func TestReportIDIgnoresRenderedValues(t *testing.T) {
 	}
 
 	assert.Equal(t, reportID("1.25.2"), reportID("1.25.3"))
+}
+
+// TestReportIDFallsBackToRawConfig ensures a resource whose report config can't be computed
+// before its spec is rendered still counts in the report ID.
+func TestReportIDFallsBackToRawConfig(t *testing.T) {
+	initPipeline := func(image string) Pipeline {
+		p := Pipeline{}
+		require.NoError(t, p.Init(&config.Config{
+			Spec: config.Spec{
+				Name: "Update Golang image",
+				Sources: map[string]source.Config{
+					"go": {ResourceConfig: resource.ResourceConfig{Name: "Get latest Golang version", Kind: "golang"}},
+				},
+				Conditions: map[string]condition.Config{
+					"image": {
+						ResourceConfig: resource.ResourceConfig{
+							Kind: "dockerimage",
+							Spec: map[string]any{
+								"image":         image,
+								"architectures": `{{ source "go" }}`,
+							},
+						},
+					},
+				},
+			},
+		}, Options{}))
+		return p
+	}
+
+	golang, alpine := initPipeline("golang"), initPipeline("alpine")
+
+	_, err := resource.GetReportConfig(golang.Config.Spec.Conditions["image"].ResourceConfig)
+	require.Error(t, err, "the unrendered spec must be rejected for this test to be meaningful")
+
+	assert.Nil(t, golang.Report.Conditions["image"].Config, "the raw config must not be reported")
+
+	require.NoError(t, golang.Report.UpdateID())
+	require.NoError(t, alpine.Report.UpdateID())
+	assert.NotEqual(t, golang.Report.ID, alpine.Report.ID)
 }

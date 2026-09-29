@@ -129,6 +129,10 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 
 	}
 
+	// Resources whose report config can't be computed before their spec is rendered are
+	// identified by their raw config, which is cleared once the report ID is frozen.
+	var clearRawConfigs []func()
+
 	// Init sources report
 	for id := range config.Spec.Sources {
 		// Set scm pointer
@@ -163,9 +167,9 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 			r.Scm.Branch.Source, r.Scm.Branch.Working, r.Scm.Branch.Target = scm.GetBranches()
 		}
 
-		reportConfig, err := resource.GetReportConfig(p.Config.Spec.Sources[id].ResourceConfig)
-		if err == nil {
-			r.Config = reportConfig
+		var isRaw bool
+		if r.Config, isRaw = initReportConfig(p.Config.Spec.Sources[id].ResourceConfig); isRaw {
+			clearRawConfigs = append(clearRawConfigs, func() { r.Config = nil })
 		}
 
 		p.Report.Sources[id] = r
@@ -204,9 +208,9 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 			r.Scm.Branch.Source, r.Scm.Branch.Working, r.Scm.Branch.Target = scm.GetBranches()
 		}
 
-		reportConfig, err := resource.GetReportConfig(p.Config.Spec.Conditions[id].ResourceConfig)
-		if err == nil {
-			r.Config = reportConfig
+		var isRaw bool
+		if r.Config, isRaw = initReportConfig(p.Config.Spec.Conditions[id].ResourceConfig); isRaw {
+			clearRawConfigs = append(clearRawConfigs, func() { r.Config = nil })
 		}
 
 		p.Report.Conditions[id] = r
@@ -244,9 +248,9 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 			r.Scm.Branch.Source, r.Scm.Branch.Working, r.Scm.Branch.Target = scm.GetBranches()
 		}
 
-		reportConfig, err := resource.GetReportConfig(p.Config.Spec.Targets[id].ResourceConfig)
-		if err == nil {
-			r.Config = reportConfig
+		var isRaw bool
+		if r.Config, isRaw = initReportConfig(p.Config.Spec.Targets[id].ResourceConfig); isRaw {
+			clearRawConfigs = append(clearRawConfigs, func() { r.Config = nil })
 		}
 
 		p.Report.Targets[id] = r
@@ -256,17 +260,35 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 
 	// The report ID is frozen before runtime values, such as {{ source "id" }}, are
 	// rendered, so it keeps identifying this manifest whatever those values are.
-	if err := p.Report.FreezeID(); err != nil {
+	err := p.Report.FreezeID()
+	// The raw configurations were only needed to compute the report ID. They are not
+	// cleaned of sensitive information, so they must not end up in the report.
+	for _, clearRawConfig := range clearRawConfigs {
+		clearRawConfig()
+	}
+	if err != nil {
 		return fmt.Errorf("computing report ID: %w", err)
 	}
 
-	err := p.UpdateGraphReport()
-	if err != nil {
+	if err := p.UpdateGraphReport(); err != nil {
 		return err
 	}
 
 	return nil
 
+}
+
+// initReportConfig returns the report config of a resource before its spec is rendered.
+// When it can't be computed yet, for instance because the spec only becomes valid once
+// rendered, it returns the raw resource config instead, so the resource still counts in
+// the report ID, and isRaw is true.
+func initReportConfig(rc resource.ResourceConfig) (config any, isRaw bool) {
+	reportConfig, err := resource.GetReportConfig(rc)
+	if err != nil {
+		return rc, true
+	}
+
+	return reportConfig, false
 }
 
 func (p *Pipeline) UpdateGraphReport() error {
