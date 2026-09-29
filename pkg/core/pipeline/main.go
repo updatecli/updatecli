@@ -130,7 +130,7 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 	}
 
 	// Resources whose report config can't be computed before their spec is rendered are
-	// identified by their raw config, which is cleared once the report ID is frozen.
+	// identified by their config without spec, which is cleared once the report ID is frozen.
 	var clearRawConfigs []func()
 
 	// Init sources report
@@ -261,8 +261,8 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 	// The report ID is frozen before runtime values, such as {{ source "id" }}, are
 	// rendered, so it keeps identifying this manifest whatever those values are.
 	err := p.Report.FreezeID()
-	// The raw configurations were only needed to compute the report ID. They are not
-	// cleaned of sensitive information, so they must not end up in the report.
+	// The configurations without spec were only needed to compute the report ID. They are
+	// not what the resource reports, so they must not end up in the report.
 	for _, clearRawConfig := range clearRawConfigs {
 		clearRawConfig()
 	}
@@ -280,11 +280,13 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 
 // initReportConfig returns the report config of a resource before its spec is rendered.
 // When it can't be computed yet, for instance because the spec only becomes valid once
-// rendered, it returns the raw resource config instead, so the resource still counts in
-// the report ID, and isRaw is true.
+// rendered, it returns the resource config without its spec instead, so the resource still
+// counts in the report ID, and isRaw is true. The spec is left out because values, secrets
+// and environment variables are already rendered in it, so it may contain credentials.
 func initReportConfig(rc resource.ResourceConfig) (config any, isRaw bool) {
 	reportConfig, err := resource.GetReportConfig(rc)
 	if err != nil {
+		rc.Spec = nil
 		return rc, true
 	}
 

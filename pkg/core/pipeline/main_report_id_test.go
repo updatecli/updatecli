@@ -57,10 +57,10 @@ func TestReportIDIgnoresRenderedValues(t *testing.T) {
 	assert.Equal(t, reportID("1.25.2"), reportID("1.25.3"))
 }
 
-// TestReportIDFallsBackToRawConfig ensures a resource whose report config can't be computed
-// before its spec is rendered still counts in the report ID.
-func TestReportIDFallsBackToRawConfig(t *testing.T) {
-	initPipeline := func(image string) Pipeline {
+// TestReportIDFallsBackToConfigWithoutSpec ensures a resource whose report config can't be
+// computed before its spec is rendered still counts in the report ID, without its spec.
+func TestReportIDFallsBackToConfigWithoutSpec(t *testing.T) {
+	initPipeline := func(image, kind string) Pipeline {
 		p := Pipeline{}
 		require.NoError(t, p.Init(&config.Config{
 			Spec: config.Spec{
@@ -71,7 +71,7 @@ func TestReportIDFallsBackToRawConfig(t *testing.T) {
 				Conditions: map[string]condition.Config{
 					"image": {
 						ResourceConfig: resource.ResourceConfig{
-							Kind: "dockerimage",
+							Kind: kind,
 							Spec: map[string]any{
 								"image":         image,
 								"architectures": `{{ source "go" }}`,
@@ -84,14 +84,19 @@ func TestReportIDFallsBackToRawConfig(t *testing.T) {
 		return p
 	}
 
-	golang, alpine := initPipeline("golang"), initPipeline("alpine")
+	golang, alpine := initPipeline("golang", "dockerimage"), initPipeline("alpine", "dockerimage")
+	other := initPipeline("golang", "dockerdigest")
 
 	_, err := resource.GetReportConfig(golang.Config.Spec.Conditions["image"].ResourceConfig)
 	require.Error(t, err, "the unrendered spec must be rejected for this test to be meaningful")
 
-	assert.Nil(t, golang.Report.Conditions["image"].Config, "the raw config must not be reported")
+	assert.Nil(t, golang.Report.Conditions["image"].Config, "the fallback config must not be reported")
 
-	require.NoError(t, golang.Report.UpdateID())
-	require.NoError(t, alpine.Report.UpdateID())
-	assert.NotEqual(t, golang.Report.ID, alpine.Report.ID)
+	for _, p := range []*Pipeline{&golang, &alpine, &other} {
+		require.NoError(t, p.Report.UpdateID())
+	}
+
+	// The spec may contain credentials, so it doesn't count in the report ID
+	assert.Equal(t, golang.Report.ID, alpine.Report.ID)
+	assert.NotEqual(t, golang.Report.ID, other.Report.ID)
 }
