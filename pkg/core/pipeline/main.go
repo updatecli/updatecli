@@ -254,6 +254,12 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 
 	p.tracer = telemetry.Tracer("updatecli")
 
+	// The report ID is frozen before runtime values, such as {{ source "id" }}, are
+	// rendered, so it keeps identifying this manifest whatever those values are.
+	if err := p.Report.FreezeID(); err != nil {
+		return fmt.Errorf("computing report ID: %w", err)
+	}
+
 	err := p.UpdateGraphReport()
 	if err != nil {
 		return err
