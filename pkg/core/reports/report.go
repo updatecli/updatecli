@@ -98,6 +98,8 @@ type Report struct {
 	Targets    map[string]*result.Target
 	ReportURL  string
 	CI         *CIData
+	// stableID holds the report ID frozen by FreezeID, before the configuration was rendered
+	stableID string
 }
 
 // String returns a report as a string
@@ -149,17 +151,124 @@ func (r *Report) UpdateCIJob() error {
 	return nil
 }
 
-// UpdateID generates a unique ID for the report based on the content of the report
-// Ideally the report ID should be the same regardless of the result of the pipeline.
-// The goal is to be able to identify what report corresponds to what pipeline manifest.
+// UpdateID sets the report ID along with the ID of every resource and of its scm.
+//
+// The report ID identifies the pipeline manifest the report comes from, regardless of the
+// result of the pipeline or of the values rendered at runtime, such as {{ source "id" }}.
 // It's different from the pipelineID which is used to identify an update scenario which
 // could be the result of multiple Updatecli manifests.
+//
+// The resource IDs are computed from the configuration as it was rendered, while the report
+// ID is the one frozen by FreezeID when it was called.
 func (r *Report) UpdateID() error {
-	var err error
-
-	r.ID, err = getSha256HashFromStruct(*r)
+	resourceIDs, err := r.resourceIDs()
 	if err != nil {
 		return err
+	}
+
+	for id, condition := range r.Conditions {
+		condition.ID = resourceIDs[conditionKey(id)].config
+		condition.Scm.ID = resourceIDs[conditionKey(id)].scm
+	}
+
+	for id, source := range r.Sources {
+		source.ID = resourceIDs[sourceKey(id)].config
+		source.Scm.ID = resourceIDs[sourceKey(id)].scm
+	}
+
+	for id, target := range r.Targets {
+		target.ID = resourceIDs[targetKey(id)].config
+		target.Scm.ID = resourceIDs[targetKey(id)].scm
+	}
+
+	if r.stableID != "" {
+		r.ID = r.stableID
+		return nil
+	}
+
+	r.ID, err = r.computeID()
+	return err
+}
+
+// FreezeID computes the report ID from the report as it is now, and keeps it for UpdateID.
+//
+// It is meant to be called before the configuration is rendered with the values only known
+// at runtime, such as {{ source "id" }}. Otherwise a resource named after the version it
+// updates would get a new report ID every time that version changes.
+func (r *Report) FreezeID() error {
+	id, err := r.computeID()
+	if err != nil {
+		return err
+	}
+
+	r.stableID = id
+	return nil
+}
+
+// resourceHashes contains the hash of a resource configuration and the hash of its scm.
+type resourceHashes struct {
+	config string
+	scm    string
+}
+
+func conditionKey(id string) string { return "condition#" + id }
+func sourceKey(id string) string    { return "source#" + id }
+func targetKey(id string) string    { return "target#" + id }
+
+// resourceIDs returns the hashes of every resource of the report, without modifying it.
+func (r *Report) resourceIDs() (map[string]resourceHashes, error) {
+	hashes := make(map[string]resourceHashes, len(r.Conditions)+len(r.Sources)+len(r.Targets))
+
+	hash := func(key string, config any, scm result.SCM) error {
+		configID, err := getSha256HashFromStruct(config)
+		if err != nil {
+			return err
+		}
+
+		// The scm ID is itself derived from the scm, so it is cleared first to keep the
+		// hash the same whether or not it was already set.
+		scm.ID = ""
+		/*
+			Always generate a SCM Id even if the scm is empty.
+			I think this information could be useful to quickly identify this scenario
+			That being said, I may revisit this decision in the future
+		*/
+		scmID, err := getSha256HashFromStruct(scm)
+		if err != nil {
+			return err
+		}
+
+		hashes[key] = resourceHashes{config: configID, scm: scmID}
+		return nil
+	}
+
+	for id, condition := range r.Conditions {
+		if err := hash(conditionKey(id), condition.Config, condition.Scm); err != nil {
+			return nil, err
+		}
+	}
+
+	for id, source := range r.Sources {
+		if err := hash(sourceKey(id), source.Config, source.Scm); err != nil {
+			return nil, err
+		}
+	}
+
+	for id, target := range r.Targets {
+		if err := hash(targetKey(id), target.Config, target.Scm); err != nil {
+			return nil, err
+		}
+	}
+
+	return hashes, nil
+}
+
+// computeID returns the report ID derived from the pipeline name and from the configuration
+// of every resource and of its scm, without modifying the report.
+func (r *Report) computeID() (string, error) {
+	resourceIDs, err := r.resourceIDs()
+	if err != nil {
+		return "", err
 	}
 
 	reportHash := []string{}
@@ -168,93 +277,20 @@ func (r *Report) UpdateID() error {
 		reportHash = append(reportHash, r.Name)
 	}
 
-	// We need to sort the conditions by their ID to make sure that the hash is always the same
-	for _, i := range slices.Sorted(maps.Keys(r.Conditions)) {
-		condition := r.Conditions[i]
-		condition.ID, err = getSha256HashFromStruct(condition.Config)
-		if err != nil {
-			return err
-		}
-
-		reportHash = append(reportHash, condition.ID)
-
-		/*
-			Always generate a SCM Id even if the scm is empty.
-			I think this information could be useful to quickly identify this scenario
-			That being said, I may revisit this decision in the future
-		*/
-		condition.Scm.ID, err = getSha256HashFromStruct(condition.Scm)
-		if err != nil {
-			return err
-		}
-
-		reportHash = append(reportHash, condition.Scm.ID)
-
-		r.Conditions[i] = condition
+	// Resources are sorted by their ID to make sure that the hash is always the same
+	for _, id := range slices.Sorted(maps.Keys(r.Conditions)) {
+		reportHash = append(reportHash, resourceIDs[conditionKey(id)].config, resourceIDs[conditionKey(id)].scm)
 	}
 
-	// We need to sort the conditions by their ID to make sure that the hash is always the same
-	for _, i := range slices.Sorted(maps.Keys(r.Sources)) {
-		source := r.Sources[i]
-		source.ID, err = getSha256HashFromStruct(source.Config)
-		if err != nil {
-			return err
-		}
-
-		reportHash = append(reportHash, source.ID)
-
-		/*
-			Always generate a SCM Id even if the scm is empty.
-			I think this information could be useful to quickly identify this scenario
-			That being said, I may revisit this decision in the future
-		*/
-		source.Scm.ID, err = getSha256HashFromStruct(source.Scm)
-		if err != nil {
-			return err
-		}
-
-		reportHash = append(reportHash, source.Scm.ID)
-		r.Sources[i] = source
+	for _, id := range slices.Sorted(maps.Keys(r.Sources)) {
+		reportHash = append(reportHash, resourceIDs[sourceKey(id)].config, resourceIDs[sourceKey(id)].scm)
 	}
 
-	// We need to sort the conditions by their ID to make sure that the hash is always the same
-	for _, i := range slices.Sorted(maps.Keys(r.Targets)) {
-		target := r.Targets[i]
-		target.ID, err = getSha256HashFromStruct(target.Config)
-		if err != nil {
-			return err
-		}
-
-		reportHash = append(reportHash, target.ID)
-
-		/*
-			Always generate a SCM Id even if the scm is empty.
-			I think this information could be useful to quickly identify this scenario
-			That being said, I may revisit this decision in the future
-		*/
-		target.Scm.ID, err = getSha256HashFromStruct(target.Scm)
-		if err != nil {
-			return err
-		}
-
-		reportHash = append(reportHash, target.Scm.ID)
-
-		r.Targets[i] = target
+	for _, id := range slices.Sorted(maps.Keys(r.Targets)) {
+		reportHash = append(reportHash, resourceIDs[targetKey(id)].config, resourceIDs[targetKey(id)].scm)
 	}
 
-	r.ID = fmt.Sprintf("%x", sha256.Sum256([]byte(strings.Join(reportHash, "0"))))
-
-	// If the report doesn't have any configuration then we need to generate a hash based on the report itself
-	// This is not ideal because it means that the report ID will be different each time Updatecli is executed
-	// and that the result is different.
-	if r.ID == "" {
-		r.ID, err = getSha256HashFromStruct(*r)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return fmt.Sprintf("%x", sha256.Sum256([]byte(strings.Join(reportHash, "0")))), nil
 }
 
 func getSha256HashFromStruct(input interface{}) (string, error) {
