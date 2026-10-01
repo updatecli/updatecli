@@ -154,6 +154,9 @@ func Test_multiMatchDepth(t *testing.T) {
 		{key: "$.a[*].b[*].c", wantedDepth: 2},
 		{key: "$.a[*].b[*]", wantedDepth: 1},
 		{key: "$.a[*]..c", wantedDepth: 2},
+		// goccy ignores the selectors following a recursive descent.
+		{key: "$..b[*].c", wantedDepth: 1},
+		{key: "$..b..c", wantedDepth: 1},
 		{key: "$.a[*].b[*].c[*].d", wantedDepth: 3},
 	}
 

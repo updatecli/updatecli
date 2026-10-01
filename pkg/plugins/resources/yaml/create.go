@@ -371,6 +371,9 @@ func multiMatchKey(key string) (bool, error) {
 // always wraps, while "[*]" only wraps when it is not the last element of the path.
 // "$.repos[*].hooks[*].language_version" therefore resolves to one sequence per
 // repo, each holding one entry per hook.
+//
+// goccy ends the evaluation at a recursive descent and returns its matches without
+// applying the rest of the path, so the selectors following it add no level.
 func multiMatchDepth(key string) (int, error) {
 	elements, err := splitYamlPathKey(key)
 	if err != nil {
@@ -381,7 +384,7 @@ func multiMatchDepth(key string) (int, error) {
 	for i, element := range elements {
 		switch {
 		case strings.HasPrefix(element.raw, ".."):
-			depth++
+			return depth + 1, nil
 		case element.raw == "[*]" && i < len(elements)-1:
 			depth++
 		}
