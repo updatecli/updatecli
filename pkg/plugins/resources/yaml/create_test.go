@@ -140,3 +140,31 @@ func Test_pathPrefix(t *testing.T) {
 	assert.Equal(t, "$.a[0]", pathPrefix(elements, 2))
 	assert.Equal(t, "$.a[0].'b.c'", pathPrefix(elements, 3))
 }
+
+func Test_multiMatchDepth(t *testing.T) {
+	tests := []struct {
+		key         string
+		wantedDepth int
+	}{
+		{key: "$.a.b", wantedDepth: 0},
+		{key: "$.a[0].b", wantedDepth: 0},
+		{key: "$.a[*]", wantedDepth: 0},
+		{key: "$.a[*].b", wantedDepth: 1},
+		{key: "$..b", wantedDepth: 1},
+		{key: "$.a[*].b[*].c", wantedDepth: 2},
+		{key: "$.a[*].b[*]", wantedDepth: 1},
+		{key: "$.a[*]..c", wantedDepth: 2},
+		// goccy ignores the selectors following a recursive descent.
+		{key: "$..b[*].c", wantedDepth: 1},
+		{key: "$..b..c", wantedDepth: 1},
+		{key: "$.a[*].b[*].c[*].d", wantedDepth: 3},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.key, func(t *testing.T) {
+			got, err := multiMatchDepth(tt.key)
+			require.NoError(t, err)
+			assert.Equal(t, tt.wantedDepth, got)
+		})
+	}
+}

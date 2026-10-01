@@ -3,6 +3,7 @@ package yaml
 import (
 	"context"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -821,6 +822,158 @@ status:
 			wantedResult: true,
 		},
 		{
+			name:             "Update every node selected by nested wildcards",
+			spec:             Spec{File: "test.yaml", Key: "$.repos[*].hooks[*].language_version"},
+			inputSourceValue: "1.25.0",
+			mockedContent: `repos:
+  - hooks:
+      - id: a
+        language_version: 1.24.0
+  - hooks:
+      - id: b
+        language_version: 1.24.0
+      - id: c
+        language_version: 1.24.0
+`,
+			wantedContent: `repos:
+  - hooks:
+      - id: a
+        language_version: 1.25.0
+  - hooks:
+      - id: b
+        language_version: 1.25.0
+      - id: c
+        language_version: 1.25.0
+`,
+			wantedResult: true,
+		},
+		{
+			// goccy nests one sequence per wildcard, which used to be compared to
+			// the value as is, so the target reported a change on every run.
+			name:             "Updating nested wildcards reports no change when every selected node already holds the value",
+			spec:             Spec{File: "test.yaml", Key: "$.repos[*].hooks[*].language_version"},
+			inputSourceValue: "1.25.0",
+			mockedContent: `repos:
+  - hooks:
+      - id: a
+        language_version: 1.25.0
+  - hooks:
+      - id: b
+        language_version: 1.25.0
+`,
+			wantedContent: `repos:
+  - hooks:
+      - id: a
+        language_version: 1.25.0
+  - hooks:
+      - id: b
+        language_version: 1.25.0
+`,
+			wantedResult: false,
+		},
+		{
+			name:             "A key missing from some of the nodes selected by nested wildcards fails",
+			spec:             Spec{File: "test.yaml", Key: "$.repos[*].hooks[*].language_version"},
+			inputSourceValue: "1.25.0",
+			mockedContent: `repos:
+  - hooks:
+      - id: a
+  - hooks:
+      - id: b
+        language_version: 1.24.0
+`,
+			wantedError: true,
+		},
+		{
+			name:             "A key whose path stops at an outer wildcard fails",
+			spec:             Spec{File: "test.yaml", Key: "$.repos[*].hooks[*].language_version"},
+			inputSourceValue: "1.25.0",
+			mockedContent: `repos:
+  - name: no hooks
+  - hooks:
+      - id: b
+        language_version: 1.24.0
+`,
+			wantedError: true,
+		},
+		{
+			name:             "Updating three nested wildcards reports no change when every selected node already holds the value",
+			spec:             Spec{File: "test.yaml", Key: "$.groups[*].repos[*].hooks[*].v"},
+			inputSourceValue: "2",
+			mockedContent: `groups:
+  - repos:
+      - hooks:
+          - v: "2"
+  - repos:
+      - hooks:
+          - v: "2"
+      - hooks:
+          - v: "2"
+`,
+			wantedContent: `groups:
+  - repos:
+      - hooks:
+          - v: "2"
+  - repos:
+      - hooks:
+          - v: "2"
+      - hooks:
+          - v: "2"
+`,
+			wantedResult: false,
+		},
+		{
+			name:             "Update every node selected by three nested wildcards",
+			spec:             Spec{File: "test.yaml", Key: "$.groups[*].repos[*].hooks[*].v"},
+			inputSourceValue: "2",
+			mockedContent: `groups:
+  - repos:
+      - hooks:
+          - v: "1"
+  - repos:
+      - hooks:
+          - v: "1"
+      - hooks:
+          - v: "2"
+`,
+			wantedContent: `groups:
+  - repos:
+      - hooks:
+          - v: "2"
+  - repos:
+      - hooks:
+          - v: "2"
+      - hooks:
+          - v: "2"
+`,
+			wantedResult: true,
+		},
+		{
+			// The matched value is itself a sequence, which must not be mistaken
+			// for one more level of goccy's match sequences.
+			name:             "Appending to sequences selected by nested wildcards",
+			spec:             Spec{File: "test.yaml", Key: "$.repos[*].hooks[*].args", AppendToArray: true},
+			inputSourceValue: "b",
+			mockedContent: `repos:
+  - hooks:
+      - args:
+          - a
+  - hooks:
+      - args:
+          - b
+`,
+			wantedContent: `repos:
+  - hooks:
+      - args:
+          - a
+          - b
+  - hooks:
+      - args:
+          - b
+`,
+			wantedResult: true,
+		},
+		{
 			name:             "Appending to a sequence missing from every node selected by a wildcard is not found",
 			spec:             Spec{File: "test.yaml", Key: "$.agents[*].tags", AppendToArray: true},
 			inputSourceValue: "b",
@@ -908,6 +1061,53 @@ func Test_TargetSearchPatternUpdatesPartialWildcardKey(t *testing.T) {
 	assert.True(t, gotResult.Changed)
 	assert.Equal(t, result.ATTENTION, gotResult.Result)
 	assert.Equal(t, "agents:\n  - name: first\n    tag: v2\n  - name: second\n", mockedText.Contents["test.yaml"])
+}
+
+// Test_TargetSearchPatternUpdatesPartialNestedWildcardKey covers the pre-commit
+// configuration shape, where only some hooks pin a language version: the nested
+// wildcards must report the hooks without the key as missing, and
+// spec.searchpattern then updates the ones holding it.
+func Test_TargetSearchPatternUpdatesPartialNestedWildcardKey(t *testing.T) {
+	content := `repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+  - repo: https://github.com/golangci/golangci-lint
+    hooks:
+      - id: golangci-lint
+        language_version: 1.24.0
+`
+
+	t.Chdir(t.TempDir())
+	require.NoError(t, os.WriteFile("test.yaml", []byte(content), 0600))
+
+	mockedText := text.MockTextRetriever{
+		Contents: map[string]string{"test.yaml": content},
+	}
+
+	y, err := New(Spec{File: "test.yaml", Key: "$.repos[*].hooks[*].language_version", SearchPattern: true})
+	require.NoError(t, err)
+
+	y.contentRetriever = &mockedText
+
+	gotResult := result.Target{}
+	require.NoError(t, y.Target(context.Background(), "1.25.0", nil, pathresolver.Resolver{}, false, &gotResult))
+
+	assert.True(t, gotResult.Changed)
+	assert.Equal(t, result.ATTENTION, gotResult.Result)
+	assert.Equal(t, strings.Replace(content, "1.24.0", "1.25.0", 1), mockedText.Contents["test.yaml"])
+
+	// A second run must find the target already up to date.
+	y, err = New(Spec{File: "test.yaml", Key: "$.repos[*].hooks[*].language_version", SearchPattern: true})
+	require.NoError(t, err)
+
+	y.contentRetriever = &mockedText
+
+	gotResult = result.Target{}
+	require.NoError(t, y.Target(context.Background(), "1.25.0", nil, pathresolver.Resolver{}, false, &gotResult))
+
+	assert.False(t, gotResult.Changed)
 }
 
 // Test_TargetDocumentIndexOutOfRange covers a documentindex addressing no document
