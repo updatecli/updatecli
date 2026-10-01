@@ -360,24 +360,37 @@ func appendToSequence(seq *ast.SequenceNode, value string, comment string) (bool
 // multiMatchKey reports whether key can address more than one node. goccy answers
 // such a query with a synthetic sequence wrapping the matched nodes rather than
 // with a matched node itself, so callers that mutate the returned node in place
-// must unwrap it first. A recursive descent always wraps, while "[*]" only wraps
-// when it is not the last element of the path.
+// must unwrap it first.
 func multiMatchKey(key string) (bool, error) {
+	depth, err := multiMatchDepth(key)
+	return depth > 0, err
+}
+
+// multiMatchDepth returns how many synthetic sequences goccy nests around the nodes
+// matched by key. Each multi match selector adds one level: a recursive descent
+// always wraps, while "[*]" only wraps when it is not the last element of the path.
+// "$.repos[*].hooks[*].language_version" therefore resolves to one sequence per
+// repo, each holding one entry per hook.
+//
+// goccy ends the evaluation at a recursive descent and returns its matches without
+// applying the rest of the path, so the selectors following it add no level.
+func multiMatchDepth(key string) (int, error) {
 	elements, err := splitYamlPathKey(key)
 	if err != nil {
-		return false, err
+		return 0, err
 	}
 
+	depth := 0
 	for i, element := range elements {
 		switch {
 		case strings.HasPrefix(element.raw, ".."):
-			return true, nil
+			return depth + 1, nil
 		case element.raw == "[*]" && i < len(elements)-1:
-			return true, nil
+			depth++
 		}
 	}
 
-	return false, nil
+	return depth, nil
 }
 
 // matchedNodes unwraps the node goccy returned for key into the nodes it actually
@@ -389,8 +402,13 @@ func multiMatchKey(key string) (bool, error) {
 // node is therefore no proof that the key exists, and mutating it in place mutates
 // a copy. An empty wrapper, or one holding only nil entries, means the key is
 // absent everywhere.
+//
+// Several multi match selectors nest those sequences, one level per selector, with
+// a nil entry at whichever level the path stops resolving. The depth is taken from
+// the key rather than from the shape of the result, as a matched value may itself
+// be a sequence.
 func matchedNodes(node ast.Node, key string) (matched []ast.Node, missing int, err error) {
-	multiMatch, err := multiMatchKey(key)
+	depth, err := multiMatchDepth(key)
 	if err != nil {
 		return nil, 0, fmt.Errorf("cannot evaluate key %q: %w", key, err)
 	}
@@ -401,7 +419,13 @@ func matchedNodes(node ast.Node, key string) (matched []ast.Node, missing int, e
 		return nil, 0, nil
 	}
 
-	if !multiMatch {
+	return unwrapMatches(node, depth, key)
+}
+
+// unwrapMatches flattens depth levels of goccy's synthetic match sequences, counting
+// every nil entry met on the way as a missing position.
+func unwrapMatches(node ast.Node, depth int, key string) (matched []ast.Node, missing int, err error) {
+	if depth == 0 {
 		return []ast.Node{node}, 0, nil
 	}
 
@@ -415,7 +439,13 @@ func matchedNodes(node ast.Node, key string) (matched []ast.Node, missing int, e
 			missing++
 			continue
 		}
-		matched = append(matched, value)
+
+		valueMatched, valueMissing, err := unwrapMatches(value, depth-1, key)
+		if err != nil {
+			return nil, 0, err
+		}
+		matched = append(matched, valueMatched...)
+		missing += valueMissing
 	}
 
 	return matched, missing, nil
