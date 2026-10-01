@@ -3,6 +3,7 @@ package gittag
 import (
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
@@ -23,7 +24,11 @@ func (gt *GitTag) listRemoteURLTags() ([]string, map[string]string, error) {
 		},
 	})
 
-	listOptions := &git.ListOptions{}
+	listOptions := &git.ListOptions{
+		// An annotated tag is advertised with the hash of its tag object; only its peeled
+		// entry carries the commit, which is what local listing and pinned references use.
+		PeelingOption: git.AppendPeeled,
+	}
 
 	if gt.spec.Username != "" && gt.spec.Password != "" {
 		listOptions.Auth = &http.BasicAuth{
@@ -38,12 +43,22 @@ func (gt *GitTag) listRemoteURLTags() ([]string, map[string]string, error) {
 	}
 
 	tagsList := make([]string, 0, len(refs))
+	peeled := make(map[string]string)
 	for _, ref := range refs {
 		if !ref.Name().IsTag() {
 			continue
 		}
+		if name, isPeeled := strings.CutSuffix(ref.Name().Short(), "^{}"); isPeeled {
+			peeled[name] = ref.Hash().String()
+			continue
+		}
 		results[ref.Name().Short()] = ref.Hash().String()
 		tagsList = append(tagsList, ref.Name().Short())
+	}
+	for name, hash := range peeled {
+		if _, found := results[name]; found {
+			results[name] = hash
+		}
 	}
 
 	// Sort the tags list in lexicographical order before returning
