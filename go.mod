@@ -40,7 +40,7 @@ require (
 	github.com/heimdalr/dag v1.5.1
 	github.com/hexops/gotextdiff v1.0.3
 	github.com/invopop/jsonschema v0.14.0
-	github.com/jferrl/go-githubauth v1.7.0
+	github.com/jferrl/go-githubauth v1.9.1
 	github.com/joho/godotenv v1.5.1
 	github.com/lithammer/dedent v1.1.0
 	github.com/microsoft/azure-devops-go-api/azuredevops/v7 v7.1.0
