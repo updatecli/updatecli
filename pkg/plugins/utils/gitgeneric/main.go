@@ -719,9 +719,9 @@ func (g GoGit) Clone(username, password, URL, workingDir string, withSubmodules 
 	}
 
 	// Skip the full ref reconciliation fetch below when singleBranch is enabled: it
-	// intentionally mirrors every ref from the remote (branches, tags, pull request refs,
-	// etc.), which defeats the purpose of only cloning/fetching the configured branch and
-	// can be very expensive on repositories with a large number of refs.
+	// mirrors every branch and tag from the remote, which defeats the purpose of only
+	// cloning/fetching the configured branch and can be very expensive on repositories with a
+	// large number of refs.
 	if singleBranch {
 		return nil
 	}
@@ -737,7 +737,9 @@ func (g GoGit) Clone(username, password, URL, workingDir string, withSubmodules 
 
 		fetchOptions := git.FetchOptions{
 			Progress: &b,
-			RefSpecs: []config.RefSpec{"refs/*:refs/*"},
+			// Only branches and tags: other refs, such as the refs/pull/* GitHub keeps for every
+			// pull request, aren't used and can hold most of the refs and objects of a repository.
+			RefSpecs: []config.RefSpec{"refs/heads/*:refs/heads/*", "refs/tags/*:refs/tags/*"},
 			Force:    true,
 		}
 
