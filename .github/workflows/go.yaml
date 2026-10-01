@@ -106,10 +106,58 @@ jobs:
           VENOM_VERSION: v1.3.0
       - name: Show Venom version
         run: venom version
+      # Every HTTP call and resource of the e2e run becomes a span; the collector keeps them in a
+      # file so the run can be summarized and compared, instead of lost in venom's captured stdout.
+      - name: Start trace collector
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/otelcol.tar.gz" \
+            "https://github.com/open-telemetry/opentelemetry-collector-releases/releases/download/v${OTELCOL_VERSION}/otelcol-contrib_${OTELCOL_VERSION}_linux_amd64.tar.gz"
+          echo "${OTELCOL_SHA256}  $RUNNER_TEMP/otelcol.tar.gz" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/otelcol.tar.gz" -C "$RUNNER_TEMP" otelcol-contrib
+          mkdir -p "$RUNNER_TEMP/traces"
+          nohup "$RUNNER_TEMP/otelcol-contrib" --config=env:COLLECTOR_CONFIG >"$RUNNER_TEMP/traces/otelcol.log" 2>&1 &
+          echo $! >"$RUNNER_TEMP/otelcol.pid"
+        env:
+          OTELCOL_VERSION: 0.162.0
+          OTELCOL_SHA256: fcc063749f730f8c21fe29f2d340ff174f5f1c5885bd3156fb6c985a3036fcc3
+          COLLECTOR_CONFIG: |
+            receivers:
+              otlp:
+                protocols:
+                  http:
+                    endpoint: 127.0.0.1:4318
+            exporters:
+              file:
+                path: ${env:RUNNER_TEMP}/traces/spans.jsonl
+            service:
+              pipelines:
+                traces:
+                  receivers: [otlp]
+                  exporters: [file]
       - name: Run End to End tests
         run: make test-e2e
         env:
           IS_TTY: true # https://github.com/ovh/venom#use-venom-in-ci
           # Access only to ec2 AMI api in read-only
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          OTEL_TRACES_EXPORTER: console
+          OTEL_TRACES_EXPORTER: otlphttp
+          OTEL_EXPORTER_OTLP_ENDPOINT: http://127.0.0.1:4318
+          # The default 2048-span queue drops spans when pipelines finish in bursts.
+          OTEL_BSP_MAX_QUEUE_SIZE: "262144"
+      - name: Summarize e2e traces
+        if: ${{ always() }}
+        run: |
+          kill "$(cat "$RUNNER_TEMP/otelcol.pid")" && sleep 2 || true
+          if [ ! -s "$RUNNER_TEMP/traces/spans.jsonl" ]; then
+            echo "No e2e traces: the e2e step didn't run." >>"$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          python3 e2e/scripts/trace_summary.py "$RUNNER_TEMP/traces/spans.jsonl" \
+            --json "$RUNNER_TEMP/traces/summary.json" >>"$GITHUB_STEP_SUMMARY"
+      - name: Upload e2e traces
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: e2e-traces
+          path: ${{ runner.temp }}/traces
+          retention-days: 30
