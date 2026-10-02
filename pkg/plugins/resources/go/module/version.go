@@ -3,13 +3,14 @@ package gomodule
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"os"
-	"sort"
+	"regexp"
 	"strings"
 	"time"
 
@@ -17,7 +18,16 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
+	"golang.org/x/mod/module"
+	"golang.org/x/mod/semver"
 )
+
+// ErrNoVersionNewerThanPseudo is returned when the version filter starts from a pseudo version
+// and no version newer than that pseudo version is published yet.
+var ErrNoVersionNewerThanPseudo = errors.New("no version newer than the pseudo version")
+
+// operatorSpacing matches a semver constraint operator followed by spaces.
+var operatorSpacing = regexp.MustCompile(`([<>=!~^]+)\s+`)
 
 // versionInfo represents the structure of the version information returned by the Go proxy API.
 type versionInfo struct {
@@ -41,6 +51,13 @@ func (g *GoModule) versions(ctx context.Context) (v string, err error) {
 	// filter, so that a running cooldown isn't reported as a missing module.
 	heldBackByAge := false
 
+	// pseudoVersion is set when the version filter looks for a version newer than a pseudo version.
+	pseudoVersion := pseudoVersionLowerBound(g.versionFilter)
+
+	// Tracks proxies which serve that module but nothing newer than the pseudo version,
+	// as another proxy listed in GOPROXY may already serve a newer one.
+	noVersionNewerThanPseudo := false
+
 	for _, proxy := range strings.Split(GOPROXY, ",") {
 		proxy = strings.TrimSpace(proxy)
 		if !isSupportedGoProxy(proxy) {
@@ -59,7 +76,7 @@ func (g *GoModule) versions(ctx context.Context) (v string, err error) {
 			as explained on https://go.dev/ref/mod#goproxy-protocol
 		*/
 		if len(publishedVersions) == 0 {
-			if !isLatestVersionFilter(g.versionFilter) {
+			if !isLatestVersionFilter(g.versionFilter) && pseudoVersion == "" {
 				logrus.Debugf("no version published for module %q on proxy %q\n", g.Spec.Module, proxy)
 				continue
 			}
@@ -79,6 +96,15 @@ func (g *GoModule) versions(ctx context.Context) (v string, err error) {
 				logrus.Debugf("ignoring version %q from proxy %q because it doesn't match the age filter\n", latestVersion.Version, proxy)
 				heldBackByAge = true
 				continue
+			}
+
+			// The latest commit must still be newer than the pseudo version the filter starts from.
+			if pseudoVersion != "" {
+				if _, err := g.versionFilter.Search([]string{latestVersion.Version}); err != nil {
+					logrus.Debugf("ignoring version %q from proxy %q as it isn't newer than %q\n", latestVersion.Version, proxy, pseudoVersion)
+					noVersionNewerThanPseudo = true
+					continue
+				}
 			}
 
 			logrus.Debugf("no version published for module %q on proxy %q, fallback to version %q\n", g.Spec.Module, proxy, latestVersion.Version)
@@ -119,9 +145,14 @@ func (g *GoModule) versions(ctx context.Context) (v string, err error) {
 			}
 		}
 
-		sort.Strings(versions)
-		g.Version, err = g.versionFilter.Search(versions)
+		semver.Sort(versions)
+		g.Version, err = g.searchVersion(versions, pseudoVersion)
 		if err != nil {
+			if errors.Is(err, ErrNoVersionNewerThanPseudo) {
+				logrus.Debugf("no version newer than %q for module %q on proxy %q\n", pseudoVersion, g.Spec.Module, proxy)
+				noVersionNewerThanPseudo = true
+				continue
+			}
 			return "", err
 		}
 
@@ -133,7 +164,68 @@ func (g *GoModule) versions(ctx context.Context) (v string, err error) {
 		return "", fmt.Errorf("%w for GO module %q", age.ErrNoVersionMatchingAge, g.Spec.Module)
 	}
 
+	if noVersionNewerThanPseudo {
+		return "", fmt.Errorf("%w %q for GO module %q", ErrNoVersionNewerThanPseudo, pseudoVersion, g.Spec.Module)
+	}
+
 	return "", fmt.Errorf("GO module %q not found on proxy %q", g.Spec.Module, GOPROXY)
+}
+
+// searchVersion returns the version matching the version filter.
+//
+// When the filter starts from a pseudo version, a release is preferred over a prerelease
+// or a pseudo version, as "go get -u" does, and finding nothing newer than that pseudo
+// version isn't an error but the expected state until a newer version is published.
+func (g *GoModule) searchVersion(versions []string, pseudoVersion string) (version.Version, error) {
+	if pseudoVersion == "" {
+		return g.versionFilter.Search(versions)
+	}
+
+	releases := make([]string, 0, len(versions))
+	for _, v := range versions {
+		if semver.Prerelease(v) == "" {
+			releases = append(releases, v)
+		}
+	}
+
+	if foundVersion, err := g.versionFilter.Search(releases); err == nil {
+		return foundVersion, nil
+	}
+
+	foundVersion, err := g.versionFilter.Search(versions)
+	if errors.Is(err, version.ErrNoVersionFound) {
+		return foundVersion, fmt.Errorf("%w %q for GO module %q", ErrNoVersionNewerThanPseudo, pseudoVersion, g.Spec.Module)
+	}
+
+	return foundVersion, err
+}
+
+// pseudoVersionLowerBound returns the pseudo version a semver version filter starts from,
+// such as ">=0.0.0-20230215024106-420ad0987b9b", or an empty string.
+func pseudoVersionLowerBound(versionfilter version.Filter) string {
+	if versionfilter.Kind != version.SEMVERVERSIONKIND {
+		return ""
+	}
+
+	// Operators may be separated from their version by spaces, such as "<= 1.2.3",
+	// so they are joined back first to keep each field a single comparison.
+	pattern := operatorSpacing.ReplaceAllString(versionfilter.Pattern, "$1")
+
+	for _, field := range strings.FieldsFunc(pattern, func(r rune) bool {
+		return r == ' ' || r == ',' || r == '|'
+	}) {
+		// Only lower bounds and exact versions, such as ">=", ">" or no operator, start the search.
+		if strings.ContainsAny(field[:1], "<!~^") {
+			continue
+		}
+
+		v := "v" + strings.TrimLeft(field, ">=v")
+		if module.IsPseudoVersion(v) || module.IsZeroPseudoVersion(v) {
+			return v
+		}
+	}
+
+	return ""
 }
 
 // getFromProxy queries a Go module proxy endpoint and returns its raw response body.
