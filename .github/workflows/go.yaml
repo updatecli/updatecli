@@ -69,6 +69,9 @@ jobs:
       - name: Show GoReleaser version
         run: goreleaser --version
       - name: Build
+        # e2e only runs this runner's binary; pushes to main and the nightly run build every platform.
+        env:
+          BUILD_FLAGS: ${{ (github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch') && '--single-target' || '' }}
         run: make build
       - name: Quick Test
         env:
