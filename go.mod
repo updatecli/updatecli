@@ -12,7 +12,7 @@ require (
 	github.com/JohannesKaufmann/html-to-markdown v1.6.0
 	github.com/Masterminds/semver/v3 v3.5.0
 	github.com/Masterminds/sprig/v3 v3.3.0
-	github.com/ProtonMail/go-crypto v1.4.1
+	github.com/ProtonMail/go-crypto v1.5.2
 	github.com/agext/levenshtein v1.2.3
 	github.com/aquasecurity/go-pep440-version v0.0.1
 	github.com/aws/aws-sdk-go-v2 v1.47.1
