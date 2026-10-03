@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -417,6 +418,9 @@ func (g GoGit) Add(files []string, workingDir string) error {
 	return nil
 }
 
+// pulledBranches holds the "<repository path>\x00<branch>" keys Checkout already pulled.
+var pulledBranches sync.Map
+
 // Checkout create and then uses a temporary git branch.
 func (g *GoGit) Checkout(username, password, basedBranch, newBranch, gitRepositoryPath string, forceReset bool, depth *int) error {
 	logrus.Debugf("checkout git branch %q, based on %q",
@@ -484,13 +488,6 @@ func (g *GoGit) Checkout(username, password, basedBranch, newBranch, gitReposito
 		// aligned with the remote one.
 		b := bytes.Buffer{}
 
-		// Todo in a separated pullrequest, we should validate that we can remove the pull operation from the checkout function
-		// as we are already doing it in the clone function.
-
-		// Today the checkout function is call when Updatecli is started to clone git repositories
-		// then after each resource execution that depends on a git repository.
-		// For large repository, the pull can take a long time so ideally we would like to only do it once
-		// when Updatecli is started.
 		pullOptions := git.PullOptions{
 			Force:    true,
 			Progress: &b,
@@ -507,7 +504,15 @@ func (g *GoGit) Checkout(username, password, basedBranch, newBranch, gitReposito
 			pullOptions.Auth = &auth
 		}
 
-		err = worktree.Pull(&pullOptions)
+		// Checkout runs before every resource of the repository, but the branch only changes
+		// during an execution through Updatecli's own pushes and API commits, which update
+		// the local branch themselves, so it's pulled once.
+		pulledKey := gitRepositoryPath + "\x00" + newBranch
+		if _, pulled := pulledBranches.Load(pulledKey); pulled {
+			err = git.NoErrAlreadyUpToDate
+		} else {
+			err = worktree.Pull(&pullOptions)
+		}
 		if b.String() != "" {
 			logrus.Debugln(b.String())
 		}
@@ -518,6 +523,7 @@ func (g *GoGit) Checkout(username, password, basedBranch, newBranch, gitReposito
 			logrus.Debugln(err)
 			return err
 		}
+		pulledBranches.Store(pulledKey, true)
 
 		if forceReset {
 			logrus.Debugf("Checking if branch %q diverged from %q:", newBranch, basedBranch)
@@ -713,9 +719,9 @@ func (g GoGit) Clone(username, password, URL, workingDir string, withSubmodules 
 	}
 
 	// Skip the full ref reconciliation fetch below when singleBranch is enabled: it
-	// intentionally mirrors every ref from the remote (branches, tags, pull request refs,
-	// etc.), which defeats the purpose of only cloning/fetching the configured branch and
-	// can be very expensive on repositories with a large number of refs.
+	// mirrors every branch and tag from the remote, which defeats the purpose of only
+	// cloning/fetching the configured branch and can be very expensive on repositories with a
+	// large number of refs.
 	if singleBranch {
 		return nil
 	}
@@ -731,7 +737,9 @@ func (g GoGit) Clone(username, password, URL, workingDir string, withSubmodules 
 
 		fetchOptions := git.FetchOptions{
 			Progress: &b,
-			RefSpecs: []config.RefSpec{"refs/*:refs/*"},
+			// Only branches and tags: other refs, such as the refs/pull/* GitHub keeps for every
+			// pull request, aren't used and can hold most of the refs and objects of a repository.
+			RefSpecs: []config.RefSpec{"refs/heads/*:refs/heads/*", "refs/tags/*:refs/tags/*"},
 			Force:    true,
 		}
 

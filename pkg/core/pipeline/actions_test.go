@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/action"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
 	"github.com/updatecli/updatecli/pkg/core/reports"
 )
@@ -76,10 +77,49 @@ func TestRunCleanActions(t *testing.T) {
 			}
 			p.Options.Target.DryRun = tt.dryRun
 
-			gotErr := p.RunCleanActions(context.Background())
+			gotErr := p.RunCleanActions(context.Background(), map[string]bool{})
 
 			require.NoError(t, gotErr)
 			assert.Equal(t, tt.expectedCleanCounter, handler.cleanCounter)
 		})
 	}
+}
+
+// mockBranchScm implements the scm methods a cleanup key is built from.
+type mockBranchScm struct {
+	scm.ScmHandler
+	workingBranch string
+}
+
+func (m *mockBranchScm) GetURL() string { return "https://github.com/updatecli/updatecli.git" }
+
+func (m *mockBranchScm) GetBranches() (string, string, string) {
+	return "main", m.workingBranch, "main"
+}
+
+func TestRunCleanActionsOncePerPullRequest(t *testing.T) {
+	newPipeline := func(handler action.ActionHandler, workingBranch string) *Pipeline {
+		var scmHandler scm.ScmHandler = &mockBranchScm{workingBranch: workingBranch}
+		return &Pipeline{
+			Targets: map[string]target.Target{"default": {}},
+			Actions: map[string]action.Action{"default": {
+				Config:  action.Config{Kind: "github/pullrequest"},
+				Scm:     &scm.Scm{Handler: scmHandler},
+				Handler: handler,
+			}},
+		}
+	}
+
+	handler := mockActionHandler{}
+	handled := map[string]bool{}
+	for _, workingBranch := range []string{"updatecli_a", "updatecli_a", "updatecli_b"} {
+		p := newPipeline(&handler, workingBranch)
+		require.NoError(t, p.RunCleanActions(context.Background(), handled))
+	}
+	assert.Equal(t, 2, handler.cleanCounter, "pipelines sharing a working branch clean its pull request once")
+
+	published := newPipeline(&handler, "updatecli_c")
+	handled[published.Actions["default"].CleanupKey()] = true
+	require.NoError(t, published.RunCleanActions(context.Background(), handled))
+	assert.Equal(t, 2, handler.cleanCounter, "a pull request published during this execution isn't cleaned")
 }

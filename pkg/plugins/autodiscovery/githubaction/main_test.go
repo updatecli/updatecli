@@ -122,6 +122,7 @@ sources:
     spec:
       url: "https://github.com/actions/checkout.git"
       password: 'xxx'
+      lsremote: true
       versionfilter:
         kind: 'semver'
         pattern: '*'
@@ -134,6 +135,7 @@ sources:
     spec:
       url: "https://github.com/actions/checkout.git"
       password: 'xxx'
+      lsremote: true
       versionfilter:
         kind: 'semver'
         pattern: '*'
@@ -157,6 +159,7 @@ conditions:
     spec:
       url: "https://github.com/actions/checkout.git"
       password: 'xxx'
+      lsremote: true
       versionfilter:
         kind: 'regex'
         pattern: '^v4$'
@@ -169,6 +172,7 @@ conditions:
       branch: 'v4'
       url: "https://github.com/actions/checkout.git"
       password: 'xxx'
+      lsremote: true
 
 targets:
   release:
@@ -264,6 +268,7 @@ sources:
     spec:
       url: "https://github.com/actions/checkout.git"
       password: 'xxx'
+      lsremote: true
       versionfilter:
         kind: 'semver'
         pattern: '*'
@@ -276,6 +281,7 @@ sources:
     spec:
       url: "https://github.com/actions/checkout.git"
       password: 'xxx'
+      lsremote: true
       key: 'hash'
       versionfilter:
         kind: 'regex'
@@ -289,6 +295,7 @@ sources:
     spec:
       url: "https://github.com/actions/checkout.git"
       password: 'xxx'
+      lsremote: true
       versionfilter:
         kind: 'semver'
         pattern: '*'
@@ -301,6 +308,7 @@ sources:
     spec:
       url: "https://github.com/actions/checkout.git"
       password: 'xxx'
+      lsremote: true
       key: 'hash'
       versionfilter:
         kind: 'regex'
@@ -325,6 +333,7 @@ conditions:
     spec:
       url: "https://github.com/actions/checkout.git"
       password: 'xxx'
+      lsremote: true
       versionfilter:
         kind: 'regex'
         pattern: '^v4$'
@@ -337,6 +346,7 @@ conditions:
       branch: 'v4'
       url: "https://github.com/actions/checkout.git"
       password: 'xxx'
+      lsremote: true
 
 targets:
   release:
@@ -423,6 +433,7 @@ sources:
     spec:
       url: "https://github.com/actions/checkout.git"
       password: 'xxx'
+      lsremote: true
       versionfilter:
         kind: 'semver'
         pattern: '*'
@@ -435,6 +446,7 @@ sources:
     spec:
       url: "https://github.com/actions/checkout.git"
       password: 'xxx'
+      lsremote: true
       key: 'hash'
       versionfilter:
         kind: 'regex'
@@ -448,6 +460,7 @@ sources:
     spec:
       url: "https://github.com/actions/checkout.git"
       password: 'xxx'
+      lsremote: true
       versionfilter:
         kind: 'semver'
         pattern: '*'
@@ -460,6 +473,7 @@ sources:
     spec:
       url: "https://github.com/actions/checkout.git"
       password: 'xxx'
+      lsremote: true
       key: 'hash'
       versionfilter:
         kind: 'regex'
@@ -484,6 +498,7 @@ conditions:
     spec:
       url: "https://github.com/actions/checkout.git"
       password: 'xxx'
+      lsremote: true
       versionfilter:
         kind: 'regex'
         pattern: '^v4.2.2$'
@@ -496,6 +511,7 @@ conditions:
       branch: 'v4.2.2'
       url: "https://github.com/actions/checkout.git"
       password: 'xxx'
+      lsremote: true
 
 targets:
   release:
@@ -592,6 +608,7 @@ sources:
     spec:
       url: "https://github.com/actions/checkout.git"
       password: 'xxx'
+      lsremote: true
       key: 'hash'
       versionfilter:
         kind: 'regex'
@@ -616,6 +633,7 @@ sources:
     spec:
       url: "https://github.com/actions/checkout.git"
       password: 'xxx'
+      lsremote: true
       key: 'hash'
       versionfilter:
         kind: 'regex'
@@ -640,6 +658,7 @@ conditions:
     spec:
       url: "https://github.com/actions/checkout.git"
       password: 'xxx'
+      lsremote: true
       versionfilter:
         kind: 'regex'
         pattern: '^main$'
@@ -652,6 +671,7 @@ conditions:
       branch: 'main'
       url: "https://github.com/actions/checkout.git"
       password: 'xxx'
+      lsremote: true
 
 targets:
   release:
@@ -735,6 +755,7 @@ sources:
     spec:
       url: "https://gitea.com/actions/checkout.git"
       password: 'xxx'
+      lsremote: true
       versionfilter:
         kind: 'semver'
         pattern: '*'
@@ -747,6 +768,7 @@ sources:
     spec:
       url: "https://gitea.com/actions/checkout.git"
       password: 'xxx'
+      lsremote: true
       versionfilter:
         kind: 'semver'
         pattern: '*'
@@ -770,6 +792,7 @@ conditions:
     spec:
       url: "https://gitea.com/actions/checkout.git"
       password: 'xxx'
+      lsremote: true
       versionfilter:
         kind: 'regex'
         pattern: '^v4$'
@@ -782,6 +805,7 @@ conditions:
       branch: 'v4'
       url: "https://gitea.com/actions/checkout.git"
       password: 'xxx'
+      lsremote: true
 
 targets:
   release:
@@ -861,6 +885,7 @@ sources:
     spec:
       url: "https://github.com/tibdex/github-app-token.git"
       password: 'xxx'
+      lsremote: true
       versionfilter:
         kind: 'semver'
         pattern: '*'
@@ -873,6 +898,7 @@ sources:
     spec:
       url: "https://github.com/tibdex/github-app-token.git"
       password: 'xxx'
+      lsremote: true
       versionfilter:
         kind: 'semver'
         pattern: '*'
@@ -896,6 +922,7 @@ conditions:
     spec:
       url: "https://github.com/tibdex/github-app-token.git"
       password: 'xxx'
+      lsremote: true
       versionfilter:
         kind: 'regex'
         pattern: '^v2.1$'
@@ -908,6 +935,7 @@ conditions:
       branch: 'v2.1'
       url: "https://github.com/tibdex/github-app-token.git"
       password: 'xxx'
+      lsremote: true
 
 targets:
   release:
@@ -976,6 +1004,7 @@ sources:
     spec:
       url: "https://github.com/tibdex/github-app-token.git"
       password: 'xxx'
+      lsremote: true
       versionfilter:
         kind: 'semver'
         pattern: '*'
@@ -988,6 +1017,7 @@ sources:
     spec:
       url: "https://github.com/tibdex/github-app-token.git"
       password: 'xxx'
+      lsremote: true
       versionfilter:
         kind: 'semver'
         pattern: '*'
@@ -1011,6 +1041,7 @@ conditions:
     spec:
       url: "https://github.com/tibdex/github-app-token.git"
       password: 'xxx'
+      lsremote: true
       versionfilter:
         kind: 'regex'
         pattern: '^v2.1$'
@@ -1023,6 +1054,7 @@ conditions:
       branch: 'v2.1'
       url: "https://github.com/tibdex/github-app-token.git"
       password: 'xxx'
+      lsremote: true
 
 targets:
   release:
@@ -1091,6 +1123,7 @@ sources:
     spec:
       url: "https://github.com/actions/checkout.git"
       password: 'xxx'
+      lsremote: true
       versionfilter:
         kind: 'semver'
         pattern: '*'
@@ -1103,6 +1136,7 @@ sources:
     spec:
       url: "https://github.com/actions/checkout.git"
       password: 'xxx'
+      lsremote: true
       versionfilter:
         kind: 'semver'
         pattern: '*'
@@ -1126,6 +1160,7 @@ conditions:
     spec:
       url: "https://github.com/actions/checkout.git"
       password: 'xxx'
+      lsremote: true
       versionfilter:
         kind: 'regex'
         pattern: '^v4$'
@@ -1138,6 +1173,7 @@ conditions:
       branch: 'v4'
       url: "https://github.com/actions/checkout.git"
       password: 'xxx'
+      lsremote: true
 
 targets:
   release:
@@ -1206,6 +1242,7 @@ sources:
     spec:
       url: "https://github.com/updatecli/updatecli-action.git"
       password: 'xxx'
+      lsremote: true
       versionfilter:
         kind: 'semver'
         pattern: '*'
@@ -1218,6 +1255,7 @@ sources:
     spec:
       url: "https://github.com/updatecli/updatecli-action.git"
       password: 'xxx'
+      lsremote: true
       versionfilter:
         kind: 'semver'
         pattern: '*'
@@ -1241,6 +1279,7 @@ conditions:
     spec:
       url: "https://github.com/updatecli/updatecli-action.git"
       password: 'xxx'
+      lsremote: true
       versionfilter:
         kind: 'regex'
         pattern: '^v2$'
@@ -1253,6 +1292,7 @@ conditions:
       branch: 'v2'
       url: "https://github.com/updatecli/updatecli-action.git"
       password: 'xxx'
+      lsremote: true
 
 targets:
   release:
@@ -1332,6 +1372,7 @@ sources:
     spec:
       url: "https://github.com/actions/checkout.git"
       password: 'xxx'
+      lsremote: true
       versionfilter:
         kind: 'semver'
         pattern: '*'
@@ -1344,6 +1385,7 @@ sources:
     spec:
       url: "https://github.com/actions/checkout.git"
       password: 'xxx'
+      lsremote: true
       versionfilter:
         kind: 'semver'
         pattern: '*'
@@ -1367,6 +1409,7 @@ conditions:
     spec:
       url: "https://github.com/actions/checkout.git"
       password: 'xxx'
+      lsremote: true
       versionfilter:
         kind: 'regex'
         pattern: '^v4$'
@@ -1379,6 +1422,7 @@ conditions:
       branch: 'v4'
       url: "https://github.com/actions/checkout.git"
       password: 'xxx'
+      lsremote: true
 
 targets:
   release:
@@ -1447,6 +1491,7 @@ sources:
     spec:
       url: "https://github.com/actions/checkout.git"
       password: 'xxx'
+      lsremote: true
       versionfilter:
         kind: 'semver'
         pattern: '*'
@@ -1459,6 +1504,7 @@ sources:
     spec:
       url: "https://github.com/actions/checkout.git"
       password: 'xxx'
+      lsremote: true
       versionfilter:
         kind: 'semver'
         pattern: '*'
@@ -1482,6 +1528,7 @@ conditions:
     spec:
       url: "https://github.com/actions/checkout.git"
       password: 'xxx'
+      lsremote: true
       versionfilter:
         kind: 'regex'
         pattern: '^v4$'
@@ -1494,6 +1541,7 @@ conditions:
       branch: 'v4'
       url: "https://github.com/actions/checkout.git"
       password: 'xxx'
+      lsremote: true
 
 targets:
   release:
@@ -1618,6 +1666,7 @@ conditions:
     spec:
       url: "https://github.com/actions/checkout.git"
       password: 'xxx'
+      lsremote: true
       versionfilter:
         kind: 'regex'
         pattern: '^v4$'
@@ -1630,6 +1679,7 @@ conditions:
       branch: 'v4'
       url: "https://github.com/actions/checkout.git"
       password: 'xxx'
+      lsremote: true
 
 targets:
   release:
