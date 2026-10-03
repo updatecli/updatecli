@@ -11,6 +11,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"golang.org/x/mod/modfile"
 	"golang.org/x/mod/module"
+	"golang.org/x/mod/semver"
 )
 
 const (
@@ -153,4 +154,47 @@ func getGoModContent(filename string) (goVersion string, goModules map[string]st
 // isPseudoVersion checks if the provided version is a pseudo-version.
 func isPseudoVersion(version string) bool {
 	return module.IsPseudoVersion(version) || module.IsZeroPseudoVersion(version)
+}
+
+// moduleVersionPattern returns the version filter kind and pattern used to look for a version newer than the provided one.
+func (g Golang) moduleVersionPattern(version string) (kind, pattern string, err error) {
+	kind = g.versionFilter.Kind
+
+	pattern, err = g.versionFilter.GreaterThanPattern(version)
+	if err != nil {
+		return "", "", err
+	}
+
+	if !isPseudoVersion(version) || kind != "semver" {
+		return kind, pattern, nil
+	}
+
+	/*
+		A pseudo version is a semver prerelease, so patterns such as "patch" ("1.2.x-0")
+		or a custom constraint such as "~1.2" accept tags older than the pseudo version.
+		Each group of the constraint gets the pseudo version as lower bound, unless it
+		already starts from it, so that no tag can downgrade the module.
+	*/
+	lowerBound := strings.TrimPrefix(version, "v")
+
+	/*
+		For a prerelease, GreaterThanPattern turns "majoronly" into "any version newer
+		than the current one", which would also accept minor and patch updates.
+		Requiring a greater major version keeps the update major only.
+	*/
+	if g.versionFilter.Pattern == "majoronly" {
+		pattern = ">" + strings.TrimPrefix(semver.Major(version), "v")
+	}
+
+	groups := strings.Split(pattern, "||")
+	for i, group := range groups {
+		group = strings.TrimSpace(group)
+		if !strings.Contains(group, lowerBound) {
+			group = fmt.Sprintf(">=%s, %s", lowerBound, group)
+		}
+		groups[i] = group
+	}
+	pattern = strings.Join(groups, " || ")
+
+	return kind, pattern, nil
 }
