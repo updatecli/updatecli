@@ -39,7 +39,7 @@ template: |
   If Updatecli is useful to you, please consider sponsoring it.  
   Your support helps maintain and improve this project.
 
-  [![GitHub stars](https://img.shields.io/github/stars/updatecli/updatecli?style=for-the-badge)](https://github.com/updatecli/updatecli/stargazers) [![Sponsor](https://img.shields.io/badge/Sponsor-%E2%9D%A4-pink?style=for-the-badge)](https://www.updatecli.io/support/#sponsor-or-donate)
+  [![GitHub stars](https://img.shields.io/github/stars/updatecli/updatecli?style=for-the-badge)](https://github.com/updatecli/updatecli) [![Sponsor](https://img.shields.io/badge/Sponsor-%E2%9D%A4-pink?style=for-the-badge)](https://www.updatecli.io/support/#sponsor-or-donate)
 
 version-resolver:
   major:
