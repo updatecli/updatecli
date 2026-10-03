@@ -29,7 +29,7 @@ jobs:
       - name: "Setup updatecli"
         uses: "updatecli/updatecli-action@2efa15cbae1751f532f9bfc88f56adafd6d1faed" # v3.8.0
         with:
-          version: "v0.122.0"
+          version: "v0.122.1"
       - name: "Set up Go"
         uses: "actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e" # v7.0.0
         with:
