@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
 func TestSearchGoModFiles(t *testing.T) {
@@ -230,6 +231,117 @@ func TestPseudoVersion(t *testing.T) {
 		t.Run(d.name, func(t *testing.T) {
 			result := isPseudoVersion(d.version)
 			assert.Equal(t, d.expectedResult, result)
+		})
+	}
+}
+
+func TestModuleVersionPattern(t *testing.T) {
+	const (
+		zeroPseudoVersion = "v0.0.0-20230215024106-420ad0987b9b"
+		pseudoVersion     = "v1.2.4-0.20230215024106-420ad0987b9b"
+	)
+
+	tests := []struct {
+		name            string
+		filter          version.Filter
+		version         string
+		expectedKind    string
+		expectedPattern string
+	}{
+		{
+			name:            "release with patch pattern",
+			filter:          version.Filter{Kind: "semver", Pattern: "patch"},
+			version:         "v1.2.3",
+			expectedKind:    "semver",
+			expectedPattern: "1.2.x",
+		},
+		{
+			name:            "zero pseudo version with default pattern",
+			filter:          version.Filter{Kind: "semver", Pattern: "*"},
+			version:         zeroPseudoVersion,
+			expectedKind:    "semver",
+			expectedPattern: ">=0.0.0-20230215024106-420ad0987b9b",
+		},
+		{
+			name:            "pseudo version with patch pattern",
+			filter:          version.Filter{Kind: "semver", Pattern: "patch"},
+			version:         pseudoVersion,
+			expectedKind:    "semver",
+			expectedPattern: ">=1.2.4-0.20230215024106-420ad0987b9b, 1.2.x-0",
+		},
+		{
+			name:            "pseudo version with minor pattern",
+			filter:          version.Filter{Kind: "semver", Pattern: "minor"},
+			version:         pseudoVersion,
+			expectedKind:    "semver",
+			expectedPattern: ">=1.2.4-0.20230215024106-420ad0987b9b, 1.x.x-0",
+		},
+		{
+			name:            "pseudo version with major pattern",
+			filter:          version.Filter{Kind: "semver", Pattern: "major"},
+			version:         pseudoVersion,
+			expectedKind:    "semver",
+			expectedPattern: ">=1.2.4-0.20230215024106-420ad0987b9b, >=1.x.x-0",
+		},
+		{
+			name:            "pseudo version with minoronly pattern",
+			filter:          version.Filter{Kind: "semver", Pattern: "minoronly"},
+			version:         pseudoVersion,
+			expectedKind:    "semver",
+			expectedPattern: pseudoVersion + " || >=1.2.4-0.20230215024106-420ad0987b9b, >1.2.x-0 < 2",
+		},
+		{
+			name:            "pseudo version with majoronly pattern",
+			filter:          version.Filter{Kind: "semver", Pattern: "majoronly"},
+			version:         pseudoVersion,
+			expectedKind:    "semver",
+			expectedPattern: ">=1.2.4-0.20230215024106-420ad0987b9b, >1",
+		},
+		{
+			name:            "zero pseudo version with majoronly pattern",
+			filter:          version.Filter{Kind: "semver", Pattern: "majoronly"},
+			version:         zeroPseudoVersion,
+			expectedKind:    "semver",
+			expectedPattern: ">=0.0.0-20230215024106-420ad0987b9b, >0",
+		},
+		{
+			name:            "pseudo version with a custom constraint",
+			filter:          version.Filter{Kind: "semver", Pattern: "~1.2"},
+			version:         pseudoVersion,
+			expectedKind:    "semver",
+			expectedPattern: ">=1.2.4-0.20230215024106-420ad0987b9b, ~1.2",
+		},
+		{
+			name:            "pseudo version with a custom constraint made of several groups",
+			filter:          version.Filter{Kind: "semver", Pattern: "~1.2 || ~1.3"},
+			version:         pseudoVersion,
+			expectedKind:    "semver",
+			expectedPattern: ">=1.2.4-0.20230215024106-420ad0987b9b, ~1.2 || >=1.2.4-0.20230215024106-420ad0987b9b, ~1.3",
+		},
+		{
+			name:            "pseudo version with latest kind",
+			filter:          version.Filter{Kind: "latest", Pattern: "latest"},
+			version:         pseudoVersion,
+			expectedKind:    "latest",
+			expectedPattern: "latest",
+		},
+		{
+			name:            "pseudo version with regex kind",
+			filter:          version.Filter{Kind: "regex", Pattern: `^v1\.`},
+			version:         pseudoVersion,
+			expectedKind:    "regex",
+			expectedPattern: `^v1\.`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := Golang{versionFilter: tt.filter}
+
+			gotKind, gotPattern, err := g.moduleVersionPattern(tt.version)
+			require.NoError(t, err)
+			assert.Equal(t, tt.expectedKind, gotKind)
+			assert.Equal(t, tt.expectedPattern, gotPattern)
 		})
 	}
 }

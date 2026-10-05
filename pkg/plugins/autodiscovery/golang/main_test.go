@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
 func TestDiscoverManifests(t *testing.T) {
@@ -126,8 +127,8 @@ sources:
     spec:
       module: 'github.com/shurcooL/githubv4'
       versionfilter:
-        kind: 'latest'
-        pattern: ''
+        kind: 'semver'
+        pattern: '>=0.0.0-20230215024106-420ad0987b9b'
 targets:
   module:
     name: 'deps(go): bump module github.com/shurcooL/githubv4 to {{ source "module" }}'
@@ -145,6 +146,48 @@ sources:
       versionfilter:
         kind: 'semver'
         pattern: '>=1.20.0'
+targets:
+  go:
+    name: 'deps(golang): bump Go version to {{ source "go" }}'
+    kind: 'golang/gomod'
+    sourceid: 'go'
+    spec:
+      file: 'go.mod'
+`},
+		},
+		{
+			name:    "Test with pseudo version and patch version filter",
+			rootDir: "testdata/pseudoVersion",
+			spec: Spec{
+				VersionFilter: version.Filter{Kind: "semver", Pattern: "patch"},
+			},
+			expectedPipelines: []string{`name: 'deps(go): bump module github.com/shurcooL/githubv4'
+sources:
+  module:
+    name: 'Get latest golang module github.com/shurcooL/githubv4 version'
+    kind: 'golang/module'
+    spec:
+      module: 'github.com/shurcooL/githubv4'
+      versionfilter:
+        kind: 'semver'
+        pattern: '>=0.0.0-20230215024106-420ad0987b9b, 0.0.x-0'
+targets:
+  module:
+    name: 'deps(go): bump module github.com/shurcooL/githubv4 to {{ source "module" }}'
+    kind: 'golang/gomod'
+    sourceid: 'module'
+    spec:
+      file: 'go.mod'
+      module: 'github.com/shurcooL/githubv4'
+`, `name: 'deps(golang): bump Go version'
+sources:
+  go:
+    name: 'Get latest Go version'
+    kind: 'golang'
+    spec:
+      versionfilter:
+        kind: 'semver'
+        pattern: '1.20.x'
 targets:
   go:
     name: 'deps(golang): bump Go version to {{ source "go" }}'

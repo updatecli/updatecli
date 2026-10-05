@@ -24,6 +24,16 @@ func (g *GoModule) Source(ctx context.Context, pathResolver pathresolver.Resolve
 			return nil
 		}
 
+		/*
+			The module is pinned to a pseudo version and nothing newer is published yet,
+			which is expected until a new release, so the source is skipped instead.
+		*/
+		if errors.Is(err, ErrNoVersionNewerThanPseudo) {
+			resultSource.Result = result.SKIPPED
+			resultSource.Description = err.Error()
+			return nil
+		}
+
 		return fmt.Errorf("searching go module version: %w", err)
 	}
 

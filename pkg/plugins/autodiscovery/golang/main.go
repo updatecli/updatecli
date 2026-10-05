@@ -73,7 +73,11 @@ type Spec struct {
 	//     * a version constraint, such as ">= 1.0.0".
 	//   * with kind "regex", "pattern" accepts a regular expression.
 	//   * more examples at https://www.updatecli.io/docs/core/versionfilter/
-	//   * a module using a pseudo version ignores the filter and is updated to the latest version.
+	//   * for a module using a pseudo version and a "semver" filter, the filter applies from that pseudo version onwards:
+	//     * a release is preferred over a prerelease or a newer pseudo version.
+	//     * a module without any release follows its latest commit.
+	//     * the update is skipped when no newer version exists.
+	//   * for a module using a pseudo version and another kind of filter, the pattern applies as is, so it may select an older version.
 	//   * it cannot be combined with "vulnerability".
 	//
 	// example:
