@@ -238,6 +238,13 @@ func (r *racyTransport) arm(nth int, hook func()) {
 	r.sessions, r.runOn, r.hook = 0, nth, hook
 }
 
+// started returns how many upload-pack sessions were started since the last call to arm.
+func (r *racyTransport) started() int {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return r.sessions
+}
+
 // NewUploadPackSession implements transport.Transport.
 func (r *racyTransport) NewUploadPackSession(ep *transport.Endpoint, auth transport.AuthMethod) (transport.UploadPackSession, error) {
 	r.mu.Lock()
@@ -256,30 +263,64 @@ func (r *racyTransport) NewUploadPackSession(ep *transport.Endpoint, auth transp
 }
 
 // TestPullWorkingBranchUpdatedDuringPull checks that Pull still succeeds when the working
-// branch is updated on the remote while the pull is running. The branch must be fetched
-// by the same request that resolves its latest commit, otherwise the commit is missing locally.
+// branch is updated on the remote while the pull is running.
+//
+// The branch must be fetched by the same request that resolves its latest commit, otherwise
+// the commit is resolved without having been downloaded. A pull that needs two requests, such
+// as a fetch of the branch followed by go-git's own fetch, fails the first test because the
+// hook then updates the branch between them.
 func TestPullWorkingBranchUpdatedDuringPull(t *testing.T) {
 	registerRacy.Do(func() { client.InstallProtocol(racyScheme, racy) })
 
-	r := newSingleBranchRemote(t)
-	r.commit(workingBranch, "wb-1")
-	gitCmd(t, r.seed, "checkout", "-q", "main")
+	setup := func(t *testing.T) (r *singleBranchRemote, g *GoGit, dir string) {
+		r = newSingleBranchRemote(t)
+		r.commit(workingBranch, "wb-1")
+		gitCmd(t, r.seed, "checkout", "-q", "main")
 
-	url := racyScheme + strings.TrimPrefix(r.url, "file")
-	dir := filepath.Join(t.TempDir(), "clone")
-	g := &GoGit{}
+		url := racyScheme + strings.TrimPrefix(r.url, "file")
+		dir = filepath.Join(t.TempDir(), "clone")
+		g = &GoGit{}
 
-	require.NoError(t, g.Clone("", "", url, dir, nil, nil, "main", true))
-	require.NoError(t, g.Checkout("", "", "main", workingBranch, dir, true, nil))
+		require.NoError(t, g.Clone("", "", url, dir, nil, nil, "main", true))
+		require.NoError(t, g.Checkout("", "", "main", workingBranch, dir, true, nil))
 
-	// commit created remotely, for instance with the GitHub API
-	r.commit(workingBranch, "api-commit")
+		// commit created remotely, for instance with the GitHub API
+		r.commit(workingBranch, "api-commit")
 
-	// someone else updates the working branch before the second request of the pull
-	racy.arm(2, func() { r.commit(workingBranch, "concurrent-push") })
-	t.Cleanup(func() { racy.arm(0, nil) })
+		t.Cleanup(func() { racy.arm(0, nil) })
+		return r, g, dir
+	}
 
-	require.NoError(t, g.Pull("", "", dir, workingBranch, true, true, nil))
+	t.Run("pull is a single request", func(t *testing.T) {
+		r, g, dir := setup(t)
+
+		// The hook only runs if the pull makes a second request, which is what would race.
+		racy.arm(2, func() { r.commit(workingBranch, "concurrent-push") })
+
+		require.NoError(t, g.Pull("", "", dir, workingBranch, true, true, nil))
+
+		assert.Equal(t, 1, racy.started(), "the branch should be fetched and resolved by a single request")
+
+		hash, err := g.GetLatestCommitHash(dir)
+		require.NoError(t, err)
+		assert.Equal(t, r.head(workingBranch), hash)
+	})
+
+	t.Run("branch updated before the request", func(t *testing.T) {
+		r, g, dir := setup(t)
+
+		before := r.head(workingBranch)
+		racy.arm(1, func() { r.commit(workingBranch, "concurrent-push") })
+
+		require.NoError(t, g.Pull("", "", dir, workingBranch, true, true, nil))
+
+		assert.Equal(t, 1, racy.started())
+		assert.NotEqual(t, before, r.head(workingBranch), "the hook should have updated the branch")
+
+		hash, err := g.GetLatestCommitHash(dir)
+		require.NoError(t, err)
+		assert.Equal(t, r.head(workingBranch), hash, "the pull should include the latest commit")
+	})
 }
 
 // remoteFetchRefSpecs returns the fetch refspecs configured for the origin remote.
