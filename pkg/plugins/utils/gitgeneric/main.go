@@ -419,6 +419,12 @@ func (g GoGit) Add(files []string, workingDir string) error {
 
 // Checkout create and then uses a temporary git branch.
 func (g *GoGit) Checkout(username, password, basedBranch, newBranch, gitRepositoryPath string, forceReset bool, depth *int) error {
+	return g.checkout(username, password, basedBranch, newBranch, gitRepositoryPath, forceReset, depth, true)
+}
+
+// checkout implements Checkout. When the new branch doesn't exist locally and fetchMissingBranch
+// is true, it first tries to fetch it from the remote.
+func (g *GoGit) checkout(username, password, basedBranch, newBranch, gitRepositoryPath string, forceReset bool, depth *int, fetchMissingBranch bool) error {
 	logrus.Debugf("checkout git branch %q, based on %q",
 		newBranch,
 		basedBranch)
@@ -454,20 +460,23 @@ func (g *GoGit) Checkout(username, password, basedBranch, newBranch, gitReposito
 		// With a regular clone, every remote branch exists locally so the new branch
 		// doesn't exist remotely either. With a single branch clone, it may exist remotely
 		// without being fetched, so we must fetch it to continue from where it was left.
-		fetched, fetchErr := fetchBranch(
-			repository,
-			&auth,
-			newBranch,
-			plumbing.NewBranchReferenceName(newBranch).String(),
-			depth,
-		)
-		if fetchErr != nil {
-			return fetchErr
-		}
+		if fetchMissingBranch {
+			fetched, fetchErr := fetchBranch(
+				repository,
+				&auth,
+				newBranch,
+				plumbing.NewBranchReferenceName(newBranch).String(),
+				depth,
+			)
 
-		if fetched {
-			logrus.Debugf("new branch %q already exists on the remote, using it", newBranch)
-			return g.Checkout(username, password, basedBranch, newBranch, gitRepositoryPath, forceReset, depth)
+			switch {
+			case fetchErr != nil:
+				// Don't fail, a regular clone doesn't need the remote here either.
+				logrus.Debugf("failed fetching new branch %q from the remote, continuing without it: %s", newBranch, fetchErr)
+			case fetched:
+				logrus.Debugf("new branch %q already exists on the remote, using it", newBranch)
+				return g.checkout(username, password, basedBranch, newBranch, gitRepositoryPath, forceReset, depth, false)
+			}
 		}
 
 		logrus.Debugf("new branch %q doesn't exist, creating it from branch %q", newBranch, basedBranch)
@@ -1144,7 +1153,7 @@ func fetchBranch(repository *git.Repository, auth *transportHttp.BasicAuth, bran
 		fetchOptions.Depth = *depth
 	}
 
-	if !isAuthEmpty(auth) {
+	if auth != nil && !isAuthEmpty(auth) {
 		fetchOptions.Auth = auth
 	}
 
