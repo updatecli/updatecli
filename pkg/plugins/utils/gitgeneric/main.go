@@ -419,6 +419,12 @@ func (g GoGit) Add(files []string, workingDir string) error {
 
 // Checkout create and then uses a temporary git branch.
 func (g *GoGit) Checkout(username, password, basedBranch, newBranch, gitRepositoryPath string, forceReset bool, depth *int) error {
+	return g.checkout(username, password, basedBranch, newBranch, gitRepositoryPath, forceReset, depth, true)
+}
+
+// checkout implements Checkout. When the new branch doesn't exist locally and fetchMissingBranch
+// is true, it first tries to fetch it from the remote.
+func (g *GoGit) checkout(username, password, basedBranch, newBranch, gitRepositoryPath string, forceReset bool, depth *int, fetchMissingBranch bool) error {
 	logrus.Debugf("checkout git branch %q, based on %q",
 		newBranch,
 		basedBranch)
@@ -450,7 +456,28 @@ func (g *GoGit) Checkout(username, password, basedBranch, newBranch, gitReposito
 
 	switch err {
 	case plumbing.ErrReferenceNotFound:
-		// Means that the new branch doesn't exist
+		// Means that the new branch doesn't exist locally.
+		// With a regular clone, every remote branch exists locally so the new branch
+		// doesn't exist remotely either. With a single branch clone, it may exist remotely
+		// without being fetched, so we must fetch it to continue from where it was left.
+		if fetchMissingBranch {
+			fetched, fetchErr := fetchBranch(
+				repository,
+				&auth,
+				newBranch,
+				plumbing.NewBranchReferenceName(newBranch).String(),
+				depth,
+			)
+
+			switch {
+			case fetchErr != nil:
+				// Don't fail, a regular clone doesn't need the remote here either.
+				logrus.Warningf("failed fetching new branch %q from the remote, continuing without it: %s", newBranch, fetchErr)
+			case fetched:
+				logrus.Debugf("new branch %q already exists on the remote, using it", newBranch)
+				return g.checkout(username, password, basedBranch, newBranch, gitRepositoryPath, forceReset, depth, false)
+			}
+		}
 
 		logrus.Debugf("new branch %q doesn't exist, creating it from branch %q", newBranch, basedBranch)
 
@@ -1105,6 +1132,84 @@ func isAuthEmpty(auth *transportHttp.BasicAuth) bool {
 	return auth.Username == "" && auth.Password == ""
 }
 
+// fetchBranch fetches a single branch from the origin remote into the given reference.
+// It returns false, without error, if the branch doesn't exist on the remote.
+//
+// A clone done with "singleBranch" only fetches the configured branch, so any other
+// branch, such as the working branch, must be fetched explicitly.
+func fetchBranch(repository *git.Repository, auth *transportHttp.BasicAuth, branch, localRef string, depth *int) (bool, error) {
+	fetchOptions := git.FetchOptions{
+		RemoteName: DefaultRemoteReferenceName,
+		RefSpecs: []config.RefSpec{
+			config.RefSpec(fmt.Sprintf("+%s:%s", plumbing.NewBranchReferenceName(branch), localRef)),
+		},
+		Force: true,
+	}
+
+	if depth != nil {
+		if *depth < 0 {
+			return false, fmt.Errorf("invalid depth value: %d, depth should be a positive integer", *depth)
+		}
+		fetchOptions.Depth = *depth
+	}
+
+	if auth != nil && !isAuthEmpty(auth) {
+		fetchOptions.Auth = auth
+	}
+
+	err := repository.Fetch(&fetchOptions)
+	switch {
+	case err == nil, errors.Is(err, git.NoErrAlreadyUpToDate):
+		return true, nil
+	case errors.Is(err, git.NoMatchingRefSpecError{}):
+		return false, nil
+	}
+
+	return false, fmt.Errorf("fetching branch %q: %w", branch, err)
+}
+
+// trackBranch temporarily adds a branch to the references fetched from the origin remote, so that
+// operations relying on the remote configuration, such as a pull, also fetch it.
+// The returned function restores the original configuration, so a later fetch doesn't fail
+// if the branch is removed from the remote.
+func trackBranch(repository *git.Repository, branch string) (restore func(), err error) {
+	noop := func() {}
+
+	cfg, err := repository.Config()
+	if err != nil {
+		return noop, fmt.Errorf("getting repository configuration: %w", err)
+	}
+
+	remote, ok := cfg.Remotes[DefaultRemoteReferenceName]
+	if !ok {
+		return noop, fmt.Errorf("remote %q not found in the repository configuration", DefaultRemoteReferenceName)
+	}
+
+	refSpec := config.RefSpec(fmt.Sprintf("+%s:%s",
+		plumbing.NewBranchReferenceName(branch),
+		plumbing.NewRemoteReferenceName(DefaultRemoteReferenceName, branch)))
+
+	for _, existing := range remote.Fetch {
+		if existing == refSpec {
+			return noop, nil
+		}
+	}
+
+	original := append([]config.RefSpec(nil), remote.Fetch...)
+	remote.Fetch = append(remote.Fetch, refSpec)
+
+	if err := repository.SetConfig(cfg); err != nil {
+		return noop, fmt.Errorf("adding branch %q to the fetched references: %w", branch, err)
+	}
+
+	return func() {
+		remote.Fetch = original
+		if err := repository.SetConfig(cfg); err != nil {
+			logrus.Debugf("failed restoring the fetched references of remote %q: %s", DefaultRemoteReferenceName, err)
+		}
+	}, nil
+}
+
 // Pull run `git pull` on the local HEAD.
 func (g GoGit) Pull(username, password, gitRepositoryPath, branch string, singleBranch, forceReset bool, depth *int) error {
 	repository, err := git.PlainOpen(gitRepositoryPath)
@@ -1130,6 +1235,18 @@ func (g GoGit) Pull(username, password, gitRepositoryPath, branch string, single
 	}
 
 	b := bytes.Buffer{}
+
+	// Pull only fetches the references configured on the remote, which in a single branch
+	// clone is the configured branch. The branch to pull, usually the working branch,
+	// must be part of that same fetch, otherwise its latest commit is resolved without
+	// having been downloaded, for instance if the branch is updated between two requests.
+	if singleBranch && branch != "" {
+		restore, err := trackBranch(repository, branch)
+		if err != nil {
+			return err
+		}
+		defer restore()
+	}
 
 	pullOptions := git.PullOptions{
 		Force:        forceReset,
