@@ -472,7 +472,7 @@ func (g *GoGit) checkout(username, password, basedBranch, newBranch, gitReposito
 			switch {
 			case fetchErr != nil:
 				// Don't fail, a regular clone doesn't need the remote here either.
-				logrus.Debugf("failed fetching new branch %q from the remote, continuing without it: %s", newBranch, fetchErr)
+				logrus.Warningf("failed fetching new branch %q from the remote, continuing without it: %s", newBranch, fetchErr)
 			case fetched:
 				logrus.Debugf("new branch %q already exists on the remote, using it", newBranch)
 				return g.checkout(username, password, basedBranch, newBranch, gitRepositoryPath, forceReset, depth, false)
