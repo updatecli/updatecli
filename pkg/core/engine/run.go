@@ -86,7 +86,6 @@ func (e *Engine) Run(ctx context.Context) (err error) {
 		if err != nil {
 			errs = append(errs, fmt.Errorf("updating report ID failed: %w", err))
 		}
-		e.Reports = append(e.Reports, pipeline.Report)
 	}
 
 	e.publishErr = nil
@@ -98,6 +97,12 @@ func (e *Engine) Run(ctx context.Context) (err error) {
 			telemetry.RecordSpanError(publishSpan, e.publishErr)
 		}
 		publishSpan.End()
+	}
+
+	// e.Reports holds copies, so collect them once publishing has set the
+	// report URL shown in the summary.
+	for i := range e.Pipelines {
+		e.Reports = append(e.Reports, e.Pipelines[i].Report)
 	}
 
 	if e.Options.ExportToYAML {

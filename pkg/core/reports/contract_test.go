@@ -84,3 +84,15 @@ func TestReportJSONContract(t *testing.T) {
 
 	assert.JSONEq(t, string(expected), string(got))
 }
+
+func TestReportStringShowsReportURL(t *testing.T) {
+	r := Report{
+		Name:      "pipeline",
+		Result:    result.SUCCESS,
+		ReportURL: "https://udash.example.com/pipeline/reports/abc",
+	}
+
+	got, err := r.String("all")
+	require.NoError(t, err)
+	assert.Contains(t, got, "Report available on https://udash.example.com/pipeline/reports/abc")
+}

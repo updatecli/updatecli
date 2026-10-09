@@ -52,8 +52,8 @@ REPORTS:
 {{ "\t"}}Error: {{ .Err}}
 {{ else }}
 {{- .Result }} {{ .Name -}}{{"\n"}}
-{{- if .reportURL }}
-Report available on {{ .reportURL -}}{{"\n"}}
+{{- if .ReportURL }}
+Report available on {{ .ReportURL -}}{{"\n"}}
 {{- end }}
 {{- "\t"}}Source:
 {{ range $ID, $source := .Sources }}
