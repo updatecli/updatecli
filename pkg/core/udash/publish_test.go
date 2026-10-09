@@ -55,6 +55,7 @@ func TestPublishSuccess(t *testing.T) {
 
 	assert.Equal(t, "/api/pipeline/reports", seen.path)
 	assert.Equal(t, "Bearer udash_pat_valid", seen.authorization)
+	assert.Contains(t, seen.body, "UpdatecliVersion")
 	assert.Equal(t, "https://udash.example.com/pipeline/reports/abc", r.ReportURL)
 }
 

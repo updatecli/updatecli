@@ -12,6 +12,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
 	"github.com/updatecli/updatecli/pkg/core/reports"
+	"github.com/updatecli/updatecli/pkg/core/version"
 )
 
 var (
@@ -62,6 +63,8 @@ func Publish(r *reports.Report) error {
 	if err != nil {
 		return fmt.Errorf("parsing report URL: %w", err)
 	}
+
+	r.UpdatecliVersion = version.Version
 
 	jsonBody, err := json.MarshalIndent(r, "", "  ")
 	if err != nil {
