@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/http/httputil"
 	"net/url"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
@@ -68,13 +68,9 @@ func Publish(r *reports.Report) error {
 		return fmt.Errorf("marshaling json: %w", err)
 	}
 
-	bodyReader := bytes.NewReader(jsonBody)
-
 	u := reportApiURL.JoinPath("pipeline", "reports")
 
-	client := httpclient.NewRetryClient()
-
-	req, err := http.NewRequest("POST", u.String(), bodyReader)
+	req, err := http.NewRequest("POST", u.String(), bytes.NewReader(jsonBody))
 	if err != nil {
 		return err
 	}
@@ -83,30 +79,20 @@ func Publish(r *reports.Report) error {
 		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", envUdashToken))
 	}
 
-	res, err := client.Do(req)
+	res, err := httpclient.NewRetryClient().Do(req)
 	if err != nil {
 		return err
 	}
-
-	if res.StatusCode >= 400 {
-		body, err := httputil.DumpResponse(res, false)
-		if err != nil {
-			return err
-		}
-		logrus.Debugf("\n%v\n", string(body))
-	}
-
 	defer res.Body.Close()
-	if res.StatusCode >= 400 {
-		body, err := httputil.DumpResponse(res, false)
-		logrus.Debugf("\n%v\n", string(body))
-		return err
-	}
 
 	data, err := io.ReadAll(res.Body)
 	if err != nil {
-		logrus.Debugf("\n%v\n", string(data))
-		return err
+		return fmt.Errorf("reading response from %s: %w", u.String(), err)
+	}
+
+	if res.StatusCode >= 400 {
+		logrus.Debugf("response from %s:\n%s", u.String(), string(data))
+		return responseError(res.Status, res.StatusCode, data, envUdashURLString)
 	}
 
 	d := struct {
@@ -114,13 +100,40 @@ func Publish(r *reports.Report) error {
 		Message  string
 	}{}
 
-	err = json.Unmarshal(data, &d)
-	if err != nil {
-		logrus.Errorf("error unmarshalling json: %q", err)
-		return err
+	if err := json.Unmarshal(data, &d); err != nil {
+		return fmt.Errorf("decoding response from %s: %w", u.String(), err)
 	}
 
-	r.ReportURL = reportURL.JoinPath("pipeline", "reports", d.ReportID).String()
+	// Without a front URL or a report ID, the link would be a broken relative path.
+	if envUdashURLString != "" && d.ReportID != "" {
+		r.ReportURL = reportURL.JoinPath("pipeline", "reports", d.ReportID).String()
+	}
 
 	return nil
+}
+
+// maxErrorBodyLength bounds how much of a Udash error response ends up in an error message.
+const maxErrorBodyLength = 512
+
+// responseError builds the error returned when Udash refuses a report.
+func responseError(status string, statusCode int, body []byte, udashURL string) error {
+	msg := strings.TrimSpace(string(body))
+	if len(msg) > maxErrorBodyLength {
+		msg = msg[:maxErrorBodyLength] + "..."
+	}
+
+	err := fmt.Errorf("udash responded %s", status)
+	if msg != "" {
+		err = fmt.Errorf("udash responded %s: %s", status, msg)
+	}
+
+	if statusCode == http.StatusUnauthorized || statusCode == http.StatusForbidden {
+		loginURL := udashURL
+		if loginURL == "" {
+			loginURL = "<url>"
+		}
+		return fmt.Errorf("%w, run `updatecli udash login %s` to store a valid token", err, loginURL)
+	}
+
+	return err
 }
