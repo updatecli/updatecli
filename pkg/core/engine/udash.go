@@ -18,6 +18,9 @@ func (e *Engine) publishToUdash() error {
 	errs := []string{}
 
 	if !cmdoptions.Experimental {
+		if udash.IsConfigured() {
+			logrus.Warningf("A Udash endpoint is configured but publishing reports requires the flag --experimental, skipping. Use --disable-udash-report to silence this warning.")
+		}
 		return nil
 	}
 

@@ -146,3 +146,28 @@ func TestPublishSelectsStoredCredential(t *testing.T) {
 	assert.Equal(t, "Bearer wanted", seen.authorization)
 	assert.Empty(t, otherSeen.path)
 }
+
+func TestIsConfigured(t *testing.T) {
+	t.Run("nothing configured", func(t *testing.T) {
+		useTempConfigDir(t)
+		clearUdashEnv(t)
+		assert.False(t, IsConfigured())
+	})
+
+	t.Run("environment variable", func(t *testing.T) {
+		useTempConfigDir(t)
+		clearUdashEnv(t)
+		t.Setenv(DefaultEnvVariableAPIURL, "https://udash.example.com/api")
+		assert.True(t, IsConfigured())
+	})
+
+	t.Run("config file", func(t *testing.T) {
+		useTempConfigDir(t)
+		clearUdashEnv(t)
+		require.NoError(t, updateConfigFile(authData{
+			URL: "https://udash.example.com",
+			API: "https://udash.example.com/api",
+		}))
+		assert.True(t, IsConfigured())
+	})
+}

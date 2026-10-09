@@ -42,3 +42,14 @@ func getConfigFromFile(apiURL string) (URL string, ApiURL string, Token string, 
 func getConfigFromEnv() (URL string, ApiURL string, Token string) {
 	return os.Getenv(DefaultEnvVariableURL), os.Getenv(DefaultEnvVariableAPIURL), os.Getenv(DefaultEnvVariableAccessToken)
 }
+
+// IsConfigured reports whether a Udash endpoint is configured, either through
+// environment variables or through `updatecli udash login`.
+func IsConfigured() bool {
+	if _, apiURL, _ := getConfigFromEnv(); apiURL != "" {
+		return true
+	}
+
+	_, apiURL, _, err := getConfigFromFile("")
+	return err == nil && apiURL != ""
+}
