@@ -7,7 +7,7 @@ import (
 
 // APIURLSelector selects which stored credential to use when several Udash
 // instances are configured. It holds the API URL of the wanted instance and is
-// set from the --reportAPI flag.
+// set from the --udash-api-url flag.
 var APIURLSelector string
 
 // getConfigFromFile return the Udash configuration from the configuration file
