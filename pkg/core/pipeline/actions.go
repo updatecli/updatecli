@@ -242,7 +242,8 @@ func (p *Pipeline) RunActions(ctx context.Context) error {
 }
 
 // RunCleanActions executes clean up operation which depends on the action plugin.
-func (p *Pipeline) RunCleanActions(ctx context.Context) error {
+// handled holds the cleanup keys already cleaned or published during this execution.
+func (p *Pipeline) RunCleanActions(ctx context.Context, handled map[string]bool) error {
 	var errs []string
 
 	// Early return
@@ -266,6 +267,13 @@ func (p *Pipeline) RunCleanActions(ctx context.Context) error {
 		if action.Published {
 			logrus.Debugf("Action %q published during this execution, skipping its cleanup", id)
 			continue
+		}
+
+		if key := action.CleanupKey(); key != "" {
+			if handled[key] {
+				continue
+			}
+			handled[key] = true
 		}
 
 		// At least we try to clean existing pullrequest

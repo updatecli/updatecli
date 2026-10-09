@@ -24,7 +24,7 @@ func (gb *GitBranch) Condition(_ context.Context, source string, scm scm.ScmHand
 			scm.GetURL())
 	}
 
-	if gb.spec.URL != "" {
+	if gb.spec.URL != "" && !gb.lsRemote {
 		gb.directory, err = gb.clone()
 		if err != nil {
 			return false, "", err
@@ -42,17 +42,17 @@ func (gb *GitBranch) Condition(_ context.Context, source string, scm scm.ScmHand
 		gb.branch = gb.spec.Branch
 	}
 
-	if gb.directory == "" {
+	if gb.directory == "" && !gb.lsRemote {
 		return false, "", fmt.Errorf("unknown Git working directory. Did you specify one of `spec.URL`, `scmid` or a `spec.path`?")
 	}
 
-	branches, err := gb.nativeGitHandler.Branches(gb.directory)
+	branches, err := gb.branchRefs()
 	if err != nil {
 		return false, "", fmt.Errorf("searching git branches: %w", err)
 	}
 
 	for _, b := range branches {
-		if b == gb.branch {
+		if b.Name == gb.branch {
 			return true, fmt.Sprintf("git branch %q matching", gb.branch), nil
 		}
 	}

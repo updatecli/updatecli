@@ -29,10 +29,23 @@ func (e *Engine) runActions(ctx context.Context) error {
 		}
 	}
 
+	logrus.Infof("Cleaning up actions published by previous executions")
+
+	// Pipelines sharing a working branch share one pull request, so it's cleaned once,
+	// and never when any of them published to it during this execution.
+	handled := map[string]bool{}
+	for _, pipeline := range e.Pipelines {
+		for _, a := range pipeline.Actions {
+			if key := a.CleanupKey(); a.Published && key != "" {
+				handled[key] = true
+			}
+		}
+	}
+
 	for id := range e.Pipelines {
 		pipeline := e.Pipelines[id]
 		if len(pipeline.Actions) > 0 {
-			if err := pipeline.RunCleanActions(ctx); err != nil {
+			if err := pipeline.RunCleanActions(ctx, handled); err != nil {
 				errs = append(errs, "cleaning: "+err.Error())
 				pipeline.Report.Result = result.FAILURE
 				logrus.Errorf("cleaning action stage:\t%q", err.Error())
