@@ -1,0 +1,111 @@
+{
+  "Name": "Bump example",
+  "Labels": {
+    "dependency.type": "golang-module"
+  },
+  "Err": "",
+  "Graph": "",
+  "Result": "⚠",
+  "ID": "report-id",
+  "PipelineID": "pipeline-id",
+  "Actions": {
+    "default": {
+      "id": "action-id",
+      "title": "Bump example",
+      "description": "description",
+      "targets": [
+        {
+          "ID": "target-id",
+          "Title": "target",
+          "Description": "description",
+          "Changelogs": null
+        }
+      ],
+      "pipelineURL": {
+        "URL": "https://ci.example.com/job/1",
+        "Name": "ci"
+      },
+      "actionUrl": "https://github.com/example/example/pull/1"
+    }
+  },
+  "Sources": {
+    "default": {
+      "Name": "Get latest version",
+      "Result": "✔",
+      "Information": "1.2.3",
+      "Description": "",
+      "Scm": {
+        "URL": "",
+        "Branch": {
+          "Source": "",
+          "Working": "",
+          "Target": ""
+        },
+        "ID": "",
+        "BranchReset": false
+      },
+      "ID": "default",
+      "ConsoleOutput": "",
+      "Config": {
+        "kind": "golang/module"
+      }
+    }
+  },
+  "Conditions": {
+    "default": {
+      "Name": "Check module",
+      "Result": "✔",
+      "Pass": true,
+      "Description": "",
+      "Scm": {
+        "URL": "",
+        "Branch": {
+          "Source": "",
+          "Working": "",
+          "Target": ""
+        },
+        "ID": "",
+        "BranchReset": false
+      },
+      "ID": "",
+      "ConsoleOutput": "",
+      "Config": null,
+      "SourceID": ""
+    }
+  },
+  "Targets": {
+    "default": {
+      "Name": "Update go.mod",
+      "DryRun": false,
+      "Result": "⚠",
+      "Information": "1.2.2",
+      "NewInformation": "1.2.3",
+      "Description": "",
+      "Files": [
+        "go.mod"
+      ],
+      "Changed": false,
+      "Scm": {
+        "URL": "",
+        "Branch": {
+          "Source": "",
+          "Working": "",
+          "Target": ""
+        },
+        "ID": "",
+        "BranchReset": false
+      },
+      "ID": "",
+      "ConsoleOutput": "",
+      "Changelogs": null,
+      "Config": null,
+      "SourceID": ""
+    }
+  },
+  "ReportURL": "",
+  "CI": {
+    "URL": "https://ci.example.com/job/1",
+    "Name": "ci"
+  },
+  "UpdatecliVersion": ""
+}

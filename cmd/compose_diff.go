@@ -62,7 +62,7 @@ var (
 )
 
 func init() {
-	addReportAPIFlag(composeDiffCmd)
+	addUdashAPIURLFlag(composeDiffCmd)
 	composeDiffCmd.Flags().StringVarP(&composeCmdFile, "file", "f", composeDefaultCmdFile, "Define the Updatecli compose file name")
 	composeDiffCmd.Flags().BoolVar(&composeCmdClean, "clean", false, "Remove updatecli working directory like '--clean=true'")
 	composeDiffCmd.Flags().BoolVar(&disableTLS, "disable-tls", false, "Disable TLS verification like '--disable-tls=true'")

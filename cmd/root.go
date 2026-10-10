@@ -178,7 +178,7 @@ func run(command string) error {
 
 	switch command {
 	case "apply", "compose/apply", "pipeline/apply":
-		udash.APIURLSelector = udashReportAPI
+		udash.APIURLSelector = udashAPIURL
 
 		if applyClean {
 			defer func() {
@@ -200,7 +200,7 @@ func run(command string) error {
 			return err
 		}
 	case "diff", "compose/diff", "pipeline/diff":
-		udash.APIURLSelector = udashReportAPI
+		udash.APIURLSelector = udashAPIURL
 		if diffClean {
 			defer func() {
 				if err := e.Clean(); err != nil {

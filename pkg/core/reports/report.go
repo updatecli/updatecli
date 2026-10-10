@@ -52,8 +52,8 @@ REPORTS:
 {{ "\t"}}Error: {{ .Err}}
 {{ else }}
 {{- .Result }} {{ .Name -}}{{"\n"}}
-{{- if .reportURL }}
-Report available on {{ .reportURL -}}{{"\n"}}
+{{- if .ReportURL }}
+Report available on {{ .ReportURL -}}{{"\n"}}
 {{- end }}
 {{- "\t"}}Source:
 {{ range $ID, $source := .Sources }}
@@ -98,6 +98,8 @@ type Report struct {
 	Targets    map[string]*result.Target
 	ReportURL  string
 	CI         *CIData
+	// UpdatecliVersion is the version of Updatecli which produced the report
+	UpdatecliVersion string
 	// stableID holds the report ID frozen by FreezeID, before the configuration was rendered
 	stableID string
 }
