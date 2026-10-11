@@ -12,7 +12,7 @@ require (
 	github.com/JohannesKaufmann/html-to-markdown v1.6.0
 	github.com/Masterminds/semver/v3 v3.5.0
 	github.com/Masterminds/sprig/v3 v3.3.0
-	github.com/ProtonMail/go-crypto v1.4.1
+	github.com/ProtonMail/go-crypto v1.5.2
 	github.com/agext/levenshtein v1.2.3
 	github.com/aquasecurity/go-pep440-version v0.0.1
 	github.com/aws/aws-sdk-go-v2 v1.47.1
@@ -20,9 +20,9 @@ require (
 	github.com/aws/aws-sdk-go-v2/credentials v1.20.6
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.336.1
 	github.com/aws/smithy-go v1.28.2
-	github.com/beevik/etree v1.8.0
+	github.com/beevik/etree v1.8.1
 	github.com/coreos/go-systemd/v22 v22.7.0
-	github.com/drone/go-scm v1.42.17
+	github.com/drone/go-scm v1.42.18
 	github.com/extism/go-sdk v1.7.1
 	github.com/fatih/color v1.19.0
 	github.com/fluxcd/helm-controller/api v1.6.4
@@ -35,12 +35,12 @@ require (
 	github.com/google/go-github/v69 v69.2.0
 	github.com/google/uuid v1.6.0
 	github.com/goware/urlx v0.3.2
-	github.com/hashicorp/hcl/v2 v2.24.0
+	github.com/hashicorp/hcl/v2 v2.25.0
 	github.com/hashicorp/terraform-registry-address v0.5.0
 	github.com/heimdalr/dag v1.5.1
 	github.com/hexops/gotextdiff v1.0.3
 	github.com/invopop/jsonschema v0.14.0
-	github.com/jferrl/go-githubauth v1.7.0
+	github.com/jferrl/go-githubauth v1.9.1
 	github.com/joho/godotenv v1.5.1
 	github.com/lithammer/dedent v1.1.0
 	github.com/microsoft/azure-devops-go-api/azuredevops/v7 v7.1.0
@@ -77,15 +77,15 @@ require (
 	go.yaml.in/yaml/v3 v3.0.5
 	go.yaml.in/yaml/v4 v4.0.0-rc.4
 	golang.org/x/exp v0.0.0-20260603202125-055de637280b
-	golang.org/x/mod v0.40.0
-	golang.org/x/net v0.58.0
-	golang.org/x/oauth2 v0.36.0
-	golang.org/x/term v0.45.0
-	golang.org/x/text v0.41.0
-	golang.org/x/time v0.15.0
+	golang.org/x/mod v0.41.0
+	golang.org/x/net v0.60.0
+	golang.org/x/oauth2 v0.37.0
+	golang.org/x/term v0.46.0
+	golang.org/x/text v0.42.0
+	golang.org/x/time v0.16.0
 	gopkg.in/ini.v1 v1.67.3
 	gopkg.in/yaml.v2 v2.4.0
-	helm.sh/helm/v3 v3.21.4
+	helm.sh/helm/v3 v3.22.0
 	oras.land/oras-go/v2 v2.6.2
 	sigs.k8s.io/yaml v1.6.0
 )
@@ -321,9 +321,9 @@ require (
 	go.opentelemetry.io/otel/sdk/metric v1.46.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.11.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.4 // indirect
-	golang.org/x/crypto v0.55.0 // indirect
-	golang.org/x/sync v0.22.0 // indirect
-	golang.org/x/sys v0.47.0 // indirect
+	golang.org/x/crypto v0.57.0 // indirect
+	golang.org/x/sync v0.23.0 // indirect
+	golang.org/x/sys v0.48.0 // indirect
 	golang.org/x/tools v0.49.0 // indirect
 	golang.org/x/xerrors v0.0.0-20231012003039-104605ab7028 // indirect
 	google.golang.org/api v0.289.0 // indirect
@@ -336,23 +336,23 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/api v0.36.4 // indirect
-	k8s.io/apiextensions-apiserver v0.36.4 // indirect
-	k8s.io/apimachinery v0.36.4 // indirect
-	k8s.io/apiserver v0.36.4 // indirect
-	k8s.io/cli-runtime v0.36.2 // indirect
-	k8s.io/client-go v0.36.4 // indirect
-	k8s.io/component-base v0.36.4 // indirect
+	k8s.io/api v0.37.0 // indirect
+	k8s.io/apiextensions-apiserver v0.37.0 // indirect
+	k8s.io/apimachinery v0.37.0 // indirect
+	k8s.io/apiserver v0.37.0 // indirect
+	k8s.io/cli-runtime v0.37.0 // indirect
+	k8s.io/client-go v0.37.0 // indirect
+	k8s.io/component-base v0.37.0 // indirect
 	k8s.io/klog/v2 v2.140.0 // indirect
-	k8s.io/kube-openapi v0.0.0-20260603220949-865597e52e25 // indirect
-	k8s.io/kubectl v0.36.2 // indirect
-	k8s.io/utils v0.0.0-20260507154919-ff6756f316d2 // indirect
+	k8s.io/kube-openapi v0.0.0-20260721132016-d427ff9ee9ad // indirect
+	k8s.io/kubectl v0.37.0 // indirect
+	k8s.io/utils v0.0.0-20260626114624-be93311217bd // indirect
 	sigs.k8s.io/controller-runtime v0.24.1 // indirect
 	sigs.k8s.io/json v0.0.0-20250730193827-2d320260d730 // indirect
 	sigs.k8s.io/kustomize/api v0.21.1 // indirect
 	sigs.k8s.io/kustomize/kyaml v0.21.1 // indirect
 	sigs.k8s.io/randfill v1.0.0 // indirect
-	sigs.k8s.io/structured-merge-diff/v6 v6.4.0 // indirect
+	sigs.k8s.io/structured-merge-diff/v6 v6.4.2 // indirect
 )
 
 replace github.com/vmware-labs/yaml-jsonpath => github.com/helm-unittest/yaml-jsonpath v0.4.0 // fork maintained; module path remains vmware-labs
