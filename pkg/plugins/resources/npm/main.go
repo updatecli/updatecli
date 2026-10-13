@@ -239,7 +239,8 @@ func defaultNpmConfig(defaultUrl string, defaultToken string) RcConfig {
 }
 
 func fileExists(path string) bool {
-	_, err := os.Stat(filepath.Clean(path))
+	// The path comes from the manifest or HOME, both controlled by the user running Updatecli.
+	_, err := os.Stat(filepath.Clean(path)) //nolint:gosec // G703
 	return !os.IsNotExist(err)
 }
 
