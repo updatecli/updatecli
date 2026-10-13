@@ -186,7 +186,8 @@ func getSettingsXMLPath(projectDirname string) []string {
 	}
 
 	for _, path := range defaultSettingsXMLPath {
-		if _, err := os.Stat(filepath.Clean(path)); err == nil {
+		// The path comes from the user's own environment (HOME, MAVEN_HOME, M2_HOME).
+		if _, err := os.Stat(filepath.Clean(path)); err == nil { //nolint:gosec // G703
 			result = append(result, path)
 		}
 	}

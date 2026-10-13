@@ -89,6 +89,16 @@ type Action struct {
 	Published bool
 }
 
+// CleanupKey identifies the remote object the action cleans up, such as a pull request,
+// shared by every pipeline using the same working branch. Empty when the action has no scm.
+func (a Action) CleanupKey() string {
+	if a.Scm == nil || a.Scm.Handler == nil {
+		return ""
+	}
+	_, workingBranch, targetBranch := a.Scm.Handler.GetBranches()
+	return fmt.Sprintf("%s|%s|%s|%s|%v", a.Config.Kind, a.Scm.Handler.GetURL(), workingBranch, targetBranch, a.Config.Spec)
+}
+
 // Validate ensures that an action configuration has required parameters.
 func (c *Config) Validate() (err error) {
 	missingParameters := []string{}
