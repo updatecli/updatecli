@@ -29,11 +29,12 @@ type singleBranchRemote struct {
 // and returns its combined output. The test fails if the command fails.
 func gitCmd(t *testing.T, dir string, args ...string) string {
 	t.Helper()
-	cmd := exec.Command("git", append([]string{"-c", "commit.gpgsign=false"}, args...)...) //nolint:gosec // test helper, args are controlled by the tests
+	cmd := exec.Command("git", args...)
 	cmd.Dir = dir
 	// Ignore the git configuration of the machine running the tests
 	cmd.Env = append(os.Environ(),
 		"GIT_CONFIG_GLOBAL="+os.DevNull, "GIT_CONFIG_SYSTEM="+os.DevNull, "GIT_CONFIG_NOSYSTEM=1",
+		"GIT_CONFIG_COUNT=1", "GIT_CONFIG_KEY_0=commit.gpgsign", "GIT_CONFIG_VALUE_0=false",
 		"GIT_AUTHOR_NAME=test", "GIT_AUTHOR_EMAIL=test@example.com",
 		"GIT_COMMITTER_NAME=test", "GIT_COMMITTER_EMAIL=test@example.com")
 	out, err := cmd.CombinedOutput()
