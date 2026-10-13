@@ -29,7 +29,7 @@ type singleBranchRemote struct {
 // and returns its combined output. The test fails if the command fails.
 func gitCmd(t *testing.T, dir string, args ...string) string {
 	t.Helper()
-	cmd := exec.Command("git", append([]string{"-c", "commit.gpgsign=false"}, args...)...)
+	cmd := exec.Command("git", append([]string{"-c", "commit.gpgsign=false"}, args...)...) //nolint:gosec // test helper, args are controlled by the tests
 	cmd.Dir = dir
 	// Ignore the git configuration of the machine running the tests
 	cmd.Env = append(os.Environ(),
@@ -74,7 +74,7 @@ func (r *singleBranchRemote) commit(branch, file string) {
 	default:
 		gitCmd(r.t, r.seed, "checkout", "-q", "-b", branch)
 	}
-	require.NoError(r.t, os.WriteFile(filepath.Join(r.seed, file), []byte(file), 0o644))
+	require.NoError(r.t, os.WriteFile(filepath.Join(r.seed, file), []byte(file), 0o600))
 	gitCmd(r.t, r.seed, "add", file)
 	gitCmd(r.t, r.seed, "commit", "-qm", file)
 	gitCmd(r.t, r.seed, "push", "-q", "origin", branch)
