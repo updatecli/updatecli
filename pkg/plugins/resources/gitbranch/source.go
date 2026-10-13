@@ -15,7 +15,7 @@ func (gb *GitBranch) Source(_ context.Context, pathResolver pathresolver.Resolve
 	var err error
 
 	gb.directory = pathResolver.RepositoryDir()
-	if gb.spec.URL != "" {
+	if gb.spec.URL != "" && !gb.lsRemote {
 		gb.directory, err = gb.clone()
 		if err != nil {
 			return err
@@ -25,11 +25,11 @@ func (gb *GitBranch) Source(_ context.Context, pathResolver pathresolver.Resolve
 		gb.directory = pathResolver.JoinManifest(gb.spec.Path)
 	}
 
-	if gb.directory == "" {
+	if gb.directory == "" && !gb.lsRemote {
 		return fmt.Errorf("unknown Git working directory. Did you specify one of `spec.URL`, `scmid` or a `spec.path`?")
 	}
 
-	refs, err := gb.nativeGitHandler.BranchRefs(gb.directory)
+	refs, err := gb.branchRefs()
 
 	if err != nil {
 		return fmt.Errorf("retrieving branches: %w", err)
