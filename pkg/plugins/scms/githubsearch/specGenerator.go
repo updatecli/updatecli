@@ -5,17 +5,49 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"sync"
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
 )
+
+var (
+	// Manifests of a compose file or a policy usually share one search, which ran the
+	// same queries once per manifest.
+	queryResults     = map[string][]string{}
+	queryResultsLock sync.Mutex
+)
+
+// cachedQuery runs query once per execution for the same credentials and key.
+func (g GitHubSearch) cachedQuery(key string, query func() ([]string, error)) ([]string, error) {
+	app := ""
+	if g.spec.App != nil {
+		app = fmt.Sprintf("%+v", *g.spec.App)
+	}
+	key = strings.Join([]string{g.spec.URL, g.spec.Username, g.spec.Token, app, key}, "\x00")
+
+	queryResultsLock.Lock()
+	defer queryResultsLock.Unlock()
+
+	if result, ok := queryResults[key]; ok {
+		return result, nil
+	}
+	result, err := query()
+	if err != nil {
+		return nil, err
+	}
+	queryResults[key] = result
+	return result, nil
+}
 
 // ScmsGenerator generates GitHub SCM specs based on the search query and branch filter.
 func (g GitHubSearch) ScmsGenerator(ctx context.Context) (results []github.Spec, err error) {
 
 	results = make([]github.Spec, 0)
 
-	repositories, err := github.SearchRepositories(g.client, g.search, 0, ctx)
+	repositories, err := g.cachedQuery("search\x00"+g.search, func() ([]string, error) {
+		return github.SearchRepositories(g.client, g.search, 0, ctx)
+	})
 	if err != nil {
 		return nil, fmt.Errorf("failed generating spec: %w", err)
 	}
@@ -28,7 +60,9 @@ func (g GitHubSearch) ScmsGenerator(ctx context.Context) (results []github.Spec,
 			return nil, fmt.Errorf("invalid repository format: %s", repo)
 		}
 
-		branches, err := github.ListBranches(g.client, repositoryParts[0], repositoryParts[1], 0, ctx)
+		branches, err := g.cachedQuery("branches\x00"+repo, func() ([]string, error) {
+			return github.ListBranches(g.client, repositoryParts[0], repositoryParts[1], 0, ctx)
+		})
 
 		for _, b := range branches {
 

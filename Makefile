@@ -17,8 +17,8 @@ clean: ## Clean go test cache
 	go clean -testcache
 
 .PHONY: build
-build: ## Build updatecli as a "dirty snapshot" (no tag, no release, but all OS/arch combinations)
-	goreleaser build --snapshot --clean
+build: ## Build updatecli as a "dirty snapshot" (no tag, no release, but all OS/arch combinations unless BUILD_FLAGS=--single-target)
+	goreleaser build --snapshot --clean $(BUILD_FLAGS)
 
 .PHONY: build.all
 build.all: ## Build updatecli for "release" (tag or release and all OS/arch combinations)

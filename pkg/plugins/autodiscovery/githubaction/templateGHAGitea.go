@@ -36,6 +36,9 @@ sources:
     spec:
       url: "{{ .URL }}/{{ .Owner }}/{{ .Repository }}.git"
       password: '{{ .Token }}'
+{{- if and .Age.IsZero (ne .VersionFilterKind "latest") }}
+      lsremote: true
+{{- end }}
 {{- template "age" .Age }}
       versionfilter:
         kind: '{{ .VersionFilterKind }}'
@@ -52,6 +55,9 @@ sources:
     spec:
       url: "{{ .URL }}/{{ .Owner }}/{{ .Repository }}.git"
       password: '{{ .Token }}'
+{{- if and .Age.IsZero (ne .VersionFilterKind "latest") }}
+      lsremote: true
+{{- end }}
 {{- template "age" .Age }}
       versionfilter:
         kind: '{{ .VersionFilterKind }}'
@@ -79,6 +85,7 @@ conditions:
     spec:
       url: "{{ .URL }}/{{ .Owner }}/{{ .Repository }}.git"
       password: '{{ .Token }}'
+      lsremote: true
       versionfilter:
         kind: 'regex'
         pattern: '^{{ .Reference }}$'
@@ -91,6 +98,7 @@ conditions:
       branch: '{{ .Reference }}'
       url: "{{ .URL }}/{{ .Owner }}/{{ .Repository }}.git"
       password: '{{ .Token }}'
+      lsremote: true
 
 targets:
   release:
