@@ -55,6 +55,8 @@ type Pipeline struct {
 	tracer      trace.Tracer
 	// unrenderedName holds the pipeline name before runtime values, such as {{ source "id" }}, are rendered.
 	unrenderedName string
+	// consoleOutput collects the console output reported in Report.ConsoleOutput
+	consoleOutput *log.TailBuffer
 }
 
 // Init initialize an updatecli context based on its configuration

@@ -98,6 +98,9 @@ type Report struct {
 	Targets    map[string]*result.Target
 	ReportURL  string
 	CI         *CIData
+	// ConsoleOutput holds the end of the console output of the whole pipeline,
+	// including the output logged outside of any source, condition or target
+	ConsoleOutput string `json:",omitempty"`
 	// UpdatecliVersion is the version of Updatecli which produced the report
 	UpdatecliVersion string
 	// stableID holds the report ID frozen by FreezeID, before the configuration was rendered

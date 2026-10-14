@@ -20,12 +20,13 @@ func (e *Engine) runActions(ctx context.Context) error {
 	for id := range e.Pipelines {
 		pipeline := e.Pipelines[id]
 		if len(pipeline.Actions) > 0 {
+			stopCapture := pipeline.CaptureConsoleOutput()
 			if err := pipeline.RunActions(ctx); err != nil {
 				errs = append(errs, err.Error())
 				pipeline.Report.Result = result.FAILURE
 				log.Errorf("action stage:\t%q", err.Error())
-				continue
 			}
+			stopCapture()
 		}
 	}
 
@@ -45,12 +46,13 @@ func (e *Engine) runActions(ctx context.Context) error {
 	for id := range e.Pipelines {
 		pipeline := e.Pipelines[id]
 		if len(pipeline.Actions) > 0 {
+			stopCapture := pipeline.CaptureConsoleOutput()
 			if err := pipeline.RunCleanActions(ctx, handled); err != nil {
 				errs = append(errs, "cleaning: "+err.Error())
 				pipeline.Report.Result = result.FAILURE
 				log.Errorf("cleaning action stage:\t%q", err.Error())
-				continue
 			}
+			stopCapture()
 		}
 	}
 
