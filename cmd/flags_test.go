@@ -112,6 +112,33 @@ func TestAddDisableUdashReportFlagRegistration(t *testing.T) {
 	}
 }
 
+func TestAddUdashAPIURLFlagRegistration(t *testing.T) {
+	cmd := &cobra.Command{
+		Use: "test",
+	}
+
+	addUdashAPIURLFlag(cmd)
+
+	flag := cmd.Flags().Lookup("udash-api-url")
+	if flag == nil {
+		t.Fatal("flag not registered")
+		return
+	}
+
+	if flag.Usage == "" {
+		t.Error("flag help text is empty")
+	}
+
+	if cmd.Flags().Lookup("reportAPI") != nil {
+		t.Error("legacy flag reportAPI is still registered")
+	}
+
+	// Empty means the default stored credential is used
+	if flag.DefValue != "" {
+		t.Errorf("flag default value: got %q, expected empty", flag.DefValue)
+	}
+}
+
 func TestAddDisableChangelogFlagUsesEnvDefault(t *testing.T) {
 	tests := []struct {
 		name        string

@@ -69,7 +69,7 @@ var (
 )
 
 func init() {
-	addReportAPIFlag(composeApplyCmd)
+	addUdashAPIURLFlag(composeApplyCmd)
 	composeApplyCmd.Flags().StringVarP(&composeCmdFile, "file", "f", composeDefaultCmdFile, "Define the update-compose file")
 	composeApplyCmd.Flags().BoolVar(&composeApplyExistingOnly, "existing-only", false, "Skip targets when pipeline has no existing remote branch '--existing-only=true'")
 	composeApplyCmd.Flags().BoolVarP(&composeApplyCommit, "commit", "", true, "Record changes to the repository, '--commit=false'")

@@ -7,7 +7,7 @@ import (
 
 // APIURLSelector selects which stored credential to use when several Udash
 // instances are configured. It holds the API URL of the wanted instance and is
-// set from the --reportAPI flag.
+// set from the --udash-api-url flag.
 var APIURLSelector string
 
 // getConfigFromFile return the Udash configuration from the configuration file
@@ -41,4 +41,15 @@ func getConfigFromFile(apiURL string) (URL string, ApiURL string, Token string, 
 // getConfigFromEnv return the Udash configuration from environment variables
 func getConfigFromEnv() (URL string, ApiURL string, Token string) {
 	return os.Getenv(DefaultEnvVariableURL), os.Getenv(DefaultEnvVariableAPIURL), os.Getenv(DefaultEnvVariableAccessToken)
+}
+
+// IsConfigured reports whether a Udash endpoint is configured, either through
+// environment variables or through `updatecli udash login`.
+func IsConfigured() bool {
+	if _, apiURL, _ := getConfigFromEnv(); apiURL != "" {
+		return true
+	}
+
+	_, apiURL, _, err := getConfigFromFile("")
+	return err == nil && apiURL != ""
 }

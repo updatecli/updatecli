@@ -86,13 +86,23 @@ func (e *Engine) Run(ctx context.Context) (err error) {
 		if err != nil {
 			errs = append(errs, fmt.Errorf("updating report ID failed: %w", err))
 		}
-		e.Reports = append(e.Reports, pipeline.Report)
 	}
 
+	e.publishErr = nil
 	if !e.Options.DisableUdashReport {
-		if err = e.publishToUdash(); err != nil {
-			errs = append(errs, fmt.Errorf("publishing to Udash failed: %w", err))
+		_, publishSpan := tracer.Start(ctx, "updatecli.publish_udash")
+		// A publish failure is logged and kept apart from the pipeline errors.
+		if e.publishErr = e.publishToUdash(); e.publishErr != nil {
+			logrus.Error(e.publishErr)
+			telemetry.RecordSpanError(publishSpan, e.publishErr)
 		}
+		publishSpan.End()
+	}
+
+	// e.Reports holds copies, so collect them once publishing has set the
+	// report URL shown in the summary.
+	for i := range e.Pipelines {
+		e.Reports = append(e.Reports, e.Pipelines[i].Report)
 	}
 
 	if e.Options.ExportToYAML {
