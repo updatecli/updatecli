@@ -4,12 +4,13 @@ import (
 	"fmt"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/scaffold"
 )
 
 func (e *Engine) Scaffold(rootDir string) error {
 
-	PrintTitle("Scaffold a new Updatecli policy")
+	log.Title("Scaffold a new Updatecli policy")
 
 	s := scaffold.Scaffold{}
 

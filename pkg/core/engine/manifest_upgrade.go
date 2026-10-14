@@ -4,13 +4,14 @@ import (
 	"fmt"
 
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 // ManifestUpgrade load Updatecli Manifest to update them then written them back on disk
 func (e *Engine) ManifestUpgrade(saveToDisk bool) (err error) {
 
-	PrintTitle("Manifest Upgrade")
+	log.Title("Manifest Upgrade")
 
 	err = e.LoadConfigurations()
 

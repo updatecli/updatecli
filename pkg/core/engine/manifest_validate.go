@@ -7,6 +7,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/config"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
@@ -17,7 +18,7 @@ import (
 // can gate a pipeline.
 func (e *Engine) ValidateManifests(strict bool) error {
 
-	PrintTitle("Manifest Validation")
+	log.Title("Manifest Validation")
 
 	problems := []config.SchemaProblem{}
 	manifestCount := 0

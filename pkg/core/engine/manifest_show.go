@@ -2,6 +2,7 @@ package engine
 
 import (
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 // Show displays configurations that should be apply.
@@ -11,7 +12,7 @@ func (e *Engine) Show() (err error) {
 
 		graphOutput := ""
 
-		PrintTitle(pipeline.Config.Spec.Name)
+		log.Title(pipeline.Config.Spec.Name)
 
 		if e.Options.DisplayFlavor == "graph" {
 			graphOutput, err = pipeline.Graph(e.Options.GraphFlavor)

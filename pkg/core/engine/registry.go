@@ -5,13 +5,14 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/registry"
 )
 
 // PullFromRegistry retrieves an Updatecli policy from an OCI registry.
 func (e *Engine) PullFromRegistry(policyReference string, disableTLS bool) (err error) {
 
-	PrintTitle("Registry")
+	log.Title("Registry")
 
 	_, err = registry.Pull(policyReference, disableTLS)
 	if err != nil {
@@ -24,7 +25,7 @@ func (e *Engine) PullFromRegistry(policyReference string, disableTLS bool) (err 
 // PushToRegistry pushes an Updatecli policy to an OCI registry.
 func (e *Engine) PushToRegistry(manifests, valuesFiles, secretsFiles, assetsFiles, policyReference []string, disableTLS bool, policyMetadataFile, fileStore string, overwrite bool) error {
 
-	PrintTitle("Registry")
+	log.Title("Registry")
 
 	// filepath.Rel needs both paths to be absolute, or both relative,
 	// so fileStore must be absolute before comparing it with absolute input paths.

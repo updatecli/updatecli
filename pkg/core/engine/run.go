@@ -7,6 +7,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/cache"
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/telemetry"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -16,7 +17,7 @@ import (
 // Run runs the full process under the provided context, emitting
 // OpenTelemetry spans for each major operation so failures are observable.
 func (e *Engine) Run(ctx context.Context) (err error) {
-	PrintTitle("Pipeline")
+	log.Title("Pipeline")
 
 	tracer := e.tracer
 	ctx, span := tracer.Start(ctx, "updatecli.run",

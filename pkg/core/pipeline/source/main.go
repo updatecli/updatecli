@@ -4,12 +4,11 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"io"
-	"os"
 	"strings"
 
 	jschema "github.com/invopop/jsonschema"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 
 	"github.com/updatecli/updatecli/pkg/core/cache"
 	"github.com/updatecli/updatecli/pkg/core/jsonschema"
@@ -50,16 +49,10 @@ var (
 func (s *Source) Run(ctx context.Context, sourceCache *cache.SourceCache) (err error) {
 
 	var consoleOutput bytes.Buffer
-	// By default logrus logs to stderr, so I guess we want to keep this behavior...
-	logrus.SetOutput(io.MultiWriter(os.Stdout, &consoleOutput))
-	/*
-		The last defer will be executed first,
-		so in this case we want to first save the console output
-		before setting back the logrus output to stdout.
-	*/
-	// By default logrus logs to stdout and we want to keep this behavior.
-	defer logrus.SetOutput(os.Stdout)
+	stopCapture := log.Capture(&consoleOutput)
+	// The last defer runs first: stop capturing before saving the console output
 	defer s.Result.SetConsoleOutput(&consoleOutput)
+	defer stopCapture()
 
 	var scmIdentity *cache.SCMIdentity
 	if s.Scm != nil {
