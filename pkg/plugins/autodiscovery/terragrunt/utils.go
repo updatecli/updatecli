@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/updatecli/updatecli/pkg/core/log"
+
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclparse"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
@@ -33,7 +35,7 @@ func searchTerragruntFiles(rootDir string) ([]string, error) {
 
 	err := filepath.WalkDir(rootDir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
-			fmt.Printf("prevent panic by handling failure accessing a path %q: %v\n", path, err)
+			log.Warningf("prevent panic by handling failure accessing a path %q: %v\n", path, err)
 			return err
 		}
 
@@ -156,12 +158,12 @@ func parseSourceUrl(evaluatedSource string, rawSource string, allowNoVersion boo
 		}
 		u, err := url.Parse(evaluatedSource)
 		if err != nil {
-			fmt.Printf("prevent panic by handling failure parsing url %q: %v\n", redact.URL(evaluatedSource), err)
+			log.Warningf("prevent panic by handling failure parsing url %q: %v\n", redact.URL(evaluatedSource), err)
 			return source, err
 		}
 		params, err := url.ParseQuery(u.RawQuery)
 		if err != nil {
-			fmt.Printf("prevent panic by handling failure parsing query %q: %v\n", u.RawQuery, err)
+			log.Warningf("prevent panic by handling failure parsing query %q: %v\n", u.RawQuery, err)
 			return source, err
 		}
 		var param string
@@ -220,7 +222,7 @@ func getModuleFromUrl(evaluatedSource string, rawSource string, allowNoVersion b
 	case SourceTypeRegistry:
 		registryModule, err := terraformRegistryAddress.ParseModuleSource(source.baseUrl)
 		if err != nil {
-			fmt.Printf("prevent panic by handling failure parsing url %q: %v\n", redact.URL(source.baseUrl), err)
+			log.Warningf("prevent panic by handling failure parsing url %q: %v\n", redact.URL(source.baseUrl), err)
 			return nil, err
 		}
 		module.registryModule = &registryModule

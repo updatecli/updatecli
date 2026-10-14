@@ -116,9 +116,10 @@ func readToken(udashEndpoint string) (string, error) {
 		logrus.Debugf("can't open browser to URL %s: %s", tokenPageURL, err)
 	}
 
-	fmt.Print("Paste your Udash API token: ")
+	// Interactive prompt, it must reach the terminal and never a report
+	fmt.Print("Paste your Udash API token: ") //nolint:forbidigo
 	data, err := term.ReadPassword(int(os.Stdin.Fd()))
-	fmt.Println()
+	fmt.Println() //nolint:forbidigo
 	if err != nil {
 		return "", fmt.Errorf("reading token: %w", err)
 	}

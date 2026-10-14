@@ -7,6 +7,8 @@ import (
 	"os/exec"
 	"path/filepath"
 
+	"github.com/updatecli/updatecli/pkg/core/log"
+
 	sv "github.com/Masterminds/semver/v3"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/text"
@@ -28,7 +30,7 @@ func findCargoFiles(rootDir string, validFiles []string) ([]string, error) {
 
 	err := filepath.WalkDir(rootDir, func(path string, di fs.DirEntry, err error) error {
 		if err != nil {
-			fmt.Printf("prevent panic by handling failure accessing a path %q: %v\n", path, err)
+			log.Warningf("prevent panic by handling failure accessing a path %q: %v\n", path, err)
 			return err
 		}
 

@@ -6,6 +6,7 @@ linters:
     - depguard
     - dogsled
     - errcheck
+    - forbidigo
     - funlen
     - goconst
     - goprintffuncname
@@ -32,6 +33,12 @@ linters:
       threshold: 100
     exhaustive:
       default-signifies-exhaustive: false
+    forbidigo:
+      forbid:
+        - pattern: ^fmt\.Print(f|ln)?$
+          msg: use pkg/core/log so the output reaches pipeline reports
+        - pattern: ^os\.Std(out|err)$
+          msg: use pkg/core/log (or log.Progress for transient output) so the output reaches pipeline reports
     funlen:
       lines: 200
       statements: 150
@@ -98,6 +105,11 @@ linters:
       - linters:
           - testpackage
         path: _expansion_test\.go
+      # Commands write their own output to the terminal, the log package owns
+      # the terminal, and tests print what they like.
+      - linters:
+          - forbidigo
+        path: (^cmd/|^pkg/core/log/|_test\.go$|^main\.go$)
       - linters:
           - gocritic
         text: 'unnecessaryDefer:'

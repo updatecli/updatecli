@@ -1,12 +1,13 @@
 package dockercompose
 
 import (
-	"fmt"
 	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"sort"
+
+	"github.com/updatecli/updatecli/pkg/core/log"
 
 	"github.com/sirupsen/logrus"
 	goyaml "go.yaml.in/yaml/v3"
@@ -20,7 +21,7 @@ func searchDockerComposeFiles(rootDir string, filePatterns []string) ([]string, 
 
 	err := filepath.WalkDir(rootDir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
-			fmt.Printf("prevent panic by handling failure accessing a path %q: %v\n", path, err)
+			log.Warningf("prevent panic by handling failure accessing a path %q: %v\n", path, err)
 			return err
 		}
 

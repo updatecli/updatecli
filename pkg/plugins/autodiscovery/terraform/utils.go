@@ -1,11 +1,12 @@
 package terraform
 
 import (
-	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/updatecli/updatecli/pkg/core/log"
 
 	terraformUtils "github.com/updatecli/updatecli/pkg/plugins/resources/terraform"
 )
@@ -20,7 +21,7 @@ func searchTerraformLockFiles(rootDir string) ([]string, error) {
 
 	err := filepath.WalkDir(rootDir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
-			fmt.Printf("prevent panic by handling failure accessing a path %q: %v\n", path, err)
+			log.Warningf("prevent panic by handling failure accessing a path %q: %v\n", path, err)
 			return err
 		}
 

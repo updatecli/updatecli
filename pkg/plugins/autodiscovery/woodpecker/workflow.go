@@ -12,6 +12,8 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/updatecli/updatecli/pkg/core/log"
+
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/dockerimage"
 	goyaml "go.yaml.in/yaml/v3"
@@ -72,7 +74,7 @@ func searchWorkflowFiles(rootDir string, filePatterns []string) ([]string, error
 
 	err := filepath.WalkDir(rootDir, func(filePath string, d fs.DirEntry, err error) error {
 		if err != nil {
-			fmt.Printf("prevent panic by handling failure accessing a path %q: %v\n", filePath, err)
+			log.Warningf("prevent panic by handling failure accessing a path %q: %v\n", filePath, err)
 			return err
 		}
 

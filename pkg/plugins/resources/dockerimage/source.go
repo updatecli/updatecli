@@ -86,7 +86,5 @@ func (di *DockerImage) filterTags(tags []string) []string {
 		}
 	}
 
-	fmt.Println()
-
 	return results
 }

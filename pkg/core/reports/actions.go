@@ -3,9 +3,10 @@ package reports
 import (
 	"bytes"
 	"encoding/xml"
-	"fmt"
 	"sort"
 	"strings"
+
+	"github.com/updatecli/updatecli/pkg/core/log"
 
 	"github.com/sirupsen/logrus"
 	"github.com/yuin/goldmark"
@@ -53,7 +54,7 @@ func (a *Actions) String() string {
 
 	output, err := xml.MarshalIndent(a, "", "    ")
 	if err != nil {
-		fmt.Printf("error: %v\n", err)
+		log.Errorf("%v", err)
 	}
 
 	return string(output[:])
