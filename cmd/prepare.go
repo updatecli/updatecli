@@ -3,9 +3,9 @@ package cmd
 import (
 	"os"
 
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/config"
 	"github.com/updatecli/updatecli/pkg/core/engine/manifest"
+	"github.com/updatecli/updatecli/pkg/core/log"
 
 	"github.com/spf13/cobra"
 )
@@ -21,7 +21,7 @@ var (
 			policyReferences = args
 			err := getPolicyFilesFromRegistry()
 			if err != nil {
-				logrus.Errorf("command failed: %s", err)
+				log.Errorf("command failed: %s", err)
 				os.Exit(1)
 			}
 
@@ -34,12 +34,12 @@ var (
 
 			e.Options.Pipeline.Target.Clean = prepareClean
 
-			logrus.Warningln("Deprecated command, please instead use `updatecli pipeline prepare`")
+			log.Warningln("Deprecated command, please instead use `updatecli pipeline prepare`")
 
 			e.Options.ManifestOptions.RelativePaths = config.RelativePathBase(relativePaths)
 			err = run("prepare")
 			if err != nil {
-				logrus.Errorf("command failed: %s", err)
+				log.Errorf("command failed: %s", err)
 				os.Exit(1)
 			}
 		},

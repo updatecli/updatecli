@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 var (
@@ -30,7 +30,7 @@ func (c *Chart) ValidateTarget() error {
 
 	if len(errs) > 0 {
 		for _, e := range errs {
-			logrus.Errorln(e)
+			log.Errorln(e)
 		}
 		return ErrWrongConfig
 	}

@@ -15,7 +15,6 @@ import (
 	"dario.cat/mergo"
 	"github.com/Masterminds/sprig/v3"
 	"github.com/getsops/sops/v3/decrypt"
-	"github.com/sirupsen/logrus"
 	"go.yaml.in/yaml/v3"
 
 	"cuelang.org/go/cue"
@@ -166,7 +165,7 @@ func (t *Template) readFile(filename string, values *map[string]interface{}, enc
 		strings.Compare(extension, EXTENSIONYAML) != 0 &&
 		strings.Compare(extension, EXTENSIONJSON) != 0 {
 		err = fmt.Errorf("wrong file extension %q for file %q", extension, baseFilename)
-		logrus.Errorln(err)
+		log.Errorln(err)
 		return err
 	}
 
@@ -239,7 +238,7 @@ func mergeValueFile(valuesFiles ...map[string]interface{}) (results map[string]i
 	for _, values := range valuesFiles {
 		if err := mergo.Merge(&results, values, mergo.WithOverride); err != nil {
 			err = fmt.Errorf("merging values files: %w", err)
-			logrus.Errorln(err)
+			log.Errorln(err)
 		}
 	}
 

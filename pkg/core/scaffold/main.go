@@ -1,7 +1,7 @@
 package scaffold
 
 import (
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 var (
@@ -40,7 +40,7 @@ func (s *Scaffold) Init() {
 // Run scaffold a new Updatecli policy
 func (s *Scaffold) Run(rootDir string) error {
 	s.Init()
-	logrus.Debugf("Initialize an Updatecli policy")
+	log.Debugf("Initialize an Updatecli policy")
 
 	err := s.scaffoldPolicy(&PolicySpec{}, rootDir)
 	if err != nil {

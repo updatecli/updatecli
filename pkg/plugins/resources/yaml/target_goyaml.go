@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 
 	"github.com/updatecli/updatecli/pkg/core/result"
 
@@ -22,7 +22,7 @@ func (y Yaml) goYamlTarget(valueToWrite string, resultTarget *result.Target, dry
 
 	if y.spec.Comment != "" {
 		if err := setNodeComment(nodeToWrite, y.spec.Comment); err != nil {
-			logrus.Errorf("error setting comment: %s", err)
+			log.Errorf("error setting comment: %s", err)
 		}
 	}
 
@@ -47,7 +47,7 @@ func (y Yaml) goYamlTarget(valueToWrite string, resultTarget *result.Target, dry
 		// this as a missing key.
 		if y.spec.DocumentIndex != nil && (*y.spec.DocumentIndex < 0 || *y.spec.DocumentIndex >= len(yamlFile.Docs)) {
 			if y.spec.SearchPattern {
-				logrus.Debugf("ignoring file %q as it holds %d document(s) and documentindex is %d", originFilePath, len(yamlFile.Docs), *y.spec.DocumentIndex)
+				log.Debugf("ignoring file %q as it holds %d document(s) and documentindex is %d", originFilePath, len(yamlFile.Docs), *y.spec.DocumentIndex)
 				ignoredFiles++
 				continue
 			}
@@ -108,7 +108,7 @@ func (y Yaml) goYamlTarget(valueToWrite string, resultTarget *result.Target, dry
 				// may create the key we overwrite it instead of updating it.
 				case filterErr == nil && len(matched) > 0 && (!y.spec.CreateMissingKey || !isNullNode(node)):
 					if missing > 0 {
-						logrus.Debugf("key %q from file %q is missing from %d of the %d nodes it selects in document %d, updating the %d nodes holding it", key, originFilePath, missing, missing+len(matched), index, len(matched))
+						log.Debugf("key %q from file %q is missing from %d of the %d nodes it selects in document %d, updating the %d nodes holding it", key, originFilePath, missing, missing+len(matched), index, len(matched))
 					}
 
 					changed, err := y.updateNode(yamlFile, index, doc, urlPath, matched, key, valueToWrite, nodeToWrite, resultTarget, originFilePath, dryRun)
@@ -132,7 +132,7 @@ func (y Yaml) goYamlTarget(valueToWrite string, resultTarget *result.Target, dry
 				case y.spec.SearchPattern:
 					// If search pattern is true then we don't want to return an error
 					// as we are probably trying to identify a file matching the key
-					logrus.Debugf("ignoring key %q from file %q in document %d as it does not exist", key, originFilePath, index)
+					log.Debugf("ignoring key %q from file %q in document %d as it does not exist", key, originFilePath, index)
 
 				default:
 					keyNotFound = append(keyNotFound, fmt.Sprintf("couldn't find key %q from file %q in document %d", key, originFilePath, index))
@@ -145,7 +145,7 @@ func (y Yaml) goYamlTarget(valueToWrite string, resultTarget *result.Target, dry
 
 			if len(keyNotFound) > 0 {
 				for _, msg := range keyNotFound {
-					logrus.Errorln(msg)
+					log.Errorln(msg)
 				}
 				return 0, ignoredFiles, fmt.Errorf("key not found from file %q", originFilePath)
 			}
@@ -231,7 +231,7 @@ func (y Yaml) createKey(doc *ast.DocumentNode, key, valueToWrite string, resultT
 			}
 		}
 		if err := setNodeComment(leaf, y.spec.Comment); err != nil {
-			logrus.Errorf("error setting comment: %s", err)
+			log.Errorf("error setting comment: %s", err)
 		}
 	}
 

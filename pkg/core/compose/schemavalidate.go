@@ -6,8 +6,8 @@ import (
 
 	jschema "github.com/invopop/jsonschema"
 	validator "github.com/santhosh-tekuri/jsonschema/v6"
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/jsonschema"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"go.yaml.in/yaml/v3"
 )
 
@@ -42,7 +42,7 @@ func validateSchema(filename string, content []byte) {
 
 	schema, err := getComposeSchema()
 	if err != nil {
-		logrus.Debugf("building the compose schema: %s", err)
+		log.Debugf("building the compose schema: %s", err)
 		return
 	}
 
@@ -53,6 +53,6 @@ func validateSchema(filename string, content []byte) {
 	}
 
 	for _, problem := range jsonschema.Validate(schema, document) {
-		logrus.Warningf("%s %s", filename, problem.String())
+		log.Warningf("%s %s", filename, problem.String())
 	}
 }

@@ -8,7 +8,6 @@ import (
 
 	"github.com/updatecli/updatecli/pkg/core/log"
 
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/dockerfile/simpletextparser"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/dockerfile/simpletextparser/keywords"
 )
@@ -26,7 +25,7 @@ func searchDockerfiles(rootDir string, files []string) ([]string, error) {
 
 	dockerfiles := []string{}
 
-	logrus.Debugf("Looking for Dockerfile(s) in %q", rootDir)
+	log.Debugf("Looking for Dockerfile(s) in %q", rootDir)
 
 	// To do switch to WalkDir which is more efficient, introduced in 1.16
 	err := filepath.Walk(rootDir, func(path string, info fs.FileInfo, err error) error {
@@ -38,7 +37,7 @@ func searchDockerfiles(rootDir string, files []string) ([]string, error) {
 		for _, f := range files {
 			match, err := filepath.Match(f, info.Name())
 			if err != nil {
-				logrus.Errorln(err)
+				log.Errorln(err)
 				continue
 			}
 			if match {
@@ -52,7 +51,7 @@ func searchDockerfiles(rootDir string, files []string) ([]string, error) {
 		return nil, err
 	}
 
-	logrus.Debugf("%d potential Dockerfile(s) found", len(dockerfiles))
+	log.Debugf("%d potential Dockerfile(s) found", len(dockerfiles))
 
 	return dockerfiles, nil
 }

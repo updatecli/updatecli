@@ -8,9 +8,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/cmdoptions"
 	"github.com/updatecli/updatecli/pkg/core/config"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/pipeline"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/reports"
@@ -47,14 +47,14 @@ func (e *Engine) detectManifests(i int) bool {
 
 	for _, filename := range defaultManifestFilenames {
 		if _, err := os.Stat(filename); err == nil {
-			logrus.Debugf("Default Updatecli manifest detected %q", filename)
+			log.Debugf("Default Updatecli manifest detected %q", filename)
 			e.Options.Manifests[i].Manifests = append(e.Options.Manifests[i].Manifests, filename)
 		}
 	}
 
 	if fs, err := os.Stat(defaultManifestDirname); err == nil {
 		if fs.IsDir() {
-			logrus.Debugf("Default Updatecli manifest directory detected %q", defaultManifestDirname)
+			log.Debugf("Default Updatecli manifest directory detected %q", defaultManifestDirname)
 			e.Options.Manifests[i].Manifests = append(e.Options.Manifests[i].Manifests, defaultManifestDirname)
 		}
 	}
@@ -138,7 +138,7 @@ func (e *Engine) LoadConfigurations() error {
 			}
 
 			if loadedConfigurations == nil {
-				logrus.Debugf("No valid manifest detected for %q", manifestFile)
+				log.Debugf("No valid manifest detected for %q", manifestFile)
 				continue
 			}
 
@@ -154,7 +154,7 @@ func (e *Engine) LoadConfigurations() error {
 					switch scmConfig.Kind {
 					case githubsearch.Kind:
 
-						logrus.Debugf("Processing githubsearch scm %q for potential multiple repository discovery", scmID)
+						log.Debugf("Processing githubsearch scm %q for potential multiple repository discovery", scmID)
 
 						ctx := context.Background()
 						autodiscoveryScms, err := githubsearch.New(scmConfig.Spec)
@@ -190,12 +190,12 @@ func (e *Engine) LoadConfigurations() error {
 							newPipeline.Spec.SCMs[scmID] = newSCM
 
 							loadedConfigurations = append(loadedConfigurations, newPipeline)
-							logrus.Debugf("githubsearch scm %q added new pipeline configuration for repository %s/%s", scmID, spec.Owner, spec.Repository)
+							log.Debugf("githubsearch scm %q added new pipeline configuration for repository %s/%s", scmID, spec.Owner, spec.Repository)
 						}
 
 					case azuredevopssearch.Kind:
 
-						logrus.Debugf("Processing azuredevopssearch scm %q for potential multiple repository discovery", scmID)
+						log.Debugf("Processing azuredevopssearch scm %q for potential multiple repository discovery", scmID)
 
 						ctx := context.Background()
 						azdoSearchScms, err := azuredevopssearch.New(scmConfig.Spec)
@@ -233,7 +233,7 @@ func (e *Engine) LoadConfigurations() error {
 
 					case gitlabsearch.Kind:
 
-						logrus.Debugf("Processing gitlabsearch scm %q for potential multiple repository discovery", scmID)
+						log.Debugf("Processing gitlabsearch scm %q for potential multiple repository discovery", scmID)
 
 						ctx := context.Background()
 						glSearchScms, err := gitlabsearch.New(scmConfig.Spec)
@@ -269,13 +269,13 @@ func (e *Engine) LoadConfigurations() error {
 							newPipeline.Spec.SCMs[scmID] = newSCM
 
 							loadedConfigurations = append(loadedConfigurations, newPipeline)
-							logrus.Debugf("gitlabsearch scm %q added new pipeline configuration for repository %s/%s", scmID, spec.Owner, spec.Repository)
+							log.Debugf("gitlabsearch scm %q added new pipeline configuration for repository %s/%s", scmID, spec.Owner, spec.Repository)
 						}
 					}
 				}
 			}
 
-			logrus.Debugf("Loaded %d pipeline configuration(s) from %q", len(loadedConfigurations), manifestFile)
+			log.Debugf("Loaded %d pipeline configuration(s) from %q", len(loadedConfigurations), manifestFile)
 
 			for id := range loadedConfigurations {
 				newPipeline := pipeline.Pipeline{}

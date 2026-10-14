@@ -16,8 +16,8 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/cargo"
 
 	"github.com/go-viper/mapstructure/v2"
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
@@ -66,13 +66,13 @@ func New(spec interface{}, isSCM bool) (*CargoPackage, error) {
 	}
 
 	if newSpec.IndexUrl != "" {
-		logrus.Infof("IndexURL IS SET, but not used")
+		log.Infof("IndexURL IS SET, but not used")
 		switch newSpec.Registry.URL != "" {
 		case true:
-			logrus.Warningf("Registry.URL and IndexUrl are mutually exclusive, unset indexurl")
+			log.Warningf("Registry.URL and IndexUrl are mutually exclusive, unset indexurl")
 			newSpec.IndexUrl = ""
 		case false:
-			logrus.Warningf("indexurl is deprecated in favor of registry.url")
+			log.Warningf("indexurl is deprecated in favor of registry.url")
 			newSpec.Registry.URL = newSpec.IndexUrl
 			newSpec.IndexUrl = ""
 		}
@@ -138,7 +138,7 @@ func (cp *CargoPackage) getVersions(ctx context.Context) (v string, versions []s
 func getPackageFileDir(packageName string) (string, error) {
 	if packageName == "" {
 		err := errors.New("got empty package name")
-		logrus.Errorf("%q\n", err)
+		log.Errorf("%q\n", err)
 		return "", err
 	}
 	switch packageNameLen := len(packageName); packageNameLen {
@@ -158,7 +158,7 @@ func (cp *CargoPackage) getPackageDataFromApi(ctx context.Context, name string, 
 
 	req, err := http.NewRequestWithContext(ctx, "GET", packageUrl, nil)
 	if err != nil {
-		logrus.Errorf("something went wrong while getting cargo api data %q\n", err)
+		log.Errorf("something went wrong while getting cargo api data %q\n", err)
 		return PackageData{}, err
 	}
 
@@ -172,7 +172,7 @@ func (cp *CargoPackage) getPackageDataFromApi(ctx context.Context, name string, 
 
 	res, err := cp.webClient.Do(req)
 	if err != nil {
-		logrus.Errorf("something went wrong while getting cargo api data %q\n", err)
+		log.Errorf("something went wrong while getting cargo api data %q\n", err)
 		return PackageData{}, err
 	}
 	defer res.Body.Close()
@@ -180,7 +180,7 @@ func (cp *CargoPackage) getPackageDataFromApi(ctx context.Context, name string, 
 	var d PackageData
 	err = json.NewDecoder(res.Body).Decode(&d)
 	if err != nil && err != io.EOF {
-		logrus.Errorf("something went wrong while reading cargo api data%q\n", err)
+		log.Errorf("something went wrong while reading cargo api data%q\n", err)
 		return PackageData{}, err
 	}
 	return d, nil
@@ -191,7 +191,7 @@ func (cp *CargoPackage) getPackageDataFromFS(name string, indexDir string) (Pack
 	pd.Crate.Name = name
 	packageDir, err := getPackageFileDir(name)
 	if err != nil {
-		logrus.Errorf("something went wrong while getting the package directory from its name %q\n", err)
+		log.Errorf("something went wrong while getting the package directory from its name %q\n", err)
 		return pd, err
 	}
 	packageFilePath := filepath.Join(indexDir, packageDir, name)
@@ -202,7 +202,7 @@ func (cp *CargoPackage) getPackageDataFromFS(name string, indexDir string) (Pack
 	defer func(packageInfoFile *os.File) {
 		err := packageInfoFile.Close()
 		if err != nil {
-			logrus.Errorf("something went wrong while cleaning the package file %q\n", err)
+			log.Errorf("something went wrong while cleaning the package file %q\n", err)
 		}
 	}(packageInfoFile)
 
@@ -211,7 +211,7 @@ func (cp *CargoPackage) getPackageDataFromFS(name string, indexDir string) (Pack
 		var packageVersion PackageVersion
 		err = json.Unmarshal(scanner.Bytes(), &packageVersion)
 		if err != nil {
-			logrus.Errorf("something went wrong while parsing the version %q\n", err)
+			log.Errorf("something went wrong while parsing the version %q\n", err)
 		}
 		if packageVersion.Yanked {
 			continue

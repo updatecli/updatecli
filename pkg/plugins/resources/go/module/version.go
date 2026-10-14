@@ -14,8 +14,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 	"golang.org/x/mod/module"
@@ -66,7 +66,7 @@ func (g *GoModule) versions(ctx context.Context) (v string, err error) {
 
 		publishedVersions, matchingVersions, err := getVersionsFromProxy(ctx, g.webClient, proxy, g.Spec.Module, g.Spec.Age)
 		if err != nil {
-			logrus.Debugf("skipping proxy %q due to %v\n", proxy, err)
+			log.Debugf("skipping proxy %q due to %v\n", proxy, err)
 			continue
 		}
 
@@ -77,23 +77,23 @@ func (g *GoModule) versions(ctx context.Context) (v string, err error) {
 		*/
 		if len(publishedVersions) == 0 {
 			if !isLatestVersionFilter(g.versionFilter) && pseudoVersion == "" {
-				logrus.Debugf("no version published for module %q on proxy %q\n", g.Spec.Module, proxy)
+				log.Debugf("no version published for module %q on proxy %q\n", g.Spec.Module, proxy)
 				continue
 			}
 
 			latestVersion, err := getLatestVersionFromProxy(ctx, g.webClient, proxy, g.Spec.Module)
 			if err != nil {
-				logrus.Debugf("skipping proxy %q due to %v\n", proxy, err)
+				log.Debugf("skipping proxy %q due to %v\n", proxy, err)
 				continue
 			}
 
 			if latestVersion.Version == "" {
-				logrus.Debugf("no version published for module %q on proxy %q\n", g.Spec.Module, proxy)
+				log.Debugf("no version published for module %q on proxy %q\n", g.Spec.Module, proxy)
 				continue
 			}
 
 			if !isVersionMatchingAge(latestVersion, g.Spec.Age) {
-				logrus.Debugf("ignoring version %q from proxy %q because it doesn't match the age filter\n", latestVersion.Version, proxy)
+				log.Debugf("ignoring version %q from proxy %q because it doesn't match the age filter\n", latestVersion.Version, proxy)
 				heldBackByAge = true
 				continue
 			}
@@ -101,13 +101,13 @@ func (g *GoModule) versions(ctx context.Context) (v string, err error) {
 			// The latest commit must still be newer than the pseudo version the filter starts from.
 			if pseudoVersion != "" {
 				if _, err := g.versionFilter.Search([]string{latestVersion.Version}); err != nil {
-					logrus.Debugf("ignoring version %q from proxy %q as it isn't newer than %q\n", latestVersion.Version, proxy, pseudoVersion)
+					log.Debugf("ignoring version %q from proxy %q as it isn't newer than %q\n", latestVersion.Version, proxy, pseudoVersion)
 					noVersionNewerThanPseudo = true
 					continue
 				}
 			}
 
-			logrus.Debugf("no version published for module %q on proxy %q, fallback to version %q\n", g.Spec.Module, proxy, latestVersion.Version)
+			log.Debugf("no version published for module %q on proxy %q, fallback to version %q\n", g.Spec.Module, proxy, latestVersion.Version)
 
 			g.Version = version.Version{
 				ParsedVersion:   latestVersion.Version,
@@ -120,7 +120,7 @@ func (g *GoModule) versions(ctx context.Context) (v string, err error) {
 		// The module publishes versions but the age filter discarded every one of them,
 		// which means the version we would have returned is still cooling down.
 		if len(matchingVersions) == 0 {
-			logrus.Debugf("every version published for module %q on proxy %q is filtered out by the age filter\n", g.Spec.Module, proxy)
+			log.Debugf("every version published for module %q on proxy %q is filtered out by the age filter\n", g.Spec.Module, proxy)
 			heldBackByAge = true
 			continue
 		}
@@ -149,7 +149,7 @@ func (g *GoModule) versions(ctx context.Context) (v string, err error) {
 		g.Version, err = g.searchVersion(versions, pseudoVersion)
 		if err != nil {
 			if errors.Is(err, ErrNoVersionNewerThanPseudo) {
-				logrus.Debugf("no version newer than %q for module %q on proxy %q\n", pseudoVersion, g.Spec.Module, proxy)
+				log.Debugf("no version newer than %q for module %q on proxy %q\n", pseudoVersion, g.Spec.Module, proxy)
 				noVersionNewerThanPseudo = true
 				continue
 			}
@@ -257,13 +257,13 @@ func getFromProxy(ctx context.Context, client httpclient.HTTPClient, proxy, modu
 			list several proxies and the next one is expected to serve the module, so the
 			details are only reported at debug level.
 		*/
-		logrus.Debugf("proxy %q returned HTTP %d (%s) for module %q\n", proxy, res.StatusCode, res.Status, module)
+		log.Debugf("proxy %q returned HTTP %d (%s) for module %q\n", proxy, res.StatusCode, res.Status, module)
 
 		body, err := httputil.DumpResponse(res, false)
 		if err != nil {
-			logrus.Debugf("failed to dump proxy response for %q: %v\n", proxy, err)
+			log.Debugf("failed to dump proxy response for %q: %v\n", proxy, err)
 		} else {
-			logrus.Debugf("\n%v\n", string(body))
+			log.Debugf("\n%v\n", string(body))
 		}
 
 		return nil, fmt.Errorf("GO module %q not found on proxy %q", module, proxy)
@@ -312,7 +312,7 @@ func getVersionsFromProxy(ctx context.Context, client httpclient.HTTPClient, pro
 	for _, v := range publishedVersions {
 		vInfo, err := getVersionInfoFromProxy(ctx, client, proxy, module, v)
 		if err != nil {
-			logrus.Debugf("ignoring version %q from proxy %q due to %v\n", v, proxy, err)
+			log.Debugf("ignoring version %q from proxy %q due to %v\n", v, proxy, err)
 			continue
 		}
 
@@ -394,17 +394,17 @@ func isVersionMatchingAge(v versionInfo, releaseAge age.Spec) bool {
 
 	releaseDate, err := time.Parse(time.RFC3339, v.Time)
 	if err != nil {
-		logrus.Debugf("ignoring version %q due to invalid release date %q: %v\n", v.Version, v.Time, err)
+		log.Debugf("ignoring version %q due to invalid release date %q: %v\n", v.Version, v.Time, err)
 		return false
 	}
 
 	if releaseAge.Minimum != "" && releaseAge.IsOlderThan(releaseDate, nil) {
-		logrus.Debugf("ignoring version %q because its age is below %q (released on %s)\n", v.Version, releaseAge.Minimum, releaseDate)
+		log.Debugf("ignoring version %q because its age is below %q (released on %s)\n", v.Version, releaseAge.Minimum, releaseDate)
 		return false
 	}
 
 	if releaseAge.Maximum != "" && releaseAge.IsNewerThan(releaseDate, nil) {
-		logrus.Debugf("ignoring version %q because its age is above %q (released on %s)\n", v.Version, releaseAge.Maximum, releaseDate)
+		log.Debugf("ignoring version %q because its age is above %q (released on %s)\n", v.Version, releaseAge.Maximum, releaseDate)
 		return false
 	}
 

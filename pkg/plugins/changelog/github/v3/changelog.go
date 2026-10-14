@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/google/go-github/v69/github"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 
@@ -35,14 +35,14 @@ func (c *Changelog) Search(from, to string) (result.Changelogs, error) {
 		// We first try to get a token source from the environment variable
 		_, tokenSource, err := token.GetTokenSourceFromEnv()
 		if err != nil {
-			logrus.Debugf("no GitHub token found in environment variables: %s", err)
+			log.Debugf("no GitHub token found in environment variables: %s", err)
 		}
 
 		if tokenSource == nil {
 			// We fallback to the GITHUB_TOKEN environment variable if no other token source could be found
 			_, tokenSource = token.GetFallbackTokenSourceFromEnv()
 			if tokenSource != nil {
-				logrus.Debugf("using GitHub token from environment variable")
+				log.Debugf("using GitHub token from environment variable")
 			}
 		}
 
@@ -51,9 +51,9 @@ func (c *Changelog) Search(from, to string) (result.Changelogs, error) {
 			if err != nil {
 				return nil, fmt.Errorf("failed to get access token from token source: %w", err)
 			}
-			logrus.Debugf("using GitHub token from environment variable")
+			log.Debugf("using GitHub token from environment variable")
 		} else {
-			logrus.Debugln("no GitHub token defined, please provide a GitHub token via the setting `token` or one of the environment variable UPDATECLI_GITHUB_TOKEN or GITHUB_TOKEN.")
+			log.Debugln("no GitHub token defined, please provide a GitHub token via the setting `token` or one of the environment variable UPDATECLI_GITHUB_TOKEN or GITHUB_TOKEN.")
 		}
 	}
 
@@ -73,7 +73,7 @@ func (c *Changelog) Search(from, to string) (result.Changelogs, error) {
 	allReleases := getReleasesFromCatalog(releasesID)
 
 	if allReleases == nil {
-		logrus.Debugf("Changelog releases not detected locally, checking online")
+		log.Debugf("Changelog releases not detected locally, checking online")
 
 		allReleases, err = getReleasesFromAPI(client, c.Owner, c.Repository)
 		if err != nil {
@@ -89,7 +89,7 @@ func (c *Changelog) Search(from, to string) (result.Changelogs, error) {
 			sortReleasesBySemver(&allReleases)
 		}
 	default:
-		logrus.Debugf("version filter of kind %q not supported. Feel free to open an issue explaining your need", c.VersionFilter.Kind)
+		log.Debugf("version filter of kind %q not supported. Feel free to open an issue explaining your need", c.VersionFilter.Kind)
 	}
 
 	allReleases = filterReleases(allReleases, from, to)
@@ -142,7 +142,7 @@ func filterReleases(allReleases []*github.RepositoryRelease, from, to string) []
 	}
 
 	if from != "" && !foundFrom {
-		logrus.Debugf("GitHub release version %q not found so I only return the latest release", from)
+		log.Debugf("GitHub release version %q not found so I only return the latest release", from)
 		return filteredReleases[0:1]
 	}
 

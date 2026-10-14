@@ -3,7 +3,7 @@ package cmd
 import (
 	"os"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 
 	"github.com/spf13/cobra"
 )
@@ -17,13 +17,13 @@ var (
 
 			// TODO: To be removed once not experimental anymore
 			if !experimental {
-				logrus.Warningf("The 'config' feature requires the flag experimental to work, such as:\n\t`updatecli udash config --experimental`")
+				log.Warningf("The 'config' feature requires the flag experimental to work, such as:\n\t`updatecli udash config --experimental`")
 				os.Exit(1)
 			}
 
 			err := run("udash/config")
 			if err != nil {
-				logrus.Errorf("command failed")
+				log.Errorf("command failed")
 				os.Exit(1)
 			}
 		},

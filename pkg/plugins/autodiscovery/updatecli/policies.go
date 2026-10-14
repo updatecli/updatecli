@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"text/template"
 
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/compose"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 var (
@@ -40,13 +40,13 @@ func (u Updatecli) discoverUpdatecliPolicyManifests() ([][]byte, error) {
 	}
 
 	for _, foundUpdateComposeFile := range foundUpdateComposeFiles {
-		logrus.Debugf("parsing file %q", foundUpdateComposeFile)
+		log.Debugf("parsing file %q", foundUpdateComposeFile)
 
 		relativeUpdateComposeFile, err := filepath.Rel(u.rootDir, foundUpdateComposeFile)
 
 		if err != nil {
 			// Jump to the next Update compose file if current failed
-			logrus.Debugln(err)
+			log.Debugln(err)
 			continue
 		}
 
@@ -55,7 +55,7 @@ func (u Updatecli) discoverUpdatecliPolicyManifests() ([][]byte, error) {
 
 		metadata, err := getComposeFileMetadata(foundUpdateComposeFile)
 		if err != nil {
-			logrus.Debugln(err)
+			log.Debugln(err)
 			continue
 		}
 
@@ -70,38 +70,38 @@ func (u Updatecli) discoverUpdatecliPolicyManifests() ([][]byte, error) {
 		for i, policy := range metadata.Policies {
 			policyName, policyVersion, err := getPolicyName(policy.Policy)
 			if err != nil {
-				logrus.Debugln(err)
+				log.Debugln(err)
 				continue
 			}
 
-			logrus.Debugf("policy name: %q detected", policyName)
+			log.Debugf("policy name: %q detected", policyName)
 
 			switch policyVersion {
 			case "": // No version specified
-				logrus.Debug("No version detected")
+				log.Debug("No version detected")
 			case "latest":
-				logrus.Debug("latest version detected")
+				log.Debug("latest version detected")
 			default:
-				logrus.Debugf("version %q detected", policyVersion)
+				log.Debugf("version %q detected", policyVersion)
 			}
 
 			if len(u.spec.Ignore) > 0 {
 				if u.spec.Ignore.isMatchingRules(u.rootDir, relativeUpdateComposeFile, policyName, policyVersion) {
-					logrus.Debugf("Ignoring Updatecli policy %q from %q, as matching ignore rule(s)\n", policyName, composeFilename)
+					log.Debugf("Ignoring Updatecli policy %q from %q, as matching ignore rule(s)\n", policyName, composeFilename)
 					continue
 				}
 			}
 
 			if len(u.spec.Only) > 0 {
 				if !u.spec.Only.isMatchingRules(u.rootDir, relativeUpdateComposeFile, policyName, policyVersion) {
-					logrus.Debugf("Ignoring Updatecli policy %q from %q, as not matching only rule(s)\n", policyName, composeFilename)
+					log.Debugf("Ignoring Updatecli policy %q from %q, as not matching only rule(s)\n", policyName, composeFilename)
 					continue
 				}
 			}
 
 			tmpl, err := template.New("manifest").Parse(manifestTemplate)
 			if err != nil {
-				logrus.Debugln(err)
+				log.Debugln(err)
 				continue
 			}
 
@@ -114,7 +114,7 @@ func (u Updatecli) discoverUpdatecliPolicyManifests() ([][]byte, error) {
 					sourceVersionFilterPattern, err = u.versionFilter.GreaterThanPattern(policyVersion)
 					sourceVersionFilterRegex = u.versionFilter.Regex
 					if err != nil {
-						logrus.Debugf("building version filter pattern: %s", err)
+						log.Debugf("building version filter pattern: %s", err)
 						sourceVersionFilterPattern = "*"
 					}
 				}
@@ -156,7 +156,7 @@ func (u Updatecli) discoverUpdatecliPolicyManifests() ([][]byte, error) {
 
 			manifest := bytes.Buffer{}
 			if err := tmpl.Execute(&manifest, params); err != nil {
-				logrus.Debugln(err)
+				log.Debugln(err)
 				continue
 			}
 

@@ -8,7 +8,7 @@ import (
 	"text/template"
 
 	terraformRegistryAddress "github.com/hashicorp/terraform-registry-address"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 func (t Terraform) discoverTerraformProvidersManifests() ([][]byte, error) {
@@ -27,16 +27,16 @@ func (t Terraform) discoverTerraformProvidersManifests() ([][]byte, error) {
 	}
 
 	for _, foundFile := range foundFiles {
-		logrus.Debugf("parsing file %q", foundFile)
+		log.Debugf("parsing file %q", foundFile)
 
 		relativeFoundFile, err := filepath.Rel(t.rootDir, foundFile)
 		if err != nil {
-			logrus.Debugln(err)
+			log.Debugln(err)
 			continue
 		}
 		providers, err := getTerraformLockContent(foundFile)
 		if err != nil {
-			logrus.Debugln(err)
+			log.Debugln(err)
 			continue
 		}
 
@@ -44,7 +44,7 @@ func (t Terraform) discoverTerraformProvidersManifests() ([][]byte, error) {
 			// Test if the ignore rule based on path is respected
 			if len(t.spec.Ignore) > 0 {
 				if t.spec.Ignore.isMatchingRules(t.rootDir, relativeFoundFile, provider, providerVersion) {
-					logrus.Debugf("Ignoring provider %q from file %q, as matching ignore rule(s)\n", provider, relativeFoundFile)
+					log.Debugf("Ignoring provider %q from file %q, as matching ignore rule(s)\n", provider, relativeFoundFile)
 					continue
 				}
 			}
@@ -52,14 +52,14 @@ func (t Terraform) discoverTerraformProvidersManifests() ([][]byte, error) {
 			// Test if the only rule based on path is respected
 			if len(t.spec.Only) > 0 {
 				if !t.spec.Only.isMatchingRules(t.rootDir, relativeFoundFile, provider, providerVersion) {
-					logrus.Debugf("Ignoring provider %q from %q, as not matching only rule(s)\n", provider, relativeFoundFile)
+					log.Debugf("Ignoring provider %q from %q, as not matching only rule(s)\n", provider, relativeFoundFile)
 					continue
 				}
 			}
 
 			versionPattern, err := t.versionFilter.GreaterThanPattern(providerVersion)
 			if err != nil {
-				logrus.Debugf("skipping provider %q due to: %s", provider, err)
+				log.Debugf("skipping provider %q due to: %s", provider, err)
 				continue
 			}
 
@@ -69,7 +69,7 @@ func (t Terraform) discoverTerraformProvidersManifests() ([][]byte, error) {
 				versionPattern,
 			)
 			if err != nil {
-				logrus.Debugf("skipping provider %q due to: %s", provider, err)
+				log.Debugf("skipping provider %q due to: %s", provider, err)
 				continue
 			}
 
@@ -78,7 +78,7 @@ func (t Terraform) discoverTerraformProvidersManifests() ([][]byte, error) {
 		}
 	}
 
-	logrus.Printf("%v manifests identified", len(manifests))
+	log.Printf("%v manifests identified", len(manifests))
 
 	return manifests, nil
 }
@@ -129,7 +129,7 @@ func (t Terraform) getTerraformManifest(filename, provider, versionFilterPattern
 
 	manifest := bytes.Buffer{}
 	if err := tmpl.Execute(&manifest, params); err != nil {
-		logrus.Debugln(err)
+		log.Debugln(err)
 		return nil, err
 	}
 	return manifest.Bytes(), nil

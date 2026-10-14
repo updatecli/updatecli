@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
@@ -14,8 +14,8 @@ func (e *Engine) runActions(ctx context.Context) error {
 
 	errs := []string{}
 
-	logrus.Infof("\n\n%s\n", strings.ToTitle("Actions"))
-	logrus.Infof("%s\n", strings.Repeat("=", len("Actions")+1))
+	log.Infof("\n\n%s\n", strings.ToTitle("Actions"))
+	log.Infof("%s\n", strings.Repeat("=", len("Actions")+1))
 
 	for id := range e.Pipelines {
 		pipeline := e.Pipelines[id]
@@ -23,13 +23,13 @@ func (e *Engine) runActions(ctx context.Context) error {
 			if err := pipeline.RunActions(ctx); err != nil {
 				errs = append(errs, err.Error())
 				pipeline.Report.Result = result.FAILURE
-				logrus.Errorf("action stage:\t%q", err.Error())
+				log.Errorf("action stage:\t%q", err.Error())
 				continue
 			}
 		}
 	}
 
-	logrus.Infof("Cleaning up actions published by previous executions")
+	log.Infof("Cleaning up actions published by previous executions")
 
 	// Pipelines sharing a working branch share one pull request, so it's cleaned once,
 	// and never when any of them published to it during this execution.
@@ -48,7 +48,7 @@ func (e *Engine) runActions(ctx context.Context) error {
 			if err := pipeline.RunCleanActions(ctx, handled); err != nil {
 				errs = append(errs, "cleaning: "+err.Error())
 				pipeline.Report.Result = result.FAILURE
-				logrus.Errorf("cleaning action stage:\t%q", err.Error())
+				log.Errorf("cleaning action stage:\t%q", err.Error())
 				continue
 			}
 		}

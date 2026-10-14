@@ -3,7 +3,7 @@ package mergerequest
 import (
 	"context"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/reports"
 )
 
@@ -16,7 +16,7 @@ func (g *Gitlab) CheckActionExist(ctx context.Context, report *reports.Action) e
 	}
 
 	if mr != nil {
-		logrus.Debugf("GitLab merge request detected")
+		log.Debugf("GitLab merge request detected")
 
 		report.Title = mr.Title
 		report.Link = mr.WebURL

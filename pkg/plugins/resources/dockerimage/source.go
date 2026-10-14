@@ -7,7 +7,7 @@ import (
 
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
@@ -17,7 +17,7 @@ func (di *DockerImage) Source(_ context.Context, pathResolver pathresolver.Resol
 	if err != nil {
 		return fmt.Errorf("invalid repository %s: %w", di.spec.Image, err)
 	}
-	logrus.Debugf(
+	log.Debugf(
 		"Searching tags for the image %q",
 		repo,
 	)
@@ -29,7 +29,7 @@ func (di *DockerImage) Source(_ context.Context, pathResolver pathresolver.Resol
 
 	// apply tagFilter
 
-	logrus.Debugf("%d Docker image tag(s) found", len(tags))
+	log.Debugf("%d Docker image tag(s) found", len(tags))
 
 	if di.spec.TagFilter != "" {
 		tags = di.filterTags(tags)
@@ -76,8 +76,8 @@ func (di *DockerImage) filterTags(tags []string) []string {
 	var results []string
 	re, err := regexp.Compile(di.spec.TagFilter)
 	if err != nil {
-		logrus.Errorln(err)
-		logrus.Debugln("=> something went wrong, falling back to latest versioning")
+		log.Errorln(err)
+		log.Debugln("=> something went wrong, falling back to latest versioning")
 		return []string{}
 	}
 	for _, tag := range tags {

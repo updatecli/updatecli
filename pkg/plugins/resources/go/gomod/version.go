@@ -10,7 +10,7 @@ import (
 	"github.com/hexops/gotextdiff"
 	"github.com/hexops/gotextdiff/myers"
 	"github.com/hexops/gotextdiff/span"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"golang.org/x/mod/modfile"
 )
 
@@ -165,12 +165,12 @@ func (g *GoMod) setVersion(version, filename string, dryrun bool) (oldVersion, n
 	newContent, err := modFile.Format()
 
 	if err != nil {
-		logrus.Errorln(err)
+		log.Errorln(err)
 		return oldVersion, newVersion, changed, fmt.Errorf("failed formatting %q", filename)
 	}
 
 	edits := myers.ComputeEdits(span.URIFromPath(filename), string(oldContent), string(newContent))
-	logrus.Debugf("\n---\n%v\n---\n", gotextdiff.ToUnified("old", "new", string(oldContent), edits))
+	log.Debugf("\n---\n%v\n---\n", gotextdiff.ToUnified("old", "new", string(oldContent), edits))
 
 	if !changed || dryrun {
 		return oldVersion, newVersion, changed, nil
@@ -187,7 +187,7 @@ func (g *GoMod) setVersion(version, filename string, dryrun bool) (oldVersion, n
 		return oldVersion, newVersion, changed, fmt.Errorf("failed writing data to %q: %w", filename, err)
 	}
 
-	logrus.Debugf("%q updated\n", filename)
+	log.Debugf("%q updated\n", filename)
 
 	return oldVersion, newVersion, changed, nil
 }

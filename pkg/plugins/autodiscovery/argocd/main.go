@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/go-viper/mapstructure/v2"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
@@ -127,7 +127,7 @@ func New(spec interface{}, rootDir, scmID, actionID string) (ArgoCD, error) {
 
 	if path.IsAbs(s.RootDir) {
 		if scmID != "" {
-			logrus.Warningf("rootdir %q is an absolute path, scmID %q will be ignored", s.RootDir, scmID)
+			log.Warningf("rootdir %q is an absolute path, scmID %q will be ignored", s.RootDir, scmID)
 		}
 		dir = s.RootDir
 	}
@@ -135,7 +135,7 @@ func New(spec interface{}, rootDir, scmID, actionID string) (ArgoCD, error) {
 	// If no RootDir have been provided via settings,
 	// then fallback to the current process path.
 	if len(dir) == 0 {
-		logrus.Errorln("no working directory defined")
+		log.Errorln("no working directory defined")
 		return ArgoCD{}, err
 	}
 
@@ -158,8 +158,8 @@ func New(spec interface{}, rootDir, scmID, actionID string) (ArgoCD, error) {
 
 func (f ArgoCD) DiscoverManifests() ([][]byte, error) {
 
-	logrus.Infof("\n\n%s\n", strings.ToTitle("ArgoCD"))
-	logrus.Infof("%s\n", strings.Repeat("=", len("ArgoCD")+1))
+	log.Infof("\n\n%s\n", strings.ToTitle("ArgoCD"))
+	log.Infof("%s\n", strings.Repeat("=", len("ArgoCD")+1))
 
 	return f.discoverArgoCDManifests()
 }

@@ -8,7 +8,6 @@ import (
 
 	"github.com/updatecli/updatecli/pkg/core/log"
 
-	"github.com/sirupsen/logrus"
 	goyaml "go.yaml.in/yaml/v3"
 )
 
@@ -16,7 +15,7 @@ import (
 func searchChartFiles(rootDir string, files []string) ([]string, error) {
 	metadataFiles := []string{}
 
-	logrus.Debugf("Looking for Helm charts in %q", rootDir)
+	log.Debugf("Looking for Helm charts in %q", rootDir)
 
 	// To do switch to WalkDir which is more efficient, introduced in 1.16
 	err := filepath.Walk(rootDir, func(path string, info fs.FileInfo, err error) error {
@@ -39,10 +38,10 @@ func searchChartFiles(rootDir string, files []string) ([]string, error) {
 		return nil, err
 	}
 
-	logrus.Debugf("%d chart(s) found", len(metadataFiles))
+	log.Debugf("%d chart(s) found", len(metadataFiles))
 	for _, foundFile := range metadataFiles {
 		chartName := filepath.Base(filepath.Dir(foundFile))
-		logrus.Debugf("    * %q", chartName)
+		log.Debugf("    * %q", chartName)
 	}
 
 	return metadataFiles, nil
@@ -68,7 +67,7 @@ func getChartMetadata(filename string) (*chartMetadata, error) {
 	var chart chartMetadata
 
 	chartName := filepath.Base(filepath.Dir(filename))
-	logrus.Debugf("Chart %q found in %q", chartName, filepath.Dir(filename))
+	log.Debugf("Chart %q found in %q", chartName, filepath.Dir(filename))
 
 	if _, err := os.Stat(filename); err != nil {
 		return &chartMetadata{}, err
@@ -95,11 +94,11 @@ func getChartMetadata(filename string) (*chartMetadata, error) {
 		return &chartMetadata{}, nil
 	}
 
-	logrus.Debugf("Chart: %q\n", chartName)
+	log.Debugf("Chart: %q\n", chartName)
 	for _, value := range chart.Dependencies {
-		logrus.Debugf("Name: %q\n", value.Name)
-		logrus.Debugf("URL: %q\n", value.Repository)
-		logrus.Debugf("Version: %q\n", value.Version)
+		log.Debugf("Name: %q\n", value.Name)
+		log.Debugf("URL: %q\n", value.Repository)
+		log.Debugf("Version: %q\n", value.Version)
 	}
 
 	return &chart, nil
@@ -110,7 +109,7 @@ func getValuesFileContent(filename string) (*valuesContent, error) {
 	var values valuesContent
 
 	chartName := filepath.Base(filepath.Dir(filename))
-	logrus.Debugf("Chart values file %q found in %q", chartName, filepath.Dir(filename))
+	log.Debugf("Chart values file %q found in %q", chartName, filepath.Dir(filename))
 
 	if _, err := os.Stat(filename); err != nil {
 		return &valuesContent{}, err
@@ -138,17 +137,17 @@ func getValuesFileContent(filename string) (*valuesContent, error) {
 	}
 
 	if len(values.Images) > 0 {
-		logrus.Debugf("Images found for chart %q\n", chartName)
+		log.Debugf("Images found for chart %q\n", chartName)
 		for id, value := range values.Images {
-			logrus.Debugf("Image id %q found\n", id)
-			logrus.Debugf("\tName: %q\n", value.Repository)
-			logrus.Debugf("\tURL: %q\n", value.Tag)
+			log.Debugf("Image id %q found\n", id)
+			log.Debugf("\tName: %q\n", value.Repository)
+			log.Debugf("\tURL: %q\n", value.Tag)
 		}
 	}
 
 	if values.Image.Repository != "" {
-		logrus.Debugf("Image Repository: %q\n", values.Image.Repository)
-		logrus.Debugf("Image Tag: %q\n", values.Image.Tag)
+		log.Debugf("Image Repository: %q\n", values.Image.Repository)
+		log.Debugf("Image Tag: %q\n", values.Image.Tag)
 	}
 
 	return &values, nil

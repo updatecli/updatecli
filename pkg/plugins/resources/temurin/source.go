@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
@@ -18,7 +18,7 @@ func (t *Temurin) Source(ctx context.Context, pathResolver pathresolver.Resolver
 	}
 
 	if len(releaseNames) == 0 {
-		logrus.Debug("[temurin] empty response for 'release_names'.")
+		log.Debug("[temurin] empty response for 'release_names'.")
 		resultSource.Result = result.FAILURE
 		return fmt.Errorf("[temurin] No release found matching provided criteria. Use '--debug' to get details")
 	}

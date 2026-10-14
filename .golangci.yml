@@ -29,6 +29,12 @@ linters:
               desc: not allowed
             - pkg: github.com/magiconair/properties/assert
               desc: not allowed
+        logging:
+          files:
+            - "!**/pkg/core/log/**"
+          deny:
+            - pkg: github.com/sirupsen/logrus
+              desc: use github.com/updatecli/updatecli/pkg/core/log
     dupl:
       threshold: 100
     exhaustive:

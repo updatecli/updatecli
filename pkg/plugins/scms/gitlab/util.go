@@ -3,7 +3,7 @@ package gitlab
 import (
 	"os"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 // setDirectory creates the local git repository path if it does not exist.
@@ -13,7 +13,7 @@ func (g *Gitlab) setDirectory() {
 
 		err := os.MkdirAll(g.Spec.Directory, 0755)
 		if err != nil {
-			logrus.Errorf("err - %s", err)
+			log.Errorf("err - %s", err)
 		}
 	}
 }

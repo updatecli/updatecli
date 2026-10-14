@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/go-viper/mapstructure/v2"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github/app"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
@@ -197,14 +197,14 @@ func New(spec interface{}) (*GitHubRelease, error) {
 	switch newSpec.Key {
 	case "":
 		newSpec.Key = KeyTagName
-		logrus.Debugf("configuration \"key\" not set, defaulting to %q", KeyTagName)
+		log.Debugf("configuration \"key\" not set, defaulting to %q", KeyTagName)
 	case KeyTagHash, KeyTagName, KeyTitle:
 		// Nothing to do
 	case DeprecatedKeyTagName:
-		logrus.Warningf("configuration \"key\" set to %q is deprecated and should be replaced by %q", DeprecatedKeyTagName, KeyTagName)
+		log.Warningf("configuration \"key\" set to %q is deprecated and should be replaced by %q", DeprecatedKeyTagName, KeyTagName)
 		newSpec.Key = KeyTagName
 	case DeprecatedKeyTagHash:
-		logrus.Warningf("configuration \"key\" set to %q is deprecated and should be replaced by %q", DeprecatedKeyTagHash, KeyTagHash)
+		log.Warningf("configuration \"key\" set to %q is deprecated and should be replaced by %q", DeprecatedKeyTagHash, KeyTagHash)
 		newSpec.Key = KeyTagHash
 	default:
 		validationErrors = append(

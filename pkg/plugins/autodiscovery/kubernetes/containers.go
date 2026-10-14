@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"text/template"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/dockerimage"
 )
 
@@ -34,11 +34,11 @@ func (k Kubernetes) discoverContainerManifests() ([][]byte, error) {
 	}
 
 	for _, kubernetesFile := range kubernetesFiles {
-		logrus.Debugf("parsing file %q", kubernetesFile)
+		log.Debugf("parsing file %q", kubernetesFile)
 
 		relativeFoundKubernetesFile, err := filepath.Rel(k.rootDir, kubernetesFile)
 		if err != nil {
-			logrus.Debugln(err)
+			log.Debugln(err)
 			continue
 		}
 
@@ -73,21 +73,21 @@ func (k Kubernetes) generateContainerManifest(targetKey, containerName, containe
 
 	if len(k.spec.Ignore) > 0 {
 		if k.spec.Ignore.isMatchingRules(k.rootDir, relativeFoundKubernetesFile, imageName) {
-			logrus.Debugf("Ignoring container %q from %q, as matching ignore rule(s)\n", imageName, relativeFoundKubernetesFile)
+			log.Debugf("Ignoring container %q from %q, as matching ignore rule(s)\n", imageName, relativeFoundKubernetesFile)
 			return nil, nil
 		}
 	}
 
 	if len(k.spec.Only) > 0 {
 		if !k.spec.Only.isMatchingRules(k.rootDir, relativeFoundKubernetesFile, imageName) {
-			logrus.Debugf("Ignoring container %q from %q, as not matching only rule(s)\n", imageName, relativeFoundKubernetesFile)
+			log.Debugf("Ignoring container %q from %q, as not matching only rule(s)\n", imageName, relativeFoundKubernetesFile)
 			return nil, nil
 		}
 	}
 
 	sourceSpec := dockerimage.NewDockerImageSpecFromImage(imageName, imageTag, k.spec.Auths)
 	if sourceSpec == nil && !k.digest {
-		logrus.Infoln("No source spec detected")
+		log.Infoln("No source spec detected")
 		return nil, nil
 	}
 
@@ -118,7 +118,7 @@ func (k Kubernetes) generateContainerManifest(targetKey, containerName, containe
 		versionFilterRegex = k.versionFilter.Regex
 		if err != nil {
 			versionFilterPattern = "*"
-			logrus.Debugf("building version filter pattern: %s", err)
+			log.Debugf("building version filter pattern: %s", err)
 		}
 	}
 
@@ -139,7 +139,7 @@ func (k Kubernetes) generateContainerManifest(targetKey, containerName, containe
 			return nil, err
 		}
 	} else {
-		logrus.Infoln("No source spec detected")
+		log.Infoln("No source spec detected")
 		return nil, nil
 	}
 

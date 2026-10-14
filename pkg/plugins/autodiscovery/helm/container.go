@@ -8,7 +8,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/dockerimage"
 )
 
@@ -45,12 +45,12 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 
 	for _, foundValueFile := range foundValuesFiles {
 
-		logrus.Debugf("parsing file %q", foundValueFile)
+		log.Debugf("parsing file %q", foundValueFile)
 
 		relativeFoundValueFile, err := filepath.Rel(h.rootDir, foundValueFile)
 		if err != nil {
 			// Jump to the next Helm chart if current failed
-			logrus.Errorln(err)
+			log.Errorln(err)
 			continue
 		}
 
@@ -93,7 +93,7 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 			}
 
 			if tag == "" {
-				logrus.Debugf("No tag set for image %q using 'latest' as default", repository)
+				log.Debugf("No tag set for image %q using 'latest' as default", repository)
 				tag = "latest"
 			}
 
@@ -157,7 +157,7 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 			// Test if the ignore rule based on path is respected
 			if len(h.spec.Ignore) > 0 {
 				if h.spec.Ignore.isMatchingRules(h.rootDir, chartRelativeMetadataPath, "", "", imageName, imageTag) {
-					logrus.Debugf("Ignoring container version update from file %q, as matching ignore rule(s)\n", relativeFoundValueFile)
+					log.Debugf("Ignoring container version update from file %q, as matching ignore rule(s)\n", relativeFoundValueFile)
 					continue
 				}
 			}
@@ -165,7 +165,7 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 			// Test if the only rule based on path is respected
 			if len(h.spec.Only) > 0 {
 				if !h.spec.Only.isMatchingRules(h.rootDir, chartRelativeMetadataPath, "", "", imageName, imageTag) {
-					logrus.Debugf("Ignoring container version update from %q, as not matching only rule(s)\n", relativeFoundValueFile)
+					log.Debugf("Ignoring container version update from %q, as not matching only rule(s)\n", relativeFoundValueFile)
 					continue
 				}
 			}
@@ -202,7 +202,7 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 				versionFilterRegex = h.versionFilter.Regex
 				tagFilter = ""
 				if err != nil {
-					logrus.Debugf("building version filter pattern: %s", err)
+					log.Debugf("building version filter pattern: %s", err)
 					if sourceSpec != nil {
 						sourceSpec.VersionFilter.Pattern = "*"
 					}
@@ -226,7 +226,7 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 					return nil, err
 				}
 			} else {
-				logrus.Infoln("No source spec detected")
+				log.Infoln("No source spec detected")
 				return nil, nil
 			}
 

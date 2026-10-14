@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	gitlabapi "gitlab.com/gitlab-org/api/client-go"
 )
@@ -47,7 +47,7 @@ func (g *Gitlab) findExistingMR() (mr *gitlabapi.BasicMergeRequest, err error) {
 				mr.TargetBranch == g.TargetBranch &&
 				mr.State == "opened" {
 
-				logrus.Infof("%s GitLab merge request detected at:\n\t%s",
+				log.Infof("%s GitLab merge request detected at:\n\t%s",
 					result.SUCCESS,
 					mr.WebURL)
 
@@ -136,14 +136,14 @@ func (g *Gitlab) isRemoteBranchesExist() (bool, error) {
 	}
 
 	if !foundRemoteSourceBranch {
-		logrus.Debugf("Branch %q not found on remote repository %s/%s",
+		log.Debugf("Branch %q not found on remote repository %s/%s",
 			sourceBranch,
 			owner,
 			repository)
 	}
 
 	if !foundRemoteTargetBranch {
-		logrus.Debugf("Branch %q not found on remote repository %s/%s",
+		log.Debugf("Branch %q not found on remote repository %s/%s",
 			targetBranch,
 			owner,
 			repository)

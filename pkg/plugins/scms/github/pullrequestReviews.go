@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/shurcooL/githubv4"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github/client"
 )
 
@@ -17,9 +17,9 @@ func (p *PullRequest) addPullrequestReviewers(ctx context.Context, prID string, 
 	rateLimit, err := queryRateLimit(p.gh.client, ctx)
 	if err != nil {
 		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
-			logrus.Debugln(rateLimit)
+			log.Debugln(rateLimit)
 			if retry < client.MaxRetry {
-				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
+				log.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
 				rateLimit.Pause()
 				return p.addPullrequestReviewers(ctx, prID, retry+1)
 			}
@@ -27,7 +27,7 @@ func (p *PullRequest) addPullrequestReviewers(ctx context.Context, prID string, 
 		}
 		return fmt.Errorf("unable to query GitHub API rate limit: %w", err)
 	}
-	logrus.Debugln(rateLimit)
+	log.Debugln(rateLimit)
 
 	if len(p.spec.Reviewers) == 0 {
 		return nil
@@ -55,24 +55,24 @@ func (p *PullRequest) addPullrequestReviewers(ctx context.Context, prID string, 
 		switch len(a) {
 		case 2:
 			teamID, err := getTeamID(ctx, p.gh.client, a[0], a[1], 0)
-			logrus.Debugf("Team ID: %q found for %q", teamID, reviewer)
+			log.Debugf("Team ID: %q found for %q", teamID, reviewer)
 			if err != nil {
-				logrus.Warningf("Failed to get team id for %s/%s: %v", a[0], a[1], err)
+				log.Warningf("Failed to get team id for %s/%s: %v", a[0], a[1], err)
 			} else {
 				teamIDs = append(teamIDs, githubv4.NewID(teamID))
 			}
 		case 1:
 			user, err := getUserInfo(ctx, p.gh.client, a[0], 0)
-			logrus.Debugf("User ID: %q found for %q", user.ID, reviewer)
+			log.Debugf("User ID: %q found for %q", user.ID, reviewer)
 			if err != nil {
-				logrus.Warningf("Failed to get user id for %s/%s: %v", a[0], a[1], err)
+				log.Warningf("Failed to get user id for %s/%s: %v", a[0], a[1], err)
 			} else {
 				userIDs = append(userIDs, githubv4.NewID(user.ID))
 			}
 		case 0:
 			// Ignore empty reviewer
 		default:
-			logrus.Warningf("Invalid reviewer format: %s", reviewer)
+			log.Warningf("Invalid reviewer format: %s", reviewer)
 		}
 	}
 

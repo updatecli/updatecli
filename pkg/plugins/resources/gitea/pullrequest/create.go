@@ -4,7 +4,7 @@ import (
 	"context"
 
 	giteasdk "code.gitea.io/sdk/gitea"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/reports"
 	utils "github.com/updatecli/updatecli/pkg/plugins/utils/action"
 )
@@ -20,7 +20,7 @@ func (g *Gitea) CreateAction(ctx context.Context, report *reports.Action, resetD
 	body, err := utils.GeneratePullRequestBody("", report.ToActionsString())
 
 	if err != nil {
-		logrus.Warningf("something wrong happened while generating gitea pullrequest body: %s", err)
+		log.Warningf("something wrong happened while generating gitea pullrequest body: %s", err)
 	}
 
 	if len(g.spec.Body) > 0 {
@@ -39,7 +39,7 @@ func (g *Gitea) CreateAction(ctx context.Context, report *reports.Action, resetD
 
 	// If a pullrequest already exist, we update the report with the existing pullrequest
 	if pullrequestLink != "" {
-		logrus.Debugf("Gitea pullrequest already exist, nothing to do")
+		log.Debugf("Gitea pullrequest already exist, nothing to do")
 
 		report.Title = pullrequestTitle
 		report.Link = pullrequestLink
@@ -64,11 +64,11 @@ func (g *Gitea) CreateAction(ctx context.Context, report *reports.Action, resetD
 		such as missing remote branches.
 	*/
 	if !ok {
-		logrus.Debugln("skipping pullrequest creation")
+		log.Debugln("skipping pullrequest creation")
 		return nil
 	}
 
-	logrus.Debugf("Title:\t%q\nBody:\t%q\nSource:\n%q\ntarget:\t%q\n",
+	log.Debugf("Title:\t%q\nBody:\t%q\nSource:\n%q\ntarget:\t%q\n",
 		title,
 		body,
 		g.SourceBranch,
@@ -83,17 +83,17 @@ func (g *Gitea) CreateAction(ctx context.Context, report *reports.Action, resetD
 	}
 
 	if len(g.spec.Assignees) > 0 {
-		logrus.Debugf("Setting assignees for pull request: %v", g.spec.Assignees)
+		log.Debugf("Setting assignees for pull request: %v", g.spec.Assignees)
 	}
 
 	pr, resp, err := g.client.CreatePullRequest(g.Owner, g.Repository, sdkOpts)
 
 	if resp != nil && resp.StatusCode > 400 {
-		logrus.Debugf("RC: %s\nBody:\n%s", resp.Status, resp.Body)
+		log.Debugf("RC: %s\nBody:\n%s", resp.Status, resp.Body)
 	}
 
 	if err != nil {
-		logrus.Infof("Gitea pullrequest not created, skipping")
+		log.Infof("Gitea pullrequest not created, skipping")
 		return nil
 	}
 
@@ -101,7 +101,7 @@ func (g *Gitea) CreateAction(ctx context.Context, report *reports.Action, resetD
 	report.Description = pr.Body
 	report.Link = pr.URL
 
-	logrus.Infof("Gitea pullrequest successfully opened on %q", pr.URL)
+	log.Infof("Gitea pullrequest successfully opened on %q", pr.URL)
 
 	return nil
 }

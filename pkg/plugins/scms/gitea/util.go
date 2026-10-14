@@ -3,7 +3,7 @@ package gitea
 import (
 	"os"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 func (g *Gitea) setDirectory() {
@@ -12,7 +12,7 @@ func (g *Gitea) setDirectory() {
 
 		err := os.MkdirAll(g.Spec.Directory, 0755)
 		if err != nil {
-			logrus.Errorf("err - %s", err)
+			log.Errorf("err - %s", err)
 		}
 	}
 }

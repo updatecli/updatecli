@@ -5,7 +5,7 @@ import (
 	"slices"
 	"time"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 type Time struct {
@@ -30,7 +30,7 @@ func (d *Time) Init(versions []string) error {
 	for _, version := range versions {
 		t, err := time.Parse(d.layout, version)
 		if err != nil {
-			logrus.Debugf("Skipping %q because %s, skipping", version, err)
+			log.Debugf("Skipping %q because %s, skipping", version, err)
 			continue
 		}
 

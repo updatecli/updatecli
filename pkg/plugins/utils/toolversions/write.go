@@ -6,8 +6,8 @@ import (
 	"os/user"
 	"strings"
 
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 func (f *FileContent) Write() error {
@@ -16,14 +16,14 @@ func (f *FileContent) Write() error {
 		return fmt.Errorf("[%s] unable to get file info: %w", f.FilePath, err)
 	}
 
-	logrus.Debugf("fileInfo for %s mode=%s", f.FilePath, fileInfo.Mode().String())
+	log.Debugf("fileInfo for %s mode=%s", f.FilePath, fileInfo.Mode().String())
 
 	user, err := user.Current()
 	if err != nil {
-		logrus.Errorf("unable to get user info: %s", err)
+		log.Errorf("unable to get user info: %s", err)
 	}
 
-	logrus.Debugf("user: username=%s, uid=%s, gid=%s", user.Username, user.Uid, user.Gid)
+	log.Debugf("user: username=%s, uid=%s, gid=%s", user.Username, user.Uid, user.Gid)
 
 	fs := afero.NewOsFs()
 	newFile, err := fs.Create(f.FilePath)

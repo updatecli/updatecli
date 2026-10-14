@@ -6,7 +6,7 @@ import (
 	"runtime"
 
 	"github.com/go-viper/mapstructure/v2"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
@@ -266,15 +266,15 @@ func (s *Shell) report() {
 		// Shell command exited with an error: log everything as info, including exit code and stderr
 		message += fmt.Sprintf(" exited on error (exit code %d) %s\n\n%s", s.result.ExitCode, stdoutMessage, stderrMessage)
 
-		logrus.Info(message)
+		log.Info(message)
 		return
 	}
 
 	// Shell command ran successfully: logs the command and its standard output as info, and stderr as debug
 	message += fmt.Sprintf(" ran successfully %s", stdoutMessage)
 
-	logrus.Info(message)
-	logrus.Debug(stderrMessage)
+	log.Info(message)
+	log.Debug(stderrMessage)
 }
 
 func formatShellBlock(content string) string {

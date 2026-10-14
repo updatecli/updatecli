@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/go-viper/mapstructure/v2"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/gitlab/client"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
@@ -221,7 +221,7 @@ func (g *Gitlab) SearchReleases(releaseAge age.Spec) ([]string, error) {
 		}
 
 		if resp.StatusCode > 400 {
-			logrus.Debugf("GitLab Api Response:\n%+v", resp)
+			log.Debugf("GitLab Api Response:\n%+v", resp)
 		}
 
 		for _, release := range releases {
@@ -233,11 +233,11 @@ func (g *Gitlab) SearchReleases(releaseAge age.Spec) ([]string, error) {
 			if !releaseAge.IsZero() {
 				date, ok := releaseDate(release)
 				if !ok {
-					logrus.Debugf("ignoring release %q, which carries no date, as the age filter cannot be applied to it", release.TagName)
+					log.Debugf("ignoring release %q, which carries no date, as the age filter cannot be applied to it", release.TagName)
 					continue
 				}
 				if !releaseAge.Matches(date) {
-					logrus.Debugf("ignoring release %q, dated %s, as outside of the age window", release.TagName, date)
+					log.Debugf("ignoring release %q, dated %s, as outside of the age window", release.TagName, date)
 					continue
 				}
 			}
@@ -300,11 +300,11 @@ func (s Spec) Validate() error {
 
 	if err := s.Age.Validate(); err != nil {
 		gotError = true
-		logrus.Errorln(err)
+		log.Errorln(err)
 	}
 
 	if len(missingParameters) > 0 {
-		logrus.Errorf("missing parameter(s) [%s]", strings.Join(missingParameters, ","))
+		log.Errorf("missing parameter(s) [%s]", strings.Join(missingParameters, ","))
 	}
 
 	if gotError {

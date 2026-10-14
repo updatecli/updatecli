@@ -10,7 +10,7 @@ import (
 	"regexp"
 
 	"github.com/beevik/etree"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 func (m Maven) discoverParentPomDependencyManifests() ([][]byte, error) {
@@ -35,16 +35,16 @@ func (m Maven) discoverParentPomDependencyManifests() ([][]byte, error) {
 	for _, pomFile := range foundPomFiles {
 
 		relativePomFile, err := filepath.Rel(m.rootDir, pomFile)
-		logrus.Debugf("parsing file %q", relativePomFile)
+		log.Debugf("parsing file %q", relativePomFile)
 		if err != nil {
 			// Let's try the next pom.xml if one fail
-			logrus.Debugln(err)
+			log.Debugln(err)
 			continue
 		}
 
 		doc := etree.NewDocument()
 		if err := doc.ReadFromFile(pomFile); err != nil {
-			logrus.Debugln(err)
+			log.Debugln(err)
 			continue
 		}
 
@@ -62,7 +62,7 @@ func (m Maven) discoverParentPomDependencyManifests() ([][]byte, error) {
 		containsVariableRegex, err := regexp.Compile(`.*\$\{.*\}.*`)
 
 		if err != nil {
-			logrus.Debugln(err)
+			log.Debugln(err)
 			continue
 		}
 
@@ -70,7 +70,7 @@ func (m Maven) discoverParentPomDependencyManifests() ([][]byte, error) {
 		isContainVariable := containsVariableRegex.Match([]byte(parentPom.Version))
 
 		if isContainVariable {
-			logrus.Printf("Skipping parent pom %q in %q as it relies on the property %q", parentPom.ArtifactID, relativePomFile, parentPom.Version)
+			log.Printf("Skipping parent pom %q in %q as it relies on the property %q", parentPom.ArtifactID, relativePomFile, parentPom.Version)
 			continue
 		}
 
@@ -84,28 +84,28 @@ func (m Maven) discoverParentPomDependencyManifests() ([][]byte, error) {
 			sourceVersionFilterPattern, err = m.versionFilter.GreaterThanPattern(parentPom.Version)
 			sourceVersionFilterRegex = m.versionFilter.Regex
 			if err != nil {
-				logrus.Debugf("building version filter pattern: %s", err)
+				log.Debugf("building version filter pattern: %s", err)
 				sourceVersionFilterPattern = "*"
 			}
 		}
 
 		if len(m.spec.Ignore) > 0 {
 			if m.spec.Ignore.isMatchingRules(m.rootDir, relativePomFile, parentPom.GroupID, parentPom.ArtifactID, parentPom.Version) {
-				logrus.Debugf("Ignoring %s.%s from %q, as matching ignore rule(s)\n", parentPom.GroupID, parentPom.ArtifactID, relativePomFile)
+				log.Debugf("Ignoring %s.%s from %q, as matching ignore rule(s)\n", parentPom.GroupID, parentPom.ArtifactID, relativePomFile)
 				continue
 			}
 		}
 
 		if len(m.spec.Only) > 0 {
 			if !m.spec.Only.isMatchingRules(m.rootDir, relativePomFile, parentPom.GroupID, parentPom.ArtifactID, parentPom.Version) {
-				logrus.Debugf("Ignoring package %s.%s from %q, as not matching only rule(s)\n", parentPom.GroupID, parentPom.ArtifactID, relativePomFile)
+				log.Debugf("Ignoring package %s.%s from %q, as not matching only rule(s)\n", parentPom.GroupID, parentPom.ArtifactID, relativePomFile)
 				continue
 			}
 		}
 
 		tmpl, err := template.New("manifest").Parse(manifestTemplate)
 		if err != nil {
-			logrus.Debugln(err)
+			log.Debugln(err)
 			continue
 		}
 
@@ -165,7 +165,7 @@ func (m Maven) discoverParentPomDependencyManifests() ([][]byte, error) {
 
 		manifest := bytes.Buffer{}
 		if err := tmpl.Execute(&manifest, params); err != nil {
-			logrus.Debugln(err)
+			log.Debugln(err)
 			continue
 		}
 

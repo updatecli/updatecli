@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"go.yaml.in/yaml/v3"
 )
@@ -51,7 +51,7 @@ func PinScmDirectory(scmConfig scm.Config, baseDir string) scm.Config {
 	updateScmDirectory(&scmConfig, func(directory string) string {
 		absDirectory, err := filepath.Abs(filepath.Join(baseDir, directory))
 		if err != nil {
-			logrus.Debugf("unable to make scm directory %q absolute: %s", directory, err)
+			log.Debugf("unable to make scm directory %q absolute: %s", directory, err)
 			return filepath.Join(baseDir, directory)
 		}
 		return absDirectory
@@ -106,13 +106,13 @@ func specToMap(spec interface{}) (map[string]interface{}, bool) {
 
 	content, err := yaml.Marshal(spec)
 	if err != nil {
-		logrus.Debugf("unable to read the scm spec directory: %s", err)
+		log.Debugf("unable to read the scm spec directory: %s", err)
 		return nil, false
 	}
 
 	specMap := map[string]interface{}{}
 	if err := yaml.Unmarshal(content, &specMap); err != nil {
-		logrus.Debugf("unable to read the scm spec directory: %s", err)
+		log.Debugf("unable to read the scm spec directory: %s", err)
 		return nil, false
 	}
 

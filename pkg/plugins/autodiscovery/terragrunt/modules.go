@@ -9,7 +9,7 @@ import (
 	"text/template"
 
 	terraformRegistryAddress "github.com/hashicorp/terraform-registry-address"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 const (
@@ -47,7 +47,7 @@ func (t *terragruntModule) ForDisplay() string {
 		// Need to make sure we drop the version from it and the leading protocol info
 		return t.source.baseUrl
 	default:
-		logrus.Errorf("Unsupported source type %q", t.source.sourceType)
+		log.Errorf("Unsupported source type %q", t.source.sourceType)
 	}
 
 	return t.source.rawSource
@@ -74,20 +74,20 @@ func (t Terragrunt) discoverTerragruntManifests() ([][]byte, error) {
 	}
 
 	for _, foundFile := range foundFiles {
-		logrus.Debugf("parsing file %q", foundFile)
+		log.Debugf("parsing file %q", foundFile)
 
 		relativeFoundFile, err := filepath.Rel(t.rootDir, foundFile)
 		if err != nil {
-			logrus.Debugln(err)
+			log.Debugln(err)
 			continue
 		}
 		module, err := getTerragruntModule(foundFile, false)
 		if err != nil {
-			logrus.Debugln(err)
+			log.Debugln(err)
 			continue
 		}
 		if module == nil {
-			logrus.Debugf("Skipping %q: no valid module found in it", foundFile)
+			log.Debugf("Skipping %q: no valid module found in it", foundFile)
 			continue
 		}
 
@@ -95,12 +95,12 @@ func (t Terragrunt) discoverTerragruntManifests() ([][]byte, error) {
 		if len(t.spec.Ignore) > 0 {
 			ignored, err := t.spec.Ignore.isMatchingRules(t.rootDir, relativeFoundFile, module)
 			if err != nil {
-				logrus.Debugf("skipping module %q due to: %s", module.source, err)
+				log.Debugf("skipping module %q due to: %s", module.source, err)
 				continue
 			}
 
 			if ignored {
-				logrus.Debugf("Ignoring file %q, as matching ignore rule(s)\n", relativeFoundFile)
+				log.Debugf("Ignoring file %q, as matching ignore rule(s)\n", relativeFoundFile)
 				continue
 			}
 		}
@@ -109,19 +109,19 @@ func (t Terragrunt) discoverTerragruntManifests() ([][]byte, error) {
 		if len(t.spec.Only) > 0 {
 			ignored, err := t.spec.Only.isMatchingRules(t.rootDir, relativeFoundFile, module)
 			if err != nil {
-				logrus.Debugf("skipping module %q due to: %s", module.source, err)
+				log.Debugf("skipping module %q due to: %s", module.source, err)
 				continue
 			}
 
 			if !ignored {
-				logrus.Debugf("Ignoring provider file %q, as not matching only rule(s)\n", relativeFoundFile)
+				log.Debugf("Ignoring provider file %q, as not matching only rule(s)\n", relativeFoundFile)
 				continue
 			}
 		}
 
 		versionPattern, err := t.versionFilter.GreaterThanPattern(module.source.version)
 		if err != nil {
-			logrus.Debugf("skipping file %q due to: %s", relativeFoundFile, err)
+			log.Debugf("skipping file %q due to: %s", relativeFoundFile, err)
 			continue
 		}
 
@@ -131,7 +131,7 @@ func (t Terragrunt) discoverTerragruntManifests() ([][]byte, error) {
 			versionPattern,
 		)
 		if err != nil {
-			logrus.Debugf("skipping module %q due to: %s", module.source, err)
+			log.Debugf("skipping module %q due to: %s", module.source, err)
 			continue
 		}
 
@@ -139,7 +139,7 @@ func (t Terragrunt) discoverTerragruntManifests() ([][]byte, error) {
 
 	}
 
-	logrus.Printf("%v manifests identified", len(manifests))
+	log.Printf("%v manifests identified", len(manifests))
 
 	return manifests, nil
 }
@@ -290,7 +290,7 @@ func (t Terragrunt) getTerragruntManifest(filename string, module *terragruntMod
 
 	manifest := bytes.Buffer{}
 	if err := tmpl.Execute(&manifest, params); err != nil {
-		logrus.Debugln(err)
+		log.Debugln(err)
 		return nil, err
 	}
 	return manifest.Bytes(), nil

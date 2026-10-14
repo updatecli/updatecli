@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/vmware-labs/yaml-jsonpath/pkg/yamlpath"
 
 	"github.com/updatecli/updatecli/pkg/core/result"
@@ -138,7 +138,7 @@ func (y *Yaml) goYamlPathTarget(valueToWrite string, resultTarget *result.Target
 			// been evaluated, not while iterating over them.
 			if !foundAny {
 				if y.spec.SearchPattern {
-					logrus.Debugf("ignoring key %q in file %q as we couldn't find it in any document", key, originFilePath)
+					log.Debugf("ignoring key %q in file %q as we couldn't find it in any document", key, originFilePath)
 					continue
 				}
 				return 0, ignoredFiles, fmt.Errorf("couldn't find key %q from file %q", key, originFilePath)

@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 
 	"github.com/Masterminds/semver/v3"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 // MatchingRule defines a rule to select actions and Docker images.
@@ -65,12 +65,12 @@ func (m MatchingRules) isMatchingRules(rootDir, filePath, chartName, chartVersio
 
 				match, err := filepath.Match(rule.Path, filePath)
 				if err != nil {
-					logrus.Errorf("%s - %q", err, rule.Path)
+					log.Errorf("%s - %q", err, rule.Path)
 					continue
 				}
 				ruleResults = append(ruleResults, match)
 				if match {
-					logrus.Debugf("file path %q matching rule %q", filePath, rule.Path)
+					log.Debugf("file path %q matching rule %q", filePath, rule.Path)
 				}
 			}
 
@@ -93,14 +93,14 @@ func (m MatchingRules) isMatchingRules(rootDir, filePath, chartName, chartVersio
 						v, err := semver.NewVersion(chartVersion)
 						if err != nil {
 							match = chartVersion == reference
-							logrus.Debugf("%q - %s", chartVersion, err)
+							log.Debugf("%q - %s", chartVersion, err)
 							break outAction
 						}
 
 						c, err := semver.NewConstraint(reference)
 						if err != nil {
 							match = chartVersion == reference
-							logrus.Debugf("%q %s", err, reference)
+							log.Debugf("%q %s", err, reference)
 							break outAction
 						}
 

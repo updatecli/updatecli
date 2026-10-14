@@ -3,7 +3,7 @@ package autodiscovery
 import (
 	"fmt"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 type GroupBy string
@@ -33,7 +33,7 @@ func (g GroupBy) Validate() error {
 			GROUPBYALL,
 			GROUPBYINDIVIDUAL)
 
-		logrus.Errorln(err)
+		log.Errorln(err)
 		return err
 
 	}

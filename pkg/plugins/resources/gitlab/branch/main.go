@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/go-viper/mapstructure/v2"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/gitlab/client"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
@@ -164,7 +164,7 @@ func (g *Gitlab) SearchBranches(branchAge age.Spec) ([]string, error) {
 		}
 
 		if resp.StatusCode > 400 {
-			logrus.Debugf("RC: %q\nBody:\n%s", resp.Status, resp.Body)
+			log.Debugf("RC: %q\nBody:\n%s", resp.Status, resp.Body)
 		}
 
 		for _, branch := range branches {
@@ -173,11 +173,11 @@ func (g *Gitlab) SearchBranches(branchAge age.Spec) ([]string, error) {
 			if !branchAge.IsZero() {
 				date, ok := branchDate(branch)
 				if !ok {
-					logrus.Debugf("ignoring branch %q, which carries no date, as the age filter cannot be applied to it", branch.Name)
+					log.Debugf("ignoring branch %q, which carries no date, as the age filter cannot be applied to it", branch.Name)
 					continue
 				}
 				if !branchAge.Matches(date) {
-					logrus.Debugf("ignoring branch %q, dated %s, as outside of the age window", branch.Name, date)
+					log.Debugf("ignoring branch %q, dated %s, as outside of the age window", branch.Name, date)
 					continue
 				}
 			}
@@ -234,11 +234,11 @@ func (s Spec) Validate() error {
 
 	if err := s.Age.Validate(); err != nil {
 		gotError = true
-		logrus.Errorln(err)
+		log.Errorln(err)
 	}
 
 	if len(missingParameters) > 0 {
-		logrus.Errorf("missing parameter(s) [%s]", strings.Join(missingParameters, ","))
+		log.Errorf("missing parameter(s) [%s]", strings.Join(missingParameters, ","))
 	}
 
 	if gotError {

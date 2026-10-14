@@ -8,7 +8,7 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
@@ -107,7 +107,7 @@ func (gt *GitTag) listRemoteDirectoryTags(directory string, tagAge age.Spec, pat
 
 	for _, ref := range refs {
 		if !tagAge.Matches(ref.When) {
-			logrus.Debugf("ignoring tag %q, dated %s, as outside of the age window", ref.Name, ref.When)
+			log.Debugf("ignoring tag %q, dated %s, as outside of the age window", ref.Name, ref.When)
 			continue
 		}
 		results[ref.Name] = ref.Hash

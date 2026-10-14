@@ -7,7 +7,7 @@ import (
 	"sync"
 
 	"github.com/mitchellh/hashstructure"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
@@ -35,7 +35,7 @@ func (e *Engine) InitSCM() (err error) {
 			}
 		}
 	}
-	logrus.Infof("\nSCM repository retrieved: %d", len(hashes))
+	log.Infof("\nSCM repository retrieved: %d", len(hashes))
 
 	return err
 }
@@ -69,7 +69,7 @@ func Clone(
 			defer wg.Done()
 			_, err := s.Clone()
 			if err != nil {
-				logrus.Errorf("err - %s", err)
+				log.Errorf("err - %s", err)
 			}
 		}(scmhandler)
 		<-channel
@@ -87,8 +87,8 @@ func (e *Engine) pushSCMCommits() error {
 	inconclusiveSCM := e.inconclusiveSCMBranches()
 
 	allScm := map[string]map[string]*scm.ScmHandler{}
-	logrus.Infof("\n\n%s\n", strings.ToTitle("Pushing Git changes"))
-	logrus.Infof("%s\n\n", strings.Repeat("=", len("Pushing Git changes")+1))
+	log.Infof("\n\n%s\n", strings.ToTitle("Pushing Git changes"))
+	log.Infof("%s\n\n", strings.Repeat("=", len("Pushing Git changes")+1))
 
 	countScms := 0
 	countPushedScms := 0
@@ -124,7 +124,7 @@ func (e *Engine) pushSCMCommits() error {
 			if target.ToPush {
 				if _, ok := changedSCM[url]; ok {
 					if slices.Contains(changedSCM[url], branch) {
-						logrus.Debugf("Changes for target %q already pushed to %q on branch %q, skipping...\n", target.Config.Name, redact.URL(url), branch)
+						log.Debugf("Changes for target %q already pushed to %q on branch %q, skipping...\n", target.Config.Name, redact.URL(url), branch)
 						continue
 					}
 				}
@@ -142,7 +142,7 @@ func (e *Engine) pushSCMCommits() error {
 					target.Result.Result = result.FAILURE
 					continue
 				}
-				logrus.Debugf("Pushed to URL: %q on branch: %q", redact.URL(url), branch)
+				log.Debugf("Pushed to URL: %q on branch: %q", redact.URL(url), branch)
 
 				if _, ok := changedSCM[url]; !ok {
 					changedSCM[url] = []string{}
@@ -156,9 +156,9 @@ func (e *Engine) pushSCMCommits() error {
 	}
 
 	if countPushedScms == 0 {
-		logrus.Info("No SCM repositories have changes to push")
+		log.Info("No SCM repositories have changes to push")
 	} else {
-		logrus.Infof("Pushed changes to %d of %d SCM repositories", countPushedScms, countScms)
+		log.Infof("Pushed changes to %d of %d SCM repositories", countPushedScms, countScms)
 	}
 
 	for url := range allScm {
@@ -172,7 +172,7 @@ func (e *Engine) pushSCMCommits() error {
 			scmHandler := *scmHandlerPtr
 
 			if slices.Contains(inconclusiveSCM[url], branch) {
-				logrus.Debugf("Not publishing branch %q to %q as at least one of its target(s) didn't run during this execution\n", branch, redact.URL(url))
+				log.Debugf("Not publishing branch %q to %q as at least one of its target(s) didn't run during this execution\n", branch, redact.URL(url))
 				continue
 			}
 
@@ -183,11 +183,11 @@ func (e *Engine) pushSCMCommits() error {
 			}
 
 			if isRemoteBranchUpToDate {
-				logrus.Debugf("No changes to push to %q on branch %q\n", redact.URL(url), branch)
+				log.Debugf("No changes to push to %q on branch %q\n", redact.URL(url), branch)
 				continue
 			}
 
-			logrus.Infof("\n\u26A0 According to the git history, some commits must be pushed to %q %q\n", redact.URL(url), branch)
+			log.Infof("\n\u26A0 According to the git history, some commits must be pushed to %q %q\n", redact.URL(url), branch)
 
 			err = scmHandler.Checkout()
 			if err != nil {
@@ -199,7 +199,7 @@ func (e *Engine) pushSCMCommits() error {
 			if err != nil {
 				errs = append(errs, fmt.Sprintf("pushing commits to %q on branch %q: %s", redact.URL(url), branch, err.Error()))
 			}
-			logrus.Debugf("Pushed changes to %q on branch %q: %t\n", redact.URL(url), branch, isPushed)
+			log.Debugf("Pushed changes to %q on branch %q: %t\n", redact.URL(url), branch, isPushed)
 		}
 	}
 
@@ -219,7 +219,7 @@ func (e *Engine) pruneSCMBranches() error {
 	allScm := e.getUniqueTargetSCMTargets()
 	inconclusiveSCM := e.inconclusiveSCMBranches()
 
-	logrus.Debugf("Cleaning working branches")
+	log.Debugf("Cleaning working branches")
 
 	for url := range allScm {
 		for branch := range allScm[url] {
@@ -241,12 +241,12 @@ func (e *Engine) pruneSCMBranches() error {
 				anymore.
 			*/
 			if slices.Contains(inconclusiveSCM[url], branch) {
-				logrus.Debugf("Not cleaning working branch %q on %q as at least one of its target(s) didn't run during this execution\n", workingBranch, redact.URL(url))
+				log.Debugf("Not cleaning working branch %q on %q as at least one of its target(s) didn't run during this execution\n", workingBranch, redact.URL(url))
 				continue
 			}
 
 			if workingBranch == targetBranch {
-				logrus.Debugf("Skipping cleaning working branch %q on %q (same as target branch)\n", workingBranch, redact.URL(url))
+				log.Debugf("Skipping cleaning working branch %q on %q (same as target branch)\n", workingBranch, redact.URL(url))
 				continue
 			}
 
@@ -256,7 +256,7 @@ func (e *Engine) pruneSCMBranches() error {
 			}
 
 			if isCleaned {
-				logrus.Debugf("cleaning working branch %q for %q\n", branch, redact.URL(url))
+				log.Debugf("cleaning working branch %q for %q\n", branch, redact.URL(url))
 			}
 		}
 	}

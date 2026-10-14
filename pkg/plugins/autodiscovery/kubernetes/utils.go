@@ -10,8 +10,6 @@ import (
 
 	"github.com/updatecli/updatecli/pkg/core/log"
 
-	"github.com/sirupsen/logrus"
-
 	goyaml "go.yaml.in/yaml/v4"
 )
 
@@ -19,7 +17,7 @@ import (
 func searchKubernetesFiles(rootDir string, files []string) ([]string, error) {
 	kubernetesFiles := []string{}
 
-	logrus.Debugf("Looking for Kubernetes file(s) in %q", rootDir)
+	log.Debugf("Looking for Kubernetes file(s) in %q", rootDir)
 
 	err := filepath.Walk(rootDir, func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
@@ -46,10 +44,10 @@ func searchKubernetesFiles(rootDir string, files []string) ([]string, error) {
 		return nil, err
 	}
 
-	logrus.Debugf("%d Kubernetes file(s) found", len(kubernetesFiles))
+	log.Debugf("%d Kubernetes file(s) found", len(kubernetesFiles))
 	for _, foundFile := range kubernetesFiles {
 		kubernetesFile := filepath.Base(foundFile)
-		logrus.Debugf("    * %q", kubernetesFile)
+		log.Debugf("    * %q", kubernetesFile)
 	}
 
 	return kubernetesFiles, nil
@@ -60,7 +58,7 @@ func getManifestData[T any](filename, logPrefix string) (map[int]*T, error) {
 	result := make(map[int]*T)
 
 	manifestFile := filepath.Base(filepath.Dir(filename))
-	logrus.Debugf("%s file %q found in %q", logPrefix, manifestFile, filepath.Dir(filename))
+	log.Debugf("%s file %q found in %q", logPrefix, manifestFile, filepath.Dir(filename))
 
 	content, err := os.ReadFile(filename)
 	if err != nil {

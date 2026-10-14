@@ -10,8 +10,8 @@ import (
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/google/go-containerregistry/pkg/v1/types"
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
@@ -115,7 +115,7 @@ func (di *DockerImage) checkImage(ref name.Reference, arch string) (bool, error)
 
 		remoteOptions = append(remoteOptions, remote.WithPlatform(platform))
 
-		logrus.Debugf("Querying docker image %q, os: %q, arch: %q, variant %q", ref.Name(), platform.OS, platform.Architecture, platform.Variant)
+		log.Debugf("Querying docker image %q, os: %q, arch: %q, variant %q", ref.Name(), platform.OS, platform.Architecture, platform.Variant)
 	}
 
 	descriptor, err := remote.Get(ref, remoteOptions...)
@@ -135,7 +135,7 @@ func (di *DockerImage) checkImage(ref name.Reference, arch string) (bool, error)
 		_, err = descriptor.Image()
 		if err != nil {
 			if strings.Contains(err.Error(), "no child with platform") {
-				logrus.Infof("The Docker image %s (%s) doesn't exist.",
+				log.Infof("The Docker image %s (%s) doesn't exist.",
 					ref.Name(),
 					queriedPlatform,
 				)

@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
@@ -23,7 +23,7 @@ func sanitizeUpdatecliManifestFilePath(rawFilePaths []string) (sanitizedFilePath
 
 		rawFileInfo, err := os.Stat(rawFilePath)
 		if err != nil {
-			logrus.Error(fmt.Sprintf("Loading Updatecli manifest %q: %s", rawFilePath, err))
+			log.Error(fmt.Sprintf("Loading Updatecli manifest %q: %s", rawFilePath, err))
 			continue
 		}
 
@@ -32,7 +32,7 @@ func sanitizeUpdatecliManifestFilePath(rawFilePaths []string) (sanitizedFilePath
 		if rawFileInfo.IsDir() {
 			err = filepath.Walk(rawFilePath, func(path string, info os.FileInfo, err error) error {
 				if err != nil {
-					logrus.Errorf("\n%s File %s: %s\n", result.FAILURE, path, err)
+					log.Errorf("\n%s File %s: %s\n", result.FAILURE, path, err)
 					return fmt.Errorf("unable to walk %q: %s", path, err)
 				}
 				if info.Mode().IsRegular() {
@@ -54,7 +54,7 @@ func sanitizeUpdatecliManifestFilePath(rawFilePaths []string) (sanitizedFilePath
 			manifestDirname := filepath.Dir(rawFilePath)
 			dirEntries, err := os.ReadDir(manifestDirname) // Ensure the directory exists
 			if err != nil {
-				logrus.Errorf("unable to read directory %q: %s", manifestDirname, err)
+				log.Errorf("unable to read directory %q: %s", manifestDirname, err)
 				return nil, nil
 			}
 
@@ -75,7 +75,7 @@ func sanitizeUpdatecliManifestFilePath(rawFilePaths []string) (sanitizedFilePath
 		}
 
 		if err != nil {
-			logrus.Errorf("err - %s", err)
+			log.Errorf("err - %s", err)
 		}
 	}
 

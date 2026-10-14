@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 
 	"github.com/Masterminds/semver/v3"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 // MatchingRule defines a rule to select Maven dependencies.
@@ -67,12 +67,12 @@ func (m MatchingRules) isMatchingRules(rootDir, filePath, groupid, artifactName,
 
 				match, err := filepath.Match(rule.Path, filePath)
 				if err != nil {
-					logrus.Errorf("%s - %q", err, rule.Path)
+					log.Errorf("%s - %q", err, rule.Path)
 					continue
 				}
 				ruleResults = append(ruleResults, match)
 				if match {
-					logrus.Debugf("file path %q matching rule %q", filePath, rule.Path)
+					log.Debugf("file path %q matching rule %q", filePath, rule.Path)
 				}
 			}
 
@@ -113,14 +113,14 @@ func (m MatchingRules) isMatchingRules(rootDir, filePath, groupid, artifactName,
 						v, err := semver.NewVersion(artifactVersion)
 						if err != nil {
 							match = artifactVersion == ruleArtifactVersion
-							logrus.Debugf("%q - %s", artifactVersion, err)
+							log.Debugf("%q - %s", artifactVersion, err)
 							break outArtifactName
 						}
 
 						c, err := semver.NewConstraint(ruleArtifactVersion)
 						if err != nil {
 							match = artifactVersion == ruleArtifactVersion
-							logrus.Debugf("%q %s", err, ruleArtifactVersion)
+							log.Debugf("%q %s", err, ruleArtifactVersion)
 							break outArtifactName
 						}
 

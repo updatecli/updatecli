@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"slices"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
@@ -19,14 +19,14 @@ func (j Jenkins) Changelog(from, to string) *result.Changelogs {
 
 	_, versions, err := j.getVersions()
 	if err != nil {
-		logrus.Debugf("ignored error, searching changelogs: %s", err)
+		log.Debugf("ignored error, searching changelogs: %s", err)
 		return nil
 	}
 
 	releases := filterReleases(versions, j.spec.Release, from, to)
 
 	if len(releases) == 0 {
-		logrus.Debugf("No changelog found")
+		log.Debugf("No changelog found")
 		return nil
 	}
 
@@ -101,7 +101,7 @@ func filterReleases(allReleases []string, releaseName, from, to string) []string
 	}
 
 	if from != "" && !foundTo {
-		logrus.Debugf("Jenkins release version %q not found so I only return the latest release", from)
+		log.Debugf("Jenkins release version %q not found so I only return the latest release", from)
 		return filteredReleases[0:1]
 	}
 

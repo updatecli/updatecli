@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/google/go-containerregistry/pkg/name"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/docker"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
@@ -115,7 +115,7 @@ func sanitizeRegistryEndpoint(repository string) string {
 	}
 	ref, err := name.ParseReference(repository)
 	if err != nil {
-		logrus.Debugf("Unable to parse repository %q: %v", repository, err)
+		log.Debugf("Unable to parse repository %q: %v", repository, err)
 		return ""
 	}
 	return ref.Context().RegistryStr()
@@ -129,7 +129,7 @@ func NewDockerImageSpecFromImage(image, tag string, auths map[string]docker.Inli
 		// At the time of writing, semantic versioning is the only way to have reliable results
 		// across the different registries.
 		// More information on https://github.com/updatecli/updatecli/issues/977
-		logrus.Debugf("analyzing OCI image %q: %s", image, err)
+		log.Debugf("analyzing OCI image %q: %s", image, err)
 		return nil
 	}
 
@@ -161,7 +161,7 @@ func NewDockerImageSpecFromImage(image, tag string, auths map[string]docker.Inli
 		registryAuths := []string{}
 
 		for endpoint := range auths {
-			logrus.Printf("Endpoint:\t%q\n", endpoint)
+			log.Printf("Endpoint:\t%q\n", endpoint)
 			registryAuths = append(registryAuths, endpoint)
 		}
 
@@ -177,7 +177,7 @@ func NewDockerImageSpecFromImage(image, tag string, auths map[string]docker.Inli
 				image)
 		}
 
-		logrus.Debug(warningMessage)
+		log.Debug(warningMessage)
 	}
 
 	return &dockerimagespec
@@ -185,7 +185,7 @@ func NewDockerImageSpecFromImage(image, tag string, auths map[string]docker.Inli
 
 // getTagFilterFromValue tries to identify the closest tagFilter based on an existing tag
 func getTagFilterFromValue(tag string) (string, error) {
-	logrus.Debugf("Trying the identify the best versionFilter for %q", tag)
+	log.Debugf("Trying the identify the best versionFilter for %q", tag)
 
 	switch tag {
 	case "latest":
@@ -256,12 +256,12 @@ func getTagFilterFromValue(tag string) (string, error) {
 				newRule = pattern.newRule + submatch[len(submatch)-1] + "$"
 			}
 
-			logrus.Debugf("=> closest regex %q identify for value %q", newRule, tag)
+			log.Debugf("=> closest regex %q identify for value %q", newRule, tag)
 			return newRule, nil
 		}
 	}
 
-	logrus.Debugf("=> no matching rule identified for Docker image tag %q, feel free to ignore this image with a manifest or to suggest a new rule on https://github.com/updatecli/updatecli/issues/new/choose", tag)
+	log.Debugf("=> no matching rule identified for Docker image tag %q, feel free to ignore this image with a manifest or to suggest a new rule on https://github.com/updatecli/updatecli/issues/new/choose", tag)
 	return "", fmt.Errorf("no tag pattern identify")
 }
 

@@ -3,7 +3,7 @@ package cmd
 import (
 	"os"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 
 	"github.com/spf13/cobra"
 
@@ -36,7 +36,7 @@ and does not fail the command unless '--strict' is specified.`,
 			e.Options.ManifestOptions.RelativePaths = config.RelativePathBase(relativePaths)
 			err := run("manifest/validate")
 			if err != nil {
-				logrus.Errorf("command failed: %s", err)
+				log.Errorf("command failed: %s", err)
 				os.Exit(1)
 			}
 		},

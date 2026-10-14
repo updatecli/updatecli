@@ -6,7 +6,7 @@ import (
 	"os"
 	"regexp"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
@@ -27,7 +27,7 @@ var noopShutdown = func(context.Context) error { return nil }
 func Init(ctx context.Context, serviceName, serviceVersion string) func(context.Context) error {
 	exporter, err := buildExporter(ctx)
 	if err != nil {
-		logrus.Warnf("telemetry: failed to create span exporter (OTEL_TRACES_EXPORTER=%q), tracing disabled: %v",
+		log.Warnf("telemetry: failed to create span exporter (OTEL_TRACES_EXPORTER=%q), tracing disabled: %v",
 			os.Getenv("OTEL_TRACES_EXPORTER"), err)
 		return noopShutdown
 	}
@@ -43,11 +43,11 @@ func Init(ctx context.Context, serviceName, serviceVersion string) func(context.
 		),
 	)
 	if err != nil && res == nil {
-		logrus.Warnf("telemetry: failed to create resource, tracing disabled: %v", err)
+		log.Warnf("telemetry: failed to create resource, tracing disabled: %v", err)
 		return noopShutdown
 	}
 	if err != nil {
-		logrus.Warnf("telemetry: partial resource created: %v", err)
+		log.Warnf("telemetry: partial resource created: %v", err)
 	}
 
 	provider := sdktrace.NewTracerProvider(
@@ -105,7 +105,7 @@ func buildExporter(ctx context.Context) (sdktrace.SpanExporter, error) {
 		// No configuration — tracing disabled.
 		return nil, nil
 	default:
-		logrus.Warnf("telemetry: unknown OTEL_TRACES_EXPORTER=%q, tracing disabled", exporterName)
+		log.Warnf("telemetry: unknown OTEL_TRACES_EXPORTER=%q, tracing disabled", exporterName)
 		return nil, nil
 	}
 }

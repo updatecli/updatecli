@@ -10,7 +10,6 @@ import (
 
 	"github.com/updatecli/updatecli/pkg/core/log"
 
-	"github.com/sirupsen/logrus"
 	"golang.org/x/mod/modfile"
 	"golang.org/x/mod/module"
 	"golang.org/x/mod/semver"
@@ -44,7 +43,7 @@ func searchGoModFiles(rootDir string) ([]string, error) {
 
 	foundFiles := []string{}
 
-	logrus.Debugf("Looking for Go mod file(s) in %q", rootDir)
+	log.Debugf("Looking for Go mod file(s) in %q", rootDir)
 
 	// To do switch to WalkDir which is more efficient, introduced in 1.16
 	err := filepath.Walk(rootDir, func(path string, info fs.FileInfo, err error) error {

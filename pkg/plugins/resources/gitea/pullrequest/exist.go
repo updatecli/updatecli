@@ -3,7 +3,7 @@ package pullrequest
 import (
 	"context"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/reports"
 )
 
@@ -16,7 +16,7 @@ func (g *Gitea) CheckActionExist(ctx context.Context, report *reports.Action) er
 	}
 
 	if pullrequestLink != "" {
-		logrus.Debugf("GiTea pull request detected")
+		log.Debugf("GiTea pull request detected")
 
 		report.Title = pullrequestTitle
 		report.Link = pullrequestLink

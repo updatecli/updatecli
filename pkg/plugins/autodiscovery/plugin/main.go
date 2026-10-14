@@ -10,7 +10,7 @@ import (
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/tetratelabs/wazero"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 // Plugin represents an Updatecli plugin object
@@ -50,7 +50,7 @@ func New(spec interface{}, rootDir, scmID, actionID, path string) (Plugin, error
 		}
 	}
 
-	logrus.Debugf("Configuring plugin allowed hosts: %v\n", s.AllowHosts)
+	log.Debugf("Configuring plugin allowed hosts: %v\n", s.AllowHosts)
 	manifest.AllowedHosts = append(manifest.AllowedHosts, s.AllowHosts...)
 
 	if s.AllowedPaths == nil {
@@ -60,7 +60,7 @@ func New(spec interface{}, rootDir, scmID, actionID, path string) (Plugin, error
 	}
 
 	for k, v := range getAllowedPaths(rootDir, *s.AllowedPaths) {
-		logrus.Debugf("Adding allowed path %q -> %q to plugin manifest\n", k, v)
+		log.Debugf("Adding allowed path %q -> %q to plugin manifest\n", k, v)
 		if manifest.AllowedPaths == nil {
 			manifest.AllowedPaths = map[string]string{}
 		}
@@ -94,7 +94,7 @@ func (p Plugin) DiscoverManifests() ([][]byte, error) {
 	}
 
 	if timeout > 0 {
-		logrus.Debugf("Setting plugin timeout to %d seconds\n", timeout)
+		log.Debugf("Setting plugin timeout to %d seconds\n", timeout)
 		p.manifest.Timeout = timeout
 	}
 

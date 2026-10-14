@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
@@ -38,7 +38,7 @@ func (c *CSV) Source(_ context.Context, pathResolver pathresolver.Resolver, resu
 	query := ""
 	switch c.engine {
 	case ENGINEDASEL_V1:
-		logrus.Debugf("Using engine %q", c.engine)
+		log.Debugf("Using engine %q", c.engine)
 		switch len(c.spec.Query) > 0 {
 		case true:
 			query = c.spec.Query
@@ -75,7 +75,7 @@ func (c *CSV) Source(_ context.Context, pathResolver pathresolver.Resolver, resu
 		}
 
 	case ENGINEDASEL_V2:
-		logrus.Debugf("Using engine %q", c.engine)
+		log.Debugf("Using engine %q", c.engine)
 		query = c.spec.Key
 		queryResults, err := content.QueryV2(c.spec.Key)
 		if err != nil {
@@ -94,7 +94,7 @@ func (c *CSV) Source(_ context.Context, pathResolver pathresolver.Resolver, resu
 		sourceOutput = c.foundVersion.GetVersion()
 
 	case ENGINEDASEL_V3:
-		logrus.Debugf("Using engine %q", c.engine)
+		log.Debugf("Using engine %q", c.engine)
 		query = c.spec.Key
 		queryResults, err := content.QueryV3(c.spec.Key)
 		if err != nil {

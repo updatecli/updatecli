@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
@@ -46,7 +46,7 @@ func (p *Pipeline) RunTarget(ctx context.Context, id string, sourceIds []string)
 			// If we have more than one sourceID then we can't define in a reliable way which one to use
 			// as the order of the sourceIDs is not guaranteed.
 			default:
-				logrus.Debugf("Target depends on a too many sources that we can't determine which one to use for the changelog")
+				log.Debugf("Target depends on a too many sources that we can't determine which one to use for the changelog")
 			}
 		}
 
@@ -63,10 +63,10 @@ func (p *Pipeline) RunTarget(ctx context.Context, id string, sourceIds []string)
 					if changelogs != nil {
 						target.Result.Changelogs = *changelogs
 
-						logrus.Debugf("%s", changelogs.String())
+						log.Debugf("%s", changelogs.String())
 
 					} else {
-						logrus.Debugln("no changelog detected")
+						log.Debugln("no changelog detected")
 					}
 				}
 			}

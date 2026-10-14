@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/coreos/go-systemd/v22/unit"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
@@ -57,7 +57,7 @@ func (s *Systemd) Target(_ context.Context, source string, scm scm.ScmHandler, p
 			if opt.Section == s.spec.Section && opt.Name == s.spec.Option {
 				resultTarget.Information = opt.Value
 				if expected != opt.Value {
-					logrus.Debugf("option %d %q value %q doesn't match expected value %q",
+					log.Debugf("option %d %q value %q doesn't match expected value %q",
 						i, opt.Name, opt.Value, expected)
 					totalNotMatchingOpts = append(totalNotMatchingOpts, i)
 				}

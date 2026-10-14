@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	gitlabscm "github.com/updatecli/updatecli/pkg/plugins/scms/gitlab"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 )
@@ -40,12 +40,12 @@ func (g *GitLabSearch) ScmsGenerator(ctx context.Context) ([]gitlabscm.Spec, err
 		}
 
 		for _, project := range projects {
-			logrus.Debugf("Processing GitLab project: %s", project.PathWithNamespace)
+			log.Debugf("Processing GitLab project: %s", project.PathWithNamespace)
 
 			// Split "group/subgroup/repo" into owner="group/subgroup" and repository="repo"
 			lastSlash := strings.LastIndex(project.PathWithNamespace, "/")
 			if lastSlash < 0 {
-				logrus.Warningf("Skipping project with unexpected path format: %s", project.PathWithNamespace)
+				log.Warningf("Skipping project with unexpected path format: %s", project.PathWithNamespace)
 				continue
 			}
 

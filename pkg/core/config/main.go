@@ -11,7 +11,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"go.yaml.in/yaml/v3"
 
 	"github.com/updatecli/updatecli/pkg/core/cmdoptions"
@@ -354,16 +354,16 @@ func New(option Option, manifestDefaults ManifestOptions, pipelineIDFilters []st
 		// Ignore partial files that are not in the same directory as the main manifest file
 		// This is to avoid loading partial files from other directories to reduce the complexity of the manifest.
 		if filepath.Dir(partialFile) != filepath.Dir(option.ManifestFile) {
-			logrus.Debugf("Ignoring partial from a different directory: %q", partialFile)
+			log.Debugf("Ignoring partial from a different directory: %q", partialFile)
 			continue
 		}
 
-		logrus.Debugf("Partial content detected from: %q", partialFile)
+		log.Debugf("Partial content detected from: %q", partialFile)
 		manifestFragments, partialContent = appendFragment(manifestFragments, partialFile, partialContent)
 		rawManifestContent = append(rawManifestContent, partialContent...)
 	}
 
-	logrus.Infof("Loading Pipeline %q", option.ManifestFile)
+	log.Infof("Loading Pipeline %q", option.ManifestFile)
 	// Load updatecli manifest no matter the file extension
 	rawManifestFileContent, err := readFile(option.ManifestFile)
 	if err != nil {
@@ -387,7 +387,7 @@ func New(option Option, manifestDefaults ManifestOptions, pipelineIDFilters []st
 		isCue = true
 
 	default:
-		logrus.Debugf("file extension '%s' not supported for file '%s'", extension, option.ManifestFile)
+		log.Debugf("file extension '%s' not supported for file '%s'", extension, option.ManifestFile)
 		return configs, ErrConfigFileTypeNotSupported
 	}
 
@@ -425,14 +425,14 @@ func New(option Option, manifestDefaults ManifestOptions, pipelineIDFilters []st
 				// Reformat all the CUE sources so that they can be diffed.
 				rawManifestContent, err = cueformat.Source(rawManifestContent, cueformat.Simplify())
 				if err != nil {
-					logrus.Errorf("Error formatting %q for diff: %s", option.ManifestFile, err.Error())
+					log.Errorf("Error formatting %q for diff: %s", option.ManifestFile, err.Error())
 					return nil, err
 				}
 
 				node := cueManifest.Syntax(cue.Final(), cue.ErrorsAsValues(true))
 				templatedManifestContent, err = cueformat.Node(node, cueformat.Simplify())
 				if err != nil {
-					logrus.Errorf("Error formatting %q (templated) for diff: %s", option.ManifestFile, err.Error())
+					log.Errorf("Error formatting %q (templated) for diff: %s", option.ManifestFile, err.Error())
 					return nil, err
 				}
 			}
@@ -440,9 +440,9 @@ func New(option Option, manifestDefaults ManifestOptions, pipelineIDFilters []st
 			diff := text.Diff("raw manifest", "templated manifest", string(rawManifestContent), string(templatedManifestContent))
 			switch diff {
 			case "":
-				logrus.Debugln("no Golang templating detected")
+				log.Debugln("no Golang templating detected")
 			default:
-				logrus.Debugf("Golang templating change detected:\n%s\n\n---\n", diff)
+				log.Debugf("Golang templating change detected:\n%s\n\n---\n", diff)
 			}
 		}
 	} else if isCue {
@@ -480,16 +480,16 @@ func New(option Option, manifestDefaults ManifestOptions, pipelineIDFilters []st
 		config.SetManifestID(fmt.Sprintf("%s#%d", option.ManifestFile, id))
 		// config.PipelineID is required for config.Validate()
 		if len(config.Spec.PipelineID) == 0 {
-			logrus.Debugln("pipelineid undefined, we'll try to generate one")
+			log.Debugln("pipelineid undefined, we'll try to generate one")
 
 			// If pipeline name is defined then we use it to generate a pipeline id
 			// there is less change for the pipeline name to change.
 			switch config.Spec.Name {
 			case "":
-				logrus.Debugln("pipeline name undefined, we'll use the manifest file checksum")
+				log.Debugln("pipeline name undefined, we'll use the manifest file checksum")
 				config.Spec.PipelineID = fileChecksum
 			default:
-				logrus.Debugln("using pipeline name to generate the pipelineid")
+				log.Debugln("using pipeline name to generate the pipelineid")
 				hash := sha256.New()
 				hash.Write([]byte(config.Spec.Name))
 				config.Spec.PipelineID = fmt.Sprintf("%x", hash.Sum(nil))
@@ -510,7 +510,7 @@ func New(option Option, manifestDefaults ManifestOptions, pipelineIDFilters []st
 
 		// Ensure there is a local SCM defined as specified
 		if err = config.EnsureLocalScm(); err != nil {
-			logrus.Errorf("No local scm configured %s", err)
+			log.Errorf("No local scm configured %s", err)
 			continue
 		}
 
@@ -519,11 +519,11 @@ func New(option Option, manifestDefaults ManifestOptions, pipelineIDFilters []st
 		if len(config.Spec.PullRequests) > 0 {
 			if len(config.Spec.Actions) > 0 {
 				err := fmt.Errorf("the `pullrequests` and `actions` keywords are mutually exclusive. Please use only `actions` as `pullrequests` is deprecated")
-				logrus.Errorf("Skipping manifest %q:\n\t%s", option.ManifestFile, err.Error())
+				log.Errorf("Skipping manifest %q:\n\t%s", option.ManifestFile, err.Error())
 				continue
 			}
 
-			logrus.Warningf("The `pullrequests` keyword is deprecated in favor of `actions`, please update this manifest. Updatecli will continue the execution while trying to translate `pullrequests` to `actions`.")
+			log.Warningf("The `pullrequests` keyword is deprecated in favor of `actions`, please update this manifest. Updatecli will continue the execution while trying to translate `pullrequests` to `actions`.")
 
 			config.Spec.Actions = config.Spec.PullRequests
 			config.Spec.PullRequests = nil
@@ -535,17 +535,17 @@ func New(option Option, manifestDefaults ManifestOptions, pipelineIDFilters []st
 
 		err = config.Validate()
 		if err != nil {
-			logrus.Errorf("manifest configuration failed: %s", err)
+			log.Errorf("manifest configuration failed: %s", err)
 			continue
 		}
 
 		if len(pipelineIDFilters) > 0 && !slices.Contains(pipelineIDFilters, config.Spec.PipelineID) {
-			logrus.Debugf("Manifest ID %q not referenced in the pipeline filter, skipping.", config.Spec.PipelineID)
+			log.Debugf("Manifest ID %q not referenced in the pipeline filter, skipping.", config.Spec.PipelineID)
 			continue
 		}
 
 		if isMatchingLabel := isMatchingLabel(config.Spec.Labels, pipelineLabels); !isMatchingLabel {
-			logrus.Debugf("Manifest ID %q labels %v did not match filter labels %v, skipping.", config.Spec.PipelineID, config.Spec.Labels, pipelineLabels)
+			log.Debugf("Manifest ID %q labels %v did not match filter labels %v, skipping.", config.Spec.PipelineID, config.Spec.Labels, pipelineLabels)
 			continue
 		}
 
@@ -584,7 +584,7 @@ func (c *Config) IsManifestDifferentThanOnDisk() (bool, error) {
 	defer func() {
 		err := encoder.Close()
 		if err != nil {
-			logrus.Errorln(err)
+			log.Errorln(err)
 		}
 	}()
 
@@ -603,14 +603,14 @@ func (c *Config) IsManifestDifferentThanOnDisk() (bool, error) {
 	}
 
 	if string(onDiskData) == string(data) {
-		logrus.Infof("%s No Updatecli manifest change required", result.SUCCESS)
+		log.Infof("%s No Updatecli manifest change required", result.SUCCESS)
 		return false, nil
 	}
 
 	edits := myers.ComputeEdits(span.URIFromPath(c.filename), string(onDiskData), string(data))
 	diff := fmt.Sprint(gotextdiff.ToUnified(c.filename+"(old)", c.filename+"(updated)", string(onDiskData), edits))
 
-	logrus.Infof("%s Updatecli manifest change required\n%s", result.ATTENTION, diff)
+	log.Infof("%s Updatecli manifest change required\n%s", result.ATTENTION, diff)
 
 	return true, nil
 }
@@ -625,7 +625,7 @@ func (c *Config) SaveOnDisk() error {
 	defer func() {
 		err = file.Close()
 		if err != nil {
-			logrus.Errorln(err)
+			log.Errorln(err)
 		}
 	}()
 
@@ -634,7 +634,7 @@ func (c *Config) SaveOnDisk() error {
 	defer func() {
 		err = encoder.Close()
 		if err != nil {
-			logrus.Errorln(err)
+			log.Errorln(err)
 		}
 	}()
 
@@ -655,7 +655,7 @@ func (config *Config) Display() error {
 	if err != nil {
 		return err
 	}
-	logrus.Infof("%s", string(c))
+	log.Infof("%s", string(c))
 
 	return nil
 }
@@ -663,14 +663,14 @@ func (config *Config) Display() error {
 func (config *Config) validateActions() error {
 	for id, a := range config.Spec.Actions {
 		if err := a.Validate(); err != nil {
-			logrus.Errorf("bad parameters for action %q", id)
+			log.Errorf("bad parameters for action %q", id)
 			return err
 		}
 
 		// Then validate that the action specifies an existing SCM
 		if len(a.ScmID) > 0 {
 			if _, ok := config.Spec.SCMs[a.ScmID]; !ok {
-				logrus.Errorf("The action %q specifies a scm id %q which does not exist", id, a.ScmID)
+				log.Errorf("The action %q specifies a scm id %q which does not exist", id, a.ScmID)
 				return ErrBadConfig
 			}
 		}
@@ -686,7 +686,7 @@ func (config *Config) validateAutodiscovery() error {
 	// Then validate that the action specifies an existing SCM
 	if len(config.Spec.AutoDiscovery.ScmId) > 0 {
 		if _, ok := config.Spec.SCMs[config.Spec.AutoDiscovery.ScmId]; !ok {
-			logrus.Errorf("The autodiscovery specifies a scm id %q which does not exist",
+			log.Errorf("The autodiscovery specifies a scm id %q which does not exist",
 				config.Spec.AutoDiscovery.ScmId)
 			return ErrBadConfig
 		}
@@ -703,12 +703,12 @@ func (config *Config) validateSources() error {
 	for id, s := range config.Spec.Sources {
 		err := s.Validate()
 		if err != nil {
-			logrus.Errorf("bad parameters for source %q", id)
+			log.Errorf("bad parameters for source %q", id)
 			return ErrBadConfig
 		}
 
 		if IsTemplatedString(id) {
-			logrus.Errorf("sources key %q contains forbidden go template instruction", id)
+			log.Errorf("sources key %q contains forbidden go template instruction", id)
 			return ErrNotAllowedTemplatedKey
 		}
 
@@ -722,7 +722,7 @@ func (config *Config) validateSources() error {
 func (config *Config) validateSCMs() error {
 	for id, scmConfig := range config.Spec.SCMs {
 		if err := scmConfig.Validate(); err != nil {
-			logrus.Errorf("bad parameter(s) for scm %q", id)
+			log.Errorf("bad parameter(s) for scm %q", id)
 			return err
 		}
 	}
@@ -734,19 +734,19 @@ func (config *Config) validateTargets() error {
 
 		err := t.Validate()
 		if err != nil {
-			logrus.Errorf("bad parameters for target %q", id)
+			log.Errorf("bad parameters for target %q", id)
 			return ErrBadConfig
 		}
 
 		if len(t.SourceID) > 0 {
 			if _, ok := config.Spec.Sources[t.SourceID]; !ok {
-				logrus.Errorf("the specified sourceid %q for target %q does not exist", t.SourceID, id)
+				log.Errorf("the specified sourceid %q for target %q does not exist", t.SourceID, id)
 				return ErrBadConfig
 			}
 		}
 
 		if t.DisableConditions && len(t.DeprecatedConditionIDs) > 0 {
-			logrus.Errorf("target %q has 'disableconditions' set to true and 'conditionids' defined (%v), it's not possible to disable conditions and define conditions at the same time", id, t.DeprecatedConditionIDs)
+			log.Errorf("target %q has 'disableconditions' set to true and 'conditionids' defined (%v), it's not possible to disable conditions and define conditions at the same time", id, t.DeprecatedConditionIDs)
 			return ErrBadConfig
 		}
 
@@ -758,7 +758,7 @@ func (config *Config) validateTargets() error {
 		}
 
 		if len(undefinedConditions) > 0 {
-			logrus.Errorf("target %q has undefined conditionids: %v", id, undefinedConditions)
+			log.Errorf("target %q has undefined conditionids: %v", id, undefinedConditions)
 			return ErrBadConfig
 		}
 
@@ -767,7 +767,7 @@ func (config *Config) validateTargets() error {
 			// Try to guess SourceID
 			if len(t.SourceID) == 0 && len(config.Spec.Sources) > 1 {
 
-				logrus.Errorf("empty 'sourceid' for target %q", id)
+				log.Errorf("empty 'sourceid' for target %q", id)
 				return ErrBadConfig
 			} else if len(t.SourceID) == 0 && len(config.Spec.Sources) == 1 {
 				for id := range config.Spec.Sources {
@@ -777,7 +777,7 @@ func (config *Config) validateTargets() error {
 		}
 
 		if IsTemplatedString(id) {
-			logrus.Errorf("target key %q contains forbidden go template instruction", id)
+			log.Errorf("target key %q contains forbidden go template instruction", id)
 			return ErrNotAllowedTemplatedKey
 		}
 
@@ -793,13 +793,13 @@ func (config *Config) validateConditions() error {
 	for id, c := range config.Spec.Conditions {
 		err := c.Validate()
 		if err != nil {
-			logrus.Errorf("bad parameters for condition %q", id)
+			log.Errorf("bad parameters for condition %q", id)
 			return ErrBadConfig
 		}
 
 		if len(c.SourceID) > 0 {
 			if _, ok := config.Spec.Sources[c.SourceID]; !ok {
-				logrus.Errorf("the specified sourceid %q for condition %q does not exist", c.SourceID, id)
+				log.Errorf("the specified sourceid %q for condition %q does not exist", c.SourceID, id)
 				return ErrBadConfig
 			}
 		}
@@ -807,7 +807,7 @@ func (config *Config) validateConditions() error {
 		if !c.DisableSourceInput {
 			// Try to guess SourceID
 			if len(c.SourceID) == 0 && len(config.Spec.Sources) > 1 {
-				logrus.Errorf("The condition %q has an empty 'sourceid' attribute.", id)
+				log.Errorf("The condition %q has an empty 'sourceid' attribute.", id)
 				return ErrBadConfig
 			} else if len(c.SourceID) == 0 && len(config.Spec.Sources) == 1 {
 				for id := range config.Spec.Sources {
@@ -817,7 +817,7 @@ func (config *Config) validateConditions() error {
 		}
 
 		if IsTemplatedString(id) {
-			logrus.Errorf("condition key %q contains forbidden go template instruction", id)
+			log.Errorf("condition key %q contains forbidden go template instruction", id)
 			return ErrNotAllowedTemplatedKey
 		}
 
@@ -838,7 +838,7 @@ func (config *Config) Validate() error {
 	}
 
 	if config.Spec.Title != "" {
-		logrus.Warningf("title is deprecated, please use name instead")
+		log.Warningf("title is deprecated, please use name instead")
 	}
 
 	if err := config.Spec.Options.Validate(); err != nil {
