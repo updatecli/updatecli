@@ -38,6 +38,7 @@ func (e *Engine) Run(ctx context.Context) (err error) {
 		pipeline := e.Pipelines[i]
 		pipeline.SourceCache = e.sourceCache
 
+		stopCapture := pipeline.CaptureConsoleOutput()
 		err := pipeline.Run(ctx)
 		if err != nil {
 			errs = append(errs, fmt.Errorf("pipeline %q failed: %w", pipeline.Name, err))
@@ -47,8 +48,8 @@ func (e *Engine) Run(ctx context.Context) (err error) {
 			))
 			log.Printf("Pipeline %q failed\n", pipeline.Name)
 			log.Printf("Skipping due to:\n\t%s\n", err)
-			continue
 		}
+		stopCapture()
 	}
 
 	if !e.Options.Pipeline.Target.DryRun && e.Options.Pipeline.Target.Push {
@@ -78,6 +79,7 @@ func (e *Engine) Run(ctx context.Context) (err error) {
 
 	for i := range e.Pipelines {
 		pipeline := e.Pipelines[i]
+		pipeline.SaveConsoleOutput()
 		err = pipeline.Report.UpdateCIJob()
 		if err != nil {
 			log.Debugf("updating CI job information: %s", err)
