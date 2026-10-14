@@ -94,10 +94,3 @@ func sanitizeUpdatecliManifestFilePath(rawFilePaths []string) (sanitizedFilePath
 
 	return trimDuplicate(sanitizedFilePaths), trimDuplicate(sanitizedPartialPaths)
 }
-
-// PrintTitle print a title
-func PrintTitle(title string) {
-	logrus.Infof("\n\n%s\n", strings.Repeat("+", len(title)+4))
-	logrus.Infof("+ %s +\n", strings.ToTitle(title))
-	logrus.Infof("%s\n\n", strings.Repeat("+", len(title)+4))
-}

@@ -5,13 +5,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
-	"os"
 	"strings"
 
 	jschema "github.com/invopop/jsonschema"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/jsonschema"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
@@ -102,16 +101,10 @@ func (t *Target) Check() (bool, error) {
 // Run applies a specific target configuration
 func (t *Target) Run(ctx context.Context, source string, o *Options) (err error) {
 	var consoleOutput bytes.Buffer
-	// By default logrus logs to stderr, so I guess we want to keep this behavior...
-	logrus.SetOutput(io.MultiWriter(os.Stdout, &consoleOutput))
-	/*
-		The last defer will be executed first,
-		so in this case we want to first save the console output
-		before setting back the logrus output to stdout.
-	*/
-	// By default logrus logs to stdout and we want to keep this behavior...
-	defer logrus.SetOutput(os.Stdout)
+	stopCapture := log.Capture(&consoleOutput)
+	// The last defer runs first: stop capturing before saving the console output
 	defer t.Result.SetConsoleOutput(&consoleOutput)
+	defer stopCapture()
 
 	failTargetRun := func() {
 		t.Result.Result = result.FAILURE

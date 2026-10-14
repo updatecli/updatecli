@@ -12,6 +12,7 @@ import (
 	"dario.cat/mergo"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/config"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/pipeline"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/action"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/autodiscovery"
@@ -52,14 +53,14 @@ func (e *Engine) LoadAutoDiscovery(ctx context.Context, defaultEnabled bool) err
 		}
 	}
 
-	PrintTitle("Auto Discovery")
+	log.Title("Auto Discovery")
 
 	for id, p := range e.Pipelines {
 		if p.Config.Spec.AutoDiscovery.Crawlers == nil {
 			continue
 		}
 
-		PrintTitle(p.Name)
+		log.Title(p.Name)
 
 		var actionConfig *action.Config
 		var autodiscoveryScm scm.Scm

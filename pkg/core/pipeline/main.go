@@ -10,6 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/cache"
 	"github.com/updatecli/updatecli/pkg/core/config"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/action"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
@@ -451,8 +452,7 @@ func (p *Pipeline) runFlowCallbackWithCtx(ctx context.Context, d *dag.DAG, id st
 	span.SetAttributes(attribute.String("updatecli.resource.category", leaf.Category))
 
 	resourceTitle := strings.TrimPrefix(id, leaf.Category+"#")
-	logrus.Infof("\n%s: %s\n", leaf.Category, resourceTitle)
-	logrus.Infof("%s\n\n", strings.Repeat("-", len(resourceTitle)+len(leaf.Category)+2))
+	log.Section(leaf.Category, resourceTitle)
 
 	// Display repository header when the resource is bound to an SCM.
 	p.logRepositoryHeader(id, leaf.Category)

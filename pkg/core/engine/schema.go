@@ -9,11 +9,12 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/compose"
 	"github.com/updatecli/updatecli/pkg/core/config"
 	"github.com/updatecli/updatecli/pkg/core/jsonschema"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/registry"
 )
 
 func GenerateSchema(baseSchemaID, schemaDir string) error {
-	PrintTitle("Json Schema")
+	log.Title("Json Schema")
 
 	err := jsonschema.CloneCommentDirectory()
 	if err != nil {

@@ -64,8 +64,6 @@ Updatecli  works into three stages:
 
 // Execute executes the root command.
 func Execute() {
-	logrus.SetFormatter(log.NewTextFormat())
-
 	if err := rootCmd.Execute(); err != nil {
 		logrus.Errorf("%s %s", result.FAILURE, err)
 		os.Exit(1)
@@ -85,8 +83,6 @@ var skipVersionCheckCommands = []string{
 }
 
 func init() {
-
-	logrus.SetOutput(os.Stdout)
 
 	rootCmd.PersistentPostRun = func(cmd *cobra.Command, args []string) {
 		if disableVersionCheck {
@@ -109,12 +105,12 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(&disableVersionCheck, "disable-version-check", getEnvBoolOrDefault(DisableVersionCheckEnvVar, false), "Disable version check (env: "+DisableVersionCheckEnvVar+")")
 	rootCmd.PersistentPreRun = func(cmd *cobra.Command, args []string) {
 		if verbose {
-			logrus.SetLevel(logrus.DebugLevel)
+			log.SetLevel(log.DebugLevel)
 		} else {
 			detectedCi, err := ci.New()
 			if err == nil && detectedCi.IsDebug() {
 				logrus.Infof("CI pipeline detected in Debug Mode - hence enabling debug mode")
-				logrus.SetLevel(logrus.DebugLevel)
+				log.SetLevel(log.DebugLevel)
 			}
 		}
 		if experimental {
