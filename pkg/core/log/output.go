@@ -21,19 +21,27 @@ var (
 	nextID int
 )
 
-// fanout writes every log line to the terminal and to every active capture.
-type fanout struct{}
-
-func (fanout) Write(p []byte) (int, error) {
+// emit writes a log line to the terminal and to every active capture.
+// Captures always get the plain text version, as they end up in reports.
+func emit(l line) error {
 	outputMu.Lock()
 	defer outputMu.Unlock()
 
-	n, err := terminal.Write(p)
-	for _, s := range sinks {
-		// A failing capture must never break logging
-		_, _ = s.w.Write(p)
+	var err error
+	if terminal == os.Stdout && styledTerminal() {
+		_, err = io.WriteString(terminal, l.styled())
+	} else {
+		_, err = io.WriteString(terminal, l.plain())
 	}
-	return n, err
+
+	if len(sinks) > 0 {
+		plain := l.plain()
+		for _, s := range sinks {
+			// A failing capture must never break logging
+			_, _ = io.WriteString(s.w, plain)
+		}
+	}
+	return err
 }
 
 // SetOutput replaces the terminal output, os.Stdout by default.

@@ -1,18 +1,23 @@
 package log
 
 import (
-	"strings"
+	"context"
+	"log/slog"
+)
+
+const (
+	kindKey     = "kind"
+	categoryKey = "category"
 )
 
 // Title logs the title of a major step, such as "Pipeline" or "Auto Discovery".
 func Title(title string) {
-	Infof("\n\n%s\n", strings.Repeat("+", len(title)+4))
-	Infof("+ %s +\n", strings.ToTitle(title))
-	Infof("%s\n\n", strings.Repeat("+", len(title)+4))
+	logger.LogAttrs(context.Background(), InfoLevel, title, slog.Int(kindKey, int(kindTitle)))
 }
 
 // Section logs the header of a pipeline section, such as a source or a target.
 func Section(category, name string) {
-	Infof("\n%s: %s\n", category, name)
-	Infof("%s\n\n", strings.Repeat("-", len(name)+len(category)+2))
+	logger.LogAttrs(context.Background(), InfoLevel, name,
+		slog.Int(kindKey, int(kindSection)),
+		slog.String(categoryKey, category))
 }

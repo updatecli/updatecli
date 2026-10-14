@@ -1,6 +1,8 @@
 package log
 
 import (
+	"io"
+
 	"github.com/sirupsen/logrus"
 )
 
@@ -8,7 +10,8 @@ import (
 // routing it through our output keeps their messages in captures and
 // formatted like ours.
 func init() {
-	logrus.SetOutput(fanout{})
+	// The formatter writes the line itself, styled for the terminal and plain for captures
+	logrus.SetOutput(io.Discard)
 	logrus.SetFormatter(logrusFormatter{})
 	setLogrusLevel(InfoLevel)
 }
@@ -16,7 +19,7 @@ func init() {
 type logrusFormatter struct{}
 
 func (logrusFormatter) Format(entry *logrus.Entry) ([]byte, error) {
-	return render(fromLogrusLevel(entry.Level), entry.Message), nil
+	return nil, emit(line{level: fromLogrusLevel(entry.Level), msg: entry.Message})
 }
 
 func fromLogrusLevel(l logrus.Level) Level {
