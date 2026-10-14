@@ -24,6 +24,7 @@ type Engine struct {
 	Reports        reports.Reports
 	tracer         trace.Tracer
 	sourceCache    *cache.SourceCache
+	publishErr     error
 }
 
 // SetTracer configures the tracer used for OTel instrumentation across all engine operations.
