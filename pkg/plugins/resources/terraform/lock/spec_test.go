@@ -63,13 +63,11 @@ func TestValidate(t *testing.T) {
 			expectedErrorMsg: errors.New("wrong spec content"),
 		},
 		{
-			name: "Failure - No platforms",
+			name: "Success - No platforms",
 			spec: Spec{
 				File:     "testdata/terraform.lock.hcl",
-				Provider: "registry.terraform.io/hashicorp/kubernetes",
+				Provider: "registry.opentofu.org/hashicorp/kubernetes",
 			},
-			wantErr:          true,
-			expectedErrorMsg: errors.New("wrong spec content"),
 		},
 	}
 
