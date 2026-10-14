@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/hcl/v2/hclwrite"
 	terraformRegistryAddress "github.com/hashicorp/terraform-registry-address"
 	"github.com/minamijoyo/tfupdate/lock"
+	"github.com/minamijoyo/tfupdate/tfregistry"
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/text"
@@ -75,14 +76,14 @@ func New(spec interface{}) (*TerraformLock, error) {
 
 	newResource.provider = provider
 
-	client, err := lock.NewProviderDownloaderClient(lock.TFRegistryConfig{
+	lockIndex, err := lock.NewIndexFromConfig(tfregistry.Config{
 		BaseURL: fmt.Sprintf("https://%s/", provider.Hostname),
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	newResource.lockIndex = lock.NewIndex(client)
+	newResource.lockIndex = lockIndex
 
 	return newResource, nil
 }
