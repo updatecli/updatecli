@@ -5,8 +5,6 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
-
-	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -23,58 +21,27 @@ var (
 	colorError = color.New(color.FgRed).SprintFunc()
 )
 
-// TextFormat lets use a custom text format.
-type TextFormat struct {
-	ShowInfoLevel   bool
-	ShowTimestamp   bool
-	TimestampFormat string
-}
+// render formats a log line: the level, except for info messages, then the message.
+func render(level Level, msg string) []byte {
+	var b bytes.Buffer
 
-// NewTextFormat creates the default text formatter.
-func NewTextFormat() *TextFormat {
-	return &TextFormat{
-		ShowInfoLevel:   false,
-		ShowTimestamp:   false,
-		TimestampFormat: "2006-01-02 15:04:05",
-	}
-}
-
-// Format formats the log statement.
-func (f *TextFormat) Format(entry *logrus.Entry) ([]byte, error) {
-	var b *bytes.Buffer
-
-	if entry.Buffer != nil {
-		b = entry.Buffer
-	} else {
-		b = &bytes.Buffer{}
-	}
-
-	level := strings.ToUpper(entry.Level.String())
-	switch level {
-	case "INFO":
-		if f.ShowInfoLevel {
-			b.WriteString(colorStatus(level))
-			b.WriteString(": ")
-		}
-	case "WARNING":
-		b.WriteString(colorWarn(level))
+	switch {
+	case level >= ErrorLevel:
+		b.WriteString(colorError("ERROR"))
 		b.WriteString(": ")
-	case "DEBUG":
-		b.WriteString(colorStatus(level))
+	case level >= WarnLevel:
+		b.WriteString(colorWarn("WARNING"))
 		b.WriteString(": ")
+	case level >= InfoLevel:
 	default:
-		b.WriteString(colorError(level))
+		b.WriteString(colorStatus("DEBUG"))
 		b.WriteString(": ")
 	}
-	if f.ShowTimestamp {
-		b.WriteString(entry.Time.Format(f.TimestampFormat))
-		b.WriteString(" - ")
-	}
 
-	b.WriteString(entry.Message)
+	b.WriteString(msg)
 
-	if !strings.HasSuffix(entry.Message, "\n") {
+	if !strings.HasSuffix(msg, "\n") {
 		b.WriteByte('\n')
 	}
-	return b.Bytes(), nil
+	return b.Bytes()
 }
