@@ -1,11 +1,13 @@
 package lock
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"slices"
 	"testing"
 
+	"github.com/minamijoyo/tfupdate/lock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
@@ -642,6 +644,112 @@ func TestUpdateAbsoluteFilePath(t *testing.T) {
 			for _, v := range h.files {
 				assert.True(t, slices.Contains(tt.expectedResult, v.filePath), fmt.Sprintf("%s not in %v", v.filePath, tt.expectedResult))
 			}
+		})
+	}
+}
+
+// fakeIndex records the platforms requested and only knows the hashes of every
+// published platform when allPlatformsSupported is set, like a registry publishing h1 hashes.
+type fakeIndex struct {
+	allPlatformsSupported bool
+	requestedPlatforms    [][]string
+}
+
+func (f *fakeIndex) GetOrCreateProviderVersion(_ context.Context, address string, version string, platforms []string) (*lock.ProviderVersion, error) {
+	f.requestedPlatforms = append(f.requestedPlatforms, platforms)
+
+	if len(platforms) == 0 {
+		if !f.allPlatformsSupported {
+			return nil, errors.New("the registry does not support h1 hashes")
+		}
+		return lock.NewMockProviderVersion(address, version,
+			[]string{"darwin_arm64", "linux_amd64"},
+			map[string]string{"darwin_arm64": "h1:darwin", "linux_amd64": "h1:linux"},
+			map[string]string{"darwin_arm64": "zh:darwin", "linux_amd64": "zh:linux"},
+		), nil
+	}
+
+	return lock.NewMockProviderVersion(address, version,
+		platforms,
+		map[string]string{"linux_amd64": "h1:linux"},
+		map[string]string{"darwin_arm64": "zh:darwin", "linux_amd64": "zh:linux"},
+	), nil
+}
+
+func TestGetProviderHashes(t *testing.T) {
+	allPlatformsHashes := []string{"h1:darwin", "h1:linux", "zh:darwin", "zh:linux"}
+	linuxHashes := []string{"h1:linux", "zh:darwin", "zh:linux"}
+
+	testData := []struct {
+		name                       string
+		provider                   string
+		platforms                  []string
+		allPlatformsSupported      bool
+		expectedHashes             []string
+		expectedRequestedPlatforms [][]string
+		wantErr                    bool
+	}{
+		{
+			name:                       "OpenTofu registry records every published platform",
+			provider:                   "registry.opentofu.org/hashicorp/null",
+			platforms:                  []string{"linux_amd64"},
+			allPlatformsSupported:      true,
+			expectedHashes:             allPlatformsHashes,
+			expectedRequestedPlatforms: [][]string{nil},
+		},
+		{
+			name:                       "OpenTofu registry falls back to platforms",
+			provider:                   "registry.opentofu.org/hashicorp/null",
+			platforms:                  []string{"linux_amd64"},
+			allPlatformsSupported:      false,
+			expectedHashes:             linuxHashes,
+			expectedRequestedPlatforms: [][]string{nil, {"linux_amd64"}},
+		},
+		{
+			name:                       "Terraform registry only queries platforms",
+			provider:                   "registry.terraform.io/hashicorp/null",
+			platforms:                  []string{"linux_amd64"},
+			allPlatformsSupported:      true,
+			expectedHashes:             linuxHashes,
+			expectedRequestedPlatforms: [][]string{{"linux_amd64"}},
+		},
+		{
+			name:                       "No platforms records every published platform",
+			provider:                   "registry.terraform.io/hashicorp/null",
+			allPlatformsSupported:      true,
+			expectedHashes:             allPlatformsHashes,
+			expectedRequestedPlatforms: [][]string{nil},
+		},
+		{
+			name:                       "No platforms fails without h1 hashes from the registry",
+			provider:                   "registry.terraform.io/hashicorp/null",
+			allPlatformsSupported:      false,
+			expectedRequestedPlatforms: [][]string{nil},
+			wantErr:                    true,
+		},
+	}
+
+	for _, tt := range testData {
+		t.Run(tt.name, func(t *testing.T) {
+			l, err := New(Spec{
+				File:      "testdata/terraform.lock.hcl",
+				Provider:  tt.provider,
+				Platforms: tt.platforms,
+			})
+			require.NoError(t, err)
+
+			index := &fakeIndex{allPlatformsSupported: tt.allPlatformsSupported}
+			l.lockIndex = index
+
+			gotHashes, err := l.getProviderHashes("3.2.1")
+
+			if tt.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+			assert.Equal(t, tt.expectedHashes, gotHashes)
+			assert.Equal(t, tt.expectedRequestedPlatforms, index.requestedPlatforms)
 		})
 	}
 }

@@ -66,7 +66,10 @@ type Spec struct {
 	//   * target
 	//
 	// remark:
-	//   * "platforms" is required.
+	//   * when empty, the hashes of every platform published by the registry are recorded,
+	//     which requires a registry publishing h1 hashes, such as registry.opentofu.org.
+	//   * with registry.opentofu.org, the hashes of every published platform are always recorded, like "tofu init" does,
+	//     and "platforms" is only used as a fallback if the registry metadata can't be retrieved.
 	//
 	// example:
 	//   * platforms:
@@ -93,8 +96,6 @@ var (
 	ErrSpecFileUndefined = errors.New("terraform/lock file undefined")
 	// ErrSpecProviderUndefined is returned if a provider wasn't specified
 	ErrSpecProviderUndefined = errors.New("terraform/lock provider undefined")
-	// ErrSpecPlatformsUndefined is returned if a platforms wasn't specified
-	ErrSpecPlatformsUndefined = errors.New("terraform/lock platforms undefined")
 	// ErrSpecFileAndFilesDefined when we both spec File and Files have been specified
 	ErrSpecFileAndFilesDefined = errors.New("parameter \"file\" and \"files\" are mutually exclusive")
 	// ErrWrongSpec is returned when the Spec has wrong content
@@ -114,10 +115,6 @@ func (s *Spec) Validate() error {
 
 	if len(s.Provider) == 0 {
 		errs = append(errs, ErrSpecProviderUndefined)
-	}
-
-	if len(s.Platforms) == 0 {
-		errs = append(errs, ErrSpecPlatformsUndefined)
 	}
 
 	for _, e := range errs {

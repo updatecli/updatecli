@@ -10,7 +10,9 @@ import (
 	"github.com/hashicorp/hcl/v2/hclwrite"
 	terraformRegistryAddress "github.com/hashicorp/terraform-registry-address"
 	"github.com/minamijoyo/tfupdate/lock"
+	"github.com/minamijoyo/tfupdate/tfregistry"
 	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/httpclient"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/text"
 	terraformUtils "github.com/updatecli/updatecli/pkg/plugins/resources/terraform"
@@ -75,14 +77,13 @@ func New(spec interface{}) (*TerraformLock, error) {
 
 	newResource.provider = provider
 
-	client, err := lock.NewProviderDownloaderClient(lock.TFRegistryConfig{
-		BaseURL: fmt.Sprintf("https://%s/", provider.Hostname),
+	newResource.lockIndex, err = lock.NewIndexFromConfig(tfregistry.Config{
+		BaseURL:    fmt.Sprintf("https://%s/", provider.Hostname),
+		HTTPClient: httpclient.NewRetryClient(),
 	})
 	if err != nil {
 		return nil, err
 	}
-
-	newResource.lockIndex = lock.NewIndex(client)
 
 	return newResource, nil
 }
@@ -189,7 +190,37 @@ func (t *TerraformLock) Changelog(from, to string) *result.Changelogs {
 	return nil
 }
 
+// openTofuRegistryHostname is the public OpenTofu registry, which publishes
+// both the h1 and zh hashes of every platform in its provider package metadata.
+const openTofuRegistryHostname = "registry.opentofu.org"
+
 func (t *TerraformLock) getProviderHashes(version string) ([]string, error) {
+	// Without platforms, tfupdate records the h1 and zh hashes of every platform published
+	// in the registry metadata, which is what "tofu init" writes for the OpenTofu registry.
+	// It fails if the registry does not publish h1 hashes, such as the Terraform registry.
+	if len(t.spec.Platforms) == 0 || t.provider.Hostname == openTofuRegistryHostname {
+		pv, err := t.lockIndex.GetOrCreateProviderVersion(context.Background(), t.provider.ForDisplay(), version, nil)
+		if err == nil {
+			return pv.AllHashes(), nil
+		}
+
+		if len(t.spec.Platforms) == 0 {
+			return nil, fmt.Errorf("%s failed to query provider locks for provider: %q, version: %q, for all platforms: %s",
+				result.FAILURE,
+				t.spec.Provider,
+				version,
+				err.Error(),
+			)
+		}
+
+		logrus.Warningf("failed to query provider locks for provider %q, version %q, for all platforms, falling back to platforms %q: %s",
+			t.spec.Provider,
+			version,
+			t.spec.Platforms,
+			err.Error(),
+		)
+	}
+
 	pv, err := t.lockIndex.GetOrCreateProviderVersion(context.Background(), t.provider.ForDisplay(), version, t.spec.Platforms)
 	if err != nil {
 		return nil, fmt.Errorf("%s failed to query provider locks for provider: %q, version: %q, platforms: %q: %s",
