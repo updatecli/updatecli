@@ -3,7 +3,7 @@ package hcl
 import (
 	"errors"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 /*
@@ -93,7 +93,7 @@ func (s *Spec) Validate() error {
 	}
 
 	for _, e := range errs {
-		logrus.Errorln(e)
+		log.Errorln(e)
 	}
 
 	if len(errs) > 0 {

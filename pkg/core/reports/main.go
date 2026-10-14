@@ -6,7 +6,7 @@ import (
 	"sort"
 	"text/template"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
@@ -82,7 +82,7 @@ func (r *Reports) Show() error {
 		return err
 	}
 
-	logrus.Infof("%s", reports)
+	log.Infof("%s", reports)
 
 	return nil
 }
@@ -134,7 +134,7 @@ func (r *Reports) Summary() (successCounter, changedCounter, failedCounter, skip
 			changedCounter++
 
 		default:
-			logrus.Infof("Unknown report result %q with named %q.", report.Result, report.Name)
+			log.Infof("Unknown report result %q with named %q.", report.Result, report.Name)
 		}
 
 		for _, action := range report.Actions {

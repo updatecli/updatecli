@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/engine/manifest"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/registry"
 	"go.yaml.in/yaml/v3"
 )
@@ -25,13 +25,13 @@ func New(filename string, visitedComposeFiles map[string]bool) ([]Compose, error
 	composeFiles := []Compose{}
 
 	if _, ok := visitedComposeFiles[filename]; ok {
-		logrus.Debugf("Compose file %q already loaded, skipping to avoid circular reference", filename)
+		log.Debugf("Compose file %q already loaded, skipping to avoid circular reference", filename)
 		return nil, nil
 	}
 
 	visitedComposeFiles[filename] = true
 
-	logrus.Infof("Loading compose file: %q", filename)
+	log.Infof("Loading compose file: %q", filename)
 
 	spec, err := LoadFile(filename)
 	if err != nil {
@@ -39,18 +39,18 @@ func New(filename string, visitedComposeFiles map[string]bool) ([]Compose, error
 	}
 
 	if len(spec.Name) != 0 {
-		logrus.Infof("\tName: %q", spec.Name)
+		log.Infof("\tName: %q", spec.Name)
 	}
 
 	switch len(spec.Policies) {
 	case 0:
 		//
 	case 1:
-		logrus.Infof("One policy detected:\n\t* Policy: %s", spec.Policies[0].Name)
+		log.Infof("One policy detected:\n\t* Policy: %s", spec.Policies[0].Name)
 	default:
-		logrus.Infof("%d policies detected:", len(spec.Policies))
+		log.Infof("%d policies detected:", len(spec.Policies))
 		for i := range spec.Policies {
-			logrus.Infof("\t* Policy %d: %q", i, spec.Policies[i].Name)
+			log.Infof("\t* Policy %d: %q", i, spec.Policies[i].Name)
 		}
 	}
 
@@ -121,7 +121,7 @@ func (c *Compose) GetPolicies(disableTLS bool, onlyPolicyIDs, ignoredPolicyIDs [
 	for i := range c.spec.Policies {
 		if len(ignoredPolicyIDs) > 0 && c.spec.Policies[i].ID != "" {
 			if slices.Contains(ignoredPolicyIDs, c.spec.Policies[i].ID) {
-				logrus.Debugf("Policy %q is ignored, skipping", c.spec.Policies[i].Name)
+				log.Debugf("Policy %q is ignored, skipping", c.spec.Policies[i].Name)
 				continue
 			}
 		}
@@ -129,12 +129,12 @@ func (c *Compose) GetPolicies(disableTLS bool, onlyPolicyIDs, ignoredPolicyIDs [
 		if len(onlyPolicyIDs) > 0 {
 
 			if c.spec.Policies[i].ID == "" {
-				logrus.Debugf("Policy %q does not have an ID, skipping because only policies with IDs can be executed when the list of policies to execute is not empty", c.spec.Policies[i].Name)
+				log.Debugf("Policy %q does not have an ID, skipping because only policies with IDs can be executed when the list of policies to execute is not empty", c.spec.Policies[i].Name)
 				continue
 			}
 
 			if !slices.Contains(onlyPolicyIDs, c.spec.Policies[i].ID) {
-				logrus.Debugf("Policy %q is not in the list of policies to execute, skipping", c.spec.Policies[i].Name)
+				log.Debugf("Policy %q is not in the list of policies to execute, skipping", c.spec.Policies[i].Name)
 				continue
 			}
 		}
@@ -143,7 +143,7 @@ func (c *Compose) GetPolicies(disableTLS bool, onlyPolicyIDs, ignoredPolicyIDs [
 			continue
 		}
 
-		logrus.Infof("\nInitializing policy: %q\n", c.spec.Policies[i].Name)
+		log.Infof("\nInitializing policy: %q\n", c.spec.Policies[i].Name)
 
 		var policyManifest, policyValues, policySecrets []string
 
@@ -171,13 +171,13 @@ func (c *Compose) GetPolicies(disableTLS bool, onlyPolicyIDs, ignoredPolicyIDs [
 		showDetectedFiles := func(files []string, fileType string) {
 			switch len(files) {
 			case 0:
-				logrus.Debugf("\t%s: nothing detected", fileType)
+				log.Debugf("\t%s: nothing detected", fileType)
 			case 1:
-				logrus.Infof("\t%s: %q", fileType, files[0])
+				log.Infof("\t%s: %q", fileType, files[0])
 			default:
-				logrus.Infof("\t%ss:", fileType)
+				log.Infof("\t%ss:", fileType)
 				for i := range files {
-					logrus.Infof("\t\t* %q", files[i])
+					log.Infof("\t\t* %q", files[i])
 				}
 			}
 		}

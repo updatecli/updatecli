@@ -11,7 +11,7 @@ import (
 
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github/token"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 // searchWorkflowFiles will look, recursively, for every files containing a GitHub action workflow from a root directory.
@@ -19,7 +19,7 @@ func (g *GitHubAction) searchWorkflowFiles(rootDir string) error {
 
 	err := filepath.Walk(rootDir, func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
-			logrus.Debugf("something went wrong while walking in %q: %v\n", path, err)
+			log.Debugf("something went wrong while walking in %q: %v\n", path, err)
 			return err
 		}
 
@@ -58,7 +58,7 @@ func (g *GitHubAction) searchWorkflowFiles(rootDir string) error {
 		return err
 	}
 
-	logrus.Debugf("%d GitHub workflow(s) found", len(g.workflowFiles))
+	log.Debugf("%d GitHub workflow(s) found", len(g.workflowFiles))
 
 	return nil
 }
@@ -68,7 +68,7 @@ func (g *GitHubAction) searchCompositeActionFiles(rootDir string) error {
 
 	err := filepath.Walk(rootDir, func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
-			logrus.Debugf("something went wrong while walking in %q: %v\n", path, err)
+			log.Debugf("something went wrong while walking in %q: %v\n", path, err)
 			return err
 		}
 
@@ -104,7 +104,7 @@ func (g *GitHubAction) searchCompositeActionFiles(rootDir string) error {
 		return err
 	}
 
-	logrus.Debugf("%d Composite Action(s) found", len(g.compositeActionFiles))
+	log.Debugf("%d Composite Action(s) found", len(g.compositeActionFiles))
 
 	return nil
 }
@@ -142,7 +142,7 @@ func parseActionName(input string) (URL, owner, repository, directory, reference
 
 	u, err := url.Parse(input)
 	if err != nil {
-		logrus.Debugf("parsing URL: %s", err)
+		log.Debugf("parsing URL: %s", err)
 		return "", "", "", "", "", ""
 	}
 
@@ -175,7 +175,7 @@ func parseActionName(input string) (URL, owner, repository, directory, reference
 
 		// At this time we expect the URL to be a valid github action such as "actions/checkout"
 		if len(p) < 2 {
-			logrus.Debugf("unexpected action name %q, feel free to open an issue on the Updatecli project", input)
+			log.Debugf("unexpected action name %q, feel free to open an issue on the Updatecli project", input)
 			return "", "", "", "", "", ""
 		}
 
@@ -217,12 +217,12 @@ func (ga *GitHubAction) getGitProviderKind(URL string) (kind, authToken string, 
 		// 1. Get the token source from the environment
 		_, sourceToken, err := token.GetTokenSourceFromEnv()
 		if err != nil {
-			logrus.Debugf("no GitHub token found in environment variables: %s", err)
+			log.Debugf("no GitHub token found in environment variables: %s", err)
 		}
 
 		// 2. Get the token from the configuration
 		if sourceToken == nil && ga.spec.Credentials[hostname].Token != "" {
-			logrus.Debugf("using GitHub token from configuration")
+			log.Debugf("using GitHub token from configuration")
 			return ga.spec.Credentials[hostname].Token
 		}
 
@@ -230,9 +230,9 @@ func (ga *GitHubAction) getGitProviderKind(URL string) (kind, authToken string, 
 		if sourceToken == nil && ga.spec.Credentials[hostname].App != nil {
 			sourceToken, err = ga.spec.Credentials[hostname].App.Getoauth2TokenSource()
 			if err != nil {
-				logrus.Debugf("failed to get oauth2 token source from GitHub App spec: %s", err)
+				log.Debugf("failed to get oauth2 token source from GitHub App spec: %s", err)
 			} else {
-				logrus.Debugf("using GitHub App authentication from configuration")
+				log.Debugf("using GitHub App authentication from configuration")
 			}
 		}
 
@@ -240,19 +240,19 @@ func (ga *GitHubAction) getGitProviderKind(URL string) (kind, authToken string, 
 		if sourceToken == nil {
 			_, sourceToken = token.GetFallbackTokenSourceFromEnv()
 			if sourceToken != nil {
-				logrus.Debugf("using GitHub token from environment variable GITHUB_TOKEN")
+				log.Debugf("using GitHub token from environment variable GITHUB_TOKEN")
 			}
 		}
 
 		// 5. If we still don't have a token source, log a message and return an empty string
 		if sourceToken == nil {
-			logrus.Debugln("no GitHub token defined, please provide a GitHub token via the setting `token` or one of the environment variable UPDATECLI_GITHUB_TOKEN or GITHUB_TOKEN.")
+			log.Debugln("no GitHub token defined, please provide a GitHub token via the setting `token` or one of the environment variable UPDATECLI_GITHUB_TOKEN or GITHUB_TOKEN.")
 			return ""
 		}
 
 		accessToken, err := token.GetAccessToken(sourceToken)
 		if err != nil {
-			logrus.Debugf("failed to get access token from token source: %s", err)
+			log.Debugf("failed to get access token from token source: %s", err)
 			return ""
 		}
 
@@ -261,13 +261,13 @@ func (ga *GitHubAction) getGitProviderKind(URL string) (kind, authToken string, 
 
 	defaultGiteaToken := func() string {
 		if os.Getenv("UPDATECLI_GITEA_TOKEN") != "" {
-			logrus.Debugf("environment  variable UPDATECLI_GITEA_TOKEN detected, using it values as Gitea token")
+			log.Debugf("environment  variable UPDATECLI_GITEA_TOKEN detected, using it values as Gitea token")
 			return os.Getenv("UPDATECLI_GITEA_TOKEN")
 		} else if os.Getenv("GITEA_TOKEN") != "" {
-			logrus.Debugf("environment  variable GITEA_TOKEN detected, using it values as Gitea token")
+			log.Debugf("environment  variable GITEA_TOKEN detected, using it values as Gitea token")
 			return os.Getenv("GITEA_TOKEN")
 		}
-		logrus.Debugln("no Gitea token defined, please provide a Gitea token via the setting `token` or one of the environment variable UPDATECLI_GITEA_TOKEN or GITEA_TOKEN.")
+		log.Debugln("no Gitea token defined, please provide a Gitea token via the setting `token` or one of the environment variable UPDATECLI_GITEA_TOKEN or GITEA_TOKEN.")
 		return ""
 	}
 
@@ -283,7 +283,7 @@ func (ga *GitHubAction) getGitProviderKind(URL string) (kind, authToken string, 
 					authToken = defaultGiteaToken()
 				}
 			default:
-				logrus.Debugf("unknown kind %q for git provider %q specified in parameter, fallback to github", kind, hostname)
+				log.Debugf("unknown kind %q for git provider %q specified in parameter, fallback to github", kind, hostname)
 			}
 			return kind, authToken, nil
 		}
@@ -311,7 +311,7 @@ func (ga *GitHubAction) getGitProviderKind(URL string) (kind, authToken string, 
 			Token: authToken,
 		}
 	default:
-		logrus.Debugf("unknown git provider %q, fallback to github", u.Hostname())
+		log.Debugf("unknown git provider %q, fallback to github", u.Hostname())
 		kind = kindGitHub
 		authToken = defaultGitHubToken("github.com")
 	}

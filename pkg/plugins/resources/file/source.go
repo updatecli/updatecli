@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
@@ -53,7 +53,7 @@ func (f *File) Source(_ context.Context, pathResolver pathresolver.Resolver, res
 			reg, err := regexp.Compile(f.spec.MatchPattern)
 
 			if err != nil {
-				logrus.Errorf("validation error in source of type 'file': Unable to parse the regexp specified at f.spec.MatchPattern (%q)", f.spec.MatchPattern)
+				log.Errorf("validation error in source of type 'file': Unable to parse the regexp specified at f.spec.MatchPattern (%q)", f.spec.MatchPattern)
 				return fmt.Errorf("compiling regex: %w", err)
 			}
 
@@ -62,7 +62,7 @@ func (f *File) Source(_ context.Context, pathResolver pathresolver.Resolver, res
 				if f.spec.SearchPattern {
 					// When using both a file path pattern AND a content matching regex, then we want to ignore files that don't match the pattern
 					// as otherwise we trigger error for files we don't care about.
-					logrus.Debugf("No match found for pattern %q in file %q, removing it from the list of files to update", f.spec.MatchPattern, filePath)
+					log.Debugf("No match found for pattern %q in file %q, removing it from the list of files to update", f.spec.MatchPattern, filePath)
 					delete(f.files, filePath)
 					continue
 				}

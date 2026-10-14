@@ -4,7 +4,7 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 // InlineKeyChain defines the credentials used to authenticate with a cargo registry.
@@ -57,19 +57,19 @@ type Registry struct {
 
 func (r Registry) Validate() bool {
 	if r.RootDir != "" && r.SCMID != "" {
-		logrus.Errorf("Registry.RootDir is defined and set to %q but would be overridden by the scm %q",
+		log.Errorf("Registry.RootDir is defined and set to %q but would be overridden by the scm %q",
 			r.RootDir,
 			r.SCMID)
 		return false
 	}
 	if r.URL != "" && r.SCMID != "" {
-		logrus.Errorf("Registry.URL is defined and set to %q but would be overridden by the scm %q",
+		log.Errorf("Registry.URL is defined and set to %q but would be overridden by the scm %q",
 			r.URL,
 			r.SCMID)
 		return false
 	}
 	if r.RootDir != "" && r.URL != "" {
-		logrus.Errorf("Registry.URL is defined and set to %q but would be overridden by Registry.RootDir %q",
+		log.Errorf("Registry.URL is defined and set to %q but would be overridden by Registry.RootDir %q",
 			r.URL,
 			r.RootDir)
 		return false

@@ -14,7 +14,6 @@ import (
 
 	"github.com/updatecli/updatecli/pkg/core/log"
 
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/dockerimage"
 	goyaml "go.yaml.in/yaml/v3"
 )
@@ -70,7 +69,7 @@ type imageInfo struct {
 func searchWorkflowFiles(rootDir string, filePatterns []string) ([]string, error) {
 	workflowFiles := []string{}
 
-	logrus.Debugf("Looking for Woodpecker workflow file(s) in %q", rootDir)
+	log.Debugf("Looking for Woodpecker workflow file(s) in %q", rootDir)
 
 	err := filepath.WalkDir(rootDir, func(filePath string, d fs.DirEntry, err error) error {
 		if err != nil {
@@ -84,7 +83,7 @@ func searchWorkflowFiles(rootDir string, filePatterns []string) ([]string, error
 
 		relPath, err := filepath.Rel(rootDir, filePath)
 		if err != nil {
-			logrus.Errorln(err)
+			log.Errorln(err)
 			return nil
 		}
 
@@ -92,7 +91,7 @@ func searchWorkflowFiles(rootDir string, filePatterns []string) ([]string, error
 			// Handle patterns with directory separators
 			match, err := filepath.Match(pattern, relPath)
 			if err != nil {
-				logrus.Errorln(err)
+				log.Errorln(err)
 				continue
 			}
 			if match {
@@ -103,7 +102,7 @@ func searchWorkflowFiles(rootDir string, filePatterns []string) ([]string, error
 			// Also try matching just the filename for simple patterns
 			match, err = filepath.Match(pattern, d.Name())
 			if err != nil {
-				logrus.Errorln(err)
+				log.Errorln(err)
 				continue
 			}
 			if match {
@@ -143,7 +142,7 @@ func searchWorkflowFiles(rootDir string, filePatterns []string) ([]string, error
 		}
 	}
 
-	logrus.Debugf("%d potential Woodpecker workflow file(s) found", len(result))
+	log.Debugf("%d potential Woodpecker workflow file(s) found", len(result))
 
 	return result, nil
 }
@@ -253,9 +252,9 @@ func (w Woodpecker) discoverWorkflowImageManifests() ([][]byte, error) {
 
 	for _, foundWorkflowFile := range foundWorkflowFiles {
 		relativeWorkflowFile, err := filepath.Rel(w.rootDir, foundWorkflowFile)
-		logrus.Debugf("parsing file %q", foundWorkflowFile)
+		log.Debugf("parsing file %q", foundWorkflowFile)
 		if err != nil {
-			logrus.Debugln(err)
+			log.Debugln(err)
 			continue
 		}
 
@@ -264,7 +263,7 @@ func (w Woodpecker) discoverWorkflowImageManifests() ([][]byte, error) {
 
 		workflow, err := loadWorkflow(foundWorkflowFile)
 		if err != nil {
-			logrus.Debugf("loading Woodpecker workflow from %q: %s", foundWorkflowFile, err)
+			log.Debugf("loading Woodpecker workflow from %q: %s", foundWorkflowFile, err)
 			continue
 		}
 
@@ -290,7 +289,7 @@ func (w Woodpecker) discoverWorkflowImageManifests() ([][]byte, error) {
 				until a better solution, we don't handle docker image digests without tags.
 			*/
 			if imageDigest != "" && imageTag == "" {
-				logrus.Debugf("docker digest without specified tag is not supported at the moment for %q", img.Image)
+				log.Debugf("docker digest without specified tag is not supported at the moment for %q", img.Image)
 				continue
 			}
 
@@ -301,7 +300,7 @@ func (w Woodpecker) discoverWorkflowImageManifests() ([][]byte, error) {
 					relativeWorkflowFile,
 					img.Image,
 				) {
-					logrus.Debugf("Ignoring Woodpecker workflow file %q from %q, as matching ignore rule(s)\n",
+					log.Debugf("Ignoring Woodpecker workflow file %q from %q, as matching ignore rule(s)\n",
 						basename,
 						dirname)
 					continue
@@ -315,7 +314,7 @@ func (w Woodpecker) discoverWorkflowImageManifests() ([][]byte, error) {
 					relativeWorkflowFile,
 					img.Image,
 				) {
-					logrus.Debugf("Ignoring Woodpecker workflow file %q from %q, as not matching only rule(s)\n",
+					log.Debugf("Ignoring Woodpecker workflow file %q from %q, as not matching only rule(s)\n",
 						basename,
 						dirname)
 					continue
@@ -351,7 +350,7 @@ func (w Woodpecker) discoverWorkflowImageManifests() ([][]byte, error) {
 				versionFilterRegex = w.versionFilter.Regex
 				tagFilter = ""
 				if err != nil {
-					logrus.Debugf("building version filter pattern: %s", err)
+					log.Debugf("building version filter pattern: %s", err)
 					if sourceSpec != nil {
 						sourceSpec.VersionFilter.Pattern = "*"
 					}
@@ -375,7 +374,7 @@ func (w Woodpecker) discoverWorkflowImageManifests() ([][]byte, error) {
 					return nil, err
 				}
 			} else {
-				logrus.Infoln("No source spec detected")
+				log.Infoln("No source spec detected")
 				return nil, nil
 			}
 
@@ -417,7 +416,7 @@ func (w Woodpecker) discoverWorkflowImageManifests() ([][]byte, error) {
 
 			manifest := bytes.Buffer{}
 			if err := tmpl.Execute(&manifest, params); err != nil {
-				logrus.Debugln(err)
+				log.Debugln(err)
 				continue
 			}
 

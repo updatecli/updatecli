@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 const (
@@ -22,7 +22,7 @@ func findModuleFilesFromFS(fsys fs.FS) ([]string, error) {
 
 	err := fs.WalkDir(fsys, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
-			logrus.Debugf("prevent panic by handling failure accessing a path %q: %v\n", path, err)
+			log.Debugf("prevent panic by handling failure accessing a path %q: %v\n", path, err)
 			return err
 		}
 
@@ -36,7 +36,7 @@ func findModuleFilesFromFS(fsys fs.FS) ([]string, error) {
 		// Check if this is a MODULE.bazel file
 		if !d.IsDir() && d.Name() == ModuleBazelFile {
 			foundFiles = append(foundFiles, path)
-			logrus.Debugf("Found MODULE.bazel file: %q", path)
+			log.Debugf("Found MODULE.bazel file: %q", path)
 		}
 
 		return nil
@@ -46,9 +46,9 @@ func findModuleFilesFromFS(fsys fs.FS) ([]string, error) {
 		return nil, fmt.Errorf("walking filesystem: %w", err)
 	}
 
-	logrus.Debugf("%d MODULE.bazel file(s) found", len(foundFiles))
+	log.Debugf("%d MODULE.bazel file(s) found", len(foundFiles))
 	for _, foundFile := range foundFiles {
-		logrus.Debugf("    * %q", foundFile)
+		log.Debugf("    * %q", foundFile)
 	}
 
 	return foundFiles, nil
@@ -57,7 +57,7 @@ func findModuleFilesFromFS(fsys fs.FS) ([]string, error) {
 // findModuleFiles recursively searches for MODULE.bazel files starting from rootDir.
 // It skips hidden directories like .git, .bazel, etc.
 func findModuleFiles(rootDir string) ([]string, error) {
-	logrus.Debugf("Looking for MODULE.bazel files in %q", rootDir)
+	log.Debugf("Looking for MODULE.bazel files in %q", rootDir)
 
 	fsys := os.DirFS(rootDir)
 	relativeFiles, err := findModuleFilesFromFS(fsys)

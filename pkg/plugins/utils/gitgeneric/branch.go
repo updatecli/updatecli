@@ -11,7 +11,6 @@ import (
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
 	transportHttp "github.com/go-git/go-git/v5/plumbing/transport/http"
-	"github.com/sirupsen/logrus"
 )
 
 // DatedBranch represents a git branch with its latest commit date
@@ -69,7 +68,7 @@ func (g GoGit) BranchRefs(workingDir string) (branches []DatedBranch, err error)
 		return branches[i].When.Before(branches[j].When)
 	})
 
-	logrus.Debugf("got branch refs: %v", branches)
+	log.Debugf("got branch refs: %v", branches)
 
 	if len(branches) == 0 {
 		return branches, fmt.Errorf("%s", ErrNoBranchFound)
@@ -150,7 +149,7 @@ func (g GoGit) PushBranch(branch string, username string, password string, worki
 		return fmt.Errorf("opening %q git directory: %s", workingDir, err)
 	}
 
-	logrus.Debugf("Pushing git branch: %q", branch)
+	log.Debugf("Pushing git branch: %q", branch)
 
 	// By default don't force push
 	refspec := config.RefSpec("refs/heads/" + branch + ":refs/heads/" + branch)
@@ -170,7 +169,7 @@ func (g GoGit) PushBranch(branch string, username string, password string, worki
 
 	if err != nil {
 		if err == git.NoErrAlreadyUpToDate {
-			logrus.Info("origin remote was up to date, no push done")
+			log.Info("origin remote was up to date, no push done")
 			return nil
 		}
 		return fmt.Errorf("push to remote origin: %s", err)
@@ -225,11 +224,11 @@ func resetNewBranchToBaseBranch(newBranch, basedBranch plumbing.ReferenceName, g
 		return false, nil
 	}
 
-	logrus.Warningf("branch %q diverged from %q, resetting it to %q", newBranch, basedBranch, basedBranch)
+	log.Warningf("branch %q diverged from %q, resetting it to %q", newBranch, basedBranch, basedBranch)
 
 	repository, err := git.PlainOpen(gitRepositoryPath)
 	if err != nil {
-		logrus.Errorf("opening %q git directory: %s", gitRepositoryPath, err)
+		log.Errorf("opening %q git directory: %s", gitRepositoryPath, err)
 		return false, fmt.Errorf("opening %q git directory: %s", gitRepositoryPath, err)
 	}
 

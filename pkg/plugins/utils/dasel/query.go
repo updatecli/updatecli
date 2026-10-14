@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 
 	daselV2 "github.com/tomwright/dasel/v2"
 	daselV3 "github.com/tomwright/dasel/v3"
@@ -26,7 +26,7 @@ func (f *FileContent) MultipleQuery(query string) ([]string, error) {
 		// https://github.com/TomWright/dasel/blob/master/node_query.go#L58
 
 		if strings.HasPrefix(err.Error(), "could not find multiple value:") {
-			logrus.Debugln(err)
+			log.Debugln(err)
 			err = fmt.Errorf("could not find multiple value for query %q from file %q",
 				query,
 				f.FilePath)
@@ -66,7 +66,7 @@ func (f *FileContent) Query(query string) (string, error) {
 		// https://github.com/TomWright/dasel/blob/master/node_query.go#L58
 
 		if strings.HasPrefix(err.Error(), "could not find value:") {
-			logrus.Debugln(err)
+			log.Debugln(err)
 			err = fmt.Errorf("could not find value for query %q from file %q",
 				query,
 				f.FilePath)

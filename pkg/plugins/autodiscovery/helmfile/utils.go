@@ -8,7 +8,6 @@ import (
 
 	"github.com/updatecli/updatecli/pkg/core/log"
 
-	"github.com/sirupsen/logrus"
 	goyaml "go.yaml.in/yaml/v3"
 )
 
@@ -16,7 +15,7 @@ import (
 func searchHelmfileFiles(rootDir string, files []string) ([]string, error) {
 	helmfiles := []string{}
 
-	logrus.Debugf("Looking for Helmfile(s) in %q", rootDir)
+	log.Debugf("Looking for Helmfile(s) in %q", rootDir)
 
 	// To do switch to WalkDir which is more efficient, introduced in 1.16
 	err := filepath.Walk(rootDir, func(path string, info fs.FileInfo, err error) error {
@@ -28,7 +27,7 @@ func searchHelmfileFiles(rootDir string, files []string) ([]string, error) {
 		for _, f := range files {
 			match, err := filepath.Match(f, info.Name())
 			if err != nil {
-				logrus.Errorln(err)
+				log.Errorln(err)
 				continue
 			}
 			if match {
@@ -42,7 +41,7 @@ func searchHelmfileFiles(rootDir string, files []string) ([]string, error) {
 		return nil, err
 	}
 
-	logrus.Debugf("%d potential helmfile(s) found", len(helmfiles))
+	log.Debugf("%d potential helmfile(s) found", len(helmfiles))
 
 	return helmfiles, nil
 }
@@ -77,8 +76,8 @@ func getHelmfileMetadata(filename string) (*helmfileMetadata, error) {
 	}
 
 	for _, value := range helmfile.Releases {
-		logrus.Debugf("Name: %q\n", value.Name)
-		logrus.Debugf("Version: %q\n", value.Version)
+		log.Debugf("Name: %q\n", value.Name)
+		log.Debugf("Version: %q\n", value.Version)
 	}
 
 	return &helmfile, nil

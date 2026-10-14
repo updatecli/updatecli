@@ -11,7 +11,7 @@ import (
 	"github.com/google/go-containerregistry/pkg/name"
 
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	oras "oras.land/oras-go/v2"
 	"oras.land/oras-go/v2/content/file"
 	"oras.land/oras-go/v2/errdef"
@@ -41,12 +41,12 @@ func Push(p PushData) error {
 		return fmt.Errorf("load policy file: %w", err)
 	}
 
-	logrus.Infof("Pushing Updatecli policy:\n\t=> %s\n\n", strings.Join(p.PolicyReferenceNames, "\n\t=> "))
+	log.Infof("Pushing Updatecli policy:\n\t=> %s\n\n", strings.Join(p.PolicyReferenceNames, "\n\t=> "))
 
 	if p.FileStore == "" {
 		p.FileStore, err = os.Getwd()
 		if err != nil {
-			logrus.Errorln(err)
+			log.Errorln(err)
 		}
 	}
 
@@ -122,7 +122,7 @@ func Push(p PushData) error {
 
 		refName, err := name.ParseReference(p.PolicyReferenceNames[i])
 		if err != nil {
-			logrus.Errorf("parse reference: %s", err)
+			log.Errorf("parse reference: %s", err)
 			continue
 		}
 
@@ -150,13 +150,13 @@ func Push(p PushData) error {
 
 		_, _, err = repo.FetchReference(ctx, tag)
 		if err == nil && !p.Overwrite {
-			logrus.Infof("tag %q already published for policy %s", tag, p.PolicyReferenceNames[i])
+			log.Infof("tag %q already published for policy %s", tag, p.PolicyReferenceNames[i])
 			return nil
 		} else if err == nil {
-			logrus.Infof("overwriting, already published, tag %q for policy %s", tag, p.PolicyReferenceNames[i])
+			log.Infof("overwriting, already published, tag %q for policy %s", tag, p.PolicyReferenceNames[i])
 
 		} else if errors.Is(err, errdef.ErrNotFound) {
-			logrus.Infof("publishing policy %s", tag)
+			log.Infof("publishing policy %s", tag)
 		} else {
 			return fmt.Errorf("check if %s is already published: %s", p.PolicyReferenceNames[i], err)
 		}

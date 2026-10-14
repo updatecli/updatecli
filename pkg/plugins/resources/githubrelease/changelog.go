@@ -1,7 +1,7 @@
 package githubrelease
 
 import (
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	githubChangelog "github.com/updatecli/updatecli/pkg/plugins/changelog/github/v3"
 )
@@ -18,7 +18,7 @@ func (gr GitHubRelease) Changelog(from, to string) *result.Changelogs {
 
 	releases, err := changelog.Search(from, to)
 	if err != nil {
-		logrus.Debugf("ignored error, searching releases: %s", err)
+		log.Debugf("ignored error, searching releases: %s", err)
 	}
 	return &releases
 }

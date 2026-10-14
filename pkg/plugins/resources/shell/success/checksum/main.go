@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/go-viper/mapstructure/v2"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
@@ -66,7 +66,7 @@ func (s Spec) Validate() error {
 	}
 	if len(errs) > 0 {
 		for i := range errs {
-			logrus.Errorln(errs[i])
+			log.Errorln(errs[i])
 		}
 		return fmt.Errorf("wrong exit spec")
 	}
@@ -107,11 +107,11 @@ func (c *Checksum) SourceResult(resultSource *result.Source) error {
 	for _, filename := range c.spec.Files {
 		if c.preCommandMonitoredFiles[filename] == "" || c.postCommandMonitoredFiles[filename] == "" {
 			if c.preCommandMonitoredFiles[filename] == "" {
-				logrus.Debugf("no checksum for file %q before running shell command", filename)
+				log.Debugf("no checksum for file %q before running shell command", filename)
 			}
 			if c.postCommandMonitoredFiles[filename] == "" {
 				missingFiles = append(missingFiles, filename)
-				logrus.Debugf("no checksum for file %q after running shell command", filename)
+				log.Debugf("no checksum for file %q after running shell command", filename)
 			}
 
 			changed = true
@@ -119,14 +119,14 @@ func (c *Checksum) SourceResult(resultSource *result.Source) error {
 		}
 
 		if c.preCommandMonitoredFiles[filename] != c.postCommandMonitoredFiles[filename] {
-			logrus.Debugf("File checksum for %q changed after shell command run", filename)
+			log.Debugf("File checksum for %q changed after shell command run", filename)
 			changed = true
 		}
 	}
 
 	if len(missingFiles) > 0 {
 		for i := range missingFiles {
-			logrus.Debugf("Missing files %q", missingFiles[i])
+			log.Debugf("Missing files %q", missingFiles[i])
 		}
 		return fmt.Errorf("missing monitored file checksum")
 	}
@@ -151,11 +151,11 @@ func (c *Checksum) ConditionResult() (bool, error) {
 	for _, filename := range c.spec.Files {
 		if c.preCommandMonitoredFiles[filename] == "" || c.postCommandMonitoredFiles[filename] == "" {
 			if c.preCommandMonitoredFiles[filename] == "" {
-				logrus.Debugf("no checksum for file %q before running shell command", filename)
+				log.Debugf("no checksum for file %q before running shell command", filename)
 			}
 			if c.postCommandMonitoredFiles[filename] == "" {
 				missingFiles = append(missingFiles, filename)
-				logrus.Debugf("no checksum for file %q after running shell command", filename)
+				log.Debugf("no checksum for file %q after running shell command", filename)
 			}
 
 			changed = true
@@ -163,14 +163,14 @@ func (c *Checksum) ConditionResult() (bool, error) {
 		}
 
 		if c.preCommandMonitoredFiles[filename] != c.postCommandMonitoredFiles[filename] {
-			logrus.Debugf("File checksum for %q changed after shell command run", filename)
+			log.Debugf("File checksum for %q changed after shell command run", filename)
 			changed = true
 		}
 	}
 
 	if len(missingFiles) > 0 {
 		for i := range missingFiles {
-			logrus.Debugf("Missing files %q", missingFiles[i])
+			log.Debugf("Missing files %q", missingFiles[i])
 		}
 		return !changed, fmt.Errorf("missing monitored file checksum")
 	}
@@ -188,11 +188,11 @@ func (c *Checksum) TargetResult() (bool, error) {
 	for _, filename := range c.spec.Files {
 		if c.preCommandMonitoredFiles[filename] == "" || c.postCommandMonitoredFiles[filename] == "" {
 			if c.preCommandMonitoredFiles[filename] == "" {
-				logrus.Debugf("no checksum for file %q before running shell command", filename)
+				log.Debugf("no checksum for file %q before running shell command", filename)
 			}
 			if c.postCommandMonitoredFiles[filename] == "" {
 				missingFiles = append(missingFiles, filename)
-				logrus.Debugf("no checksum for file %q after running shell command", filename)
+				log.Debugf("no checksum for file %q after running shell command", filename)
 			}
 
 			changed = true
@@ -200,14 +200,14 @@ func (c *Checksum) TargetResult() (bool, error) {
 		}
 
 		if c.preCommandMonitoredFiles[filename] != c.postCommandMonitoredFiles[filename] {
-			logrus.Debugf("File checksum for %q changed after shell command run", filename)
+			log.Debugf("File checksum for %q changed after shell command run", filename)
 			changed = true
 		}
 	}
 
 	if len(missingFiles) > 0 {
 		for i := range missingFiles {
-			logrus.Debugf("Missing files %q", missingFiles[i])
+			log.Debugf("Missing files %q", missingFiles[i])
 		}
 		return changed, fmt.Errorf("missing monitored file checksum")
 	}

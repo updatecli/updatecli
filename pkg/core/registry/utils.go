@@ -8,7 +8,7 @@ import (
 
 	"github.com/Masterminds/semver/v3"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	oras "oras.land/oras-go/v2"
 	"oras.land/oras-go/v2/content"
 	"oras.land/oras-go/v2/registry"
@@ -47,7 +47,7 @@ func getLatestTagSortedBySemver(refName string, disableTLS bool) (string, error)
 	for i := range tags {
 		s, err := semver.NewVersion(tags[i])
 		if err != nil {
-			logrus.Debugf("Ignoring tag %q - %q", tags[i], err)
+			log.Debugf("Ignoring tag %q - %q", tags[i], err)
 			continue
 		}
 
@@ -62,7 +62,7 @@ func getLatestTagSortedBySemver(refName string, disableTLS bool) (string, error)
 	sort.Sort(sort.Reverse(semver.Collection(result)))
 
 	latestTag := result[0].Original()
-	logrus.Debugf("latest tag identified %q", latestTag)
+	log.Debugf("latest tag identified %q", latestTag)
 
 	return latestTag, nil
 }
@@ -113,7 +113,7 @@ func FetchManifest(ociName string, disableTLS bool) (v1.Descriptor, error) {
 	ctx = auth.AppendRepositoryScope(ctx, repo.Reference, auth.ActionPull, auth.ActionPush)
 
 	if disableTLS {
-		logrus.Debugln("TLS connection is disabled")
+		log.Debugln("TLS connection is disabled")
 		repo.PlainHTTP = true
 	}
 

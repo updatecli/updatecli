@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 // ErrNoVersionMatchingAge is returned when a resource publishes versions but the age
@@ -119,7 +119,7 @@ func (a Spec) IsOlderThan(t time.Time, since *time.Time) bool {
 
 	duration, err := parseReleaseAge(a.Minimum)
 	if err != nil {
-		logrus.Errorf("invalid MinimumReleaseAge %q: %q\n", a.Minimum, err)
+		log.Errorf("invalid MinimumReleaseAge %q: %q\n", a.Minimum, err)
 		return false
 	}
 
@@ -139,7 +139,7 @@ func (a Spec) IsNewerThan(t time.Time, since *time.Time) bool {
 
 	duration, err := parseReleaseAge(a.Maximum)
 	if err != nil {
-		logrus.Errorf("invalid MaximumReleaseAge %q: %q\n", a.Maximum, err)
+		log.Errorf("invalid MaximumReleaseAge %q: %q\n", a.Maximum, err)
 		return false
 	}
 

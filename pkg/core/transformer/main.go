@@ -9,8 +9,8 @@ import (
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/go-viper/mapstructure/v2"
-	"github.com/sirupsen/logrus"
 	daselV2 "github.com/tomwright/dasel/v2"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 var (
@@ -333,7 +333,7 @@ func (t *Transformers) Apply(input string) (string, error) {
 		return "", err
 	}
 
-	logrus.Info("[transformers]\n")
+	log.Info("[transformers]\n")
 
 	for _, transformer := range *t {
 		previous := output
@@ -342,7 +342,7 @@ func (t *Transformers) Apply(input string) (string, error) {
 			return "", err
 		}
 
-		logrus.Infof("✔ Result correctly transformed from %q to %q", previous, output)
+		log.Infof("✔ Result correctly transformed from %q to %q", previous, output)
 	}
 	return output, nil
 }
@@ -378,11 +378,11 @@ func applySemVerInc(input, semVerInc string) (string, error) {
 func (t *Transformer) Validate() error {
 
 	warningMessageToLowerCase := func(key string) {
-		logrus.Warningf("%q is deprecated in favor of %q", key, strings.ToLower(key))
+		log.Warningf("%q is deprecated in favor of %q", key, strings.ToLower(key))
 	}
 
 	warningMessageValueIgnore := func(key string) {
-		logrus.Warningf("Key %q and %q are mutually exclusive, ignoring %q ", key, strings.ToLower(key), key)
+		log.Warningf("Key %q and %q are mutually exclusive, ignoring %q ", key, strings.ToLower(key), key)
 	}
 
 	if len(t.DeprecatedAddPrefix) > 0 {
@@ -471,7 +471,7 @@ func (t *Transformer) Validate() error {
 		case false:
 			warningMessageValueIgnore("findSubMatch")
 		default:
-			logrus.Errorln("unexpected findsubmatch error")
+			log.Errorln("unexpected findsubmatch error")
 		}
 	}
 
@@ -500,7 +500,7 @@ func (t *Transformers) Validate() error {
 
 	if len(errs) > 0 {
 		for _, e := range errs {
-			logrus.Errorln(e)
+			log.Errorln(e)
 		}
 
 		return errors.New("transformers validation failed")

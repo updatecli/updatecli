@@ -7,7 +7,7 @@ import (
 	"time"
 
 	goscm "github.com/drone/go-scm/scm"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
@@ -26,7 +26,7 @@ func (g Gitea) Target(ctx context.Context, source string, scm scm.ScmHandler, pa
 	}
 
 	if len(g.spec.Commitish) == 0 {
-		logrus.Warningf("No commitish provided, fallback to branch %q\n", "main")
+		log.Warningf("No commitish provided, fallback to branch %q\n", "main")
 		g.spec.Commitish = "main"
 	}
 
@@ -47,7 +47,7 @@ func (g Gitea) Target(ctx context.Context, source string, scm scm.ScmHandler, pa
 		},
 	)
 	if err != nil {
-		logrus.Debugf("Gitea Api Response:\nReturn Code: %d\nBody:\n%s", resp.Status, resp.Body)
+		log.Debugf("Gitea Api Response:\nReturn Code: %d\nBody:\n%s", resp.Status, resp.Body)
 		return err
 	}
 
@@ -96,7 +96,7 @@ func (g Gitea) Target(ctx context.Context, source string, scm scm.ScmHandler, pa
 	}
 
 	if resp.Status >= 400 {
-		logrus.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
+		log.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
 		return fmt.Errorf("error from Gitea api: %v", resp.Status)
 	}
 

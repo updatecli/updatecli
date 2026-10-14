@@ -9,7 +9,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"go.yaml.in/yaml/v3"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
@@ -19,7 +19,7 @@ import (
 func FileChecksum(filename string) (string, error) {
 	file, err := os.Open(filename)
 	if err != nil {
-		logrus.Debugf("Can't open file %q", filename)
+		log.Debugf("Can't open file %q", filename)
 		return "", err
 	}
 
@@ -112,7 +112,7 @@ func getFieldValueByQuery(conf interface{}, query []string) (value string, err e
 
 	// Means that despite the different case sensitive key, we couldn't find it
 	if !Field.IsValid() {
-		logrus.Debugf(
+		log.Debugf(
 			"Configuration `%s` does not have the field `%s`",
 			ValueIface.Type(),
 			query[0])

@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/go-viper/mapstructure/v2"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
@@ -89,7 +89,7 @@ func (s Spec) Validate() error {
 	}
 	if len(errs) > 0 {
 		for i := range errs {
-			logrus.Errorln(errs[i])
+			log.Errorln(errs[i])
 		}
 		return fmt.Errorf("wrong exit spec")
 	}

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 var (
@@ -130,7 +130,7 @@ func getSortByAcceptedValues() []string {
 // Validate ensure that configuration inject are correct
 func (s *Spec) Validate() (errs []error) {
 	if len(s.Region) == 0 {
-		logrus.Printf("No region specified, falling back to %s\n", "us-east-1")
+		log.Printf("No region specified, falling back to %s\n", "us-east-1")
 		s.Region = "us-east-1"
 	}
 
@@ -149,8 +149,8 @@ func (s *Spec) Validate() (errs []error) {
 			}
 		}
 		if !found {
-			logrus.Printf("Invalid sortBy value %q", s.SortBy)
-			logrus.Printf("Accepted values: %v", getSortByAcceptedValues())
+			log.Printf("Invalid sortBy value %q", s.SortBy)
+			log.Printf("Accepted values: %v", getSortByAcceptedValues())
 			errs = append(errs, ErrWrongSortByValue)
 		}
 	}

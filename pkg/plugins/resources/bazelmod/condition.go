@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/Masterminds/semver/v3"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
@@ -59,14 +59,14 @@ func (b *Bazelmod) Condition(_ context.Context, source string, scm scm.ScmHandle
 				filePath,
 				expectedVersion), nil
 		}
-		logrus.Debugf("Semantic version comparison: %q != %q", dep.Version, expectedVersion)
+		log.Debugf("Semantic version comparison: %q != %q", dep.Version, expectedVersion)
 	} else {
 		// At least one version is not valid semver, use string comparison
 		if depErr != nil {
-			logrus.Debugf("Version %q is not a valid semantic version, using string comparison: %v", dep.Version, depErr)
+			log.Debugf("Version %q is not a valid semantic version, using string comparison: %v", dep.Version, depErr)
 		}
 		if expectedErr != nil {
-			logrus.Debugf("Version %q is not a valid semantic version, using string comparison: %v", expectedVersion, expectedErr)
+			log.Debugf("Version %q is not a valid semantic version, using string comparison: %v", expectedVersion, expectedErr)
 		}
 		versionsMatch = dep.Version == expectedVersion
 		if versionsMatch {

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
@@ -14,7 +14,7 @@ import (
 // Condition tests if an image matching the specific filters exists.
 func (a *AMI) Condition(_ context.Context, source string, scm scm.ScmHandler, pathResolver pathresolver.Resolver) (pass bool, message string, err error) {
 	if scm != nil {
-		logrus.Warningf("condition with SCM is not supported, please remove the scm block")
+		log.Warningf("condition with SCM is not supported, please remove the scm block")
 		return false, "", errors.New("condition with SCM is not supported")
 	}
 
@@ -42,7 +42,7 @@ func (a *AMI) Condition(_ context.Context, source string, scm scm.ScmHandler, pa
 		})
 	}
 
-	logrus.Debugf("Looking for latest AMI ID matching:\n  ---\n  %s\n  ---\n\n",
+	log.Debugf("Looking for latest AMI ID matching:\n  ---\n  %s\n  ---\n\n",
 		strings.TrimRight(
 			strings.ReplaceAll(a.Spec.String(), "\n", "\n  "), "\n "))
 

@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"text/template"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 var (
@@ -48,12 +48,12 @@ func (f Fleet) discoverFleetDependenciesManifests() ([][]byte, error) {
 	}
 
 	for _, foundFleetBundleFile := range foundFleetBundleFiles {
-		logrus.Debugf("parsing file %q", foundFleetBundleFile)
+		log.Debugf("parsing file %q", foundFleetBundleFile)
 
 		relativeFoundChartFile, err := filepath.Rel(f.rootDir, foundFleetBundleFile)
 		if err != nil {
 			// Let's try the next chart if one fail
-			logrus.Debugln(err)
+			log.Debugln(err)
 			continue
 		}
 
@@ -64,7 +64,7 @@ func (f Fleet) discoverFleetDependenciesManifests() ([][]byte, error) {
 
 		data, err := getFleetBundleData(foundFleetBundleFile)
 		if err != nil {
-			logrus.Debugln(err)
+			log.Debugln(err)
 			continue
 		}
 
@@ -79,14 +79,14 @@ func (f Fleet) discoverFleetDependenciesManifests() ([][]byte, error) {
 
 		if len(f.spec.Ignore) > 0 {
 			if f.spec.Ignore.isMatchingRules(f.rootDir, relativeFoundChartFile, data.Helm.Repo, data.Helm.Chart, data.Helm.Version) {
-				logrus.Debugf("Ignoring Helm chart %q from %q, as matching ignore rule(s)\n", data.Helm.Chart, relativeFoundChartFile)
+				log.Debugf("Ignoring Helm chart %q from %q, as matching ignore rule(s)\n", data.Helm.Chart, relativeFoundChartFile)
 				continue
 			}
 		}
 
 		if len(f.spec.Only) > 0 {
 			if !f.spec.Only.isMatchingRules(f.rootDir, relativeFoundChartFile, data.Helm.Repo, data.Helm.Chart, data.Helm.Version) {
-				logrus.Debugf("Ignoring Helm chart %q from %q, as not matching only rule(s)\n", data.Helm.Chart, relativeFoundChartFile)
+				log.Debugf("Ignoring Helm chart %q from %q, as not matching only rule(s)\n", data.Helm.Chart, relativeFoundChartFile)
 				continue
 			}
 		}
@@ -97,10 +97,10 @@ func (f Fleet) discoverFleetDependenciesManifests() ([][]byte, error) {
 		case nil:
 			if _, ok := f.spec.Auths[helmRepo.Host]; ok {
 				token = f.spec.Auths[helmRepo.Host].Token
-				logrus.Debugf("found token for repository %q", data.Helm.Repo)
+				log.Debugf("found token for repository %q", data.Helm.Repo)
 			}
 		default:
-			logrus.Debugf("Ignoring auth configuration due to invalid Helm repository URL: %s", err)
+			log.Debugf("Ignoring auth configuration due to invalid Helm repository URL: %s", err)
 		}
 
 		sourceVersionFilterKind := "semver"
@@ -112,14 +112,14 @@ func (f Fleet) discoverFleetDependenciesManifests() ([][]byte, error) {
 			sourceVersionFilterPattern, err = f.versionFilter.GreaterThanPattern(data.Helm.Version)
 			sourceVersionFilterRegex = f.versionFilter.Regex
 			if err != nil {
-				logrus.Debugf("building version filter pattern: %s", err)
+				log.Debugf("building version filter pattern: %s", err)
 				sourceVersionFilterPattern = "*"
 			}
 		}
 
 		tmpl, err := template.New("manifest").Parse(manifestTemplate)
 		if err != nil {
-			logrus.Debugln(err)
+			log.Debugln(err)
 			continue
 		}
 
@@ -162,7 +162,7 @@ func (f Fleet) discoverFleetDependenciesManifests() ([][]byte, error) {
 
 		manifest := bytes.Buffer{}
 		if err := tmpl.Execute(&manifest, params); err != nil {
-			logrus.Debugln(err)
+			log.Debugln(err)
 			continue
 		}
 

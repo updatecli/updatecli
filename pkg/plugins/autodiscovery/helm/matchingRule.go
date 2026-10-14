@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 
 	"github.com/Masterminds/semver/v3"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 // MatchingRule defines a rule to select chart dependencies or container images.
@@ -70,12 +70,12 @@ func (m MatchingRules) isMatchingRules(rootDir, filePath, dependencyName, depend
 				match, err := filepath.Match(rule.Path, filePath)
 
 				if err != nil {
-					logrus.Errorf("%s - %q", err, rule.Path)
+					log.Errorf("%s - %q", err, rule.Path)
 					continue
 				}
 				ruleResults = append(ruleResults, match)
 				if match {
-					logrus.Debugf("file path %q matching rule %q", filePath, rule.Path)
+					log.Debugf("file path %q matching rule %q", filePath, rule.Path)
 				}
 			}
 
@@ -102,14 +102,14 @@ func (m MatchingRules) isMatchingRules(rootDir, filePath, dependencyName, depend
 						v, err := semver.NewVersion(dependencyVersion)
 						if err != nil {
 							match = dependencyVersion == ruleDependencyVersion
-							logrus.Debugf("%q - %s", dependencyVersion, err)
+							log.Debugf("%q - %s", dependencyVersion, err)
 							break outDependency
 						}
 
 						c, err := semver.NewConstraint(ruleDependencyVersion)
 						if err != nil {
 							match = dependencyVersion == ruleDependencyVersion
-							logrus.Debugf("%q %s", err, ruleDependencyVersion)
+							log.Debugf("%q %s", err, ruleDependencyVersion)
 							break outDependency
 						}
 
@@ -143,14 +143,14 @@ func (m MatchingRules) isMatchingRules(rootDir, filePath, dependencyName, depend
 						v, err := semver.NewVersion(containerTag)
 						if err != nil {
 							match = containerTag == ruleContainerTag
-							logrus.Debugf("%q - %s", containerTag, err)
+							log.Debugf("%q - %s", containerTag, err)
 							break outContainer
 						}
 
 						c, err := semver.NewConstraint(ruleContainerTag)
 						if err != nil {
 							match = containerTag == ruleContainerTag
-							logrus.Debugf("%q %s", err, ruleContainerTag)
+							log.Debugf("%q %s", err, ruleContainerTag)
 							break outContainer
 						}
 

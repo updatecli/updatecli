@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
@@ -35,7 +35,7 @@ func (t *TerraformLock) Target(_ context.Context, source string, scm scm.ScmHand
 	valueToWrite := source
 	if t.spec.Value != "" {
 		valueToWrite = t.spec.Value
-		logrus.Debug("Using spec.Value instead of source input value.")
+		log.Debug("Using spec.Value instead of source input value.")
 	}
 
 	resultTarget.NewInformation = valueToWrite

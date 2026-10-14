@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	azdoclient "github.com/updatecli/updatecli/pkg/plugins/resources/azuredevops/client"
 
@@ -67,7 +67,7 @@ func (a *AzureDevOps) findExistingPullRequest(ctx context.Context) (*azdogit.Git
 			stringValue(pr.TargetRefName) == targetRefName &&
 			pr.Status != nil &&
 			*pr.Status == azdogit.PullRequestStatusValues.Active {
-			logrus.Infof("%s Azure DevOps pull request detected at:\n\t%s",
+			log.Infof("%s Azure DevOps pull request detected at:\n\t%s",
 				result.SUCCESS,
 				a.pullRequestLink(&pr))
 
@@ -105,11 +105,11 @@ func (a *AzureDevOps) isRemoteBranchesExist(ctx context.Context) (bool, error) {
 	}
 
 	if !sourceExists {
-		logrus.Debugf("Branch %q not found on remote repository %s/%s", a.SourceBranch, a.Project, a.Repository)
+		log.Debugf("Branch %q not found on remote repository %s/%s", a.SourceBranch, a.Project, a.Repository)
 	}
 
 	if !targetExists {
-		logrus.Debugf("Branch %q not found on remote repository %s/%s", a.TargetBranch, a.Project, a.Repository)
+		log.Debugf("Branch %q not found on remote repository %s/%s", a.TargetBranch, a.Project, a.Repository)
 	}
 
 	return sourceExists && targetExists, nil
@@ -195,7 +195,7 @@ func (a *AzureDevOps) retryUntilPullRequestHeadMatchesRemoteBranchHead(ctx conte
 		}
 
 		if attempt < maxAttempts {
-			logrus.Debugf("Azure DevOps pull request head does not match remote branch head yet, retrying (%d/%d)", attempt, maxAttempts)
+			log.Debugf("Azure DevOps pull request head does not match remote branch head yet, retrying (%d/%d)", attempt, maxAttempts)
 			cleanupHeadMatchSleep(cleanupHeadMatchRetryDelay)
 		}
 	}

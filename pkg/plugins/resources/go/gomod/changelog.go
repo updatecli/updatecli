@@ -3,7 +3,6 @@ package gomod
 import (
 	"github.com/updatecli/updatecli/pkg/core/log"
 
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/go/language"
 	gomodule "github.com/updatecli/updatecli/pkg/plugins/resources/go/module"
@@ -16,7 +15,7 @@ func (g *GoMod) Changelog(from, to string) *result.Changelogs {
 	case kindGolang:
 		l, err := language.New(g.spec)
 		if err != nil {
-			logrus.Debugf("failed to init golang language: %s", err)
+			log.Debugf("failed to init golang language: %s", err)
 		}
 
 		return l.Changelog(from, to)
@@ -24,7 +23,7 @@ func (g *GoMod) Changelog(from, to string) *result.Changelogs {
 	case kindModule:
 		m, err := gomodule.New(g.spec)
 		if err != nil {
-			logrus.Debugf("failed to init golang module: %s", err)
+			log.Debugf("failed to init golang module: %s", err)
 		}
 
 		return m.Changelog(from, to)

@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 var (
@@ -71,12 +71,12 @@ func readSettingsXML(path string) *Settings {
 
 	b, err := os.ReadFile(path)
 	if err != nil {
-		logrus.Errorf("Reading file %q failed: %s", path, err)
+		log.Errorf("Reading file %q failed: %s", path, err)
 	}
 
 	err = xml.Unmarshal(b, &settings)
 	if err != nil {
-		logrus.Errorf("Failed to unmarshal %q: %s", path, err)
+		log.Errorf("Failed to unmarshal %q: %s", path, err)
 		return nil
 	}
 

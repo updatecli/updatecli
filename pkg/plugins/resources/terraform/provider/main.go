@@ -9,7 +9,7 @@ import (
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/hashicorp/hcl/v2/hclwrite"
 	"github.com/minamijoyo/tfupdate/tfupdate"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/text"
 	terraformUtils "github.com/updatecli/updatecli/pkg/plugins/resources/terraform"
@@ -171,7 +171,7 @@ func (t *TerraformProvider) UpdateAbsoluteFilePath(pathResolver pathresolver.Res
 		resolvedPath := pathResolver.Join(f.originalFilePath)
 
 		if resolvedPath != f.filePath {
-			logrus.Debugf("Relative path detected: changing from %q to %q", f.originalFilePath, resolvedPath)
+			log.Debugf("Relative path detected: changing from %q to %q", f.originalFilePath, resolvedPath)
 		}
 
 		f.filePath = resolvedPath

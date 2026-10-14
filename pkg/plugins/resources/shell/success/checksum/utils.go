@@ -6,20 +6,20 @@ import (
 	"io"
 	"os"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 func getChecksum(filename string) string {
 	f, err := os.Open(filename)
 	if err != nil {
-		logrus.Debugln(err)
+		log.Debugln(err)
 		return ""
 	}
 	defer f.Close()
 
 	h := sha256.New()
 	if _, err := io.Copy(h, f); err != nil {
-		logrus.Debugln(err)
+		log.Debugln(err)
 		return ""
 	}
 

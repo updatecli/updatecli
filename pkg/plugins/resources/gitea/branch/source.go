@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
@@ -19,7 +19,7 @@ func (g *Gitea) Source(_ context.Context, pathResolver pathresolver.Resolver, re
 	}
 
 	if len(versions) == 0 {
-		logrus.Infof("%s No Gitea branches found", result.FAILURE)
+		log.Infof("%s No Gitea branches found", result.FAILURE)
 		return errors.New("no gitea branches found")
 	}
 

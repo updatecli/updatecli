@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/shurcooL/githubv4"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github/client"
 )
 
@@ -39,12 +39,12 @@ func getUserInfo(ctx context.Context, c client.Client, login string, retry int) 
 			// then we need to re-requery the rate limit to get the latest information
 			rateLimit, err := queryRateLimit(c, ctx)
 			if err != nil {
-				logrus.Errorf("Error querying GitHub API rate limit: %s", err)
+				log.Errorf("Error querying GitHub API rate limit: %s", err)
 			}
 
-			logrus.Debugln(rateLimit)
+			log.Debugln(rateLimit)
 			if retry < client.MaxRetry {
-				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
+				log.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
 				rateLimit.Pause()
 				return getUserInfo(ctx, c, login, retry+1)
 			}
@@ -53,7 +53,7 @@ func getUserInfo(ctx context.Context, c client.Client, login string, retry int) 
 		return nil, err
 	}
 
-	logrus.Debugln(query.RateLimit)
+	log.Debugln(query.RateLimit)
 
 	return &query.User, nil
 }

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/dockerimage"
 )
 
@@ -17,13 +17,13 @@ func (f Flux) discoverOCIRepositoryManifests() [][]byte {
 	for _, foundFluxFile := range f.ociRepositoryFiles {
 		relativeFoundFluxFile, err := filepath.Rel(f.rootDir, foundFluxFile)
 		if err != nil {
-			logrus.Debugln(err)
+			log.Debugln(err)
 			continue
 		}
 
 		dataDocuments, err := loadOCIRepository(foundFluxFile)
 		if err != nil {
-			logrus.Debugln(err)
+			log.Debugln(err)
 			continue
 		}
 
@@ -38,14 +38,14 @@ func (f Flux) discoverOCIRepositoryManifests() [][]byte {
 
 			if len(f.spec.Ignore) > 0 {
 				if f.spec.Ignore.isMatchingRules(f.rootDir, relativeFoundFluxFile, "", ociName, ociVersion) {
-					logrus.Debugf("Ignoring OCI repository %q from %q, as matching ignore rule(s)\n", ociName, relativeFoundFluxFile)
+					log.Debugf("Ignoring OCI repository %q from %q, as matching ignore rule(s)\n", ociName, relativeFoundFluxFile)
 					continue
 				}
 			}
 
 			if len(f.spec.Only) > 0 {
 				if !f.spec.Only.isMatchingRules(f.rootDir, relativeFoundFluxFile, "", ociName, ociVersion) {
-					logrus.Debugf("Ignoring OCI repository %q from %q, as not matching only rule(s)\n", ociName, relativeFoundFluxFile)
+					log.Debugf("Ignoring OCI repository %q from %q, as not matching only rule(s)\n", ociName, relativeFoundFluxFile)
 					continue
 				}
 			}
@@ -76,7 +76,7 @@ func (f Flux) discoverOCIRepositoryManifests() [][]byte {
 				versionFilterPattern, err = f.versionFilter.GreaterThanPattern(ociVersion)
 				versionFilterRegex = f.versionFilter.Regex
 				if err != nil {
-					logrus.Debugf("building version filter pattern: %s", err)
+					log.Debugf("building version filter pattern: %s", err)
 					versionFilterPattern = ociVersion
 				}
 			}
@@ -85,23 +85,23 @@ func (f Flux) discoverOCIRepositoryManifests() [][]byte {
 			if f.digest && sourceSpec != nil {
 				tmpl, err = template.New("manifest").Parse(ociRepositoryManifestTemplateDigestAndLatest)
 				if err != nil {
-					logrus.Debugf("parsing oci repository file %q: %s", foundFluxFile, err)
+					log.Debugf("parsing oci repository file %q: %s", foundFluxFile, err)
 					continue
 				}
 			} else if f.digest && sourceSpec == nil {
 				tmpl, err = template.New("manifest").Parse(ociRepositoryManifestTemplateDigest)
 				if err != nil {
-					logrus.Debugf("parsing oci repository file %q: %s", foundFluxFile, err)
+					log.Debugf("parsing oci repository file %q: %s", foundFluxFile, err)
 					continue
 				}
 			} else if !f.digest && sourceSpec != nil {
 				tmpl, err = template.New("manifest").Parse(ociRepositoryManifestTemplateLatest)
 				if err != nil {
-					logrus.Debugf("parsing oci repository file %q: %s", foundFluxFile, err)
+					log.Debugf("parsing oci repository file %q: %s", foundFluxFile, err)
 					continue
 				}
 			} else {
-				logrus.Infoln("No source spec detected")
+				log.Infoln("No source spec detected")
 				continue
 			}
 
@@ -138,7 +138,7 @@ func (f Flux) discoverOCIRepositoryManifests() [][]byte {
 
 			manifest := bytes.Buffer{}
 			if err := tmpl.Execute(&manifest, params); err != nil {
-				logrus.Debugln(err)
+				log.Debugln(err)
 				continue
 			}
 

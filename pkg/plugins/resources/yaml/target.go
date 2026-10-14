@@ -6,7 +6,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
@@ -38,7 +38,7 @@ func (y *Yaml) Target(_ context.Context, source string, scm scm.ScmHandler, path
 	valueToWrite := source
 	if y.spec.Value != "" {
 		valueToWrite = y.spec.Value
-		logrus.Debug("Using spec.Value instead of source input value.")
+		log.Debug("Using spec.Value instead of source input value.")
 	}
 
 	resultTarget.NewInformation = valueToWrite
@@ -110,7 +110,7 @@ func (y Yaml) validateTargetFilePath() error {
 
 	if len(errs) > 0 {
 		for i := range errs {
-			logrus.Errorln(errs[i])
+			log.Errorln(errs[i])
 		}
 		return fmt.Errorf("invalid target file path")
 	}

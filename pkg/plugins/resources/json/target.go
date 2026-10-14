@@ -6,7 +6,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
@@ -48,7 +48,7 @@ func (j *Json) Target(_ context.Context, source string, scm scm.ScmHandler, path
 
 		switch j.engine {
 		case ENGINEDASEL_V1:
-			logrus.Debugf("Using engine %q", j.engine)
+			log.Debugf("Using engine %q", j.engine)
 			switch len(j.spec.Query) > 0 {
 			case true:
 				queryResults, err = j.contents[i].MultipleQuery(j.spec.Query)
@@ -69,14 +69,14 @@ func (j *Json) Target(_ context.Context, source string, scm scm.ScmHandler, path
 			}
 
 		case ENGINEDASEL_V2:
-			logrus.Debugf("Using engine %q", ENGINEDASEL_V2)
+			log.Debugf("Using engine %q", ENGINEDASEL_V2)
 			queryResults, err = j.contents[i].QueryV2(j.spec.Key)
 			if err != nil {
 				return fmt.Errorf("querying file %q: %w", j.contents[i].FilePath, err)
 			}
 
 		case ENGINEDASEL_V3:
-			logrus.Debugf("Using engine %q", ENGINEDASEL_V3)
+			log.Debugf("Using engine %q", ENGINEDASEL_V3)
 			queryResults, err = j.contents[i].QueryV3(j.spec.Key)
 			if err != nil {
 				return fmt.Errorf("querying file %q: %w", j.contents[i].FilePath, err)

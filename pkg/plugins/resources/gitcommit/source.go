@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
@@ -60,8 +60,8 @@ func (gc *GitCommit) Source(_ context.Context, pathResolver pathresolver.Resolve
 			hence the reminder.
 		*/
 		if errors.Is(err, gitgeneric.ErrNoCommitFound) {
-			logrus.Debugf("%s", age.ErrNoVersionMatchingAge)
-			logrus.Warningf("no commit of branch %q matched the age filter %s", branch, endOfHistory(err, gc.spec.Depth))
+			log.Debugf("%s", age.ErrNoVersionMatchingAge)
+			log.Warningf("no commit of branch %q matched the age filter %s", branch, endOfHistory(err, gc.spec.Depth))
 
 			resultSource.Result = result.SKIPPED
 			resultSource.Description = "no git commit matches the age filter yet"

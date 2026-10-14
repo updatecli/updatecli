@@ -7,7 +7,7 @@ import (
 
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
@@ -15,7 +15,7 @@ import (
 // Condition checks if a Docker image tag digest exists in a registry
 func (ds *DockerDigest) Condition(_ context.Context, source string, scm scm.ScmHandler, pathResolver pathresolver.Resolver) (pass bool, message string, err error) {
 	if scm != nil {
-		logrus.Warningln("scm is not supported, ignoring")
+		log.Warningln("scm is not supported, ignoring")
 	}
 
 	refName := ds.spec.Image

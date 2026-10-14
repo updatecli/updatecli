@@ -3,11 +3,11 @@ package cmd
 import (
 	"os"
 
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/updatecli/updatecli/pkg/core/compose"
 	"github.com/updatecli/updatecli/pkg/core/config"
 	"github.com/updatecli/updatecli/pkg/core/engine/manifest"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 var (
@@ -21,7 +21,7 @@ var (
 
 			composeFiles, err := compose.New(composeCmdFile, map[string]bool{})
 			if err != nil {
-				logrus.Errorf("command failed: %s", err)
+				log.Errorf("command failed: %s", err)
 				os.Exit(1)
 			}
 
@@ -34,7 +34,7 @@ var (
 					parseParametersList(composeShowIgnoredPolicyIDs),
 				)
 				if err != nil {
-					logrus.Errorf("command failed: %s", err)
+					log.Errorf("command failed: %s", err)
 					os.Exit(1)
 				}
 
@@ -52,7 +52,7 @@ var (
 			e.Options.ManifestOptions.RelativePaths = config.RelativePathBase(relativePaths)
 			err = run("compose/show")
 			if err != nil {
-				logrus.Errorf("command failed: %s", err)
+				log.Errorf("command failed: %s", err)
 				os.Exit(1)
 			}
 		},

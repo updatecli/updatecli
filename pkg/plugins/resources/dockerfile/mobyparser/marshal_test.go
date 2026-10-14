@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
+	"github.com/updatecli/updatecli/pkg/core/log"
 
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
 )
@@ -277,7 +277,7 @@ func TestMarshal(t *testing.T) {
 
 			err = Marshal(d, &gotDockerfile)
 			if err != nil {
-				logrus.Errorf("err - %s", err)
+				log.Errorf("err - %s", err)
 			}
 
 			assert.Equal(t, data.expectedDockerfile, gotDockerfile)

@@ -9,7 +9,7 @@ import (
 	"net/http/httputil"
 	"sort"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 type versionItem struct {
@@ -70,7 +70,7 @@ func (t *TerraformRegistry) versions(ctx context.Context) (versions []string, er
 	defer res.Body.Close()
 	if res.StatusCode >= 400 {
 		body, err := httputil.DumpResponse(res, false)
-		logrus.Debugf("\n%v\n", string(body))
+		log.Debugf("\n%v\n", string(body))
 		return nil, err
 	}
 
@@ -86,7 +86,7 @@ func (t *TerraformRegistry) versions(ctx context.Context) (versions []string, er
 	case TypeModule:
 		versionListing = &moduleVersionListing{}
 	default:
-		logrus.Errorf("unknown registry type %q", t.registryAddress.registryType)
+		log.Errorf("unknown registry type %q", t.registryAddress.registryType)
 		return []string{}, err
 	}
 

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 // MatchingRule defines a rule to select container images.
@@ -58,12 +58,12 @@ func (m MatchingRules) isMatchingRules(rootDir, filePath, image string) bool {
 
 				match, err := filepath.Match(rule.Path, filePath)
 				if err != nil {
-					logrus.Errorf("%s - %q", err, rule.Path)
+					log.Errorf("%s - %q", err, rule.Path)
 					continue
 				}
 				ruleResults = append(ruleResults, match)
 				if match {
-					logrus.Debugf("file path %q matching rule %q", filePath, rule.Path)
+					log.Debugf("file path %q matching rule %q", filePath, rule.Path)
 				}
 			}
 

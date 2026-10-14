@@ -4,14 +4,14 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
 // Source returns the latest npm package version
 func (cp CargoPackage) Source(ctx context.Context, pathResolver pathresolver.Resolver, resultSource *result.Source) error {
-	logrus.Debugf("Registry RootDir: %s, base directory: %s", cp.registry.RootDir, pathResolver.Dir())
+	log.Debugf("Registry RootDir: %s, base directory: %s", cp.registry.RootDir, pathResolver.Dir())
 	switch cp.isSCM {
 	case true:
 		// With an scm, the registry data is in the checkout.

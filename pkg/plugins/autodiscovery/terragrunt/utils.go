@@ -14,7 +14,6 @@ import (
 	"github.com/hashicorp/hcl/v2/hclparse"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 	terraformRegistryAddress "github.com/hashicorp/terraform-registry-address"
-	"github.com/sirupsen/logrus"
 	terraformAutoDiscovery "github.com/updatecli/updatecli/pkg/plugins/autodiscovery/terraform"
 	terraformUtils "github.com/updatecli/updatecli/pkg/plugins/resources/terraform"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
@@ -31,7 +30,7 @@ const (
 func searchTerragruntFiles(rootDir string) ([]string, error) {
 	foundFiles := []string{}
 
-	logrus.Debugf("Looking for Terragrunt modules in %q", rootDir)
+	log.Debugf("Looking for Terragrunt modules in %q", rootDir)
 
 	err := filepath.WalkDir(rootDir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
@@ -229,7 +228,7 @@ func getModuleFromUrl(evaluatedSource string, rawSource string, allowNoVersion b
 	case SourceTypeGit:
 		//
 	default:
-		logrus.Errorf("Unsupported source type %q", source.sourceType)
+		log.Errorf("Unsupported source type %q", source.sourceType)
 	}
 
 	return module, nil
@@ -269,7 +268,7 @@ func evaluateHcl(rawSource string, hclContent []byte, hclFileName string) (strin
 		for attrName, attr := range blockContent {
 			attrValue, diags := attr.Expr.Value(&hcl.EvalContext{})
 			if diags.HasErrors() {
-				logrus.Debugf("Skipping attribute %s: %v", attrName, diags.Error())
+				log.Debugf("Skipping attribute %s: %v", attrName, diags.Error())
 				continue
 			}
 			localsValue[attrName] = attrValue

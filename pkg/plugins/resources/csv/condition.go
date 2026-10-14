@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
@@ -31,7 +31,7 @@ func (c *CSV) Condition(_ context.Context, source string, scm scm.ScmHandler, pa
 
 		switch c.engine {
 		case ENGINEDASEL_V1:
-			logrus.Debugf("Using engine %q", c.engine)
+			log.Debugf("Using engine %q", c.engine)
 			switch len(c.spec.Query) > 0 {
 			case true:
 				queryResults, err = c.contents[i].MultipleQuery(c.spec.Query)
@@ -49,14 +49,14 @@ func (c *CSV) Condition(_ context.Context, source string, scm scm.ScmHandler, pa
 			}
 
 		case ENGINEDASEL_V2:
-			logrus.Debugf("Using engine %q", c.engine)
+			log.Debugf("Using engine %q", c.engine)
 			queryResults, err = c.contents[i].QueryV2(c.spec.Key)
 			if err != nil {
 				return false, "", fmt.Errorf("querying file %q: %w", c.contents[i].FilePath, err)
 			}
 
 		case ENGINEDASEL_V3:
-			logrus.Debugf("Using engine %q", c.engine)
+			log.Debugf("Using engine %q", c.engine)
 			queryResults, err = c.contents[i].QueryV3(c.spec.Key)
 			if err != nil {
 				return false, "", fmt.Errorf("querying file %q: %w", c.contents[i].FilePath, err)

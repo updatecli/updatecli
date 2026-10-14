@@ -10,7 +10,7 @@ import (
 	"text/template"
 
 	"github.com/Masterminds/sprig/v3"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
@@ -30,7 +30,7 @@ func (f *File) Target(_ context.Context, source string, scm scm.ScmHandler, path
 
 	if f.spec.Line > 0 && f.spec.ForceCreate {
 		validationError := fmt.Errorf("validation error in target of type 'file': 'spec.line' and 'spec.forcecreate' are mutually exclusive")
-		logrus.Errorln(validationError.Error())
+		log.Errorln(validationError.Error())
 		return validationError
 	}
 
@@ -39,7 +39,7 @@ func (f *File) Target(_ context.Context, source string, scm scm.ScmHandler, path
 	for filePath := range f.files {
 		if text.IsURL(f.files[filePath].path) {
 			validationError := fmt.Errorf("validation error in target of type 'file': spec.files item value (%q) is an URL which is not supported for a target", filePath)
-			logrus.Errorln(validationError.Error())
+			log.Errorln(validationError.Error())
 			return validationError
 		}
 	}
@@ -84,7 +84,7 @@ func (f *File) Target(_ context.Context, source string, scm scm.ScmHandler, path
 		}
 		for k, v := range f.spec.TemplateData {
 			if k == "source" {
-				logrus.Warnf("TemplateData key 'source' is reserved and will be ignored")
+				log.Warnf("TemplateData key 'source' is reserved and will be ignored")
 				continue
 			}
 			templateData[k] = v
@@ -112,7 +112,7 @@ func (f *File) Target(_ context.Context, source string, scm scm.ScmHandler, path
 
 		reg, err := regexp.Compile(f.spec.MatchPattern)
 		if err != nil {
-			logrus.Errorf("Validation error in target of type 'file': Unable to parse the regexp specified at f.spec.MatchPattern (%q)", f.spec.MatchPattern)
+			log.Errorf("Validation error in target of type 'file': Unable to parse the regexp specified at f.spec.MatchPattern (%q)", f.spec.MatchPattern)
 			return err
 		}
 
@@ -120,7 +120,7 @@ func (f *File) Target(_ context.Context, source string, scm scm.ScmHandler, path
 		for filePath, file := range f.files {
 			if matches := reg.FindStringSubmatch(file.content); len(matches) > 1 {
 				resultTarget.Information = matches[1]
-				logrus.Debugf("Extracted current version %q from capture group in file %q", matches[1], filePath)
+				log.Debugf("Extracted current version %q from capture group in file %q", matches[1], filePath)
 				break // Use first match found
 			}
 		}
@@ -131,14 +131,14 @@ func (f *File) Target(_ context.Context, source string, scm scm.ScmHandler, path
 				if f.spec.SearchPattern {
 					// When using both a file path pattern AND a content matching regex, then we want to ignore files that don't match the pattern
 					// as otherwise we trigger error for files we don't care about.
-					logrus.Debugf("No match found for pattern %q in file %q, removing it from the list of files to update", f.spec.MatchPattern, filePath)
+					log.Debugf("No match found for pattern %q in file %q, removing it from the list of files to update", f.spec.MatchPattern, filePath)
 					delete(f.files, filePath)
 					continue
 				}
 				// We allow the possibility to match only some files. In that case, just a warning here
 				return fmt.Errorf("no line matched in file %q for pattern %q", filePath, f.spec.MatchPattern)
 			}
-			logrus.Debugf("Match found for pattern %q in file %q", f.spec.MatchPattern, filePath)
+			log.Debugf("Match found for pattern %q in file %q", f.spec.MatchPattern, filePath)
 
 			// Keep the original content for later comparison
 			originalContents[filePath] = file.content
@@ -165,7 +165,7 @@ func (f *File) Target(_ context.Context, source string, scm scm.ScmHandler, path
 	for filePath, file := range f.files {
 		if file.content == originalContents[filePath] {
 			notChanged++
-			logrus.Debugf("content from file %q already up to date", file.originalPath)
+			log.Debugf("content from file %q already up to date", file.originalPath)
 		} else {
 			files = append(files, file.path)
 		}
@@ -220,7 +220,7 @@ func (f *File) Target(_ context.Context, source string, scm scm.ScmHandler, path
 		} else {
 			targetDiff = text.Diff(filePath, filePath, originalContents[filePath], file.content)
 		}
-		logrus.Infof("%s\n\n```\n%s\n```\n\n",
+		log.Infof("%s\n\n```\n%s\n```\n\n",
 			description,
 			targetDiff,
 		)

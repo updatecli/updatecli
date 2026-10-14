@@ -12,8 +12,6 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/log"
 
 	terraformUtils "github.com/updatecli/updatecli/pkg/plugins/resources/terraform"
-
-	"github.com/sirupsen/logrus"
 )
 
 // searchNomadFiles will look, recursively, for every files named *.hcl or *.nomad from a root directory.
@@ -23,7 +21,7 @@ func searchNomadFiles(rootDir string, filePatterns []string) ([]string, error) {
 
 	potentialNomadFiles := []string{}
 
-	logrus.Debugf("Looking for Nomad file(s) in %q", rootDir)
+	log.Debugf("Looking for Nomad file(s) in %q", rootDir)
 
 	err := filepath.WalkDir(rootDir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
@@ -35,7 +33,7 @@ func searchNomadFiles(rootDir string, filePatterns []string) ([]string, error) {
 			for _, f := range filePatterns {
 				match, err := filepath.Match(f, d.Name())
 				if err != nil {
-					logrus.Errorln(err)
+					log.Errorln(err)
 					continue
 				}
 				if match {
@@ -124,7 +122,7 @@ func getNomadDockerSpecFromFile(filename string) ([]nomadDockerSpec, error) {
 
 											variableName, err := getVariableName(imageValue)
 											if err != nil {
-												logrus.Warningf("%s", err)
+												log.Warningf("%s", err)
 												continue
 											}
 
@@ -133,7 +131,7 @@ func getNomadDockerSpecFromFile(filename string) ([]nomadDockerSpec, error) {
 											if variableName != "" {
 												value, err = interpolateVariableName(imageValue, variables[variableName])
 												if err != nil {
-													logrus.Warningf("%s", err)
+													log.Warningf("%s", err)
 													continue
 												}
 												path = fmt.Sprintf("variable.%s.default", variableName)

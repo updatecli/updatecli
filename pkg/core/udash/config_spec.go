@@ -7,7 +7,7 @@ import (
 	"io/fs"
 	"os"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 // spec defines the structure of the config file
@@ -91,7 +91,7 @@ func updateConfigFile(data authData) error {
 
 	d, err := readConfigFile()
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
-		logrus.Errorf("Reset configuration udash configuration file content because: %s", err)
+		log.Errorf("Reset configuration udash configuration file content because: %s", err)
 	}
 
 	if d == nil {
@@ -111,7 +111,7 @@ func updateConfigFile(data authData) error {
 		return fmt.Errorf("write Updatecli configuration file: %w", err)
 	}
 
-	logrus.Debugf("Updatecli configuration file %s updated", updatecliConfigPath)
+	log.Debugf("Updatecli configuration file %s updated", updatecliConfigPath)
 
 	return nil
 }

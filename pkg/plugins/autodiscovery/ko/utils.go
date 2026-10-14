@@ -8,13 +8,12 @@ import (
 
 	"github.com/updatecli/updatecli/pkg/core/log"
 
-	"github.com/sirupsen/logrus"
 	goyaml "go.yaml.in/yaml/v3"
 )
 
 // searchKosFiles will look, recursively, for every Ko files.
 func searchKosFiles(rootDir string, files []string) ([]string, error) {
-	logrus.Debugf("Looking for Ko files in %q", rootDir)
+	log.Debugf("Looking for Ko files in %q", rootDir)
 
 	koFiles := []string{}
 
@@ -43,11 +42,11 @@ func searchKosFiles(rootDir string, files []string) ([]string, error) {
 		return nil, err
 	}
 
-	logrus.Debugf("%d Ko file(s) found", len(koFiles))
+	log.Debugf("%d Ko file(s) found", len(koFiles))
 
 	for _, foundFile := range koFiles {
 		koFile := filepath.Base(filepath.Dir(foundFile))
-		logrus.Debugf("    * %q", koFile)
+		log.Debugf("    * %q", koFile)
 	}
 
 	return koFiles, nil
@@ -58,7 +57,7 @@ func getKoManifestData(filename string) (*koSpec, error) {
 	var data koSpec
 
 	koFile := filepath.Base(filepath.Dir(filename))
-	logrus.Debugf("Ko file %q found in %q", koFile, filepath.Dir(filename))
+	log.Debugf("Ko file %q found in %q", koFile, filepath.Dir(filename))
 
 	if _, err := os.Stat(filename); err != nil {
 		return &koSpec{}, err

@@ -8,8 +8,8 @@ import (
 	"github.com/drone/go-scm/scm/driver/stash"
 	"github.com/drone/go-scm/scm/transport"
 	"github.com/drone/go-scm/scm/transport/oauth2"
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 // Spec defines the settings used to connect to a Bitbucket Server API.
@@ -99,7 +99,7 @@ func New(s Spec) (Client, error) {
 // Validate validates that a spec contains good content
 func (s Spec) Validate() error {
 	if len(s.URL) == 0 {
-		logrus.Errorf("missing %q parameter", "url")
+		log.Errorf("missing %q parameter", "url")
 		return fmt.Errorf("wrong configuration")
 	}
 

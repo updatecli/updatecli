@@ -6,7 +6,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 
 	sv "github.com/Masterminds/semver/v3"
 )
@@ -155,7 +155,7 @@ func (f Filter) Init() (Filter, error) {
 		case LATESTVERSIONKIND:
 			f.Pattern = LATESTVERSIONKIND
 		default:
-			logrus.Warningf("No default pattern provided for kind %q", f.Kind)
+			log.Warningf("No default pattern provided for kind %q", f.Kind)
 		}
 	}
 
@@ -203,7 +203,7 @@ func (f *Filter) applyReplaceAll(version string) (string, error) {
 
 // Search returns a value matching pattern
 func (f *Filter) Search(versions []string) (Version, error) {
-	logrus.Infof("Searching for version matching pattern %q", f.Pattern)
+	log.Infof("Searching for version matching pattern %q", f.Pattern)
 
 	foundVersion := Version{}
 

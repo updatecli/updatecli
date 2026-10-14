@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/heimdalr/dag"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"go.yaml.in/yaml/v3"
 )
 
@@ -150,7 +150,7 @@ func handleResourceDependencies(dag *dag.DAG, ID, Category string) (err error) {
 		err = dag.AddEdge(dep.ID, myId)
 		if err != nil {
 			if strings.Contains(err.Error(), "would create a loop") {
-				logrus.Debugf("Dependency loop detected between %q and %q",
+				log.Debugf("Dependency loop detected between %q and %q",
 					dep.ID,
 					myId)
 				return ErrDependsOnLoopDetected

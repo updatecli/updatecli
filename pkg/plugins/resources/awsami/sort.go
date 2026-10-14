@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 // Sort by CreationDate Asc
@@ -22,13 +22,13 @@ func (images ByCreationDateAsc) Less(i, j int) bool {
 	dateI, err := time.Parse(formatDate, *images[i].CreationDate)
 
 	if err != nil {
-		logrus.Errorln(err)
+		log.Errorln(err)
 	}
 
 	dateJ, err := time.Parse(formatDate, *images[j].CreationDate)
 
 	if err != nil {
-		logrus.Errorln(err)
+		log.Errorln(err)
 	}
 
 	return dateI.Before(dateJ)
@@ -53,13 +53,13 @@ func (images ByCreationDateDesc) Less(i, j int) bool {
 	dateI, err := time.Parse(formatDate, *images[i].CreationDate)
 
 	if err != nil {
-		logrus.Errorln(err)
+		log.Errorln(err)
 	}
 
 	dateJ, err := time.Parse(formatDate, *images[j].CreationDate)
 
 	if err != nil {
-		logrus.Errorln(err)
+		log.Errorln(err)
 	}
 
 	return dateI.After(dateJ)

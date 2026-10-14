@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
@@ -44,7 +44,7 @@ func (t *Toml) Target(_ context.Context, source string, scm scm.ScmHandler, path
 
 		switch t.engine {
 		case ENGINEDASEL_V1:
-			logrus.Debugf("Using engine %q", t.engine)
+			log.Debugf("Using engine %q", t.engine)
 			switch len(t.spec.Query) > 0 {
 			case true:
 				queryResults, err = t.contents[i].MultipleQuery(t.spec.Query)
@@ -69,14 +69,14 @@ func (t *Toml) Target(_ context.Context, source string, scm scm.ScmHandler, path
 			}
 
 		case ENGINEDASEL_V2:
-			logrus.Debugf("Using engine %q", t.engine)
+			log.Debugf("Using engine %q", t.engine)
 			queryResults, err = t.contents[i].QueryV2(t.spec.Key)
 			if err != nil {
 				return fmt.Errorf("querying file %q: %w", t.contents[i].FilePath, err)
 			}
 
 		case ENGINEDASEL_V3:
-			logrus.Debugf("Using engine %q", t.engine)
+			log.Debugf("Using engine %q", t.engine)
 			queryResults, err = t.contents[i].QueryV3(t.spec.Key)
 			if err != nil {
 				return fmt.Errorf("querying file %q: %w", t.contents[i].FilePath, err)

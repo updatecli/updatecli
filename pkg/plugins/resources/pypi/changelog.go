@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/result"
 
 	githubChangelog "github.com/updatecli/updatecli/pkg/plugins/changelog/github/v3"
@@ -57,7 +57,7 @@ func changelogFromGitHub(rawURL, from, to string) *result.Changelogs {
 
 	releases, err := changelog.Search(from, to)
 	if err != nil {
-		logrus.Debugf("searching GitHub releases for %s/%s: %s", parts[1], parts[2], err)
+		log.Debugf("searching GitHub releases for %s/%s: %s", parts[1], parts[2], err)
 	}
 
 	if len(releases) == 0 {

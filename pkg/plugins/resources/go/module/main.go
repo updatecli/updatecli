@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/go-viper/mapstructure/v2"
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
@@ -39,7 +39,7 @@ func New(spec interface{}) (*GoModule, error) {
 
 	newFilter := newSpec.VersionFilter
 	if newSpec.VersionFilter.IsZero() {
-		logrus.Debugln("no versioning filtering specified, fallback to semantic versioning")
+		log.Debugln("no versioning filtering specified, fallback to semantic versioning")
 		// By default, golang versioning uses semantic versioning
 		newFilter.Kind = version.SEMVERVERSIONKIND
 		newFilter.Pattern = "*"

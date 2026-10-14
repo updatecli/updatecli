@@ -5,8 +5,6 @@ import (
 	"path/filepath"
 
 	"github.com/updatecli/updatecli/pkg/core/log"
-
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -18,7 +16,7 @@ const (
 func searchPrecommitConfigFiles(rootDir string) ([]string, error) {
 	foundFiles := []string{}
 
-	logrus.Debugf("Looking for Precommit configuration modules in %q", rootDir)
+	log.Debugf("Looking for Precommit configuration modules in %q", rootDir)
 
 	err := filepath.WalkDir(rootDir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {

@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 
 	"github.com/Masterminds/semver/v3"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 // MatchingRule defines a rule to select Helm charts.
@@ -67,12 +67,12 @@ func (m MatchingRules) isMatchingRules(rootDir, filePath, repositoryURL, chartNa
 
 				match, err := filepath.Match(rule.Path, filePath)
 				if err != nil {
-					logrus.Errorf("%s - %q", err, rule.Path)
+					log.Errorf("%s - %q", err, rule.Path)
 					continue
 				}
 				ruleResults = append(ruleResults, match)
 				if match {
-					logrus.Debugf("file path %q matching rule %q", filePath, rule.Path)
+					log.Debugf("file path %q matching rule %q", filePath, rule.Path)
 				}
 			}
 
@@ -113,14 +113,14 @@ func (m MatchingRules) isMatchingRules(rootDir, filePath, repositoryURL, chartNa
 						v, err := semver.NewVersion(chartVersion)
 						if err != nil {
 							match = chartVersion == ruleReleaseVersion
-							logrus.Debugf("%q - %s", chartVersion, err)
+							log.Debugf("%q - %s", chartVersion, err)
 							break outChartName
 						}
 
 						c, err := semver.NewConstraint(ruleReleaseVersion)
 						if err != nil {
 							match = chartVersion == ruleReleaseVersion
-							logrus.Debugf("%q %s", err, ruleReleaseVersion)
+							log.Debugf("%q %s", err, ruleReleaseVersion)
 							break outChartName
 						}
 

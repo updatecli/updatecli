@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 
 	"github.com/Masterminds/semver/v3"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 // MatchingRule defines a rule to select Updatecli policies.
@@ -63,12 +63,12 @@ func (m MatchingRules) isMatchingRules(rootDir, filePath, policyName, policyVers
 				match, err := filepath.Match(rule.Path, filePath)
 
 				if err != nil {
-					logrus.Errorf("%s - %q", err, rule.Path)
+					log.Errorf("%s - %q", err, rule.Path)
 					continue
 				}
 				ruleResults = append(ruleResults, match)
 				if match {
-					logrus.Debugf("file path %q matching rule %q", filePath, rule.Path)
+					log.Debugf("file path %q matching rule %q", filePath, rule.Path)
 				}
 			}
 
@@ -90,14 +90,14 @@ func (m MatchingRules) isMatchingRules(rootDir, filePath, policyName, policyVers
 							v, err := semver.NewVersion(policyVersion)
 							if err != nil {
 								match = policyVersion == rulePolicyVersion
-								logrus.Debugf("%q - %s", policyVersion, err)
+								log.Debugf("%q - %s", policyVersion, err)
 								break outPolicy
 							}
 
 							c, err := semver.NewConstraint(rulePolicyVersion)
 							if err != nil {
 								match = policyVersion == rulePolicyVersion
-								logrus.Debugf("%q %s", err, rulePolicyVersion)
+								log.Debugf("%q %s", err, rulePolicyVersion)
 								break outPolicy
 							}
 

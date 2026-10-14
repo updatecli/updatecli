@@ -5,7 +5,6 @@ import (
 	"net/url"
 	"path/filepath"
 
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/compose"
 	"github.com/updatecli/updatecli/pkg/core/config"
 	"github.com/updatecli/updatecli/pkg/core/jsonschema"
@@ -48,7 +47,7 @@ func GenerateSchema(baseSchemaID, schemaDir string) error {
 			return err
 		}
 
-		logrus.Infof("```\n%s\n```\n", s)
+		log.Infof("```\n%s\n```\n", s)
 
 		err = s.Save()
 		if err != nil {

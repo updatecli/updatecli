@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
@@ -16,7 +15,7 @@ func (e *Engine) Show() (err error) {
 
 		if e.Options.DisplayFlavor == "graph" {
 			graphOutput, err = pipeline.Graph(e.Options.GraphFlavor)
-			logrus.Infof("%s", graphOutput)
+			log.Infof("%s", graphOutput)
 
 		} else {
 			err = pipeline.Config.Display()

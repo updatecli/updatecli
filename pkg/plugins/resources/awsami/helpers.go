@@ -10,7 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/smithy-go"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 // getLatestAmiID queries the AWS API to return the newest AMI image id.
@@ -25,9 +25,9 @@ func (a *AMI) getLatestAmiID() (string, error) {
 	if err != nil {
 		var ae smithy.APIError
 		if errors.As(err, &ae) {
-			logrus.Errorf("AWS API Error - Code: %s, Message: %s", ae.ErrorCode(), ae.ErrorMessage())
+			log.Errorf("AWS API Error - Code: %s, Message: %s", ae.ErrorCode(), ae.ErrorMessage())
 		} else {
-			logrus.Errorln(err.Error())
+			log.Errorln(err.Error())
 		}
 		return "", err
 	}
@@ -41,7 +41,7 @@ func (a *AMI) getLatestAmiID() (string, error) {
 			sort.Sort(ByCreationDateDesc(result.Images))
 		}
 
-		logrus.Debugf("Latest AMI ID found:\n  ---\n  %s---\n\n",
+		log.Debugf("Latest AMI ID found:\n  ---\n  %s---\n\n",
 			strings.ReplaceAll(
 				showShortDescription(result.Images[len(result.Images)-1]),
 				"\n",

@@ -7,7 +7,6 @@ import (
 	"sync"
 
 	"github.com/heimdalr/dag"
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/cache"
 	"github.com/updatecli/updatecli/pkg/core/config"
 	"github.com/updatecli/updatecli/pkg/core/log"
@@ -308,9 +307,9 @@ func (p *Pipeline) UpdateGraphReport() error {
 
 // Run executes a single pipeline, wrapping the entire run in an OpenTelemetry span.
 func (p *Pipeline) Run(ctx context.Context) error {
-	logrus.Infof("\n%s\n", strings.Repeat("#", len(p.Name)+4))
-	logrus.Infof("# %s #\n", strings.ToTitle(p.Name))
-	logrus.Infof("%s\n\n", strings.Repeat("#", len(p.Name)+4))
+	log.Infof("\n%s\n", strings.Repeat("#", len(p.Name)+4))
+	log.Infof("# %s #\n", strings.ToTitle(p.Name))
+	log.Infof("%s\n\n", strings.Repeat("#", len(p.Name)+4))
 
 	tracer := p.tracer
 
@@ -331,9 +330,9 @@ func (p *Pipeline) Run(ctx context.Context) error {
 	ctx, span := tracer.Start(ctx, "updatecli.pipeline", opts...)
 	defer span.End()
 
-	logrus.Infof("Pipeline ID\t: %s", p.ID)
+	log.Infof("Pipeline ID\t: %s", p.ID)
 	if p.Options.Target.DryRun {
-		logrus.Infof("Dry Run\t\t: enabled\n")
+		log.Infof("Dry Run\t\t: enabled\n")
 		span.SetAttributes(attribute.Bool("updatecli.pipeline.dry_run", true))
 	}
 
@@ -368,11 +367,11 @@ func (p *Pipeline) Run(ctx context.Context) error {
 		if leaf.Error != nil {
 			if !hasError {
 				title := fmt.Sprintf("Error(s) found in pipeline %q execution", p.Name)
-				logrus.Infof("\n%s\n%s\n", title, strings.Repeat("-", len(title)))
+				log.Infof("\n%s\n%s\n", title, strings.Repeat("-", len(title)))
 			}
-			logrus.Infof("\n")
-			logrus.Errorf("something went wrong in %q :\n\t%s", leaf.ID, strings.ReplaceAll(leaf.Error.Error(), "\n", "\n\t"))
-			logrus.Infof("\n")
+			log.Infof("\n")
+			log.Errorf("something went wrong in %q :\n\t%s", leaf.ID, strings.ReplaceAll(leaf.Error.Error(), "\n", "\n\t"))
+			log.Infof("\n")
 			hasError = true
 		}
 	}
@@ -477,7 +476,7 @@ func (p *Pipeline) runFlowCallbackWithCtx(ctx context.Context, d *dag.DAG, id st
 		source.Result.Name = source.Config.Name
 		source.Result.Config, err = resource.GetReportConfig(p.Config.Spec.Sources[id].ResourceConfig)
 		if err != nil {
-			logrus.Errorf("error while cleaning config: %v", err)
+			log.Errorf("error while cleaning config: %v", err)
 		}
 		p.Report.Sources[id] = source.Result
 	}
@@ -492,7 +491,7 @@ func (p *Pipeline) runFlowCallbackWithCtx(ctx context.Context, d *dag.DAG, id st
 		condition.Result.Name = p.Config.Spec.Conditions[id].Name
 		condition.Result.Config, err = resource.GetReportConfig(p.Config.Spec.Conditions[id].ResourceConfig)
 		if err != nil {
-			logrus.Errorf("error while cleaning config: %v", err)
+			log.Errorf("error while cleaning config: %v", err)
 		}
 		p.Report.Conditions[id] = condition.Result
 	}
@@ -508,14 +507,14 @@ func (p *Pipeline) runFlowCallbackWithCtx(ctx context.Context, d *dag.DAG, id st
 		target.Result.Config, err = resource.GetReportConfig(p.Config.Spec.Targets[id].ResourceConfig)
 		target.Result.DryRun = target.DryRun
 		if err != nil {
-			logrus.Errorf("error while cleaning config: %v", err)
+			log.Errorf("error while cleaning config: %v", err)
 		}
 		p.Report.Targets[id] = target.Result
 	}
 
 	shouldSkip := p.shouldSkipResource(&leaf, deps)
 	if shouldSkip {
-		logrus.Infof("%s Skipping %q because of dependsOn conditions", result.SKIPPED, id)
+		log.Infof("%s Skipping %q because of dependsOn conditions", result.SKIPPED, id)
 		leaf.Result = result.SKIPPED
 		span.SetAttributes(attribute.String("updatecli.resource.result", result.SKIPPED))
 
@@ -533,7 +532,7 @@ func (p *Pipeline) runFlowCallbackWithCtx(ctx context.Context, d *dag.DAG, id st
 	}
 
 	displayError := func(err error) {
-		logrus.Infof("%s Something went wrong:\n\t%s\n\n",
+		log.Infof("%s Something went wrong:\n\t%s\n\n",
 			result.FAILURE,
 			strings.ReplaceAll(err.Error(), "\n", "\n\t"),
 		)
@@ -596,17 +595,17 @@ func (p *Pipeline) logRepositoryHeader(id string, category string) {
 	case sourceCategory:
 		sourceId := strings.ReplaceAll(id, "source#", "")
 		if scm, ok := p.SCMs[p.Sources[sourceId].Config.SCMID]; ok {
-			logrus.Infof("Repository\t: %s\n\n", scm.Handler.Summary())
+			log.Infof("Repository\t: %s\n\n", scm.Handler.Summary())
 		}
 	case conditionCategory:
 		conditionId := strings.ReplaceAll(id, "condition#", "")
 		if scm, ok := p.SCMs[p.Conditions[conditionId].Config.SCMID]; ok {
-			logrus.Infof("Repository\t: %s\n\n", scm.Handler.Summary())
+			log.Infof("Repository\t: %s\n\n", scm.Handler.Summary())
 		}
 	case targetCategory:
 		targetId := strings.ReplaceAll(id, "target#", "")
 		if scm, ok := p.SCMs[p.Targets[targetId].Config.SCMID]; ok {
-			logrus.Infof("Repository\t: %s\n\n", scm.Handler.Summary())
+			log.Infof("Repository\t: %s\n\n", scm.Handler.Summary())
 		}
 	}
 }

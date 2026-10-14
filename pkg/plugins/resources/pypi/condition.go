@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
@@ -13,7 +13,7 @@ import (
 // Condition checks that a PyPI package version exists.
 func (p *Pypi) Condition(ctx context.Context, source string, scmHandler scm.ScmHandler, pathResolver pathresolver.Resolver) (pass bool, message string, err error) {
 	if scmHandler != nil {
-		logrus.Warningf("SCM configuration is not supported for pypi condition, ignoring")
+		log.Warningf("SCM configuration is not supported for pypi condition, ignoring")
 	}
 
 	versionToCheck := p.spec.Version

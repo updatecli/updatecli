@@ -8,7 +8,6 @@ import (
 
 	"github.com/updatecli/updatecli/pkg/core/log"
 
-	"github.com/sirupsen/logrus"
 	goyaml "go.yaml.in/yaml/v3"
 )
 
@@ -16,7 +15,7 @@ import (
 func searchFleetBundleFiles(rootDir string, files []string) ([]string, error) {
 	fleetBundleFiles := []string{}
 
-	logrus.Debugf("Looking for Fleet bundle(s) in %q", rootDir)
+	log.Debugf("Looking for Fleet bundle(s) in %q", rootDir)
 
 	err := filepath.Walk(rootDir, func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
@@ -36,10 +35,10 @@ func searchFleetBundleFiles(rootDir string, files []string) ([]string, error) {
 		return nil, err
 	}
 
-	logrus.Debugf("%d Fleet bundle(s) found", len(fleetBundleFiles))
+	log.Debugf("%d Fleet bundle(s) found", len(fleetBundleFiles))
 	for _, foundFile := range fleetBundleFiles {
 		fleetBundleName := filepath.Base(filepath.Dir(foundFile))
-		logrus.Debugf("    * %q", fleetBundleName)
+		log.Debugf("    * %q", fleetBundleName)
 	}
 
 	return fleetBundleFiles, nil
@@ -50,7 +49,7 @@ func getFleetBundleData(filename string) (*fleetMetadata, error) {
 	var fleetData fleetMetadata
 
 	fleetBundleName := filepath.Base(filepath.Dir(filename))
-	logrus.Debugf("Fleet bundle %q found in %q", fleetBundleName, filepath.Dir(filename))
+	log.Debugf("Fleet bundle %q found in %q", fleetBundleName, filepath.Dir(filename))
 
 	if _, err := os.Stat(filename); err != nil {
 		return &fleetMetadata{}, err
@@ -73,10 +72,10 @@ func getFleetBundleData(filename string) (*fleetMetadata, error) {
 		return nil, err
 	}
 
-	logrus.Debugf("Fleet Bundle: %q\n", fleetBundleName)
-	logrus.Debugf("Helm Chart Name: %q\n", fleetData.Helm.Chart)
-	logrus.Debugf("Helm Repository URL: %q\n", fleetData.Helm.Repo)
-	logrus.Debugf("Version: %q\n", fleetData.Helm.Version)
+	log.Debugf("Fleet Bundle: %q\n", fleetBundleName)
+	log.Debugf("Helm Chart Name: %q\n", fleetData.Helm.Chart)
+	log.Debugf("Helm Repository URL: %q\n", fleetData.Helm.Repo)
+	log.Debugf("Version: %q\n", fleetData.Helm.Version)
 
 	return &fleetData, nil
 }

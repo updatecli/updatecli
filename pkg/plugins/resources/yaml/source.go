@@ -8,7 +8,7 @@ import (
 
 	goyaml "github.com/goccy/go-yaml"
 	"github.com/goccy/go-yaml/parser"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 	"github.com/vmware-labs/yaml-jsonpath/pkg/yamlpath"
@@ -27,12 +27,12 @@ func (y *Yaml) Source(_ context.Context, pathResolver pathresolver.Resolver, res
 
 	if len(y.files) > 1 {
 		validationError := fmt.Errorf("validation error in sources of type 'yaml': the attributes `spec.files` can't contain more than one element for sources")
-		logrus.Errorln(validationError.Error())
+		log.Errorln(validationError.Error())
 		return validationError
 	}
 
 	if y.spec.Value != "" {
-		logrus.Warnf("Key 'Value' is not used by source YAML")
+		log.Warnf("Key 'Value' is not used by source YAML")
 	}
 
 	if err := y.initFiles(pathResolver); err != nil {

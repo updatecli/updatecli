@@ -5,7 +5,7 @@ import (
 	"sort"
 
 	pep440 "github.com/aquasecurity/go-pep440-version"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 // Pep440 filters versions using PEP 440 specifier syntax (e.g. ">=1.0,<2.0").
@@ -20,7 +20,7 @@ func (p *Pep440) Init(versions []string) error {
 	for _, raw := range versions {
 		v, err := pep440.Parse(raw)
 		if err != nil {
-			logrus.Debugf("Skipping %q because %s", raw, err)
+			log.Debugf("Skipping %q because %s", raw, err)
 			continue
 		}
 		p.versions = append(p.versions, v)
@@ -48,7 +48,7 @@ func (p *Pep440) Search(versions []string) error {
 	}
 
 	if err := p.Init(versions); err != nil {
-		logrus.Error(err)
+		log.Error(err)
 		return err
 	}
 

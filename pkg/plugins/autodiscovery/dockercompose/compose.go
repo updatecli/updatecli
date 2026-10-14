@@ -8,7 +8,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/dockerimage"
 )
 
@@ -49,10 +49,10 @@ func (d DockerCompose) discoverDockerComposeImageManifests() ([][]byte, error) {
 
 	for _, foundDockerComposefile := range foundDockerComposeFiles {
 		relativeFoundDockerComposeFile, err := filepath.Rel(d.rootDir, foundDockerComposefile)
-		logrus.Debugf("parsing file %q", foundDockerComposefile)
+		log.Debugf("parsing file %q", foundDockerComposefile)
 		if err != nil {
 			// Let's try the next one if it fails
-			logrus.Debugln(err)
+			log.Debugln(err)
 			continue
 		}
 
@@ -62,7 +62,7 @@ func (d DockerCompose) discoverDockerComposeImageManifests() ([][]byte, error) {
 		// Retrieve chart dependencies for each chart
 		svcList, err := getDockerComposeSpecFromFile(foundDockerComposefile)
 		if err != nil {
-			logrus.Debugln(err)
+			log.Debugln(err)
 			continue
 		}
 
@@ -75,7 +75,7 @@ func (d DockerCompose) discoverDockerComposeImageManifests() ([][]byte, error) {
 			if svc.Spec.Image == "" {
 				continue
 			} else if (strings.Contains(svc.Spec.Image, "${")) && (strings.Contains(svc.Spec.Image, "}")) {
-				logrus.Debugf("Skipping image %q as it contains environment variable, which is not supported at the moment", svc.Spec.Image)
+				log.Debugf("Skipping image %q as it contains environment variable, which is not supported at the moment", svc.Spec.Image)
 				continue
 			}
 
@@ -91,7 +91,7 @@ func (d DockerCompose) discoverDockerComposeImageManifests() ([][]byte, error) {
 				until a better solution, we don't handle docker image digest
 			*/
 			if imageDigest != "" && imageTag == "" {
-				logrus.Debugf("docker digest without specified tag is not supported at the moment for %q", svc.Spec.Image)
+				log.Debugf("docker digest without specified tag is not supported at the moment for %q", svc.Spec.Image)
 				continue
 			}
 
@@ -106,7 +106,7 @@ func (d DockerCompose) discoverDockerComposeImageManifests() ([][]byte, error) {
 					svc.Spec.Image,
 					arch) {
 
-					logrus.Debugf("Ignoring Docker Compose file %q from %q, as not matching ignore rule(s)\n",
+					log.Debugf("Ignoring Docker Compose file %q from %q, as not matching ignore rule(s)\n",
 						basename,
 						dirname)
 					continue
@@ -122,7 +122,7 @@ func (d DockerCompose) discoverDockerComposeImageManifests() ([][]byte, error) {
 					svc.Spec.Image,
 					arch) {
 
-					logrus.Debugf("Ignoring Docker Compose file %q from %q, as not matching only rule(s)\n",
+					log.Debugf("Ignoring Docker Compose file %q from %q, as not matching only rule(s)\n",
 						basename,
 						dirname)
 					continue
@@ -160,7 +160,7 @@ func (d DockerCompose) discoverDockerComposeImageManifests() ([][]byte, error) {
 				versionFilterRegex = d.versionFilter.Regex
 				tagFilter = ""
 				if err != nil {
-					logrus.Debugf("building version filter pattern: %s", err)
+					log.Debugf("building version filter pattern: %s", err)
 					versionFilterPattern = "*"
 				}
 			}
@@ -186,7 +186,7 @@ func (d DockerCompose) discoverDockerComposeImageManifests() ([][]byte, error) {
 					return nil, err
 				}
 			} else {
-				logrus.Infoln("No source spec detected")
+				log.Infoln("No source spec detected")
 				continue
 			}
 
@@ -230,7 +230,7 @@ func (d DockerCompose) discoverDockerComposeImageManifests() ([][]byte, error) {
 
 			manifest := bytes.Buffer{}
 			if err := tmpl.Execute(&manifest, params); err != nil {
-				logrus.Debugln(err)
+				log.Debugln(err)
 				continue
 			}
 

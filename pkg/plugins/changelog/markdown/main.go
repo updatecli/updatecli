@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/ast"
 	"github.com/yuin/goldmark/extension"
@@ -110,7 +110,7 @@ func (s Sections) GetSectionAsMarkdown(title string) string {
 		}
 	}
 
-	logrus.Debugf("Version %q not found from Changelog versions %v", title, titles)
+	log.Debugf("Version %q not found from Changelog versions %v", title, titles)
 	return ""
 }
 
@@ -125,6 +125,6 @@ func (s Sections) GetSectionAsHTML(title string) string {
 		}
 	}
 
-	logrus.Debugf("Version %q not found from Changelog versions %v", title, titles)
+	log.Debugf("Version %q not found from Changelog versions %v", title, titles)
 	return ""
 }

@@ -4,15 +4,15 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 // exportReportToYAML is a function that exports the report of the pipeline to a specified format and location.
 func (e *Engine) exportReportToYAML() error {
 	errs := []string{}
 
-	logrus.Infof("\n\n%s\n", strings.ToTitle("Report"))
-	logrus.Infof("%s\n\n", strings.Repeat("=", len("Report")+1))
+	log.Infof("\n\n%s\n", strings.ToTitle("Report"))
+	log.Infof("%s\n\n", strings.Repeat("=", len("Report")+1))
 
 	for id := range e.Pipelines {
 		pipeline := e.Pipelines[id]
@@ -21,7 +21,7 @@ func (e *Engine) exportReportToYAML() error {
 			errs = append(errs, pipeline.Name+err.Error())
 		}
 		if reportFilepath != "" {
-			logrus.Infof("%s:\n\t=> %q", pipeline.Name, reportFilepath)
+			log.Infof("%s:\n\t=> %q", pipeline.Name, reportFilepath)
 		}
 		e.Pipelines[id] = pipeline
 	}

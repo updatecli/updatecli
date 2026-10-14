@@ -7,7 +7,7 @@ import (
 	"sync"
 
 	"github.com/go-viper/mapstructure/v2"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
@@ -315,14 +315,14 @@ func New(spec Config, workDir string) (*AutoDiscovery, error) {
 		pluginName := kind
 		if strings.HasSuffix(kind, ".wasm") {
 			if !cmdoptions.Experimental {
-				logrus.Warningf("Skipping autodiscovery plugin %q because experimental features are disabled", kind)
+				log.Warningf("Skipping autodiscovery plugin %q because experimental features are disabled", kind)
 				continue
 			}
 			kind = "plugin"
 		}
 
 		if workDir == "" {
-			logrus.Errorf("skipping crawler %q due to: %s", kind, err)
+			log.Errorf("skipping crawler %q due to: %s", kind, err)
 			continue
 		}
 		if f, ok := crawlerFuncMap()[kind]; ok {
@@ -339,13 +339,13 @@ func New(spec Config, workDir string) (*AutoDiscovery, error) {
 			}
 			g.crawlers = append(g.crawlers, crawlerEntry{kind: pluginName, crawler: crawler})
 		} else {
-			logrus.Infof("Crawler of type %q is not supported", kind)
+			log.Infof("Crawler of type %q is not supported", kind)
 		}
 	}
 
 	if len(errs) > 0 {
 		for i := range errs {
-			logrus.Errorln(errs[i])
+			log.Errorln(errs[i])
 		}
 		return &g, fmt.Errorf("autodiscovery failed with %d error(s)", len(errs))
 	}
@@ -367,14 +367,14 @@ func (g *AutoDiscovery) Run(ctx context.Context) ([]CrawlerResult, error) {
 		discoveredManifests, err := entry.crawler.DiscoverManifests()
 		if err != nil {
 			telemetry.RecordSpanError(span, err)
-			logrus.Errorln(err)
+			log.Errorln(err)
 		}
 
 		span.SetAttributes(
 			attribute.Int("updatecli.crawler.manifests_count", len(discoveredManifests)),
 		)
 
-		logrus.Printf("Manifest detected: %d\n", len(discoveredManifests))
+		log.Printf("Manifest detected: %d\n", len(discoveredManifests))
 
 		results = append(results, CrawlerResult{
 			Kind:      entry.kind,
@@ -388,7 +388,7 @@ func (g *AutoDiscovery) Run(ctx context.Context) ([]CrawlerResult, error) {
 	for _, r := range results {
 		total += len(r.Manifests)
 	}
-	logrus.Printf("\n\n---\n\n=> Total manifest detected: %d\n\n", total)
+	log.Printf("\n\n---\n\n=> Total manifest detected: %d\n\n", total)
 
 	return results, nil
 }

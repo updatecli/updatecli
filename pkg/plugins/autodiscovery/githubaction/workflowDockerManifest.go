@@ -6,7 +6,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/dockerimage"
 )
 
@@ -37,7 +37,7 @@ func (g GitHubAction) getDockerManifest(spec *dockerGHAManifestSpec) ([]byte, er
 		until a better solution, we don't handle docker image digest
 	*/
 	if imageDigest != "" && imageTag == "" {
-		logrus.Debugf("docker digest without specified tag is not supported at the moment for %q", spec.Image)
+		log.Debugf("docker digest without specified tag is not supported at the moment for %q", spec.Image)
 		return nil, nil
 	}
 
@@ -49,7 +49,7 @@ func (g GitHubAction) getDockerManifest(spec *dockerGHAManifestSpec) ([]byte, er
 			spec.Image,
 			imageTag) {
 
-			logrus.Debugf("Ignoring Docker image %q from %q, as not matching ignore rule(s)\n",
+			log.Debugf("Ignoring Docker image %q from %q, as not matching ignore rule(s)\n",
 				spec.Image,
 				spec.RelativeFoundFile)
 			return nil, nil
@@ -64,7 +64,7 @@ func (g GitHubAction) getDockerManifest(spec *dockerGHAManifestSpec) ([]byte, er
 			spec.Image,
 			imageTag) {
 
-			logrus.Debugf("Ignoring Docker image %q from %q, as not matching only rule(s)\n",
+			log.Debugf("Ignoring Docker image %q from %q, as not matching only rule(s)\n",
 				spec.Image,
 				spec.RelativeFoundFile)
 			return nil, nil
@@ -94,7 +94,7 @@ func (g GitHubAction) getDockerManifest(spec *dockerGHAManifestSpec) ([]byte, er
 		versionFilterRegex = g.versionFilter.Regex
 		tagFilter = ""
 		if err != nil {
-			logrus.Debugf("building version filter pattern: %s", err)
+			log.Debugf("building version filter pattern: %s", err)
 			sourceSpec.VersionFilter.Pattern = "*"
 		}
 	}
@@ -116,7 +116,7 @@ func (g GitHubAction) getDockerManifest(spec *dockerGHAManifestSpec) ([]byte, er
 			return nil, err
 		}
 	} else {
-		logrus.Infoln("No source spec detected")
+		log.Infoln("No source spec detected")
 		return nil, nil
 	}
 

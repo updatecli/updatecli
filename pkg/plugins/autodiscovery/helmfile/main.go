@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/go-viper/mapstructure/v2"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/docker"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
@@ -121,14 +121,14 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Helmfile, error) {
 	dir := rootDir
 	if path.IsAbs(s.RootDir) {
 		if scmID != "" {
-			logrus.Warningf("rootdir %q is an absolute path, scmID %q will be ignored", s.RootDir, scmID)
+			log.Warningf("rootdir %q is an absolute path, scmID %q will be ignored", s.RootDir, scmID)
 		}
 		dir = s.RootDir
 	}
 
 	// Fallback to the current process path if no "rootdir" specified.
 	if len(dir) == 0 {
-		logrus.Errorln("no working directory defined")
+		log.Errorln("no working directory defined")
 		return Helmfile{}, err
 	}
 
@@ -151,8 +151,8 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Helmfile, error) {
 
 func (h Helmfile) DiscoverManifests() ([][]byte, error) {
 
-	logrus.Infof("\n\n%s\n", strings.ToTitle("Helmfile"))
-	logrus.Infof("%s\n", strings.Repeat("=", len("Helmfile")+1))
+	log.Infof("\n\n%s\n", strings.ToTitle("Helmfile"))
+	log.Infof("%s\n", strings.Repeat("=", len("Helmfile")+1))
 
 	return h.discoverHelmfileReleaseManifests()
 }

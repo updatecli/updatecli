@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
@@ -103,9 +103,7 @@ func TestLogRepositoryHeader_Source(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	original := logrus.StandardLogger().Out
-	logrus.SetOutput(&buf)
-	t.Cleanup(func() { logrus.SetOutput(original) })
+	t.Cleanup(log.Capture(&buf))
 
 	p.logRepositoryHeader("source#src1", sourceCategory)
 
@@ -120,9 +118,7 @@ func TestLogRepositoryHeader_Condition(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	original := logrus.StandardLogger().Out
-	logrus.SetOutput(&buf)
-	t.Cleanup(func() { logrus.SetOutput(original) })
+	t.Cleanup(log.Capture(&buf))
 
 	p.logRepositoryHeader("condition#cond1", conditionCategory)
 
@@ -137,9 +133,7 @@ func TestLogRepositoryHeader_Target(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	original := logrus.StandardLogger().Out
-	logrus.SetOutput(&buf)
-	t.Cleanup(func() { logrus.SetOutput(original) })
+	t.Cleanup(log.Capture(&buf))
 
 	p.logRepositoryHeader("target#tgt1", targetCategory)
 
@@ -158,9 +152,7 @@ func TestLogRepositoryHeader_NoSCM_NoOutput(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	original := logrus.StandardLogger().Out
-	logrus.SetOutput(&buf)
-	t.Cleanup(func() { logrus.SetOutput(original) })
+	t.Cleanup(log.Capture(&buf))
 
 	p.logRepositoryHeader("source#src1", sourceCategory)
 

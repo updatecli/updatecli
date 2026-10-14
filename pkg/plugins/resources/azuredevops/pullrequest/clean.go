@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/reports"
 )
 
@@ -16,7 +16,7 @@ func (a *AzureDevOps) CleanAction(ctx context.Context, report *reports.Action) e
 	}
 
 	if existingPR == nil || existingPR.PullRequestId == nil {
-		logrus.Debugln("nothing to clean")
+		log.Debugln("nothing to clean")
 		return nil
 	}
 
@@ -41,7 +41,7 @@ func (a *AzureDevOps) CleanAction(ctx context.Context, report *reports.Action) e
 	}
 
 	if !headMatches {
-		logrus.Debugf("Skipping Azure DevOps pull request cleanup because PR head does not match remote branch head:\n\t%s", a.pullRequestLink(existingPR))
+		log.Debugf("Skipping Azure DevOps pull request cleanup because PR head does not match remote branch head:\n\t%s", a.pullRequestLink(existingPR))
 		return nil
 	}
 
@@ -54,7 +54,7 @@ func (a *AzureDevOps) CleanAction(ctx context.Context, report *reports.Action) e
 		return nil
 	}
 
-	logrus.Debugf("No changed file detected at pull request:\n\t%s", a.pullRequestLink(existingPR))
+	log.Debugf("No changed file detected at pull request:\n\t%s", a.pullRequestLink(existingPR))
 
 	if err := a.closePullRequest(ctx, gitClient, repositoryID, *existingPR.PullRequestId); err != nil {
 		return fmt.Errorf("closing pull request: %w", err)

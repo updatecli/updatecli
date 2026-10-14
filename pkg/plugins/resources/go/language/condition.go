@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
@@ -14,7 +14,7 @@ func (l *Language) Condition(ctx context.Context, source string, scm scm.ScmHand
 	var versions []string
 
 	if scm != nil {
-		logrus.Debugln("scm is not supported")
+		log.Debugln("scm is not supported")
 	}
 	versionToCheck := l.Spec.Version
 	if versionToCheck == "" {

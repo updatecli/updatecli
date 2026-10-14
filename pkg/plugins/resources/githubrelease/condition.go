@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
@@ -13,7 +13,7 @@ import (
 func (gr GitHubRelease) Condition(ctx context.Context, source string, scm scm.ScmHandler, pathResolver pathresolver.Resolver) (pass bool, message string, err error) {
 
 	if scm != nil {
-		logrus.Warningf("condition not supported for plugin GitHub Release used with scm")
+		log.Warningf("condition not supported for plugin GitHub Release used with scm")
 	}
 
 	expectedValue := source
@@ -38,7 +38,7 @@ func (gr GitHubRelease) Condition(ctx context.Context, source string, scm scm.Sc
 	if len(versions) == 0 {
 		switch gr.spec.TypeFilter.IsZero() {
 		case true:
-			logrus.Warningf("%s No GitHub Release found, we fallback to published git tags", result.ATTENTION)
+			log.Warningf("%s No GitHub Release found, we fallback to published git tags", result.ATTENTION)
 
 			versions, err = gr.ghHandler.SearchTags(ctx, 0)
 			if err != nil {

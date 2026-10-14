@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	jschema "github.com/invopop/jsonschema"
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/log"
 
 	"github.com/updatecli/updatecli/pkg/core/cache"
@@ -68,7 +67,7 @@ func (s *Source) Run(ctx context.Context, sourceCache *cache.SourceCache) (err e
 
 	if sourceCache != nil {
 		if entry, ok := sourceCache.Get(cacheKey); ok {
-			logrus.Infof("source cache hit for %q", s.Config.Name)
+			log.Infof("source cache hit for %q", s.Config.Name)
 			s.Result.Information = entry.Information
 			s.Result.Description = entry.Description
 			s.Result.Result = entry.Result
@@ -104,7 +103,7 @@ func (s *Source) Run(ctx context.Context, sourceCache *cache.SourceCache) (err e
 	s.Output = s.Result.Information
 	s.OriginalOutput = s.Result.Information
 
-	logrus.Infof("%s %s", s.Result.Result, s.Result.Description)
+	log.Infof("%s %s", s.Result.Result, s.Result.Description)
 
 	if len(s.Config.Transformers) > 0 {
 		s.Output, err = s.Config.Transformers.Apply(s.Output)
@@ -123,7 +122,7 @@ func (s *Source) Run(ctx context.Context, sourceCache *cache.SourceCache) (err e
 	}
 
 	if len(s.Output) == 0 && s.Result.Result == result.SUCCESS {
-		logrus.Debugln("empty source detected")
+		log.Debugln("empty source detected")
 	}
 
 	return err
@@ -149,11 +148,11 @@ func (c *Config) Validate() error {
 	if len(c.DeprecatedSCMID) > 0 {
 		switch len(c.SCMID) {
 		case 0:
-			logrus.Warningf("%q is deprecated in favor of %q.", "scmID", "scmid")
+			log.Warningf("%q is deprecated in favor of %q.", "scmID", "scmid")
 			c.SCMID = c.DeprecatedSCMID
 			c.DeprecatedSCMID = ""
 		default:
-			logrus.Warningf("%q and %q are mutually exclusive, ignoring %q",
+			log.Warningf("%q and %q are mutually exclusive, ignoring %q",
 				"scmID", "scmid", "scmID")
 		}
 	}
@@ -167,29 +166,29 @@ func (c *Config) Validate() error {
 	if len(c.DeprecatedDependsOn) > 0 {
 		switch len(c.DependsOn) == 0 {
 		case true:
-			logrus.Warningln("\"depends_on\" is deprecated in favor of \"dependson\".")
+			log.Warningln("\"depends_on\" is deprecated in favor of \"dependson\".")
 			c.DependsOn = c.DeprecatedDependsOn
 			c.DeprecatedDependsOn = []string{}
 		case false:
-			logrus.Warningln("\"depends_on\" is ignored in favor of \"dependson\".")
+			log.Warningln("\"depends_on\" is ignored in favor of \"dependson\".")
 			c.DeprecatedDependsOn = []string{}
 		}
 	}
 
 	// Ensure kind is lowercase
 	if c.Kind != strings.ToLower(c.Kind) {
-		logrus.Warningf("kind value %q must be lowercase", c.Kind)
+		log.Warningf("kind value %q must be lowercase", c.Kind)
 		c.Kind = strings.ToLower(c.Kind)
 	}
 
 	err := c.Transformers.Validate()
 	if err != nil {
-		logrus.Errorln(err)
+		log.Errorln(err)
 		gotError = true
 	}
 
 	if len(missingParameters) > 0 {
-		logrus.Errorf("missing value for parameter(s) [%q]", strings.Join(missingParameters, ","))
+		log.Errorf("missing value for parameter(s) [%q]", strings.Join(missingParameters, ","))
 		gotError = true
 	}
 

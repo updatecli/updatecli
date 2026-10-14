@@ -12,7 +12,7 @@ import (
 
 	"encoding/json"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/ci"
@@ -118,7 +118,7 @@ func (r *Report) String(mode string) (report string, err error) {
 	case "all":
 		t = template.Must(template.New("reports").Parse(REPORTTEMPLATE))
 	default:
-		logrus.Infof("Wrong report template provided")
+		log.Infof("Wrong report template provided")
 	}
 
 	buffer := new(bytes.Buffer)

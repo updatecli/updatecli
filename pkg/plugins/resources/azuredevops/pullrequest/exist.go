@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/reports"
 )
 
@@ -16,7 +16,7 @@ func (a *AzureDevOps) CheckActionExist(ctx context.Context, report *reports.Acti
 	}
 
 	if pr != nil {
-		logrus.Debugf("Azure DevOps pull request detected")
+		log.Debugf("Azure DevOps pull request detected")
 
 		report.Title = stringValue(pr.Title)
 		report.Link = a.pullRequestLink(pr)

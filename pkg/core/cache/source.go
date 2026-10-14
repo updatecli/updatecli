@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
 )
 
@@ -77,7 +77,7 @@ type cacheKeyInput struct {
 func Key(rc resource.ResourceConfig, scm *SCMIdentity, baseDir string) string {
 	// Validates the kind and spec before caching anything under this config.
 	if _, err := resource.New(rc); err != nil {
-		logrus.Debugf("source cache: failed to instantiate resource for key: %v", err)
+		log.Debugf("source cache: failed to instantiate resource for key: %v", err)
 		return ""
 	}
 
@@ -88,7 +88,7 @@ func Key(rc resource.ResourceConfig, scm *SCMIdentity, baseDir string) string {
 		BaseDir: baseDir,
 	})
 	if err != nil {
-		logrus.Debugf("source cache: failed to marshal config for key: %v", err)
+		log.Debugf("source cache: failed to marshal config for key: %v", err)
 		return ""
 	}
 

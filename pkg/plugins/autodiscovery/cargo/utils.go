@@ -10,7 +10,6 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/log"
 
 	sv "github.com/Masterminds/semver/v3"
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/text"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/dasel"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
@@ -51,10 +50,10 @@ func findCargoFiles(rootDir string, validFiles []string) ([]string, error) {
 		return nil, err
 	}
 
-	logrus.Debugf("%d cargo files(s) found", len(cargoFiles))
+	log.Debugf("%d cargo files(s) found", len(cargoFiles))
 	for _, foundFile := range cargoFiles {
 		cargoFile := filepath.Base(filepath.Dir(foundFile))
-		logrus.Debugf("    * %q", cargoFile)
+		log.Debugf("    * %q", cargoFile)
 	}
 	return cargoFiles, nil
 }
@@ -164,18 +163,18 @@ func getCrateMetadata(rootDir string) (crateMetadata, error) {
 	crate.WorkspaceBuildDependencies, _ = getDependencies(&tomlFile, "workspace.build-dependencies")
 	crate.WorkspaceDevDependencies, _ = getDependencies(&tomlFile, "workspace.dev-dependencies")
 
-	logrus.Debugf("Crate: %q\n", name)
-	logrus.Debugf("Dependencies")
+	log.Debugf("Crate: %q\n", name)
+	log.Debugf("Dependencies")
 	for _, value := range crate.Dependencies {
-		logrus.Debugf("Name: %q\n", value.Name)
-		logrus.Debugf("Registry: %q\n", value.Registry)
-		logrus.Debugf("Version: %q\n", value.Version)
+		log.Debugf("Name: %q\n", value.Name)
+		log.Debugf("Registry: %q\n", value.Registry)
+		log.Debugf("Version: %q\n", value.Version)
 	}
-	logrus.Debugf("Dev-Dependencies")
+	log.Debugf("Dev-Dependencies")
 	for _, value := range crate.DevDependencies {
-		logrus.Debugf("Name: %q\n", value.Name)
-		logrus.Debugf("Registry: %q\n", value.Registry)
-		logrus.Debugf("Version: %q\n", value.Version)
+		log.Debugf("Name: %q\n", value.Name)
+		log.Debugf("Registry: %q\n", value.Registry)
+		log.Debugf("Version: %q\n", value.Version)
 	}
 
 	return crate, nil
