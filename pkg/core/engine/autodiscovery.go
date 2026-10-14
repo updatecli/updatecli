@@ -238,7 +238,7 @@ func (e *Engine) LoadAutoDiscovery(ctx context.Context, defaultEnabled bool) err
 
 					baseAction := *actionConfig
 					if err := mergo.Merge(&baseAction, manifestAction); err != nil {
-						fmt.Println("Error:", err)
+						log.Errorf("merging autodiscovery action: %s", err)
 					}
 					manifest.Actions[p.Config.Spec.AutoDiscovery.ActionId] = baseAction
 				}

@@ -1,7 +1,7 @@
 package gomod
 
 import (
-	"fmt"
+	"github.com/updatecli/updatecli/pkg/core/log"
 
 	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/result"
@@ -30,7 +30,7 @@ func (g *GoMod) Changelog(from, to string) *result.Changelogs {
 		return m.Changelog(from, to)
 
 	default:
-		fmt.Printf("Golang changelog of kind %q is not supported\n", g.kind)
+		log.Warningf("Golang changelog of kind %q is not supported\n", g.kind)
 	}
 
 	return nil

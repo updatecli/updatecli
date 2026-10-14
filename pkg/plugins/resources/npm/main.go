@@ -422,7 +422,6 @@ func getOrderedVersions(data []byte) ([]string, error) {
 		// Read key
 		t, err := decoder.Token()
 		if err != nil {
-			fmt.Println("Error reading version key:", err)
 			return nil, err
 		}
 

@@ -2,9 +2,10 @@ package gitgeneric
 
 import (
 	"fmt"
-	"os"
 	"sort"
 	"time"
+
+	"github.com/updatecli/updatecli/pkg/core/log"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
@@ -160,7 +161,7 @@ func (g GoGit) PushBranch(branch string, username string, password string, worki
 
 	po := &git.PushOptions{
 		RemoteName: "origin",
-		Progress:   os.Stdout,
+		Progress:   log.Progress(),
 		RefSpecs:   []config.RefSpec{refspec},
 		Auth:       &auth,
 	}
@@ -292,7 +293,7 @@ func (g *GoGit) DeleteBranch(branch, gitRepositoryPath, username, password strin
 		if ref.Name() == plumbing.NewBranchReferenceName(branch) {
 			pushOptions := &git.PushOptions{
 				RemoteName: "origin",
-				Progress:   os.Stdout,
+				Progress:   log.Progress(),
 				RefSpecs: []config.RefSpec{
 					config.RefSpec(":refs/heads/" + branch),
 				},

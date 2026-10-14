@@ -1,9 +1,10 @@
 package precommit
 
 import (
-	"fmt"
 	"io/fs"
 	"path/filepath"
+
+	"github.com/updatecli/updatecli/pkg/core/log"
 
 	"github.com/sirupsen/logrus"
 )
@@ -21,7 +22,7 @@ func searchPrecommitConfigFiles(rootDir string) ([]string, error) {
 
 	err := filepath.WalkDir(rootDir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
-			fmt.Printf("prevent panic by handling failure accessing a path %q: %v\n", path, err)
+			log.Warningf("prevent panic by handling failure accessing a path %q: %v\n", path, err)
 			return err
 		}
 

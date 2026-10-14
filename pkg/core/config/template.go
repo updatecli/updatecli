@@ -10,6 +10,8 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/updatecli/updatecli/pkg/core/log"
+
 	"dario.cat/mergo"
 	"github.com/Masterminds/sprig/v3"
 	"github.com/getsops/sops/v3/decrypt"
@@ -169,7 +171,7 @@ func (t *Template) readFile(filename string, values *map[string]interface{}, enc
 	}
 
 	if filename == "" {
-		fmt.Println("No filename defined, nothing else to do")
+		log.Infof("No filename defined, nothing else to do")
 		return nil
 	}
 

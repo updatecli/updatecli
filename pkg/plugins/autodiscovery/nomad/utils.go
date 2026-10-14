@@ -9,6 +9,8 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/updatecli/updatecli/pkg/core/log"
+
 	terraformUtils "github.com/updatecli/updatecli/pkg/plugins/resources/terraform"
 
 	"github.com/sirupsen/logrus"
@@ -25,7 +27,7 @@ func searchNomadFiles(rootDir string, filePatterns []string) ([]string, error) {
 
 	err := filepath.WalkDir(rootDir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
-			fmt.Printf("prevent panic by handling failure accessing a path %q: %v\n", path, err)
+			log.Warningf("prevent panic by handling failure accessing a path %q: %v\n", path, err)
 			return err
 		}
 
