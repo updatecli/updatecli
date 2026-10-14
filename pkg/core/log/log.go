@@ -34,11 +34,22 @@ func (handler) Enabled(_ context.Context, l slog.Level) bool {
 }
 
 func (handler) Handle(_ context.Context, r slog.Record) error {
-	_, err := fanout{}.Write(render(r.Level, r.Message))
-	return err
+	l := line{level: r.Level, msg: r.Message}
+
+	r.Attrs(func(a slog.Attr) bool {
+		switch a.Key {
+		case kindKey:
+			l.kind = kind(a.Value.Int64())
+		case categoryKey:
+			l.category = a.Value.String()
+		}
+		return true
+	})
+
+	return emit(l)
 }
 
-// Attributes and groups aren't rendered, the console output is plain text.
+// Other attributes and groups aren't rendered, the console output is text.
 func (h handler) WithAttrs([]slog.Attr) slog.Handler { return h }
 func (h handler) WithGroup(string) slog.Handler      { return h }
 
