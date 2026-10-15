@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"path"
-	"strings"
 
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/updatecli/updatecli/pkg/core/log"
@@ -275,8 +274,7 @@ func (s Spec) validateVulnerability() error {
 
 func (n Npm) DiscoverManifests() ([][]byte, error) {
 
-	log.Infof("\n\n%s\n", strings.ToTitle("NPM"))
-	log.Infof("%s\n", strings.Repeat("=", len("NPM")+1))
+	log.Heading("NPM")
 
 	manifests, err := n.discoverDependencyManifests()
 

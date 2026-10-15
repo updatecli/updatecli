@@ -2,7 +2,6 @@ package terragrunt
 
 import (
 	"path"
-	"strings"
 
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/updatecli/updatecli/pkg/core/log"
@@ -90,8 +89,7 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Terragrunt, error) 
 }
 
 func (t Terragrunt) DiscoverManifests() ([][]byte, error) {
-	log.Infof("\n\n%s\n", strings.ToTitle("Terragrunt"))
-	log.Infof("%s\n", strings.Repeat("=", len("Terragrunt")+1))
+	log.Heading("Terragrunt")
 
 	manifests, err := t.discoverTerragruntManifests()
 	if err != nil {

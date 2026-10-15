@@ -37,6 +37,13 @@ func TestStyledLines(t *testing.T) {
 	assert.True(t, strings.HasSuffix(warning, ": careful\n"))
 	assert.Contains(t, warning, "\x1b[")
 
+	heading := line{kind: kindHeading, msg: "Actions"}.styled()
+	assert.Contains(t, heading, "ACTIONS")
+	assert.Contains(t, heading, strings.Repeat("═", len("Actions")))
+
+	assert.Contains(t, line{kind: kindPipelineTitle, msg: "Update Go"}.styled(), "Update Go")
+	assert.Contains(t, line{kind: kindSubheading, msg: "Errors"}.styled(), strings.Repeat("─", len("Errors")))
+
 	assert.Equal(t, "info\n", line{level: InfoLevel, msg: "info"}.styled())
 }
 
@@ -45,6 +52,9 @@ func TestPlainLinesHaveNoColor(t *testing.T) {
 
 	for _, l := range []line{
 		{kind: kindTitle, msg: "Pipeline"},
+		{kind: kindPipelineTitle, msg: "Update Go"},
+		{kind: kindHeading, msg: "Actions"},
+		{kind: kindSubheading, msg: "Errors"},
 		{kind: kindSection, category: "source", msg: "golang"},
 		{level: ErrorLevel, msg: "failed"},
 		{level: DebugLevel, msg: "details"},

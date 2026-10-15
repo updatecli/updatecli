@@ -20,8 +20,7 @@ func (e *Engine) showReports() error {
 
 	totalPipeline := totalSuccessPipeline + totalChangedAppliedPipeline + totalFailedPipeline + totalSkippedPipeline
 
-	log.Infof("Run Summary")
-	log.Infof("===========\n")
+	log.Heading("Run Summary")
 	log.Infof("Pipeline(s) run:")
 	log.Infof("  * Changed:\t%d", totalChangedAppliedPipeline)
 	log.Infof("  * Failed:\t%d", totalFailedPipeline)

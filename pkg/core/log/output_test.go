@@ -95,3 +95,17 @@ func TestTitleAndSection(t *testing.T) {
 			"\nsource: golang\n--------------\n\n",
 		terminalOutput.String())
 }
+
+func TestBanners(t *testing.T) {
+	terminalOutput := silenceTerminal(t)
+
+	PipelineTitle("Update Go")
+	Heading("Actions")
+	Subheading("Errors")
+
+	assert.Equal(t,
+		"\n#############\n# UPDATE GO #\n#############\n\n"+
+			"\n\nACTIONS\n=======\n\n"+
+			"\nErrors\n------\n\n",
+		terminalOutput.String())
+}

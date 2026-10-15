@@ -3,7 +3,6 @@ package kubernetes
 import (
 	"fmt"
 	"path"
-	"strings"
 
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/updatecli/updatecli/pkg/core/log"
@@ -210,8 +209,7 @@ func New(spec interface{}, rootDir, scmID, actionID, flavor string) (Kubernetes,
 }
 
 func (k Kubernetes) DiscoverManifests() ([][]byte, error) {
-	log.Infof("\n\n%s\n", strings.ToTitle("Kubernetes"))
-	log.Infof("%s\n", strings.Repeat("=", len("Kubernetes")+1))
+	log.Heading("Kubernetes")
 
 	return k.discoverContainerManifests()
 }

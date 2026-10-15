@@ -3,7 +3,6 @@ package nomad
 import (
 	"fmt"
 	"path"
-	"strings"
 
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/updatecli/updatecli/pkg/core/log"
@@ -206,8 +205,7 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Nomad, error) {
 }
 
 func (n Nomad) DiscoverManifests() ([][]byte, error) {
-	log.Infof("\n\n%s\n", strings.ToTitle("Nomad"))
-	log.Infof("%s\n", strings.Repeat("=", len("Nomad")+1))
+	log.Heading("Nomad")
 
 	return n.discoverDockerDriverManifests()
 }

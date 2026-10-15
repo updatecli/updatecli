@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"path"
 	"path/filepath"
-	"strings"
 
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/updatecli/updatecli/pkg/core/log"
@@ -232,8 +231,7 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Flux, error) {
 func (f Flux) DiscoverManifests() ([][]byte, error) {
 	var manifests [][]byte
 
-	log.Infof("\n\n%s\n", strings.ToTitle("Flux"))
-	log.Infof("%s\n", strings.Repeat("=", len("Flux")+1))
+	log.Heading("Flux")
 
 	searchFromDir := f.rootDir
 	// If the spec.RootDir is an absolute path, then it as already been set

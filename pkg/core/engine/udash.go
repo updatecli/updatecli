@@ -3,7 +3,6 @@ package engine
 import (
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/updatecli/updatecli/pkg/core/cmdoptions"
 	"github.com/updatecli/updatecli/pkg/core/log"
@@ -27,8 +26,7 @@ func (e *Engine) publishToUdash() error {
 		return nil
 	}
 
-	log.Infof("\n\n%s\n", strings.ToTitle("Udash - Experimental"))
-	log.Infof("%s\n\n", strings.Repeat("=", len("Udash - Experimental")+1))
+	log.Heading("Udash - Experimental")
 
 	errs := []error{}
 

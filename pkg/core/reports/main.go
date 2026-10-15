@@ -11,11 +11,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-const reportsTpl string = `
-=============================
-
-SUMMARY:
-{{ range . }}
+const reportsTpl string = `{{ range . }}
 {{ if .Err }}
 {{- .Result }} {{ .Name -}}:{{"\n"}}
 {{- .PipelineID }}{{"\n"}}
@@ -82,6 +78,7 @@ func (r *Reports) Show() error {
 		return err
 	}
 
+	log.Heading("Summary")
 	log.Infof("%s", reports)
 
 	return nil

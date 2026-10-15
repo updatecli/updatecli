@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"strings"
-
 	"github.com/updatecli/updatecli/pkg/core/log"
 
 	"github.com/spf13/cobra"
@@ -17,7 +15,7 @@ var (
 		Short: "Print current application version",
 		Args:  cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
-			log.Infof("\n%s\n", strings.ToTitle("Version"))
+			log.Heading("Version")
 			version.Show()
 		},
 	}

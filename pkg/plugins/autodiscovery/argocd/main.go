@@ -3,7 +3,6 @@ package argocd
 import (
 	"fmt"
 	"path"
-	"strings"
 
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/updatecli/updatecli/pkg/core/log"
@@ -158,8 +157,7 @@ func New(spec interface{}, rootDir, scmID, actionID string) (ArgoCD, error) {
 
 func (f ArgoCD) DiscoverManifests() ([][]byte, error) {
 
-	log.Infof("\n\n%s\n", strings.ToTitle("ArgoCD"))
-	log.Infof("%s\n", strings.Repeat("=", len("ArgoCD")+1))
+	log.Heading("ArgoCD")
 
 	return f.discoverArgoCDManifests()
 }

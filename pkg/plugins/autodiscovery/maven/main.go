@@ -3,7 +3,6 @@ package maven
 import (
 	"fmt"
 	"path"
-	"strings"
 
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/updatecli/updatecli/pkg/core/log"
@@ -128,8 +127,7 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Maven, error) {
 
 func (m Maven) DiscoverManifests() ([][]byte, error) {
 
-	log.Infof("\n\n%s\n", strings.ToTitle("Maven"))
-	log.Infof("%s\n", strings.Repeat("=", len("Maven")+1))
+	log.Heading("Maven")
 
 	manifests, err := m.discoverDependencyManifests("dependency")
 

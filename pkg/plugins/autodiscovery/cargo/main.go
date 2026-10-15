@@ -3,7 +3,6 @@ package cargo
 import (
 	"fmt"
 	"path"
-	"strings"
 
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/updatecli/updatecli/pkg/core/log"
@@ -144,8 +143,7 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Cargo, error) {
 }
 
 func (c Cargo) DiscoverManifests() ([][]byte, error) {
-	log.Infof("\n\n%s\n", strings.ToTitle("Cargo"))
-	log.Infof("%s\n", strings.Repeat("=", len("Cargo")+1))
+	log.Heading("Cargo")
 
 	manifests, err := c.discoverCargoDependenciesManifests()
 	if err != nil {

@@ -21,16 +21,13 @@ type Changelog struct {
 type Changelogs []Changelog
 
 func (c *Changelogs) String() string {
-	var changelogs string
-
-	changelogs = fmt.Sprintf("\n\n%s:\n", strings.ToTitle("Changelog"))
-	changelogs = changelogs + fmt.Sprintf("%s\n", strings.Repeat("-", len("Changelog")+1))
+	var changelogs []string
 
 	for _, changelog := range *c {
-		changelogs = changelogs + "\n" + changelog.String()
+		changelogs = append(changelogs, changelog.String())
 	}
 
-	return changelogs
+	return strings.Join(changelogs, "\n")
 }
 
 func (c Changelog) String() string {

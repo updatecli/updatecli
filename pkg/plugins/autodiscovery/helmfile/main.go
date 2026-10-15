@@ -3,7 +3,6 @@ package helmfile
 import (
 	"fmt"
 	"path"
-	"strings"
 
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/updatecli/updatecli/pkg/core/log"
@@ -151,8 +150,7 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Helmfile, error) {
 
 func (h Helmfile) DiscoverManifests() ([][]byte, error) {
 
-	log.Infof("\n\n%s\n", strings.ToTitle("Helmfile"))
-	log.Infof("%s\n", strings.Repeat("=", len("Helmfile")+1))
+	log.Heading("Helmfile")
 
 	return h.discoverHelmfileReleaseManifests()
 }

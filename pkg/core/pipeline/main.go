@@ -309,9 +309,7 @@ func (p *Pipeline) UpdateGraphReport() error {
 
 // Run executes a single pipeline, wrapping the entire run in an OpenTelemetry span.
 func (p *Pipeline) Run(ctx context.Context) error {
-	log.Infof("\n%s\n", strings.Repeat("#", len(p.Name)+4))
-	log.Infof("# %s #\n", strings.ToTitle(p.Name))
-	log.Infof("%s\n\n", strings.Repeat("#", len(p.Name)+4))
+	log.PipelineTitle(p.Name)
 
 	tracer := p.tracer
 
@@ -369,7 +367,7 @@ func (p *Pipeline) Run(ctx context.Context) error {
 		if leaf.Error != nil {
 			if !hasError {
 				title := fmt.Sprintf("Error(s) found in pipeline %q execution", p.Name)
-				log.Infof("\n%s\n%s\n", title, strings.Repeat("-", len(title)))
+				log.Subheading(title)
 			}
 			log.Infof("\n")
 			log.Errorf("something went wrong in %q :\n\t%s", leaf.ID, strings.ReplaceAll(leaf.Error.Error(), "\n", "\n\t"))
