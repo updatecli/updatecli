@@ -60,7 +60,7 @@ func (e *Engine) ManifestUpgrade(saveToDisk bool) (err error) {
 
 	totalUpgrade := totalSuccessUpgrade + totalChangedAppliedUpgrade + totalFailedUpgrade + totalSkippedUpgrade
 
-	log.Heading("Summary")
+	log.Title("Summary")
 	log.Infof("Manifest(s) upgrade:")
 	log.Infof("  * Changed:\t%d", totalChangedAppliedUpgrade)
 	log.Infof("  * Failed:\t%d", totalFailedUpgrade)

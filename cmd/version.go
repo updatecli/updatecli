@@ -15,7 +15,7 @@ var (
 		Short: "Print current application version",
 		Args:  cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
-			log.Heading("Version")
+			log.Title("Version")
 			version.Show()
 		},
 	}

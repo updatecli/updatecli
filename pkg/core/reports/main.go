@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"slices"
 	"sort"
+	"strings"
 	"text/template"
 
 	"github.com/updatecli/updatecli/pkg/core/log"
@@ -78,8 +79,9 @@ func (r *Reports) Show() error {
 		return err
 	}
 
-	log.Heading("Summary")
-	log.Infof("%s", reports)
+	log.Title("Summary")
+	// Banners own the spacing around the summary
+	log.Infof("%s", strings.Trim(reports, "\n")+"\n")
 
 	return nil
 }

@@ -26,7 +26,7 @@ func (e *Engine) publishToUdash() error {
 		return nil
 	}
 
-	log.Heading("Udash - Experimental")
+	log.Title("Udash - Experimental")
 
 	errs := []error{}
 
