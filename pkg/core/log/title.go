@@ -13,6 +13,8 @@ const (
 	dryRunKey   = "dryrun"
 	statusKey   = "status"
 	durationKey = "duration"
+	positionKey = "position"
+	totalKey    = "total"
 )
 
 // Status is the outcome of a pipeline, as shown on its closing line.
@@ -37,13 +39,25 @@ func Title(title string) {
 	banner(kindTitle, title)
 }
 
-// PipelineTitle opens a pipeline: its name, its ID and whether it runs in dry run mode.
-// Pipelines are the main unit of the console output, so they stand out the most.
-func PipelineTitle(name, id string, dryRun bool) {
-	logger.LogAttrs(context.Background(), InfoLevel, name,
+// Pipeline describes the pipeline opened by PipelineTitle.
+type Pipeline struct {
+	Name   string
+	ID     string
+	DryRun bool
+	// Position and Total locate the pipeline within the run, such as 3 of 12
+	Position int
+	Total    int
+}
+
+// PipelineTitle opens a pipeline. Pipelines are the main unit of the console output,
+// so they stand out the most.
+func PipelineTitle(p Pipeline) {
+	logger.LogAttrs(context.Background(), InfoLevel, p.Name,
 		slog.Int(kindKey, int(kindPipelineTitle)),
-		slog.String(idKey, id),
-		slog.Bool(dryRunKey, dryRun))
+		slog.String(idKey, p.ID),
+		slog.Bool(dryRunKey, p.DryRun),
+		slog.Int(positionKey, p.Position),
+		slog.Int(totalKey, p.Total))
 }
 
 // PipelineResult closes a pipeline with its outcome and how long it took.
