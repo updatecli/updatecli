@@ -54,6 +54,7 @@ var (
 	ruleWidth     int
 	titleStyle    lipgloss.Style
 	bandStyle     lipgloss.Style
+	bandIDStyle   lipgloss.Style
 	detailStyle   lipgloss.Style
 	statusStyles  map[Status]lipgloss.Style
 	headingStyle  lipgloss.Style
@@ -85,6 +86,7 @@ func initStyles(r *lipgloss.Renderer) {
 	errorStyle = r.NewStyle().Foreground(lipgloss.Color("1")).Bold(true)
 	titleStyle = r.NewStyle().Faint(true)
 	bandStyle = r.NewStyle().Bold(true).Foreground(lipgloss.Color("15")).Background(lipgloss.Color("4"))
+	bandIDStyle = r.NewStyle().Foreground(lipgloss.Color("7")).Background(lipgloss.Color("4"))
 	detailStyle = r.NewStyle().Faint(true)
 	statusStyles = map[Status]lipgloss.Style{
 		StatusUnchanged: r.NewStyle().Foreground(lipgloss.Color("2")).Bold(true),
@@ -146,14 +148,7 @@ func (l line) styled() string {
 		rule := strings.Repeat("─", max(ruleWidth-len([]rune(label)), 3))
 		return "\n\n" + titleStyle.Render(label+rule) + "\n\n"
 	case kindPipelineTitle:
-		// A full-width band: no other line has a background, so pipelines stand out when scrolling
-		left := " " + l.msg
-		if counter := l.counter(); counter != "" {
-			left = " " + counter + "  " + l.msg
-		}
-		right := l.pipelineDetails() + " "
-		gap := max(ruleWidth-lipgloss.Width(left)-lipgloss.Width(right), 2)
-		return "\n" + bandStyle.Render(left+strings.Repeat(" ", gap)+right) + "\n\n"
+		return "\n" + l.pipelineBand() + "\n"
 	case kindPipelineResult:
 		statusStyle := statusStyles[l.status]
 		label := "┗ " + statusSymbols[l.status] + " " + statusLabels[l.status]
@@ -208,16 +203,44 @@ func (l line) counter() string {
 	return fmt.Sprintf("%d/%d", l.position, l.total)
 }
 
-// pipelineDetails returns the short pipeline ID and the dry run mode, the full ID is in the report.
-func (l line) pipelineDetails() string {
-	var details []string
-	if l.id != "" {
-		details = append(details, l.id[:min(len(l.id), 8)])
+// pipelineBand renders the opening of a pipeline as a block of colored rows: no other line has
+// a background, so pipelines stand out when scrolling. The block grows rather than cutting the
+// pipeline ID, which must stay complete to be used with --pipeline-ids.
+func (l line) pipelineBand() string {
+	title := "  " + l.msg
+	if counter := l.counter(); counter != "" {
+		title = "  " + counter + "  " + l.msg
 	}
+
+	mode := ""
 	if l.dryRun {
-		details = append(details, "dry run")
+		mode = "dry run  "
 	}
-	return strings.Join(details, " · ")
+
+	id := ""
+	if l.id != "" {
+		id = "  Pipeline ID: " + l.id + "  "
+		// On a narrow terminal, the label goes first so the ID still fits
+		if lipgloss.Width(id) > ruleWidth {
+			id = "  " + l.id + "  "
+		}
+	}
+
+	width := max(ruleWidth, lipgloss.Width(title)+2+lipgloss.Width(mode), lipgloss.Width(id))
+	pad := func(text string) string {
+		return text + strings.Repeat(" ", width-lipgloss.Width(text))
+	}
+
+	rows := []string{
+		bandStyle.Render(pad("")),
+		bandStyle.Render(pad(title + strings.Repeat(" ", width-lipgloss.Width(title)-lipgloss.Width(mode)) + mode)),
+	}
+	if id != "" {
+		rows = append(rows, bandIDStyle.Render(pad(id)))
+	}
+	rows = append(rows, bandStyle.Render(pad("")))
+
+	return strings.Join(rows, "\n") + "\n"
 }
 
 func formatDuration(d time.Duration) string {

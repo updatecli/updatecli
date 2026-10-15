@@ -10,6 +10,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/termenv"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func colorStyles(t *testing.T) {
@@ -30,13 +31,26 @@ func TestStyledLines(t *testing.T) {
 	assert.Contains(t, title, "\x1b[")
 
 	pipeline := line{kind: kindPipelineTitle, msg: "Update Go", id: "a80dab948266e130", dryRun: true, position: 3, total: 12}.styled()
-	assert.Contains(t, pipeline, " 3/12  Update Go")
-	assert.Contains(t, pipeline, "a80dab94 · dry run ")
-	assert.NotContains(t, pipeline, "a80dab948")
-	assert.Equal(t, 40, lipgloss.Width(strings.Trim(pipeline, "\n")), "the band spans the rule width")
+	rows := strings.Split(strings.Trim(pipeline, "\n"), "\n")
+	require.Len(t, rows, 4, "an empty row, the title, the pipeline ID and an empty row")
+	assert.Contains(t, rows[1], "  3/12  Update Go")
+	assert.Contains(t, rows[1], "dry run")
+	assert.Contains(t, rows[2], "Pipeline ID: a80dab948266e130", "the pipeline ID is never shortened")
+	for _, row := range rows {
+		assert.Equal(t, 40, lipgloss.Width(row), "every row spans the rule width")
+	}
 
-	longName := line{kind: kindPipelineTitle, msg: strings.Repeat("x", 60), id: "a80dab94"}.styled()
-	assert.Contains(t, longName, strings.Repeat("x", 60)+"  a80dab94 ", "a long name is never cut")
+	longID := strings.Repeat("f", 64)
+	narrow := line{kind: kindPipelineTitle, msg: "Update Go", id: longID}.styled()
+	narrowRows := strings.Split(strings.Trim(narrow, "\n"), "\n")
+	assert.Contains(t, narrowRows[2], longID)
+	assert.NotContains(t, narrowRows[2], "Pipeline ID:", "the label is dropped when the ID doesn't fit with it")
+	for _, row := range narrowRows {
+		assert.Equal(t, lipgloss.Width("  "+longID+"  "), lipgloss.Width(row), "the band grows to fit the pipeline ID")
+	}
+
+	noID := line{kind: kindPipelineTitle, msg: "Update Go"}.styled()
+	assert.Len(t, strings.Split(strings.Trim(noID, "\n"), "\n"), 3)
 
 	closing := line{kind: kindPipelineResult, status: StatusFailed, duration: 1500 * time.Millisecond}.styled()
 	assert.Contains(t, closing, "┗ ✗ failed")
