@@ -88,7 +88,7 @@ func (e *Engine) pushSCMCommits() error {
 	inconclusiveSCM := e.inconclusiveSCMBranches()
 
 	allScm := map[string]map[string]*scm.ScmHandler{}
-	log.Heading("Pushing Git changes")
+	log.Title("Pushing Git changes")
 
 	countScms := 0
 	countPushedScms := 0

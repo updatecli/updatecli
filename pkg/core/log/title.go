@@ -34,7 +34,7 @@ const (
 // Every banner of the console output goes through one of the functions below,
 // from the widest to the narrowest scope, so that they can be restyled in one place.
 
-// Title logs the title of a major step, such as "Pipeline" or "Auto Discovery".
+// Title logs the title of a step of the run, such as "Prepare", "Pipeline", "Actions" or "Summary".
 func Title(title string) {
 	banner(kindTitle, title)
 }
@@ -68,8 +68,8 @@ func PipelineResult(status Status, duration time.Duration) {
 		slog.Duration(durationKey, duration))
 }
 
-// Heading logs the heading of a stage within a step, such as "Actions",
-// "Run Summary" or an autodiscovery crawler.
+// Heading logs the heading of a part of a step, such as an autodiscovery crawler or
+// the run summary.
 func Heading(heading string) {
 	banner(kindHeading, heading)
 }

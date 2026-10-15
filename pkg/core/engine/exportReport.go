@@ -11,7 +11,7 @@ import (
 func (e *Engine) exportReportToYAML() error {
 	errs := []string{}
 
-	log.Heading("Report")
+	log.Title("Report")
 
 	for id := range e.Pipelines {
 		pipeline := e.Pipelines[id]

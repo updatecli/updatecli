@@ -14,7 +14,7 @@ func (e *Engine) runActions(ctx context.Context) error {
 
 	errs := []string{}
 
-	log.Heading("Actions")
+	log.Title("Actions")
 
 	for id := range e.Pipelines {
 		pipeline := e.Pipelines[id]
