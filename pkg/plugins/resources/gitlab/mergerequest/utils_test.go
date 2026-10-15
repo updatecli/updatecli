@@ -37,33 +37,34 @@ func TestIsRemoteBranchExist(t *testing.T) {
 
 	testdata := []struct {
 		name           string
-		spec           Spec
+		spec           map[string]interface{}
 		expectedResult bool
 	}{
 		{
 			name: "Existing branch",
-			spec: Spec{
-				Owner:        "olblak",
-				Repository:   "updatecli",
-				SourceBranch: "main",
-				TargetBranch: "main",
+			spec: map[string]interface{}{
+				"URL":          server.URL,
+				"Owner":        "olblak",
+				"Repository":   "updatecli",
+				"SourceBranch": "main",
+				"TargetBranch": "main",
 			},
 			expectedResult: true,
 		},
 		{
 			name: "Non existing branch",
-			spec: Spec{
-				Owner:        "olblak",
-				Repository:   "updatecli",
-				SourceBranch: "donotexist",
-				TargetBranch: "donotexist",
+			spec: map[string]interface{}{
+				"URL":          server.URL,
+				"Owner":        "olblak",
+				"Repository":   "updatecli",
+				"SourceBranch": "donotexist",
+				"TargetBranch": "donotexist",
 			},
 			expectedResult: false,
 		},
 	}
 
 	for _, td := range testdata {
-		td.spec.URL = server.URL
 		t.Run(td.name, func(t *testing.T) {
 			gitlab, err := New(td.spec, nil)
 			if err != nil {
@@ -85,30 +86,31 @@ func TestFindExistingMR_Table(t *testing.T) {
 
 	testdata := []struct {
 		name string
-		spec Spec
+		spec map[string]interface{}
 	}{
 		{
 			name: "NoMergeRequest",
-			spec: Spec{
-				Owner:        "olblak",
-				Repository:   "updatecli",
-				SourceBranch: "donotexist",
-				TargetBranch: "donotexist",
+			spec: map[string]interface{}{
+				"URL":          server.URL,
+				"Owner":        "olblak",
+				"Repository":   "updatecli",
+				"SourceBranch": "donotexist",
+				"TargetBranch": "donotexist",
 			},
 		},
 		{
 			name: "NoOpenedMergeRequestBetweenMainBranches",
-			spec: Spec{
-				Owner:        "olblak",
-				Repository:   "updatecli",
-				SourceBranch: "main",
-				TargetBranch: "main",
+			spec: map[string]interface{}{
+				"URL":          server.URL,
+				"Owner":        "olblak",
+				"Repository":   "updatecli",
+				"SourceBranch": "main",
+				"TargetBranch": "main",
 			},
 		},
 	}
 
 	for _, td := range testdata {
-		td.spec.URL = server.URL
 		tc := td
 		t.Run(tc.name, func(t *testing.T) {
 			gitlab, err := New(tc.spec, nil)
