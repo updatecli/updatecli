@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"io"
 	"testing"
+	"time"
 
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
@@ -91,7 +92,7 @@ func TestTitleAndSection(t *testing.T) {
 	Section("source", "golang")
 
 	assert.Equal(t,
-		"\n\n++++++++++++\n+ PIPELINE +\n++++++++++++\n\n"+
+		"\n\n== PIPELINE ==\n\n"+
 			"\nsource: golang\n--------------\n\n",
 		terminalOutput.String())
 }
@@ -99,13 +100,24 @@ func TestTitleAndSection(t *testing.T) {
 func TestBanners(t *testing.T) {
 	terminalOutput := silenceTerminal(t)
 
-	PipelineTitle("Update Go")
+	PipelineTitle("Update Go", "a80dab948266e130", true)
 	Heading("Actions")
 	Subheading("Errors")
+	PipelineResult(StatusChanged, 4210*time.Millisecond)
 
 	assert.Equal(t,
 		"\n#############\n# UPDATE GO #\n#############\n\n"+
+			"Pipeline ID\t: a80dab948266e130\nDry Run\t\t: enabled\n"+
 			"\n\nACTIONS\n=======\n\n"+
-			"\nErrors\n------\n\n",
+			"\nErrors\n------\n\n"+
+			"\n=> CHANGED (4.2s)\n",
 		terminalOutput.String())
+}
+
+func TestPipelineTitleWithoutDryRun(t *testing.T) {
+	terminalOutput := silenceTerminal(t)
+
+	PipelineTitle("Update Go", "a80dab94", false)
+
+	assert.Equal(t, "\n#############\n# UPDATE GO #\n#############\n\nPipeline ID\t: a80dab94\n", terminalOutput.String())
 }

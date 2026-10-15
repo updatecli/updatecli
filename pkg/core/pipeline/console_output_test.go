@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/updatecli/updatecli/pkg/core/log"
+	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 func TestCaptureConsoleOutput(t *testing.T) {
@@ -41,4 +42,18 @@ func TestSaveConsoleOutputWithoutCapture(t *testing.T) {
 	p := &Pipeline{}
 	p.SaveConsoleOutput()
 	assert.Empty(t, p.Report.ConsoleOutput)
+}
+
+func TestStatus(t *testing.T) {
+	for r, expected := range map[string]log.Status{
+		result.SUCCESS:   log.StatusUnchanged,
+		result.ATTENTION: log.StatusChanged,
+		result.FAILURE:   log.StatusFailed,
+		result.SKIPPED:   log.StatusSkipped,
+		"":               log.StatusSkipped,
+	} {
+		p := &Pipeline{}
+		p.Report.Result = r
+		assert.Equal(t, expected, p.Status(), "result %q", r)
+	}
 }

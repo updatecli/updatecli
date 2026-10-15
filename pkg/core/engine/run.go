@@ -3,6 +3,7 @@ package engine
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/updatecli/updatecli/pkg/core/cache"
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
@@ -39,6 +40,7 @@ func (e *Engine) Run(ctx context.Context) (err error) {
 		pipeline.SourceCache = e.sourceCache
 
 		stopCapture := pipeline.CaptureConsoleOutput()
+		start := time.Now()
 		err := pipeline.Run(ctx)
 		if err != nil {
 			errs = append(errs, fmt.Errorf("pipeline %q failed: %w", pipeline.Name, err))
@@ -49,6 +51,12 @@ func (e *Engine) Run(ctx context.Context) (err error) {
 			log.Printf("Pipeline %q failed\n", pipeline.Name)
 			log.Printf("Skipping due to:\n\t%s\n", err)
 		}
+
+		status := pipeline.Status()
+		if err != nil {
+			status = log.StatusFailed
+		}
+		log.PipelineResult(status, time.Since(start))
 		stopCapture()
 	}
 

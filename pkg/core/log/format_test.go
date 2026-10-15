@@ -5,6 +5,7 @@ import (
 	"io"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/termenv"
@@ -17,6 +18,7 @@ func colorStyles(t *testing.T) {
 	r := lipgloss.NewRenderer(io.Discard)
 	r.SetColorProfile(termenv.ANSI)
 	initStyles(r)
+	ruleWidth = 40
 	t.Cleanup(func() { initStyles(lipgloss.NewRenderer(io.Discard)) })
 }
 
@@ -24,9 +26,18 @@ func TestStyledLines(t *testing.T) {
 	colorStyles(t)
 
 	title := line{kind: kindTitle, msg: "Pipeline"}.styled()
-	assert.Contains(t, title, "╭")
-	assert.Contains(t, title, "PIPELINE")
+	assert.Contains(t, title, "── PIPELINE "+strings.Repeat("─", 40-len("── PIPELINE ")))
 	assert.Contains(t, title, "\x1b[")
+
+	pipeline := line{kind: kindPipelineTitle, msg: "Update Go", id: "a80dab948266e130", dryRun: true}.styled()
+	assert.Contains(t, pipeline, "┃")
+	assert.Contains(t, pipeline, "Update Go")
+	assert.Contains(t, pipeline, "a80dab94 · dry run")
+	assert.NotContains(t, pipeline, "a80dab948")
+
+	closing := line{kind: kindPipelineResult, status: StatusFailed, duration: 1500 * time.Millisecond}.styled()
+	assert.Contains(t, closing, "┗ ✗ failed")
+	assert.Contains(t, closing, " · 1.5s")
 
 	section := line{kind: kindSection, category: "source", msg: "golang"}.styled()
 	assert.Contains(t, section, "source:")
@@ -41,7 +52,6 @@ func TestStyledLines(t *testing.T) {
 	assert.Contains(t, heading, "ACTIONS")
 	assert.Contains(t, heading, strings.Repeat("═", len("Actions")))
 
-	assert.Contains(t, line{kind: kindPipelineTitle, msg: "Update Go"}.styled(), "Update Go")
 	assert.Contains(t, line{kind: kindSubheading, msg: "Errors"}.styled(), strings.Repeat("─", len("Errors")))
 
 	assert.Equal(t, "info\n", line{level: InfoLevel, msg: "info"}.styled())
@@ -52,7 +62,8 @@ func TestPlainLinesHaveNoColor(t *testing.T) {
 
 	for _, l := range []line{
 		{kind: kindTitle, msg: "Pipeline"},
-		{kind: kindPipelineTitle, msg: "Update Go"},
+		{kind: kindPipelineTitle, msg: "Update Go", id: "a80dab94"},
+		{kind: kindPipelineResult, status: StatusChanged},
 		{kind: kindHeading, msg: "Actions"},
 		{kind: kindSubheading, msg: "Errors"},
 		{kind: kindSection, category: "source", msg: "golang"},
@@ -73,5 +84,5 @@ func TestCaptureIsPlainText(t *testing.T) {
 	Title("Pipeline")
 	stop()
 
-	assert.Equal(t, "ERROR: failed\n\n\n++++++++++++\n+ PIPELINE +\n++++++++++++\n\n", captured.String())
+	assert.Equal(t, "ERROR: failed\n\n\n== PIPELINE ==\n\n", captured.String())
 }
