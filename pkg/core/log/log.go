@@ -50,6 +50,10 @@ func (handler) Handle(_ context.Context, r slog.Record) error {
 			l.status = Status(a.Value.Int64())
 		case durationKey:
 			l.duration = a.Value.Duration()
+		case positionKey:
+			l.position = int(a.Value.Int64())
+		case totalKey:
+			l.total = int(a.Value.Int64())
 		}
 		return true
 	})

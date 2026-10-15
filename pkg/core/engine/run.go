@@ -40,6 +40,13 @@ func (e *Engine) Run(ctx context.Context) (err error) {
 		pipeline.SourceCache = e.sourceCache
 
 		stopCapture := pipeline.CaptureConsoleOutput()
+		log.PipelineTitle(log.Pipeline{
+			Name:     pipeline.Name,
+			ID:       pipeline.ID,
+			DryRun:   pipeline.Options.Target.DryRun,
+			Position: i + 1,
+			Total:    len(e.Pipelines),
+		})
 		start := time.Now()
 		err := pipeline.Run(ctx)
 		if err != nil {

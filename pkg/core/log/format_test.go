@@ -29,15 +29,19 @@ func TestStyledLines(t *testing.T) {
 	assert.Contains(t, title, "── PIPELINE "+strings.Repeat("─", 40-len("── PIPELINE ")))
 	assert.Contains(t, title, "\x1b[")
 
-	pipeline := line{kind: kindPipelineTitle, msg: "Update Go", id: "a80dab948266e130", dryRun: true}.styled()
-	assert.Contains(t, pipeline, "┃")
-	assert.Contains(t, pipeline, "Update Go")
-	assert.Contains(t, pipeline, "a80dab94 · dry run")
+	pipeline := line{kind: kindPipelineTitle, msg: "Update Go", id: "a80dab948266e130", dryRun: true, position: 3, total: 12}.styled()
+	assert.Contains(t, pipeline, " 3/12  Update Go")
+	assert.Contains(t, pipeline, "a80dab94 · dry run ")
 	assert.NotContains(t, pipeline, "a80dab948")
+	assert.Equal(t, 40, lipgloss.Width(strings.Trim(pipeline, "\n")), "the band spans the rule width")
+
+	longName := line{kind: kindPipelineTitle, msg: strings.Repeat("x", 60), id: "a80dab94"}.styled()
+	assert.Contains(t, longName, strings.Repeat("x", 60)+"  a80dab94 ", "a long name is never cut")
 
 	closing := line{kind: kindPipelineResult, status: StatusFailed, duration: 1500 * time.Millisecond}.styled()
 	assert.Contains(t, closing, "┗ ✗ failed")
-	assert.Contains(t, closing, " · 1.5s")
+	assert.Contains(t, closing, " · 1.5s ")
+	assert.Equal(t, 40, lipgloss.Width(strings.Trim(closing, "\n")), "the closing rule spans the rule width")
 
 	section := line{kind: kindSection, category: "source", msg: "golang"}.styled()
 	assert.Contains(t, section, "source:")

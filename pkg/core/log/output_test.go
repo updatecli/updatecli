@@ -100,13 +100,13 @@ func TestTitleAndSection(t *testing.T) {
 func TestBanners(t *testing.T) {
 	terminalOutput := silenceTerminal(t)
 
-	PipelineTitle("Update Go", "a80dab948266e130", true)
+	PipelineTitle(Pipeline{Name: "Update Go", ID: "a80dab948266e130", DryRun: true, Position: 3, Total: 12})
 	Heading("Actions")
 	Subheading("Errors")
 	PipelineResult(StatusChanged, 4210*time.Millisecond)
 
 	assert.Equal(t,
-		"\n#############\n# UPDATE GO #\n#############\n\n"+
+		"\n####################\n# [3/12] UPDATE GO #\n####################\n\n"+
 			"Pipeline ID\t: a80dab948266e130\nDry Run\t\t: enabled\n"+
 			"\n\nACTIONS\n=======\n\n"+
 			"\nErrors\n------\n\n"+
@@ -117,7 +117,7 @@ func TestBanners(t *testing.T) {
 func TestPipelineTitleWithoutDryRun(t *testing.T) {
 	terminalOutput := silenceTerminal(t)
 
-	PipelineTitle("Update Go", "a80dab94", false)
+	PipelineTitle(Pipeline{Name: "Update Go", ID: "a80dab94"})
 
 	assert.Equal(t, "\n#############\n# UPDATE GO #\n#############\n\nPipeline ID\t: a80dab94\n", terminalOutput.String())
 }

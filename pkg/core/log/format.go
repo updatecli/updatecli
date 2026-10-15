@@ -32,9 +32,11 @@ type line struct {
 	msg   string
 	// category is the category of a section, such as "source" or "target"
 	category string
-	// id, dryRun, status and duration describe a pipeline
+	// id, dryRun, position, total, status and duration describe a pipeline
 	id       string
 	dryRun   bool
+	position int
+	total    int
 	status   Status
 	duration time.Duration
 }
@@ -51,8 +53,7 @@ var (
 	errorStyle    lipgloss.Style
 	ruleWidth     int
 	titleStyle    lipgloss.Style
-	pipelineStyle lipgloss.Style
-	barStyle      lipgloss.Style
+	bandStyle     lipgloss.Style
 	detailStyle   lipgloss.Style
 	statusStyles  map[Status]lipgloss.Style
 	headingStyle  lipgloss.Style
@@ -83,8 +84,7 @@ func initStyles(r *lipgloss.Renderer) {
 	warningStyle = r.NewStyle().Foreground(lipgloss.Color("3")).Bold(true)
 	errorStyle = r.NewStyle().Foreground(lipgloss.Color("1")).Bold(true)
 	titleStyle = r.NewStyle().Faint(true)
-	pipelineStyle = r.NewStyle().Bold(true)
-	barStyle = r.NewStyle().Foreground(lipgloss.Color("4")).Bold(true)
+	bandStyle = r.NewStyle().Bold(true).Foreground(lipgloss.Color("15")).Background(lipgloss.Color("4"))
 	detailStyle = r.NewStyle().Faint(true)
 	statusStyles = map[Status]lipgloss.Style{
 		StatusUnchanged: r.NewStyle().Foreground(lipgloss.Color("2")).Bold(true),
@@ -104,8 +104,12 @@ func (l line) plain() string {
 	case kindTitle:
 		return "\n\n== " + strings.ToTitle(l.msg) + " ==\n\n"
 	case kindPipelineTitle:
-		border := strings.Repeat("#", len(l.msg)+4)
-		out := "\n" + border + "\n# " + strings.ToTitle(l.msg) + " #\n" + border + "\n\n"
+		title := strings.ToTitle(l.msg)
+		if counter := l.counter(); counter != "" {
+			title = "[" + counter + "] " + title
+		}
+		border := strings.Repeat("#", len(title)+4)
+		out := "\n" + border + "\n# " + title + " #\n" + border + "\n\n"
 		out += "Pipeline ID\t: " + l.id + "\n"
 		if l.dryRun {
 			out += "Dry Run\t\t: enabled\n"
@@ -142,16 +146,20 @@ func (l line) styled() string {
 		rule := strings.Repeat("─", max(ruleWidth-len([]rune(label)), 3))
 		return "\n\n" + titleStyle.Render(label+rule) + "\n\n"
 	case kindPipelineTitle:
-		bar := barStyle.Render("┃") + " "
-		out := "\n" + bar + pipelineStyle.Render(l.msg) + "\n"
-		if details := l.pipelineDetails(); details != "" {
-			out += bar + detailStyle.Render(details) + "\n"
+		// A full-width band: no other line has a background, so pipelines stand out when scrolling
+		left := " " + l.msg
+		if counter := l.counter(); counter != "" {
+			left = " " + counter + "  " + l.msg
 		}
-		return out + "\n"
+		right := l.pipelineDetails() + " "
+		gap := max(ruleWidth-lipgloss.Width(left)-lipgloss.Width(right), 2)
+		return "\n" + bandStyle.Render(left+strings.Repeat(" ", gap)+right) + "\n\n"
 	case kindPipelineResult:
 		statusStyle := statusStyles[l.status]
-		return "\n" + statusStyle.Render("┗ "+statusSymbols[l.status]+" "+statusLabels[l.status]) +
-			detailStyle.Render(" · "+formatDuration(l.duration)) + "\n"
+		label := "┗ " + statusSymbols[l.status] + " " + statusLabels[l.status]
+		duration := " · " + formatDuration(l.duration) + " "
+		rule := strings.Repeat("━", max(ruleWidth-lipgloss.Width(label)-lipgloss.Width(duration), 3))
+		return "\n" + statusStyle.Render(label) + detailStyle.Render(duration) + statusStyle.Render(rule) + "\n"
 	case kindHeading:
 		return "\n\n" + headingStyle.Render(strings.ToTitle(l.msg)) + "\n" +
 			ruleStyle.Render(strings.Repeat("═", len([]rune(l.msg)))) + "\n\n"
@@ -191,6 +199,14 @@ var (
 		StatusSkipped:   "skipped",
 	}
 )
+
+// counter returns the position of the pipeline within the run, such as "3/12".
+func (l line) counter() string {
+	if l.total == 0 {
+		return ""
+	}
+	return fmt.Sprintf("%d/%d", l.position, l.total)
+}
 
 // pipelineDetails returns the short pipeline ID and the dry run mode, the full ID is in the report.
 func (l line) pipelineDetails() string {
