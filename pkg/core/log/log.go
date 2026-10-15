@@ -42,6 +42,14 @@ func (handler) Handle(_ context.Context, r slog.Record) error {
 			l.kind = kind(a.Value.Int64())
 		case categoryKey:
 			l.category = a.Value.String()
+		case idKey:
+			l.id = a.Value.String()
+		case dryRunKey:
+			l.dryRun = a.Value.Bool()
+		case statusKey:
+			l.status = Status(a.Value.Int64())
+		case durationKey:
+			l.duration = a.Value.Duration()
 		}
 		return true
 	})

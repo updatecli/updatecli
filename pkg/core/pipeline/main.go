@@ -309,7 +309,7 @@ func (p *Pipeline) UpdateGraphReport() error {
 
 // Run executes a single pipeline, wrapping the entire run in an OpenTelemetry span.
 func (p *Pipeline) Run(ctx context.Context) error {
-	log.PipelineTitle(p.Name)
+	log.PipelineTitle(p.Name, p.ID, p.Options.Target.DryRun)
 
 	tracer := p.tracer
 
@@ -330,9 +330,7 @@ func (p *Pipeline) Run(ctx context.Context) error {
 	ctx, span := tracer.Start(ctx, "updatecli.pipeline", opts...)
 	defer span.End()
 
-	log.Infof("Pipeline ID\t: %s", p.ID)
 	if p.Options.Target.DryRun {
-		log.Infof("Dry Run\t\t: enabled\n")
 		span.SetAttributes(attribute.Bool("updatecli.pipeline.dry_run", true))
 	}
 
