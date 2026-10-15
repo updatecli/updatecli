@@ -3,7 +3,6 @@ package woodpecker
 import (
 	"fmt"
 	"path"
-	"strings"
 
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/updatecli/updatecli/pkg/core/log"
@@ -188,8 +187,7 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Woodpecker, error) 
 }
 
 func (w Woodpecker) DiscoverManifests() ([][]byte, error) {
-	log.Infof("\n\n%s\n", strings.ToTitle("Woodpecker"))
-	log.Infof("%s\n", strings.Repeat("=", len("Woodpecker")+1))
+	log.Heading("Woodpecker")
 
 	return w.discoverWorkflowImageManifests()
 }

@@ -3,7 +3,6 @@ package dockerfile
 import (
 	"fmt"
 	"path"
-	"strings"
 
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/updatecli/updatecli/pkg/core/log"
@@ -185,8 +184,7 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Dockerfile, error) 
 
 func (d Dockerfile) DiscoverManifests() ([][]byte, error) {
 
-	log.Infof("\n\n%s\n", strings.ToTitle("Dockerfile"))
-	log.Infof("%s\n", strings.Repeat("=", len("Dockerfile")+1))
+	log.Heading("Dockerfile")
 
 	return d.discoverDockerfileManifests()
 }

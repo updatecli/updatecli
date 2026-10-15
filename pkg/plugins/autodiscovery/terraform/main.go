@@ -2,7 +2,6 @@ package terraform
 
 import (
 	"path"
-	"strings"
 
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/updatecli/updatecli/pkg/core/log"
@@ -95,8 +94,7 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Terraform, error) {
 }
 
 func (t Terraform) DiscoverManifests() ([][]byte, error) {
-	log.Infof("\n\n%s\n", strings.ToTitle("Terraform"))
-	log.Infof("%s\n", strings.Repeat("=", len("Terraform")+1))
+	log.Heading("Terraform")
 
 	manifests, err := t.discoverTerraformProvidersManifests()
 	if err != nil {

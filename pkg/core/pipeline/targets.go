@@ -63,7 +63,10 @@ func (p *Pipeline) RunTarget(ctx context.Context, id string, sourceIds []string)
 					if changelogs != nil {
 						target.Result.Changelogs = *changelogs
 
-						log.Debugf("%s", changelogs.String())
+						if log.IsDebug() {
+							log.Subheading("Changelog")
+							log.Debugf("%s", changelogs.String())
+						}
 
 					} else {
 						log.Debugln("no changelog detected")

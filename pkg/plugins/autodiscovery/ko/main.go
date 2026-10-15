@@ -3,7 +3,6 @@ package ko
 import (
 	"fmt"
 	"path"
-	"strings"
 
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/updatecli/updatecli/pkg/core/log"
@@ -202,8 +201,7 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Ko, error) {
 
 func (f Ko) DiscoverManifests() ([][]byte, error) {
 
-	log.Infof("\n\n%s\n", strings.ToTitle("Ko"))
-	log.Infof("%s\n", strings.Repeat("=", len("Ko")+1))
+	log.Heading("Ko")
 
 	return f.discoverContainerManifests()
 }

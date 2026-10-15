@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"path"
 	"path/filepath"
-	"strings"
 
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/updatecli/updatecli/pkg/core/log"
@@ -315,8 +314,7 @@ func New(spec interface{}, rootDir, scmID, actionID string) (GitHubAction, error
 }
 
 func (g GitHubAction) DiscoverManifests() ([][]byte, error) {
-	log.Infof("\n\n%s\n", strings.ToTitle("GitHub Action"))
-	log.Infof("%s\n", strings.Repeat("=", len("GitHub Action")+1))
+	log.Heading("GitHub Action")
 
 	searchFromDir := g.rootDir
 	// If the spec.RootDir is an absolute path, then it as already been set

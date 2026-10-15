@@ -3,7 +3,6 @@ package updatecli
 import (
 	"fmt"
 	"path"
-	"strings"
 
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/updatecli/updatecli/pkg/core/log"
@@ -179,8 +178,7 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Updatecli, error) {
 // DiscoverManifests search for Updatecli compose file and generate Updatecli manifests.
 func (u Updatecli) DiscoverManifests() ([][]byte, error) {
 
-	log.Infof("\n\n%s\n", strings.ToTitle("Updatecli"))
-	log.Infof("%s\n", strings.Repeat("=", len("Updatecli")+1))
+	log.Heading("Updatecli")
 
 	return u.discoverUpdatecliPolicyManifests()
 }

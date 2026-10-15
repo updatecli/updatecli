@@ -23,7 +23,6 @@ package pyproject
 import (
 	"fmt"
 	"path"
-	"strings"
 
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/updatecli/updatecli/pkg/core/log"
@@ -159,8 +158,7 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Pyproject, error) {
 
 // DiscoverManifests returns updatecli manifests for all Python dependencies found under rootDir.
 func (p Pyproject) DiscoverManifests() ([][]byte, error) {
-	log.Infof("\n\n%s\n", strings.ToTitle("Pyproject"))
-	log.Infof("%s\n", strings.Repeat("=", len("Pyproject")+1))
+	log.Heading("Pyproject")
 
 	return p.discoverDependencyManifests()
 }

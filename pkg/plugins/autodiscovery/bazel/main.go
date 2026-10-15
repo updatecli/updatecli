@@ -105,8 +105,7 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Bazel, error) {
 
 // DiscoverManifests discovers Bazel module dependencies and generates Updatecli manifests.
 func (b Bazel) DiscoverManifests() ([][]byte, error) {
-	log.Infof("\n\n%s\n", strings.ToTitle("Bazel"))
-	log.Infof("%s\n", strings.Repeat("=", len("Bazel")+1))
+	log.Heading("Bazel")
 
 	manifests, err := b.discoverBazelModuleManifests()
 	if err != nil {

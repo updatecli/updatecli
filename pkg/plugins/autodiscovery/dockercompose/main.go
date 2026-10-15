@@ -3,7 +3,6 @@ package dockercompose
 import (
 	"fmt"
 	"path"
-	"strings"
 
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/updatecli/updatecli/pkg/core/log"
@@ -184,8 +183,7 @@ func New(spec interface{}, rootDir, scmID, actionID string) (DockerCompose, erro
 
 func (d DockerCompose) DiscoverManifests() ([][]byte, error) {
 	// Print the header to get started
-	log.Infof("\n\n%s\n", strings.ToTitle("Docker Compose"))
-	log.Infof("%s\n", strings.Repeat("=", len("Docker Compose")+1))
+	log.Heading("Docker Compose")
 
 	return d.discoverDockerComposeImageManifests()
 }

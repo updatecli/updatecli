@@ -3,7 +3,6 @@ package fleet
 import (
 	"fmt"
 	"path"
-	"strings"
 
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/updatecli/updatecli/pkg/core/log"
@@ -150,8 +149,7 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Fleet, error) {
 
 func (f Fleet) DiscoverManifests() ([][]byte, error) {
 
-	log.Infof("\n\n%s\n", strings.ToTitle("Rancher Fleet"))
-	log.Infof("%s\n", strings.Repeat("=", len("Rancher Fleet")+1))
+	log.Heading("Rancher Fleet")
 
 	return f.discoverFleetDependenciesManifests()
 }

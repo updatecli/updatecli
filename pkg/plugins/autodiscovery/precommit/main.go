@@ -3,7 +3,6 @@ package precommit
 import (
 	"fmt"
 	"path"
-	"strings"
 
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/updatecli/updatecli/pkg/core/log"
@@ -147,8 +146,7 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Precommit, error) {
 
 func (p Precommit) DiscoverManifests() ([][]byte, error) {
 
-	log.Infof("\n\n%s\n", strings.ToTitle("PRECOMMIT"))
-	log.Infof("%s\n", strings.Repeat("=", len("PRECOMMIT")+1))
+	log.Heading("PRECOMMIT")
 
 	manifests, err := p.discoverDependencyManifests()
 
