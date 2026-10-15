@@ -333,7 +333,7 @@ func (t *Transformers) Apply(input string) (string, error) {
 		return "", err
 	}
 
-	log.Info("[transformers]\n")
+	log.Debugf("[transformers]\n")
 
 	for _, transformer := range *t {
 		previous := output
@@ -342,8 +342,14 @@ func (t *Transformers) Apply(input string) (string, error) {
 			return "", err
 		}
 
-		log.Infof("✔ Result correctly transformed from %q to %q", previous, output)
+		log.Debugf("✔ Result correctly transformed from %q to %q", previous, output)
 	}
+
+	// Only the net result is worth a line by default, it explains why a value differs from its source
+	if output != input {
+		log.Infof("✔ transformed %q into %q", input, output)
+	}
+
 	return output, nil
 }
 
