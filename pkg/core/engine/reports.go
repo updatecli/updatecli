@@ -16,7 +16,7 @@ func (e *Engine) showReports() error {
 		return err
 	}
 
-	totalSuccessPipeline, totalChangedAppliedPipeline, totalFailedPipeline, totalSkippedPipeline, actionLinks := e.Reports.Summary()
+	totalSuccessPipeline, totalChangedAppliedPipeline, totalFailedPipeline, totalSkippedPipeline, actionLinks, createdLabels := e.Reports.Summary()
 
 	totalPipeline := totalSuccessPipeline + totalChangedAppliedPipeline + totalFailedPipeline + totalSkippedPipeline
 
@@ -41,6 +41,21 @@ func (e *Engine) showReports() error {
 		logrus.Infof("%d action(s) to follow up:", len(actionLinks))
 		for i := range actionLinks {
 			logrus.Infof("  * %s", actionLinks[i])
+		}
+	}
+
+	switch len(createdLabels) {
+	case 0:
+		//
+	case 1:
+		logrus.Infof("One label force-created on the SCM as it didn't already exist:")
+		for i := range createdLabels {
+			logrus.Infof("  * %s", createdLabels[i])
+		}
+	default:
+		logrus.Infof("%d label(s) force-created on the SCM as they didn't already exist:", len(createdLabels))
+		for i := range createdLabels {
+			logrus.Infof("  * %s", createdLabels[i])
 		}
 	}
 
