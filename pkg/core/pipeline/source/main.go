@@ -67,7 +67,7 @@ func (s *Source) Run(ctx context.Context, sourceCache *cache.SourceCache) (err e
 
 	if sourceCache != nil {
 		if entry, ok := sourceCache.Get(cacheKey); ok {
-			log.Infof("source cache hit for %q", s.Config.Name)
+			log.Debugf("source cache hit for %q", s.Config.Name)
 			s.Result.Information = entry.Information
 			s.Result.Description = entry.Description
 			s.Result.Result = entry.Result
