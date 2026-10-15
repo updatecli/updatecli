@@ -2,6 +2,10 @@ package branch
 
 import (
 	"context"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -9,7 +13,30 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
+// newProjectBranchServer serves the given branches for any project path, except one
+// containing "nonexistent" in its name, which GitLab reports as a 404.
+func newProjectBranchServer(t *testing.T, branches ...string) *httptest.Server {
+	t.Helper()
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.Contains(r.URL.Path, "nonexistent") {
+			w.WriteHeader(http.StatusNotFound)
+			fmt.Fprint(w, `{"message":"404 Project Not Found"}`)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		taggedJSON := make([]string, 0, len(branches))
+		for _, branch := range branches {
+			taggedJSON = append(taggedJSON, branchJSON(branch, daysAgo(1)))
+		}
+		fmt.Fprintf(w, "[%s]", strings.Join(taggedJSON, ","))
+	}))
+}
+
 func TestCondition(t *testing.T) {
+
+	server := newProjectBranchServer(t, "main", "develop")
+	defer server.Close()
 
 	tests := []struct {
 		name     string
@@ -32,7 +59,7 @@ func TestCondition(t *testing.T) {
 				Repository string
 				Branch     string
 			}{
-				URL:        "gitlab.com",
+				URL:        server.URL,
 				Token:      "",
 				Owner:      "olblak",
 				Repository: "updatecli-nonexistent",
@@ -50,7 +77,7 @@ func TestCondition(t *testing.T) {
 				Repository string
 				Branch     string
 			}{
-				URL:        "gitlab.com",
+				URL:        server.URL,
 				Token:      "",
 				Owner:      "olblak",
 				Repository: "updatecli",
@@ -68,11 +95,11 @@ func TestCondition(t *testing.T) {
 				Repository string
 				Branch     string
 			}{
-				URL:        "gitlab.com",
+				URL:        server.URL,
 				Token:      "",
 				Owner:      "olblak",
 				Repository: "updatecli",
-				Branch:     "nonexistent",
+				Branch:     "doesnotexist",
 			},
 			wantResult: false,
 			wantErr:    false,

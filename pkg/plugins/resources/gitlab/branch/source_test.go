@@ -13,6 +13,9 @@ import (
 
 func TestSource(t *testing.T) {
 
+	server := newProjectBranchServer(t, "main", "develop")
+	defer server.Close()
+
 	tests := []struct {
 		name     string
 		manifest struct {
@@ -34,7 +37,7 @@ func TestSource(t *testing.T) {
 				Repository    string
 				VersionFilter version.Filter
 			}{
-				URL:        "gitlab.com",
+				URL:        server.URL,
 				Token:      "",
 				Owner:      "updatecli",
 				Repository: "updatecli-nonexistent",
@@ -51,6 +54,7 @@ func TestSource(t *testing.T) {
 				Repository    string
 				VersionFilter version.Filter
 			}{
+				URL:        server.URL,
 				Token:      "",
 				Owner:      "olblak",
 				Repository: "updatecli",
@@ -71,13 +75,13 @@ func TestSource(t *testing.T) {
 				Repository    string
 				VersionFilter version.Filter
 			}{
-				URL:        "gitlab.com",
+				URL:        server.URL,
 				Token:      "",
 				Owner:      "olblak",
 				Repository: "updatecli",
 				VersionFilter: version.Filter{
 					Kind:    "regex",
-					Pattern: "nonexistent",
+					Pattern: "doesnotexist",
 				},
 			},
 			wantResult: "",

@@ -2,6 +2,10 @@ package release
 
 import (
 	"context"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -9,7 +13,30 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
+// newProjectReleaseServer serves the given releases for most project paths, an empty
+// release list for "FOSDEM22" and a 404 for any path containing "nonexistent", mirroring
+// the handful of real-world repository states exercised by condition/source tests.
+func newProjectReleaseServer(t *testing.T, releases ...string) *httptest.Server {
+	t.Helper()
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case strings.Contains(r.URL.Path, "nonexistent"):
+			w.WriteHeader(http.StatusNotFound)
+			fmt.Fprint(w, `{"message":"404 Project Not Found"}`)
+		case strings.Contains(r.URL.Path, "FOSDEM22"):
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, "[]")
+		default:
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprintf(w, "[%s]", strings.Join(releases, ","))
+		}
+	}))
+}
+
 func TestCondition(t *testing.T) {
+
+	server := newProjectReleaseServer(t, releaseJSON("v0.46.2", daysAgo(1), false), releaseJSON("v0.46.1", daysAgo(10), false))
+	defer server.Close()
 
 	tests := []struct {
 		name     string
@@ -32,7 +59,7 @@ func TestCondition(t *testing.T) {
 				Repository string
 				Tag        string
 			}{
-				URL:        "gitlab.com",
+				URL:        server.URL,
 				Token:      "",
 				Owner:      "olblak",
 				Repository: "updatecli-nonexistent",
@@ -49,7 +76,7 @@ func TestCondition(t *testing.T) {
 				Repository string
 				Tag        string
 			}{
-				URL:        "gitlab.com",
+				URL:        server.URL,
 				Token:      "",
 				Owner:      "cicd-devroom",
 				Repository: "FOSDEM22",
@@ -65,7 +92,7 @@ func TestCondition(t *testing.T) {
 				Repository string
 				Tag        string
 			}{
-				URL:        "gitlab.com",
+				URL:        server.URL,
 				Token:      "",
 				Owner:      "cicd-devroom",
 				Repository: "FOSDEM22",
@@ -82,7 +109,7 @@ func TestCondition(t *testing.T) {
 				Repository string
 				Tag        string
 			}{
-				URL:        "gitlab.com",
+				URL:        server.URL,
 				Token:      "",
 				Owner:      "olblak",
 				Repository: "updatecli",
@@ -100,7 +127,7 @@ func TestCondition(t *testing.T) {
 				Repository string
 				Tag        string
 			}{
-				URL:        "gitlab.com",
+				URL:        server.URL,
 				Token:      "",
 				Owner:      "olblak",
 				Repository: "updatecli",

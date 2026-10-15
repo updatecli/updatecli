@@ -2,6 +2,10 @@ package tag
 
 import (
 	"context"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -9,7 +13,30 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
+// newProjectTagServer serves the given tags for any project path, except one
+// containing "nonexistent" in its name, which GitLab reports as a 404.
+func newProjectTagServer(t *testing.T, tags ...string) *httptest.Server {
+	t.Helper()
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.Contains(r.URL.Path, "nonexistent") {
+			w.WriteHeader(http.StatusNotFound)
+			fmt.Fprint(w, `{"message":"404 Project Not Found"}`)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		taggedJSON := make([]string, 0, len(tags))
+		for _, tag := range tags {
+			taggedJSON = append(taggedJSON, tagJSON(tag, daysAgo(1)))
+		}
+		fmt.Fprintf(w, "[%s]", strings.Join(taggedJSON, ","))
+	}))
+}
+
 func TestCondition(t *testing.T) {
+
+	server := newProjectTagServer(t, "v0.1.0", "v0.2.0", "v0.3.0", "v1.0.0")
+	defer server.Close()
 
 	tests := []struct {
 		name     string
@@ -32,7 +59,7 @@ func TestCondition(t *testing.T) {
 				Repository string
 				Tag        string
 			}{
-				URL:        "gitlab.com",
+				URL:        server.URL,
 				Token:      "",
 				Owner:      "olblak",
 				Repository: "updatecli-nonexistent",
@@ -49,7 +76,7 @@ func TestCondition(t *testing.T) {
 				Repository string
 				Tag        string
 			}{
-				URL:        "gitlab.com",
+				URL:        server.URL,
 				Token:      "",
 				Owner:      "olblak",
 				Repository: "updatecli",
@@ -65,7 +92,7 @@ func TestCondition(t *testing.T) {
 				Repository string
 				Tag        string
 			}{
-				URL:        "gitlab.com",
+				URL:        server.URL,
 				Token:      "",
 				Owner:      "olblak",
 				Repository: "updatecli",
@@ -82,7 +109,7 @@ func TestCondition(t *testing.T) {
 				Repository string
 				Tag        string
 			}{
-				URL:        "gitlab.com",
+				URL:        server.URL,
 				Token:      "",
 				Owner:      "olblak",
 				Repository: "updatecli",

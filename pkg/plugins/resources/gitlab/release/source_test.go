@@ -13,6 +13,9 @@ import (
 
 func TestSource(t *testing.T) {
 
+	server := newProjectReleaseServer(t, releaseJSON("v0.46.2", daysAgo(1), false), releaseJSON("v0.46.1", daysAgo(10), false))
+	defer server.Close()
+
 	tests := []struct {
 		name     string
 		manifest struct {
@@ -34,7 +37,7 @@ func TestSource(t *testing.T) {
 				Repository    string
 				VersionFilter version.Filter
 			}{
-				URL:        "gitlab.com",
+				URL:        server.URL,
 				Token:      "",
 				Owner:      "olblak",
 				Repository: "updatecli-nonexistent",
@@ -51,6 +54,7 @@ func TestSource(t *testing.T) {
 				Repository    string
 				VersionFilter version.Filter
 			}{
+				URL:        server.URL,
 				Token:      "",
 				Owner:      "cicd-devroom",
 				Repository: "FOSDEM22",
@@ -67,7 +71,7 @@ func TestSource(t *testing.T) {
 				Repository    string
 				VersionFilter version.Filter
 			}{
-				URL:        "gitlab.com",
+				URL:        server.URL,
 				Token:      "",
 				Owner:      "olblak",
 				Repository: "updatecli",

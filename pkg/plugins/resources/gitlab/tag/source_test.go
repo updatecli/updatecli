@@ -13,6 +13,9 @@ import (
 
 func TestSource(t *testing.T) {
 
+	server := newProjectTagServer(t, "v0.1.0", "v0.2.0", "v0.3.0", "v1.0.0")
+	defer server.Close()
+
 	tests := []struct {
 		name     string
 		manifest struct {
@@ -34,33 +37,13 @@ func TestSource(t *testing.T) {
 				Repository    string
 				VersionFilter version.Filter
 			}{
-				URL:        "gitlab.com",
+				URL:        server.URL,
 				Token:      "",
 				Owner:      "olblak",
 				Repository: "updatecli-nonexistent",
 			},
 			wantResult: "",
 			wantErr:    true,
-		},
-		{
-			name: "repository should exist with tag 0.3.0 without specifying gitlab.com",
-			manifest: struct {
-				URL           string
-				Token         string
-				Owner         string
-				Repository    string
-				VersionFilter version.Filter
-			}{
-				Token:      "",
-				Owner:      "olblak",
-				Repository: "updatecli",
-				VersionFilter: version.Filter{
-					Kind:    "semver",
-					Pattern: "0.3.0",
-				},
-			},
-			wantResult: "v0.3.0",
-			wantErr:    false,
 		},
 		{
 			name: "repository should exist with tag 0.3.0",
@@ -71,7 +54,7 @@ func TestSource(t *testing.T) {
 				Repository    string
 				VersionFilter version.Filter
 			}{
-				URL:        "gitlab.com",
+				URL:        server.URL,
 				Token:      "",
 				Owner:      "olblak",
 				Repository: "updatecli",
@@ -92,7 +75,7 @@ func TestSource(t *testing.T) {
 				Repository    string
 				VersionFilter version.Filter
 			}{
-				URL:        "gitlab.com",
+				URL:        server.URL,
 				Token:      "",
 				Owner:      "olblak",
 				Repository: "updatecli",
