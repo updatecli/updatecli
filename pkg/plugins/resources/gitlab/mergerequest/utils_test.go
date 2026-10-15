@@ -108,7 +108,7 @@ func TestFindExistingMR_Table(t *testing.T) {
 	}
 
 	for _, td := range testdata {
-		td.spec.Spec.URL = server.URL
+		td.spec.URL = server.URL
 		tc := td
 		t.Run(tc.name, func(t *testing.T) {
 			gitlab, err := New(tc.spec, nil)
