@@ -54,10 +54,12 @@ func (e *Engine) LoadAutoDiscovery(ctx context.Context, defaultEnabled bool) err
 
 	log.Title("Auto Discovery")
 
+	enabled := false
 	for id, p := range e.Pipelines {
 		if p.Config.Spec.AutoDiscovery.Crawlers == nil {
 			continue
 		}
+		enabled = true
 
 		log.Title(p.Name)
 
@@ -312,6 +314,10 @@ func (e *Engine) LoadAutoDiscovery(ctx context.Context, defaultEnabled bool) err
 
 		e.Pipelines[id].Report.Result = result.SUCCESS
 
+	}
+
+	if !enabled {
+		log.Infof("disabled")
 	}
 
 	return nil
