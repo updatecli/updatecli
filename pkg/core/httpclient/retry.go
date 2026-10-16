@@ -58,11 +58,7 @@ func (t *retryTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	// Inject a recognizable User-Agent so servers can identify updatecli traffic.
 	// We only override the header when it is absent or set to Go's default value.
 	if ua := req.Header.Get("User-Agent"); ua == "" || ua == "Go-http-client/1.1" || ua == "Go-http-client/2.0" {
-		ua = "Updatecli"
-		if version.Version != "" {
-			ua = "Updatecli/" + version.Version
-		}
-		req.Header.Set("User-Agent", ua)
+		req.Header.Set("User-Agent", UserAgent())
 	}
 
 	var bodyBytes []byte
@@ -103,6 +99,20 @@ func (t *retryTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	return resp, err
 }
 
+// UserAgent returns the User-Agent identifying updatecli traffic.
+func UserAgent() string {
+	if version.Version != "" {
+		return "Updatecli/" + version.Version
+	}
+	return "Updatecli"
+}
+
 func NewRetryClient() *http.Client {
 	return &http.Client{Transport: DefaultTransport()}
+}
+
+// NewUncachedRetryClient returns an HTTP client with retry and proxy support
+// that bypasses the HTTP cache. See UncachedTransport for when to use it.
+func NewUncachedRetryClient() *http.Client {
+	return &http.Client{Transport: UncachedTransport()}
 }

@@ -227,6 +227,31 @@ func TestEnableDisableHTTPCache(t *testing.T) {
 	assert.Equal(t, int64(3), hits.Load(), "plain client should not use cache, expecting 3 total hits")
 }
 
+func TestNewUncachedRetryClient_BypassesEnabledCache(t *testing.T) {
+	// Restore default state after the test regardless of outcome.
+	t.Cleanup(DisableHTTPCache)
+
+	// Arrange — a server that counts every request it receives.
+	srv, hits := newCountingServer(t, func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("ok"))
+	})
+
+	// Act — client created while caching is enabled.
+	EnableHTTPCache()
+	client := NewUncachedRetryClient()
+
+	for i := 0; i < 2; i++ {
+		resp, err := client.Get(srv.URL + "/ping")
+		require.NoError(t, err)
+		io.ReadAll(resp.Body) //nolint:errcheck
+		resp.Body.Close()
+	}
+
+	// Assert — every request reaches the server.
+	assert.Equal(t, int64(2), hits.Load(), "uncached client should hit the server on every request")
+}
+
 func TestCachingTransport_ConcurrentAccess(t *testing.T) {
 	t.Parallel()
 

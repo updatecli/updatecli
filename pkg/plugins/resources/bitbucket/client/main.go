@@ -57,7 +57,7 @@ type Spec struct {
 func New(s Spec) (*scm.Client, error) {
 	client := bitbucket.NewDefault()
 
-	client.Client = httpclient.NewRetryClient()
+	client.Client = httpclient.NewUncachedRetryClient()
 
 	if (len(s.Username) > 0) && (len(s.Password) > 0) {
 		client.Client.Transport = &transport.BasicAuth{
