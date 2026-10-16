@@ -290,3 +290,44 @@ func TestCachingTransport_ConcurrentAccess(t *testing.T) {
 	assert.LessOrEqual(t, serverHits, int64(goroutines))
 	assert.Equal(t, 1, ct.Len())
 }
+
+func TestNewUncachedClient_NoCache(t *testing.T) {
+	// Restore default state after the test regardless of outcome.
+	t.Cleanup(DisableHTTPCache)
+
+	// Arrange — a server that answers 200, which the cache would store.
+	srv, hits := newCountingServer(t, func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("fresh"))
+	})
+
+	// Act — client created while caching is enabled.
+	EnableHTTPCache()
+	client := NewUncachedClient()
+
+	for i := 0; i < 2; i++ {
+		resp, err := client.Get(srv.URL + "/ping")
+		require.NoError(t, err)
+		io.ReadAll(resp.Body) //nolint:errcheck
+		resp.Body.Close()
+	}
+
+	// Assert — both GETs reach the server.
+	assert.Equal(t, int64(2), hits.Load(), "uncached client should not serve GETs from cache")
+}
+
+func TestNewUncachedClient_NoRetry(t *testing.T) {
+	// Arrange — a server that always answers 503, which the retry client retries.
+	srv, hits := newCountingServer(t, func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusServiceUnavailable)
+	})
+
+	// Act
+	resp, err := NewUncachedClient().Get(srv.URL + "/ping")
+	require.NoError(t, err)
+	io.ReadAll(resp.Body) //nolint:errcheck
+	resp.Body.Close()
+
+	// Assert — the request reaches the server exactly once.
+	assert.Equal(t, int64(1), hits.Load(), "uncached client should not retry")
+}

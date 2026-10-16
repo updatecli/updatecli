@@ -29,17 +29,20 @@ func New(s Spec) (Client, error) {
 		unauthenticated calls with throttles that don't follow that unit, such as
 		unauthenticated_traffic_per_ip reporting a limit of 1, which throttles the
 		client to one request every ninety seconds. Rate limiting is left to the
-		server instead, as the updatecli HTTP client retries 429 responses with backoff.
+		server instead, as the client still retries 429 responses, waiting until
+		the Ratelimit-Reset header when the server sends it.
 
-		Retries are handled by the updatecli HTTP client alone, so the GitLab client
-		ones are disabled to avoid stacking both. The client also writes (merge
-		requests, branches, tags, releases), so it bypasses the HTTP cache.
+		Retries are left to the GitLab client alone, so the HTTP client it wraps
+		doesn't retry. Unlike the updatecli retry client, it doesn't retry a write
+		after a transport error that may have reached the server, which could
+		otherwise create a merge request, branch, tag or release twice. It still
+		retries any request, writes included, on 5xx responses other than 501.
+		The client also writes, so it bypasses the HTTP cache.
 	*/
 	client, err = gitlab.NewClient(
 		s.Token,
 		gitlab.WithBaseURL(url),
-		gitlab.WithHTTPClient(httpclient.NewUncachedRetryClient()),
-		gitlab.WithoutRetries(),
+		gitlab.WithHTTPClient(httpclient.NewUncachedClient()),
 		gitlab.WithUserAgent(httpclient.UserAgent()),
 		gitlab.WithCustomLimiter(rate.NewLimiter(rate.Inf, 0)),
 	)

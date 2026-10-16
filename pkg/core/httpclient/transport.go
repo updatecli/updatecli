@@ -18,9 +18,7 @@ var (
 func EnableHTTPCache() {
 	cacheMu.Lock()
 	defer cacheMu.Unlock()
-	activeCache = newCachingTransport(otelhttp.NewTransport(&http.Transport{
-		Proxy: http.ProxyFromEnvironment,
-	}))
+	activeCache = newCachingTransport(tracedTransport())
 }
 
 // DisableHTTPCache deactivates the HTTP cache so that new clients no longer
@@ -54,11 +52,15 @@ func DefaultTransport() http.RoundTripper {
 // GET responses by URL only and nothing invalidates them after a write, so a
 // later read in the same run could miss a branch, tag or pull request just created.
 func UncachedTransport() http.RoundTripper {
-	return &retryTransport{
-		transport: otelhttp.NewTransport(&http.Transport{
-			Proxy: http.ProxyFromEnvironment,
-		}),
-	}
+	return &retryTransport{transport: tracedTransport()}
+}
+
+// tracedTransport returns a RoundTripper with proxy and tracing support,
+// without retry or cache.
+func tracedTransport() http.RoundTripper {
+	return otelhttp.NewTransport(&http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+	})
 }
 
 // ProxyOnlyTransport returns a RoundTripper with proxy support but no retry.
@@ -73,4 +75,11 @@ func ProxyOnlyTransport() http.RoundTripper {
 // NewPlainClient returns an HTTP client with proxy support but no retry.
 func NewPlainClient() *http.Client {
 	return &http.Client{Transport: ProxyOnlyTransport()}
+}
+
+// NewUncachedClient returns an HTTP client with proxy and tracing support but
+// neither retry nor cache. Use it for API clients that also write and bring
+// their own retry logic, such as the GitLab one, so retries don't stack.
+func NewUncachedClient() *http.Client {
+	return &http.Client{Transport: tracedTransport()}
 }
