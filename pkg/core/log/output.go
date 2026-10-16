@@ -58,6 +58,10 @@ func SetOutput(w io.Writer) io.Writer {
 // Capture copies every log line to w until the returned stop function is called.
 // Captures can be nested: a resource capture running inside a pipeline capture
 // writes to both.
+//
+// Captures are global, not tied to a goroutine: every active capture receives every
+// log line. Resources of a pipeline run concurrently, so a resource capture also
+// receives the lines of the resources running at the same time.
 func Capture(w io.Writer) (stop func()) {
 	outputMu.Lock()
 	defer outputMu.Unlock()
