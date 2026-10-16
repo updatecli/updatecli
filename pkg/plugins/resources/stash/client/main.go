@@ -72,7 +72,7 @@ func New(s Spec) (Client, error) {
 		return nil, err
 	}
 
-	client.Client = httpclient.NewRetryClient()
+	client.Client = httpclient.NewUncachedRetryClient()
 
 	if s.Token != "" {
 		if s.Username != "" {
