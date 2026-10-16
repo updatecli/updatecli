@@ -104,3 +104,31 @@ func TestCaptureIsPlainText(t *testing.T) {
 
 	assert.Equal(t, "ERROR: failed\n\n\n== PIPELINE ==\n\n", captured.String())
 }
+
+// Rules must match the displayed width of the text above them, not its size in bytes.
+func TestPlainRulesMatchTextWidth(t *testing.T) {
+	for _, tc := range []struct {
+		name  string
+		l     line
+		text  string
+		rule  string
+		width int
+	}{
+		{name: "heading", l: line{kind: kindHeading, msg: "Mise à jour"}, text: "MISE À JOUR", rule: "=", width: 11},
+		{name: "section", l: line{kind: kindSection, category: "source", msg: "café"}, text: "source: café", rule: "-", width: 12},
+		{name: "subheading", l: line{kind: kindSubheading, msg: "Erreurs 🚀"}, text: "Erreurs 🚀", rule: "-", width: 10},
+		{name: "pipeline", l: line{kind: kindPipelineTitle, msg: "Déploiement"}, text: "# DÉPLOIEMENT #", rule: "#", width: 15},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			lines := strings.Split(strings.Trim(tc.l.plain(), "\n"), "\n")
+
+			i := 0
+			for i < len(lines) && lines[i] != tc.text {
+				i++
+			}
+			require.Less(t, i, len(lines), "text line not found in %q", tc.l.plain())
+			require.Less(t, i+1, len(lines))
+			assert.Equal(t, strings.Repeat(tc.rule, tc.width), lines[i+1])
+		})
+	}
+}

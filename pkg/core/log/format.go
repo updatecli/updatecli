@@ -110,7 +110,7 @@ func (l line) plain() string {
 		if counter := l.counter(); counter != "" {
 			title = "[" + counter + "] " + title
 		}
-		border := strings.Repeat("#", len(title)+4)
+		border := strings.Repeat("#", lipgloss.Width(title)+4)
 		out := "\n" + border + "\n# " + title + " #\n" + border + "\n\n"
 		out += "Pipeline ID\t: " + l.id + "\n"
 		if l.dryRun {
@@ -120,11 +120,13 @@ func (l line) plain() string {
 	case kindPipelineResult:
 		return "\n=> " + strings.ToUpper(statusLabels[l.status]) + " (" + formatDuration(l.duration) + ")\n"
 	case kindHeading:
-		return "\n\n" + strings.ToTitle(l.msg) + "\n" + strings.Repeat("=", len(l.msg)) + "\n\n"
+		heading := strings.ToTitle(l.msg)
+		return "\n\n" + heading + "\n" + strings.Repeat("=", lipgloss.Width(heading)) + "\n\n"
 	case kindSection:
-		return "\n" + l.category + ": " + l.msg + "\n" + strings.Repeat("-", len(l.msg)+len(l.category)+2) + "\n\n"
+		header := l.category + ": " + l.msg
+		return "\n" + header + "\n" + strings.Repeat("-", lipgloss.Width(header)) + "\n\n"
 	case kindSubheading:
-		return "\n" + l.msg + "\n" + strings.Repeat("-", len(l.msg)) + "\n\n"
+		return "\n" + l.msg + "\n" + strings.Repeat("-", lipgloss.Width(l.msg)) + "\n\n"
 	}
 
 	var prefix string
@@ -145,7 +147,7 @@ func (l line) styled() string {
 	switch l.kind {
 	case kindTitle:
 		label := "── " + strings.ToTitle(l.msg) + " "
-		rule := strings.Repeat("─", max(ruleWidth-len([]rune(label)), 3))
+		rule := strings.Repeat("─", max(ruleWidth-lipgloss.Width(label), 3))
 		return "\n\n" + titleStyle.Render(label+rule) + "\n\n"
 	case kindPipelineTitle:
 		return "\n" + l.pipelineBand() + "\n"
@@ -157,14 +159,14 @@ func (l line) styled() string {
 		return "\n" + statusStyle.Render(label) + detailStyle.Render(duration) + statusStyle.Render(rule) + "\n"
 	case kindHeading:
 		return "\n\n" + headingStyle.Render(strings.ToTitle(l.msg)) + "\n" +
-			ruleStyle.Render(strings.Repeat("═", len([]rune(l.msg)))) + "\n\n"
+			ruleStyle.Render(strings.Repeat("═", lipgloss.Width(strings.ToTitle(l.msg)))) + "\n\n"
 	case kindSection:
-		width := len([]rune(l.msg)) + len(l.category) + 2
+		width := lipgloss.Width(l.category + ": " + l.msg)
 		return "\n" + categoryStyle.Render(l.category+":") + " " + nameStyle.Render(l.msg) + "\n" +
 			ruleStyle.Render(strings.Repeat("─", width)) + "\n\n"
 	case kindSubheading:
 		return "\n" + nameStyle.Render(l.msg) + "\n" +
-			ruleStyle.Render(strings.Repeat("─", len([]rune(l.msg)))) + "\n\n"
+			ruleStyle.Render(strings.Repeat("─", lipgloss.Width(l.msg))) + "\n\n"
 	}
 
 	var prefix string
