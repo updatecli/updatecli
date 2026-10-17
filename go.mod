@@ -26,7 +26,7 @@ require (
 	github.com/extism/go-sdk v1.7.1
 	github.com/fatih/color v1.19.0
 	github.com/fluxcd/helm-controller/api v1.6.4
-	github.com/fluxcd/source-controller/api v1.9.5
+	github.com/fluxcd/source-controller/api v1.9.6
 	github.com/getsops/sops/v3 v3.13.3
 	github.com/go-git/go-git/v5 v5.19.3
 	github.com/go-viper/mapstructure/v2 v2.5.0
