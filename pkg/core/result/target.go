@@ -19,6 +19,12 @@ type Target struct {
 			* "SKIPPED"
 	*/
 	Result string
+	// IsRun reports whether the pipeline has finalized this target, meaning it
+	// either executed or was explicitly skipped through a dependsOn condition.
+	// It distinguishes a target still pending execution (Result defaults to
+	// SKIPPED while IsRun is false) from one that actually ran or was
+	// deliberately skipped (IsRun is true).
+	IsRun bool
 	// Information stores the old information detected by the target execution
 	Information string
 	// NewInformation stores the new information updated by during the target execution
