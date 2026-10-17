@@ -32,6 +32,16 @@ linters:
       threshold: 100
     exhaustive:
       default-signifies-exhaustive: false
+    forbidigo:
+      analyze-types: true
+      forbid:
+        - pattern: ^fmt\.Print(f|ln)?$
+          msg: use pkg/core/log so the output reaches pipeline reports
+        - pattern: ^os\.Std(out|err)$
+          msg: use pkg/core/log (or log.Progress for transient output) so the output reaches pipeline reports
+        - pattern: ^http\.(Client|DefaultClient|DefaultTransport|Get|Head|Post|PostForm)$
+          pkg: ^net/http$
+          msg: use pkg/core/httpclient so requests get the shared proxy, retry, throttling and caching behaviour
     funlen:
       lines: 200
       statements: 150
@@ -98,9 +108,21 @@ linters:
       - linters:
           - testpackage
         path: _expansion_test\.go
+      # Commands write their own output to the terminal, the log package owns
+      # the terminal, and tests print what they like.
+      - linters:
+          - forbidigo
+        path: (^cmd/|^pkg/core/log/|_test\.go$|^main\.go$)
+        text: pkg/core/log
+      # The httpclient package builds the shared client from net/http, and tests
+      # talk to httptest servers with a bare client.
+      - linters:
+          - forbidigo
+        path: (^pkg/core/httpclient/|_test\.go$)
+        text: pkg/core/httpclient
       - linters:
           - gocritic
-        text: 'unnecessaryDefer:'
+        text: "unnecessaryDefer:"
     paths:
       - test/testdata_etc
       - internal/cache
