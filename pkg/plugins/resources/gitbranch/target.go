@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
@@ -14,13 +14,13 @@ import (
 func (gb *GitBranch) Target(_ context.Context, source string, scm scm.ScmHandler, pathResolver pathresolver.Resolver, dryRun bool, resultTarget *result.Target) (err error) {
 
 	if gb.spec.Path != "" && scm != nil {
-		logrus.Warningf("Path setting value %q is overriding the scm configuration (value %q)",
+		log.Warningf("Path setting value %q is overriding the scm configuration (value %q)",
 			gb.spec.Path,
 			scm.GetDirectory())
 	}
 
 	if gb.spec.URL != "" && scm != nil {
-		logrus.Warningf("URL setting value %q is overriding the scm configuration (value %q)",
+		log.Warningf("URL setting value %q is overriding the scm configuration (value %q)",
 			gb.spec.URL,
 			scm.GetURL())
 	}
@@ -37,7 +37,7 @@ func (gb *GitBranch) Target(_ context.Context, source string, scm scm.ScmHandler
 	}
 
 	if gb.directory == "" {
-		logrus.Errorf("unknown Git working directory. Did you specify one of `spec.URL`, `scmid` or a `spec.path`?")
+		log.Errorf("unknown Git working directory. Did you specify one of `spec.URL`, `scmid` or a `spec.path`?")
 		return fmt.Errorf("unknown Git working directory")
 	}
 
@@ -75,17 +75,17 @@ func (gb *GitBranch) Target(_ context.Context, source string, scm scm.ScmHandler
 		return nil
 	}
 
-	logrus.Printf("git branch %q has been created.", gb.branch)
+	log.Printf("git branch %q has been created.", gb.branch)
 
 	switch scm {
 	case nil:
 		if err = gb.nativeGitHandler.Checkout(gb.spec.Username, gb.spec.Password, gb.spec.SourceBranch, gb.branch, gb.directory, false, gb.spec.Depth); err != nil {
-			logrus.Errorf("Git checkout branch error: %s", err)
+			log.Errorf("Git checkout branch error: %s", err)
 			return err
 		}
 
 		if err = gb.nativeGitHandler.PushBranch(gb.branch, gb.spec.Username, gb.spec.Password, gb.directory, false); err != nil {
-			logrus.Errorf("Git push branch error: %s", err)
+			log.Errorf("Git push branch error: %s", err)
 			return err
 		}
 	default:
@@ -96,12 +96,12 @@ func (gb *GitBranch) Target(_ context.Context, source string, scm scm.ScmHandler
 		// That being said, we may have a racing issue if the branch is created between the time Updatecli executed and the time
 		// this code is executed so the current execution would fail but not then next one.
 		if err = gb.nativeGitHandler.Checkout("", "", sourceBranch, gb.branch, gb.directory, false, gb.spec.Depth); err != nil {
-			logrus.Errorf("Git checkout branch error: %s", err)
+			log.Errorf("Git checkout branch error: %s", err)
 			return err
 		}
 
 		if err = scm.PushBranch(gb.branch); err != nil {
-			logrus.Errorf("Git push tag error: %s", err)
+			log.Errorf("Git push tag error: %s", err)
 			return err
 		}
 	}
@@ -144,7 +144,7 @@ func (gt *GitBranch) target(dryRun bool, resultTarget *result.Target) error {
 	resultTarget.Changed = true
 	resultTarget.Information = ""
 
-	logrus.Debugf("git branch %q does not exist: creating it.", gt.branch)
+	log.Debugf("git branch %q does not exist: creating it.", gt.branch)
 
 	if dryRun {
 		// Dry run: no changes to apply.

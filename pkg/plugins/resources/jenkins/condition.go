@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
@@ -14,7 +14,7 @@ import (
 func (j Jenkins) Condition(_ context.Context, source string, scm scm.ScmHandler, pathResolver pathresolver.Resolver) (pass bool, message string, err error) {
 
 	if scm != nil {
-		logrus.Warningf("SCM configuration is not supported for Jenkins condition")
+		log.Warningf("SCM configuration is not supported for Jenkins condition")
 	}
 
 	versionToCheck := j.spec.Version

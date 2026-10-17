@@ -9,7 +9,7 @@ import (
 	"github.com/Masterminds/semver/v3"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/tmp"
 )
 
@@ -84,18 +84,18 @@ func (l *Language) getTagsFromRepository() ([]string, error) {
 		}
 
 		if l.Spec.Age.Minimum != "" && l.Spec.Age.IsOlderThan(commit.Committer.When, nil) {
-			logrus.Debugf("ignoring version %q from repository because its age is below %q (released on %s)\n", tagName, l.Spec.Age.Minimum, commit.Committer.When)
+			log.Debugf("ignoring version %q from repository because its age is below %q (released on %s)\n", tagName, l.Spec.Age.Minimum, commit.Committer.When)
 			return nil
 		}
 
 		if l.Spec.Age.Maximum != "" && l.Spec.Age.IsNewerThan(commit.Committer.When, nil) {
-			logrus.Debugf("ignoring version %q from repository because its age is above %q (released on %s)\n", tagName, l.Spec.Age.Maximum, commit.Committer.When)
+			log.Debugf("ignoring version %q from repository because its age is above %q (released on %s)\n", tagName, l.Spec.Age.Maximum, commit.Committer.When)
 			return nil
 		}
 
 		version, err := semver.StrictNewVersion(strings.TrimPrefix(tagName, "go"))
 		if err != nil {
-			logrus.Debugf("ignoring version %q from repository due to invalid semantic version format: %q\n", tagName, err)
+			log.Debugf("ignoring version %q from repository due to invalid semantic version format: %q\n", tagName, err)
 			return nil
 		}
 

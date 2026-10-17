@@ -9,8 +9,8 @@ import (
 	"net/http/httputil"
 
 	terraformRegistryAddress "github.com/hashicorp/terraform-registry-address"
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 type registryAddress struct {
@@ -74,7 +74,7 @@ func (r registryAddress) String() string {
 	case TypeModule:
 		return r.module.String()
 	default:
-		logrus.Debugf("unknown registry type %q", r.registryType)
+		log.Debugf("unknown registry type %q", r.registryType)
 	}
 
 	return ""
@@ -88,7 +88,7 @@ func (r registryAddress) ForDisplay() string {
 	case TypeModule:
 		return r.module.ForDisplay()
 	default:
-		logrus.Debugf("unknown registry type %q", r.registryType)
+		log.Debugf("unknown registry type %q", r.registryType)
 	}
 
 	return ""
@@ -102,7 +102,7 @@ func (r registryAddress) Hostname() string {
 		return r.module.Package.Host.String()
 	}
 
-	logrus.Debugf("unknown registry type %q", r.registryType)
+	log.Debugf("unknown registry type %q", r.registryType)
 	return ""
 }
 
@@ -114,7 +114,7 @@ func (r registryAddress) Path() string {
 		return fmt.Sprintf("%s%s/versions", r.wellKnown.ModulesPath, r.module.Package.ForRegistryProtocol())
 	}
 
-	logrus.Debugf("unknown registry type %q", r.registryType)
+	log.Debugf("unknown registry type %q", r.registryType)
 	return ""
 }
 
@@ -136,13 +136,13 @@ func (r *registryAddress) discoverURL(ctx context.Context, webClient httpclient.
 	defer res.Body.Close()
 	if res.StatusCode >= 400 {
 		body, err := httputil.DumpResponse(res, false)
-		logrus.Debugf("\n%v\n", string(body))
+		log.Debugf("\n%v\n", string(body))
 		return err
 	}
 
 	data, err := io.ReadAll(res.Body)
 	if err != nil {
-		logrus.Errorf("something went wrong while getting npm api data%q\n", err)
+		log.Errorf("something went wrong while getting npm api data%q\n", err)
 		return err
 	}
 
@@ -150,7 +150,7 @@ func (r *registryAddress) discoverURL(ctx context.Context, webClient httpclient.
 
 	err = json.Unmarshal(data, &wellKnownResponse)
 	if err != nil {
-		logrus.Errorf("error unmarshalling json: %q", err)
+		log.Errorf("error unmarshalling json: %q", err)
 		return err
 	}
 

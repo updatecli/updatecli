@@ -8,7 +8,7 @@ import (
 
 	"github.com/drone/go-scm/scm"
 	"github.com/go-viper/mapstructure/v2"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/gitea/client"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
@@ -241,7 +241,7 @@ func (g *Gitea) SearchReleases(ctx context.Context, releaseAge age.Spec) ([]stri
 		}
 
 		if resp.Status > 400 {
-			logrus.Debugf("Gitea Api Response:\n%+v", resp)
+			log.Debugf("Gitea Api Response:\n%+v", resp)
 		}
 
 		for i := len(releases) - 1; i >= 0; i-- {
@@ -251,7 +251,7 @@ func (g *Gitea) SearchReleases(ctx context.Context, releaseAge age.Spec) ([]stri
 			foundRelease = true
 			date := releaseDate(releases[i])
 			if !releaseAge.Matches(date) {
-				logrus.Debugf("ignoring release %q, dated %s, as outside of the age window", releases[i].Tag, date)
+				log.Debugf("ignoring release %q, dated %s, as outside of the age window", releases[i].Tag, date)
 				continue
 			}
 			results = append(results, releases[i].Tag)
@@ -294,7 +294,7 @@ func (s Spec) Validate() error {
 	err := s.Spec.Validate()
 
 	if err != nil {
-		logrus.Errorln(err)
+		log.Errorln(err)
 		gotError = true
 	}
 
@@ -309,12 +309,12 @@ func (s Spec) Validate() error {
 	}
 
 	if err := s.Age.Validate(); err != nil {
-		logrus.Errorln(err)
+		log.Errorln(err)
 		gotError = true
 	}
 
 	if len(missingParameters) > 0 {
-		logrus.Errorf("missing parameter(s) [%s]", strings.Join(missingParameters, ","))
+		log.Errorf("missing parameter(s) [%s]", strings.Join(missingParameters, ","))
 	}
 
 	if gotError {

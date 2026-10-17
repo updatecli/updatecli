@@ -2,10 +2,9 @@ package terraform
 
 import (
 	"path"
-	"strings"
 
 	"github.com/go-viper/mapstructure/v2"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
@@ -59,13 +58,13 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Terraform, error) {
 	}
 
 	if len(s.Platforms) == 0 {
-		logrus.Warningf("No platforms specified, we fallback to linux_amd64, linux_arm64, darwin_amd64, darwin_arm64")
+		log.Warningf("No platforms specified, we fallback to linux_amd64, linux_arm64, darwin_amd64, darwin_arm64")
 		s.Platforms = []string{"linux_amd64", "linux_arm64", "darwin_amd64", "darwin_arm64"}
 	}
 
 	newFilter := s.VersionFilter
 	if s.VersionFilter.IsZero() {
-		logrus.Debugln("no versioning filtering specified, fallback to semantic versioning")
+		log.Debugln("no versioning filtering specified, fallback to semantic versioning")
 		// By default, golang versioning uses semantic versioning
 		newFilter.Kind = "semver"
 		newFilter.Pattern = "*"
@@ -74,14 +73,14 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Terraform, error) {
 	dir := rootDir
 	if path.IsAbs(s.RootDir) {
 		if scmID != "" {
-			logrus.Warningf("rootdir %q is an absolute path, scmID %q will be ignored", s.RootDir, scmID)
+			log.Warningf("rootdir %q is an absolute path, scmID %q will be ignored", s.RootDir, scmID)
 		}
 		dir = s.RootDir
 	}
 
 	// Fallback to the current process path if not rootdir specified.
 	if len(dir) == 0 {
-		logrus.Errorln("no working directory defined")
+		log.Errorln("no working directory defined")
 		return Terraform{}, err
 	}
 
@@ -95,8 +94,7 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Terraform, error) {
 }
 
 func (t Terraform) DiscoverManifests() ([][]byte, error) {
-	logrus.Infof("\n\n%s\n", strings.ToTitle("Terraform"))
-	logrus.Infof("%s\n", strings.Repeat("=", len("Terraform")+1))
+	log.Heading("Terraform")
 
 	manifests, err := t.discoverTerraformProvidersManifests()
 	if err != nil {

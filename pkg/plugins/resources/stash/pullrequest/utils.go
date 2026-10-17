@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/drone/go-scm/scm"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
@@ -33,12 +33,12 @@ func (s *Stash) isPullRequestExist() (title, description, link string, err error
 	)
 
 	if err != nil {
-		logrus.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
+		log.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
 		return "", "", "", err
 	}
 
 	if resp.Status > 400 {
-		logrus.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
+		log.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
 	}
 
 	for _, p := range pullrequests {
@@ -47,7 +47,7 @@ func (s *Stash) isPullRequestExist() (title, description, link string, err error
 			!p.Closed &&
 			!p.Merged {
 
-			logrus.Infof("%s Nothing else to do, our pullrequest already exist on:\n\t%s",
+			log.Infof("%s Nothing else to do, our pullrequest already exist on:\n\t%s",
 				result.SUCCESS,
 				p.Link)
 
@@ -103,12 +103,12 @@ func (s *Stash) isRemoteBranchesExist() (bool, error) {
 	)
 
 	if err != nil {
-		logrus.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
+		log.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
 		return false, err
 	}
 
 	if resp.Status > 400 {
-		logrus.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
+		log.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
 	}
 
 	foundRemoteSourceBranch := false
@@ -128,14 +128,14 @@ func (s *Stash) isRemoteBranchesExist() (bool, error) {
 	}
 
 	if !foundRemoteSourceBranch {
-		logrus.Debugf("Branch %q not found on remote repository %s/%s",
+		log.Debugf("Branch %q not found on remote repository %s/%s",
 			sourceBranch,
 			owner,
 			repository)
 	}
 
 	if !foundRemoteTargetBranch {
-		logrus.Debugf("Branch %q not found on remote repository %s/%s",
+		log.Debugf("Branch %q not found on remote repository %s/%s",
 			targetBranch,
 			owner,
 			repository)

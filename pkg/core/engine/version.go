@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/Masterminds/semver/v3"
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/version"
 )
 
@@ -59,13 +59,13 @@ func CheckLatestPublishedVersion() error {
 
 	currentVersion, err := semver.NewVersion(version.Version)
 	if err != nil {
-		logrus.Warnf("unable to parse the current version of updatecli: %v", err)
+		log.Warnf("unable to parse the current version of updatecli: %v", err)
 		return nil
 	}
 
 	latestVersion, err := semver.NewVersion(data.Latest.Tag)
 	if err != nil {
-		logrus.Warnf("unable to parse the latest version of updatecli: %v", err)
+		log.Warnf("unable to parse the latest version of updatecli: %v", err)
 		return nil
 	}
 
@@ -73,8 +73,8 @@ func CheckLatestPublishedVersion() error {
 		return nil
 	}
 
-	logrus.Infof("| A new release is available: %q -> %q", currentVersion.String(), latestVersion.String())
-	logrus.Infof("| More information on https://www.updatecli.io/changelogs/updatecli/changelogs/%s/", data.Latest.Tag)
+	log.Infof("| A new release is available: %q -> %q", currentVersion.String(), latestVersion.String())
+	log.Infof("| More information on https://www.updatecli.io/changelogs/updatecli/changelogs/%s/", data.Latest.Tag)
 
 	return nil
 }

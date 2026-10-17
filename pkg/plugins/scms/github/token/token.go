@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github/app"
 	"golang.org/x/oauth2"
 )
@@ -42,7 +42,7 @@ func GetTokenSourceFromEnv() (string, oauth2.TokenSource, error) {
 
 	if token := os.Getenv("UPDATECLI_GITHUB_TOKEN"); token != "" {
 
-		logrus.Debugf("using GitHub token from environment variable UPDATECLI_GITHUB_TOKEN")
+		log.Debugf("using GitHub token from environment variable UPDATECLI_GITHUB_TOKEN")
 
 		username := os.Getenv("UPDATECLI_GITHUB_USERNAME")
 		if username == "" {
@@ -57,7 +57,7 @@ func GetTokenSourceFromEnv() (string, oauth2.TokenSource, error) {
 
 	GitHubAppSpecFromEnv := app.NewSpecFromEnv()
 	if GitHubAppSpecFromEnv != nil {
-		logrus.Debugf("using GitHub App authentication from environment variables")
+		log.Debugf("using GitHub App authentication from environment variables")
 		tokenSource, err := GitHubAppSpecFromEnv.Getoauth2TokenSource()
 		if err != nil {
 			return "", nil, fmt.Errorf("failed to get oauth2 token source from GitHub App spec: %w", err)
@@ -74,7 +74,7 @@ func GetTokenSourceFromEnv() (string, oauth2.TokenSource, error) {
 // It is primarily intended to support GitHub Actions workflows
 func GetFallbackTokenSourceFromEnv() (string, oauth2.TokenSource) {
 	if token := os.Getenv("GITHUB_TOKEN"); token != "" {
-		logrus.Debugf("using GitHub token from environment variable GITHUB_TOKEN")
+		log.Debugf("using GitHub token from environment variable GITHUB_TOKEN")
 
 		return githubTokenUsername, oauth2.StaticTokenSource(
 			&oauth2.Token{
@@ -94,7 +94,7 @@ func GetFallbackTokenSourceFromEnv() (string, oauth2.TokenSource) {
 func GetTokenSourceFromConfig(username, token string, app *app.Spec) (string, oauth2.TokenSource, error) {
 
 	if token != "" {
-		logrus.Debugf("using GitHub token from configuration")
+		log.Debugf("using GitHub token from configuration")
 
 		return username, oauth2.StaticTokenSource(
 			&oauth2.Token{
@@ -103,7 +103,7 @@ func GetTokenSourceFromConfig(username, token string, app *app.Spec) (string, oa
 	}
 
 	if app != nil {
-		logrus.Debugf("using GitHub App authentication from configuration")
+		log.Debugf("using GitHub App authentication from configuration")
 		tokenSource, err := app.Getoauth2TokenSource()
 		if err != nil {
 			return "", nil, fmt.Errorf("failed to get oauth2 token source from GitHub App spec: %w", err)

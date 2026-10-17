@@ -4,18 +4,15 @@ import (
 	"bytes"
 	"slices"
 	"sort"
+	"strings"
 	"text/template"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-const reportsTpl string = `
-=============================
-
-SUMMARY:
-{{ range . }}
+const reportsTpl string = `{{ range . }}
 {{ if .Err }}
 {{- .Result }} {{ .Name -}}:{{"\n"}}
 {{- .PipelineID }}{{"\n"}}
@@ -82,7 +79,9 @@ func (r *Reports) Show() error {
 		return err
 	}
 
-	logrus.Infof("%s", reports)
+	log.Title("Summary")
+	// Banners own the spacing around the summary
+	log.Infof("%s", strings.Trim(reports, "\n")+"\n")
 
 	return nil
 }
@@ -134,7 +133,7 @@ func (r *Reports) Summary() (successCounter, changedCounter, failedCounter, skip
 			changedCounter++
 
 		default:
-			logrus.Infof("Unknown report result %q with named %q.", report.Result, report.Name)
+			log.Infof("Unknown report result %q with named %q.", report.Result, report.Name)
 		}
 
 		for _, action := range report.Actions {

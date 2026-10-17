@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git/sign"
 
 	"github.com/go-git/go-git/v5"
@@ -92,7 +92,7 @@ If the remote working branch doesn't exist then it means that local changes are 
 returns true if both the remote and local reference are similar.
 */
 func (g GoGit) IsLocalBranchSyncedWithRemote(baseBranch, workingBranch, username, password, workingDir string) (bool, error) {
-	logrus.Debugln("Checking if local changes have been done that should be published")
+	log.Debugln("Checking if local changes have been done that should be published")
 
 	auth := transportHttp.BasicAuth{
 		Username: username, // anything excepted an empty string
@@ -112,7 +112,7 @@ func (g GoGit) IsLocalBranchSyncedWithRemote(baseBranch, workingBranch, username
 
 	workingBranchFound, err := isLocalBranchExist(workingBranch, workingDir)
 	if err != nil {
-		logrus.Errorln(err)
+		log.Errorln(err)
 		return false, fmt.Errorf("is working branch exist? %w", err)
 	}
 
@@ -203,7 +203,7 @@ func (g GoGit) IsLocalBranchSyncedWithRemote(baseBranch, workingBranch, username
 
 // IsRemoteBranchExist checks if a remote branch exists.
 func (g GoGit) IsRemoteBranchExist(branch, username, password, workingDir string) (bool, error) {
-	logrus.Debugf("Checking if remote branch %q exists", branch)
+	log.Debugf("Checking if remote branch %q exists", branch)
 
 	auth := transportHttp.BasicAuth{
 		Username: username, // anything except an empty string
@@ -300,7 +300,7 @@ func (g GoGit) IsSimilarBranch(a, b, workingDir string) (bool, error) {
 	}
 
 	if refA.Hash().String() == refB.Hash().String() {
-		logrus.Debugf("no changes detected between branches %q and %q",
+		log.Debugf("no changes detected between branches %q and %q",
 			a, b)
 		return true, nil
 	}
@@ -385,10 +385,10 @@ func (g GoGit) IsCommitExist(workingDir, commit string) (bool, error) {
 
 // Add run `git add`.
 func (g GoGit) Add(files []string, workingDir string) error {
-	logrus.Debugf("stage: git-add\n\n")
+	log.Debugf("stage: git-add\n\n")
 
 	for _, file := range files {
-		logrus.Debugf("adding file: %q\n", file)
+		log.Debugf("adding file: %q\n", file)
 
 		// Strip working directory from file path if it's provided as an absolute path
 		if filepath.IsAbs(file) {
@@ -396,7 +396,7 @@ func (g GoGit) Add(files []string, workingDir string) error {
 			if err != nil {
 				return fmt.Errorf("failed to convert absolute file path %q to relative path: %w", file, err)
 			}
-			logrus.Debugf("absolute file path detected: %q converted to relative path %q\n", file, relativeFilePath)
+			log.Debugf("absolute file path detected: %q converted to relative path %q\n", file, relativeFilePath)
 			file = relativeFilePath
 		}
 
@@ -429,7 +429,7 @@ func (g *GoGit) Checkout(username, password, basedBranch, newBranch, gitReposito
 // checkout implements Checkout. When the new branch doesn't exist locally and fetchMissingBranch
 // is true, it first tries to fetch it from the remote.
 func (g *GoGit) checkout(username, password, basedBranch, newBranch, gitRepositoryPath string, forceReset bool, depth *int, fetchMissingBranch bool) error {
-	logrus.Debugf("checkout git branch %q, based on %q",
+	log.Debugf("checkout git branch %q, based on %q",
 		newBranch,
 		basedBranch)
 
@@ -476,14 +476,14 @@ func (g *GoGit) checkout(username, password, basedBranch, newBranch, gitReposito
 			switch {
 			case fetchErr != nil:
 				// Don't fail, a regular clone doesn't need the remote here either.
-				logrus.Warningf("failed fetching new branch %q from the remote, continuing without it: %s", newBranch, fetchErr)
+				log.Warningf("failed fetching new branch %q from the remote, continuing without it: %s", newBranch, fetchErr)
 			case fetched:
-				logrus.Debugf("new branch %q already exists on the remote, using it", newBranch)
+				log.Debugf("new branch %q already exists on the remote, using it", newBranch)
 				return g.checkout(username, password, basedBranch, newBranch, gitRepositoryPath, forceReset, depth, false)
 			}
 		}
 
-		logrus.Debugf("new branch %q doesn't exist, creating it from branch %q", newBranch, basedBranch)
+		log.Debugf("new branch %q doesn't exist, creating it from branch %q", newBranch, basedBranch)
 
 		// First we need to checkout the based branch
 		err = worktree.Checkout(&git.CheckoutOptions{
@@ -507,7 +507,7 @@ func (g *GoGit) checkout(username, password, basedBranch, newBranch, gitReposito
 			return fmt.Errorf("checking out branch %q - %s", newBranch, err)
 		}
 
-		logrus.Debugf("branch %q successfully created", newBranch)
+		log.Debugf("branch %q successfully created", newBranch)
 
 	case nil:
 		// Means that a local branch named remoteBranch already exist
@@ -541,19 +541,19 @@ func (g *GoGit) checkout(username, password, basedBranch, newBranch, gitReposito
 			err = worktree.Pull(&pullOptions)
 		}
 		if b.String() != "" {
-			logrus.Debugln(b.String())
+			log.Debugln(b.String())
 		}
 		b.Reset()
 		if err != nil &&
 			err != git.ErrNonFastForwardUpdate &&
 			err != git.NoErrAlreadyUpToDate {
-			logrus.Debugln(err)
+			log.Debugln(err)
 			return err
 		}
 		pulledBranches.Store(pulledKey, true)
 
 		if forceReset {
-			logrus.Debugf("Checking if branch %q diverged from %q:", newBranch, basedBranch)
+			log.Debugf("Checking if branch %q diverged from %q:", newBranch, basedBranch)
 			// If the newBranch diverged from the basedBranch, we need to reset it
 			resetBranch, err := resetNewBranchToBaseBranch(
 				plumbing.NewBranchReferenceName(newBranch),
@@ -565,9 +565,9 @@ func (g *GoGit) checkout(username, password, basedBranch, newBranch, gitReposito
 				return err
 			}
 			if resetBranch {
-				logrus.Debugf("\tbranch %q reset to %q", newBranch, basedBranch)
+				log.Debugf("\tbranch %q reset to %q", newBranch, basedBranch)
 			} else {
-				logrus.Debugf("\tall good,branch %q is ahead of %q", newBranch, basedBranch)
+				log.Debugf("\tall good,branch %q is ahead of %q", newBranch, basedBranch)
 			}
 		}
 
@@ -586,7 +586,7 @@ func (g *GoGit) IsForceReset() bool {
 
 // Commit run `git commit`.
 func (g GoGit) Commit(user, email, message, workingDir string, signingKey string, passphrase string) error {
-	logrus.Debugf("stage: git-commit\n\n")
+	log.Debugf("stage: git-commit\n\n")
 
 	r, err := git.PlainOpen(workingDir)
 	if err != nil {
@@ -615,7 +615,7 @@ func (g GoGit) Commit(user, email, message, workingDir string, signingKey string
 		},
 	}
 
-	logrus.Debugf("status: %q\n", status)
+	log.Debugf("status: %q\n", status)
 
 	if len(signingKey) > 0 {
 		key, err := sign.GetCommitSignKey(signingKey, passphrase)
@@ -633,7 +633,7 @@ func (g GoGit) Commit(user, email, message, workingDir string, signingKey string
 	if err != nil {
 		return fmt.Errorf("getting commit object: %w", err)
 	}
-	logrus.Debugf("git commit object:\n%s\n", obj)
+	log.Debugf("git commit object:\n%s\n", obj)
 
 	return nil
 }
@@ -679,13 +679,13 @@ func (g GoGit) Clone(username, password, URL, workingDir string, withSubmodules 
 	repo, err := git.PlainClone(workingDir, false, &cloneOptions)
 
 	if b.String() != "" {
-		logrus.Debugln(b.String())
+		log.Debugln(b.String())
 	}
 	b.Reset()
 
 	if err == git.ErrRepositoryAlreadyExists {
 
-		logrus.Debugf("repository already exists, trying to pull changes")
+		log.Debugf("repository already exists, trying to pull changes")
 		b.Reset()
 
 		repo, err = git.PlainOpen(workingDir)
@@ -723,7 +723,7 @@ func (g GoGit) Clone(username, password, URL, workingDir string, withSubmodules 
 		err = w.Pull(&pullOptions)
 
 		if b.String() != "" {
-			logrus.Debugln(b.String())
+			log.Debugln(b.String())
 		}
 		b.Reset()
 
@@ -758,7 +758,7 @@ func (g GoGit) Clone(username, password, URL, workingDir string, withSubmodules 
 		return fmt.Errorf("listing remotes: %w", err)
 	}
 
-	logrus.Debugf("Fetching remote branches for resetting local ones")
+	log.Debugf("Fetching remote branches for resetting local ones")
 
 	for _, r := range remotes {
 
@@ -784,7 +784,7 @@ func (g GoGit) Clone(username, password, URL, workingDir string, withSubmodules 
 		err := r.Fetch(&fetchOptions)
 
 		if b.String() != "" {
-			logrus.Debugln(b.String())
+			log.Debugln(b.String())
 		}
 		b.Reset()
 
@@ -802,7 +802,7 @@ func (g GoGit) Clone(username, password, URL, workingDir string, withSubmodules 
 // The function returns a boolean to indicate if the push needed a force push or not.
 // and an error if something went wrong.
 func (g GoGit) Push(username string, password string, workingDir string, force bool) (bool, error) {
-	logrus.Debugf("stage: git-push\n\n")
+	log.Debugf("stage: git-push\n\n")
 
 	auth := transportHttp.BasicAuth{
 		Username: username, // anything excepted an empty string
@@ -851,7 +851,7 @@ func (g GoGit) Push(username string, password string, workingDir string, force b
 	// Only push one branch at a time
 	err = r.Push(&pushOptions)
 	if b.String() != "" {
-		logrus.Debugln(b.String())
+		log.Debugln(b.String())
 	}
 	b.Reset()
 
@@ -880,7 +880,7 @@ func (g GoGit) Push(username string, password string, workingDir string, force b
 		err = r.Push(&pushOptions)
 
 		if b.String() != "" {
-			logrus.Debugln(b.String())
+			log.Debugln(b.String())
 		}
 		b.Reset()
 
@@ -890,8 +890,8 @@ func (g GoGit) Push(username string, password string, workingDir string, force b
 		return true, nil
 	}
 
-	logrus.Errorf("%s", git.ErrNonFastForwardUpdate.Error())
-	logrus.Errorf("push: %s", err)
+	log.Errorf("%s", git.ErrNonFastForwardUpdate.Error())
+	log.Errorf("push: %s", err)
 
 	return false, err
 }
@@ -934,7 +934,7 @@ func (g GoGit) TagHashes(workingDir string) (hashes []string, err error) {
 		hashes = append(hashes, ref.Hash)
 	}
 
-	logrus.Debugf("got tags: %v", hashes)
+	log.Debugf("got tags: %v", hashes)
 
 	if len(hashes) == 0 {
 		return hashes, fmt.Errorf("%s", ErrNoGitTagFound)
@@ -955,7 +955,7 @@ func (g GoGit) Tags(workingDir string) (names []string, err error) {
 		names = append(names, ref.Name)
 	}
 
-	logrus.Debugf("got tags: %v", names)
+	log.Debugf("got tags: %v", names)
 
 	if len(names) == 0 {
 		return names, fmt.Errorf("%s", ErrNoGitTagFound)
@@ -1078,7 +1078,7 @@ func (g GoGit) PushTag(tag string, username string, password string, workingDir 
 		return fmt.Errorf("opening %q git directory: %w", workingDir, err)
 	}
 
-	logrus.Debugf("Pushing git Tag: %q", tag)
+	log.Debugf("Pushing git Tag: %q", tag)
 
 	// By default don't force push
 	refspec := config.RefSpec("refs/tags/" + tag + ":refs/tags/" + tag)
@@ -1100,12 +1100,12 @@ func (g GoGit) PushTag(tag string, username string, password string, workingDir 
 
 	err = r.Push(po)
 
-	logrus.Debugln(b.String())
+	log.Debugln(b.String())
 	b.Reset()
 
 	if err != nil {
 		if err == git.NoErrAlreadyUpToDate {
-			logrus.Infof("%q remote was up to date, no push done", DefaultRemoteReferenceName)
+			log.Infof("%q remote was up to date, no push done", DefaultRemoteReferenceName)
 			return nil
 		}
 		return fmt.Errorf("push to remote %q: %s", DefaultRemoteReferenceName, err)
@@ -1213,7 +1213,7 @@ func trackBranch(repository *git.Repository, branch string) (restore func(), err
 	return func() {
 		remote.Fetch = original
 		if err := repository.SetConfig(cfg); err != nil {
-			logrus.Debugf("failed restoring the fetched references of remote %q: %s", DefaultRemoteReferenceName, err)
+			log.Debugf("failed restoring the fetched references of remote %q: %s", DefaultRemoteReferenceName, err)
 		}
 	}, nil
 }
@@ -1230,7 +1230,7 @@ func (g GoGit) Pull(username, password, gitRepositoryPath, branch string, single
 		return fmt.Errorf("get branch head: %s", err)
 	}
 
-	logrus.Debugf("Pulling git branch %q", ref.Name())
+	log.Debugf("Pulling git branch %q", ref.Name())
 
 	worktree, err := repository.Worktree()
 	if err != nil {
@@ -1279,7 +1279,7 @@ func (g GoGit) Pull(username, password, gitRepositoryPath, branch string, single
 
 	err = worktree.Pull(&pullOptions)
 	if b.String() != "" {
-		logrus.Debugln(b.String())
+		log.Debugln(b.String())
 	}
 
 	if err != nil &&
@@ -1293,7 +1293,7 @@ func (g GoGit) Pull(username, password, gitRepositoryPath, branch string, single
 		return fmt.Errorf("get branch head: %s", err)
 	}
 
-	logrus.Debugf("branch %q is now at %s", ref.Name(), ref.Hash())
+	log.Debugf("branch %q is now at %s", ref.Name(), ref.Hash())
 
 	return nil
 }

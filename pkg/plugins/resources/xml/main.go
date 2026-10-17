@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/go-viper/mapstructure/v2"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/text"
 )
 
@@ -62,7 +62,7 @@ func (x *XML) Validate() (err error) {
 
 	if len(errs) > 0 {
 		for _, e := range errs {
-			logrus.Errorln(e.Error())
+			log.Errorln(e.Error())
 		}
 		return ErrWrongSpec
 	}

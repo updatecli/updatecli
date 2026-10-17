@@ -3,7 +3,7 @@ package kubernetes
 import (
 	"fmt"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/dockerimage"
 )
 
@@ -12,7 +12,7 @@ func (k Kubernetes) discoverProwManifest(file, relativeFile string) [][]byte {
 
 	prowManifestData, err := getProwManifestData(file)
 	if err != nil {
-		logrus.Debugln(err)
+		log.Debugln(err)
 		return manifests
 	}
 	if prowManifestData == nil {
@@ -32,7 +32,7 @@ func (k Kubernetes) discoverProwManifest(file, relativeFile string) [][]byte {
 					if containerName == "" {
 						imageName, _, _, err := dockerimage.ParseOCIReferenceInfo(container.Image)
 						if err != nil {
-							logrus.Debugln(err)
+							log.Debugln(err)
 							continue
 						}
 						containerName = imageName
@@ -46,7 +46,7 @@ func (k Kubernetes) discoverProwManifest(file, relativeFile string) [][]byte {
 						document,
 					)
 					if err != nil {
-						logrus.Debugln(err)
+						log.Debugln(err)
 						continue
 					}
 
@@ -74,7 +74,7 @@ func (k Kubernetes) discoverProwManifest(file, relativeFile string) [][]byte {
 					if containerName == "" {
 						imageName, _, _, err := dockerimage.ParseOCIReferenceInfo(container.Image)
 						if err != nil {
-							logrus.Debugln(err)
+							log.Debugln(err)
 							continue
 						}
 						containerName = imageName
@@ -88,7 +88,7 @@ func (k Kubernetes) discoverProwManifest(file, relativeFile string) [][]byte {
 						document,
 					)
 					if err != nil {
-						logrus.Debugln(err)
+						log.Debugln(err)
 						continue
 					}
 
@@ -116,7 +116,7 @@ func (k Kubernetes) discoverProwManifest(file, relativeFile string) [][]byte {
 
 					imageName, _, _, err := dockerimage.ParseOCIReferenceInfo(container.Image)
 					if err != nil {
-						logrus.Debugln(err)
+						log.Debugln(err)
 						continue
 					}
 					containerName = imageName
@@ -130,7 +130,7 @@ func (k Kubernetes) discoverProwManifest(file, relativeFile string) [][]byte {
 					document,
 				)
 				if err != nil {
-					logrus.Debugln(err)
+					log.Debugln(err)
 					continue
 				}
 

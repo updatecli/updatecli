@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/go-viper/mapstructure/v2"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/gitlab/client"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
@@ -164,7 +164,7 @@ func (g *Gitlab) SearchTags(tagAge age.Spec) (tags []string, err error) {
 		}
 
 		if resp.StatusCode > 400 {
-			logrus.Debugf("RC: %q\nBody:\n%s", resp.Status, resp.Body)
+			log.Debugf("RC: %q\nBody:\n%s", resp.Status, resp.Body)
 		}
 
 		for _, ref := range references {
@@ -173,11 +173,11 @@ func (g *Gitlab) SearchTags(tagAge age.Spec) (tags []string, err error) {
 			if !tagAge.IsZero() {
 				date, ok := tagDate(ref)
 				if !ok {
-					logrus.Debugf("ignoring tag %q, which carries no date, as the age filter cannot be applied to it", ref.Name)
+					log.Debugf("ignoring tag %q, which carries no date, as the age filter cannot be applied to it", ref.Name)
 					continue
 				}
 				if !tagAge.Matches(date) {
-					logrus.Debugf("ignoring tag %q, dated %s, as outside of the age window", ref.Name, date)
+					log.Debugf("ignoring tag %q, dated %s, as outside of the age window", ref.Name, date)
 					continue
 				}
 			}
@@ -238,11 +238,11 @@ func (s Spec) Validate() error {
 
 	if err := s.Age.Validate(); err != nil {
 		gotError = true
-		logrus.Errorln(err)
+		log.Errorln(err)
 	}
 
 	if len(missingParameters) > 0 {
-		logrus.Errorf("missing parameter(s) [%s]", strings.Join(missingParameters, ","))
+		log.Errorf("missing parameter(s) [%s]", strings.Join(missingParameters, ","))
 	}
 
 	if gotError {

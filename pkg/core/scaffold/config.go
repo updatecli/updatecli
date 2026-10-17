@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 type scaffoldConfig struct {
@@ -86,7 +86,7 @@ func (s *Scaffold) scaffoldConfig(rootDir string) error {
 		if _, err := os.Stat(defaultConfigDir); os.IsNotExist(err) {
 			err := os.MkdirAll(defaultConfigDir, 0755)
 			if err != nil {
-				logrus.Errorf("Failed to create config directory: %s", defaultConfigDir)
+				log.Errorf("Failed to create config directory: %s", defaultConfigDir)
 				continue
 			}
 		}
@@ -95,19 +95,19 @@ func (s *Scaffold) scaffoldConfig(rootDir string) error {
 
 		// If the config already exist, we don't overwrite it
 		if _, err := os.Stat(configFilePath); err == nil {
-			logrus.Infof("Skipping, config already exist: %s", configFilePath)
+			log.Infof("Skipping, config already exist: %s", configFilePath)
 			continue
 		}
 
 		f, err := os.Create(configFilePath)
 		if err != nil {
-			logrus.Errorf("Failed to create config file: %s", configFilePath)
+			log.Errorf("Failed to create config file: %s", configFilePath)
 			continue
 		}
 
 		_, err = f.Write([]byte(cf.Content))
 		if err != nil {
-			logrus.Errorf("Failed to write config file: %s", configFilePath)
+			log.Errorf("Failed to write config file: %s", configFilePath)
 			f.Close()
 			continue
 		}

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
@@ -38,7 +38,7 @@ func (gb *GitBranch) Source(_ context.Context, pathResolver pathresolver.Resolve
 	values := []string{}
 	for _, ref := range refs {
 		if !gb.spec.Age.Matches(ref.When) {
-			logrus.Debugf("ignoring branch %q, dated %s, as outside of the age window", ref.Name, ref.When)
+			log.Debugf("ignoring branch %q, dated %s, as outside of the age window", ref.Name, ref.When)
 			continue
 		}
 		values = append(values, ref.Name)
@@ -50,7 +50,7 @@ func (gb *GitBranch) Source(_ context.Context, pathResolver pathresolver.Resolve
 		source is skipped instead.
 	*/
 	if len(refs) > 0 && len(values) == 0 {
-		logrus.Debugf("%s", age.ErrNoVersionMatchingAge)
+		log.Debugf("%s", age.ErrNoVersionMatchingAge)
 		resultSource.Result = result.SKIPPED
 		resultSource.Description = "no git branch matches the age filter yet"
 		return nil

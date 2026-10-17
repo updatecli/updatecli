@@ -4,13 +4,11 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"io"
-	"os"
 	"strings"
 
 	jschema "github.com/invopop/jsonschema"
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/jsonschema"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
@@ -53,16 +51,10 @@ type Config struct {
 func (c *Condition) Run(ctx context.Context, source string) (err error) {
 
 	var consoleOutput bytes.Buffer
-	// By default logrus logs to stderr, so I guess we want to keep this behavior...
-	logrus.SetOutput(io.MultiWriter(os.Stdout, &consoleOutput))
-	/*
-		The last defer will be executed first,
-		so in this case we want to first save the console output
-		before setting back the logrus output to stdout.
-	*/
-	// By default logrus logs to stdout and we want to keep this behavior.
-	defer logrus.SetOutput(os.Stdout)
+	stopCapture := log.Capture(&consoleOutput)
+	// The last defer runs first: stop capturing before saving the console output
 	defer c.Result.SetConsoleOutput(&consoleOutput)
+	defer stopCapture()
 
 	c.Result.Result = result.FAILURE
 
@@ -108,7 +100,7 @@ func (c *Condition) Run(ctx context.Context, source string) (err error) {
 	// FailWhen is used to reverse the expected condition value
 	// If failwhen is set to true, then we expected a condition returning "true" would be considered as a failure
 	if c.Config.FailWhen {
-		logrus.Debugf("Expected successful condition result to be %v", !c.Config.FailWhen)
+		log.Debugf("Expected successful condition result to be %v", !c.Config.FailWhen)
 		if c.Result.Pass {
 			c.Result.Result = result.FAILURE
 			c.Result.Pass = false
@@ -118,7 +110,7 @@ func (c *Condition) Run(ctx context.Context, source string) (err error) {
 		}
 	}
 
-	logrus.Infof("%s %s", c.Result.Result, c.Result.Description)
+	log.Infof("%s %s", c.Result.Result, c.Result.Description)
 
 	return nil
 }
@@ -144,7 +136,7 @@ func (c *Config) Validate() error {
 
 	// Ensure kind is lowercase
 	if c.Kind != strings.ToLower(c.Kind) {
-		logrus.Warningf("kind value %q must be lowercase", c.Kind)
+		log.Warningf("kind value %q must be lowercase", c.Kind)
 		c.Kind = strings.ToLower(c.Kind)
 	}
 
@@ -152,11 +144,11 @@ func (c *Config) Validate() error {
 	if len(c.DeprecatedSCMID) > 0 {
 		switch len(c.SCMID) {
 		case 0:
-			logrus.Warningf("%q is deprecated in favor of %q.", "scmID", "scmid")
+			log.Warningf("%q is deprecated in favor of %q.", "scmID", "scmid")
 			c.SCMID = c.DeprecatedSCMID
 			c.DeprecatedSCMID = ""
 		default:
-			logrus.Warningf("%q and %q are mutually exclusive, ignoring %q",
+			log.Warningf("%q and %q are mutually exclusive, ignoring %q",
 				"scmID", "scmid", "scmID")
 		}
 	}
@@ -165,11 +157,11 @@ func (c *Config) Validate() error {
 	if len(c.DeprecatedDependsOn) > 0 {
 		switch len(c.DependsOn) == 0 {
 		case true:
-			logrus.Warningln("\"depends_on\" is deprecated in favor of \"dependson\".")
+			log.Warningln("\"depends_on\" is deprecated in favor of \"dependson\".")
 			c.DependsOn = c.DeprecatedDependsOn
 			c.DeprecatedDependsOn = []string{}
 		case false:
-			logrus.Warningln("\"depends_on\" is ignored in favor of \"dependson\".")
+			log.Warningln("\"depends_on\" is ignored in favor of \"dependson\".")
 			c.DeprecatedDependsOn = []string{}
 		}
 	}
@@ -178,11 +170,11 @@ func (c *Config) Validate() error {
 	if len(c.DeprecatedSourceID) > 0 {
 		switch len(c.SourceID) {
 		case 0:
-			logrus.Warningf("%q is deprecated in favor of %q.", "sourceID", "sourceid")
+			log.Warningf("%q is deprecated in favor of %q.", "sourceID", "sourceid")
 			c.SourceID = c.DeprecatedSourceID
 			c.DeprecatedSourceID = ""
 		default:
-			logrus.Warningf("%q and %q are mutually exclusive, ignoring %q",
+			log.Warningf("%q and %q are mutually exclusive, ignoring %q",
 				"sourceID", "sourceid", "sourceID")
 		}
 	}
@@ -193,12 +185,12 @@ func (c *Config) Validate() error {
 	}
 
 	if len(c.SourceID) > 0 && c.DisableSourceInput {
-		logrus.Errorln("disablesourceinput is incompatible with sourceid, ignoring the latter")
+		log.Errorln("disablesourceinput is incompatible with sourceid, ignoring the latter")
 		gotError = true
 	}
 
 	if len(missingParameters) > 0 {
-		logrus.Errorf("missing value for parameter(s) [%q]", strings.Join(missingParameters, ","))
+		log.Errorf("missing value for parameter(s) [%q]", strings.Join(missingParameters, ","))
 		gotError = true
 	}
 

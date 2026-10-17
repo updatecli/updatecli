@@ -3,7 +3,7 @@ package config
 import (
 	"fmt"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 )
 
@@ -21,7 +21,7 @@ func (config *Config) GetChangelogTitle(ID string, fallback string) (title strin
 	} else {
 		// At the moment, we don't have an easy way to describe what changed
 		// I am still thinking to a better solution.
-		logrus.Warning("**Fallback** Please add a name to your configuration using the field 'name: <your pipeline>'")
+		log.Warning("**Fallback** Please add a name to your configuration using the field 'name: <your pipeline>'")
 		title = fmt.Sprintf("deps: [%s] Bump version to %s",
 			config.Spec.Sources[config.Spec.Targets[ID].SourceID].Kind,
 			fallback)
@@ -52,7 +52,7 @@ func (config *Config) EnsureLocalScm() error {
 	}
 
 	if config.Spec.SCMs == nil {
-		logrus.Infof("\nINFO: A configuration for the 'local' SCM is automatically guessed. To opt-out, please set `scms.local.disabled` to the value `true`\n")
+		log.Infof("\nINFO: A configuration for the 'local' SCM is automatically guessed. To opt-out, please set `scms.local.disabled` to the value `true`\n")
 		config.Spec.SCMs = make(map[string]scm.Config)
 	}
 	config.Spec.SCMs[LOCALSCMIDENTIFIER] = localScmConfig

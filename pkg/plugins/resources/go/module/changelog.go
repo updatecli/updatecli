@@ -5,8 +5,8 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	githubChangelog "github.com/updatecli/updatecli/pkg/plugins/changelog/github/v3"
 	"golang.org/x/net/html"
@@ -48,7 +48,7 @@ func getChangelogFromProxy(module, from, to string) *result.Changelogs {
 
 	URL, err := url.Parse(module)
 	if err != nil {
-		logrus.Errorf("something went wrong while parsing module %q\n", err)
+		log.Errorf("something went wrong while parsing module %q\n", err)
 		return nil
 	}
 
@@ -64,13 +64,13 @@ func getChangelogFromProxy(module, from, to string) *result.Changelogs {
 
 	res, err := httpClient.Get(URL.String())
 	if err != nil {
-		logrus.Errorf("something went wrong while getting go module api data %q\n", err)
+		log.Errorf("something went wrong while getting go module api data %q\n", err)
 		return nil
 	}
 
 	defer res.Body.Close()
 	if res.StatusCode >= 400 {
-		logrus.Errorf("something went wrong while getting go module data %q\n", err)
+		log.Errorf("something went wrong while getting go module data %q\n", err)
 		return nil
 	}
 
@@ -101,7 +101,7 @@ func getChangelogFromGitHub(module, from, to string) *result.Changelogs {
 
 	releases, err := changelog.Search(from, to)
 	if err != nil {
-		logrus.Debugf("ignored error, searching releases: %s", err)
+		log.Debugf("ignored error, searching releases: %s", err)
 	}
 
 	return &releases
@@ -156,7 +156,7 @@ func getGitRepositoryURL(htmlContent string) string {
 
 	URL, err := url.Parse(result)
 	if err != nil {
-		logrus.Debugf("failed parsing module %q: %s", result, err)
+		log.Debugf("failed parsing module %q: %s", result, err)
 		return ""
 	}
 

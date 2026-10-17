@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 // setDefaultHTTPSScheme adds https:// to a URL if it doesn't already have a scheme
@@ -34,7 +34,7 @@ func sanitizeTokenID(token string) string {
 func initConfigFile() (string, error) {
 	userConfigDir, err := os.UserConfigDir()
 	if err != nil {
-		logrus.Errorln(err)
+		log.Errorln(err)
 		return "", err
 	}
 

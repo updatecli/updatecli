@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
@@ -38,7 +38,7 @@ func (t *Toml) Source(_ context.Context, pathResolver pathresolver.Resolver, res
 	query := ""
 	switch t.engine {
 	case ENGINEDASEL_V1:
-		logrus.Debugf("Using engine %q", t.engine)
+		log.Debugf("Using engine %q", t.engine)
 		switch len(t.spec.Query) > 0 {
 		case true:
 			query = t.spec.Query
@@ -74,7 +74,7 @@ func (t *Toml) Source(_ context.Context, pathResolver pathresolver.Resolver, res
 		}
 
 	case ENGINEDASEL_V2:
-		logrus.Debugf("Using engine %q", t.engine)
+		log.Debugf("Using engine %q", t.engine)
 		query = t.spec.Key
 		queryResults, err := content.QueryV2(t.spec.Key)
 		if err != nil {
@@ -93,7 +93,7 @@ func (t *Toml) Source(_ context.Context, pathResolver pathresolver.Resolver, res
 		sourceOutput = t.foundVersion.GetVersion()
 
 	case ENGINEDASEL_V3:
-		logrus.Debugf("Using engine %q", t.engine)
+		log.Debugf("Using engine %q", t.engine)
 		query = t.spec.Key
 		queryResults, err := content.QueryV3(t.spec.Key)
 		if err != nil {

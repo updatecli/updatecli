@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 // Spec defines the settings used to connect to a Gitea instance.
@@ -44,7 +44,7 @@ type Spec struct {
 func (s Spec) Validate() error {
 
 	if len(s.URL) == 0 {
-		logrus.Errorf("missing %q parameter", "url")
+		log.Errorf("missing %q parameter", "url")
 		return fmt.Errorf("wrong configuration")
 	}
 

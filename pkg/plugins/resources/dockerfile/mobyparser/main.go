@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/dockerfile/types"
 )
@@ -31,30 +31,30 @@ func (m MobyParser) FindInstruction(dockerfileContent []byte, stage string) bool
 
 	data, err := parser.Parse(bytes.NewReader(dockerfileContent))
 	if err != nil {
-		logrus.Error(err.Error())
+		log.Error(err.Error())
 		return false
 	}
 
 	found, val, err := m.replace(data.AST)
 	if err != nil {
-		logrus.Error(err.Error())
+		log.Error(err.Error())
 		return false
 	}
 
 	if !found {
-		logrus.Infof("%s Instruction %q wasn't found", result.FAILURE, m.Instruction)
+		log.Infof("%s Instruction %q wasn't found", result.FAILURE, m.Instruction)
 		return false
 	}
 
 	if val == m.Value {
-		logrus.Infof("%s Instruction %q is correctly set to %q",
+		log.Infof("%s Instruction %q is correctly set to %q",
 			result.SUCCESS,
 			m.Instruction,
 			m.Value)
 		return true
 	}
 
-	logrus.Infof("%s Instruction %q found but incorrectly set to %q instead of %q",
+	log.Infof("%s Instruction %q found but incorrectly set to %q instead of %q",
 		result.FAILURE,
 		m.Instruction,
 		val,
@@ -83,14 +83,14 @@ func (m MobyParser) ReplaceInstructions(dockerfileContent []byte, sourceValue, s
 	}
 
 	if oldVersion == m.Value {
-		logrus.Infof("%s Instruction %q already set to %q, nothing else need to be done",
+		log.Infof("%s Instruction %q already set to %q, nothing else need to be done",
 			result.SUCCESS,
 			m.Instruction,
 			m.Value)
 		return dockerfileContent, changed, nil
 	}
 
-	logrus.Infof("%s Instruction %q, was updated from %q to %q",
+	log.Infof("%s Instruction %q, was updated from %q to %q",
 		result.ATTENTION,
 		m.Instruction,
 		oldVersion,
@@ -120,7 +120,7 @@ func (m MobyParser) ReplaceInstructions(dockerfileContent []byte, sourceValue, s
 
 func (m MobyParser) GetInstruction(dockerfileContent []byte, stage string) string {
 	// Not implemented
-	logrus.Warningf("Get Instruction is not yet supported for the MobyParser, if needed switch to the simpletextparser")
+	log.Warningf("Get Instruction is not yet supported for the MobyParser, if needed switch to the simpletextparser")
 	return ""
 }
 
@@ -152,7 +152,7 @@ func getPositionKeys(k string) (
 		instructionPosition, err = strconv.Atoi(positions[1])
 
 		if err != nil {
-			logrus.Errorf("err - %s", err)
+			log.Errorf("err - %s", err)
 			return "", -1, -1, err
 		}
 
@@ -161,7 +161,7 @@ func getPositionKeys(k string) (
 		elementPosition, err = strconv.Atoi(positions[1])
 
 		if err != nil {
-			logrus.Errorf("err - %s", err)
+			log.Errorf("err - %s", err)
 			return "", -1, -1, err
 		}
 

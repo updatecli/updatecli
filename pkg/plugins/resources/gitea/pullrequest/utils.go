@@ -2,7 +2,7 @@ package pullrequest
 
 import (
 	giteasdk "code.gitea.io/sdk/gitea"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
@@ -25,12 +25,12 @@ func (g *Gitea) isPullRequestExist() (title, description, link string, err error
 		)
 
 		if err != nil {
-			logrus.Debugf("gitea/isPullRequestExist RC: %s\n", err)
+			log.Debugf("gitea/isPullRequestExist RC: %s\n", err)
 			return "", "", "", err
 		}
 
 		if resp != nil && resp.StatusCode > 400 {
-			logrus.Debugf("RC: %s\nBody:\n%s", resp.Status, resp.Body)
+			log.Debugf("RC: %s\nBody:\n%s", resp.Status, resp.Body)
 		}
 
 		for _, p := range pullrequests {
@@ -40,7 +40,7 @@ func (g *Gitea) isPullRequestExist() (title, description, link string, err error
 				p.Closed == nil &&
 				p.Merged == nil {
 
-				logrus.Infof("%s GiTea pullrequest detected at:\n\t%s",
+				log.Infof("%s GiTea pullrequest detected at:\n\t%s",
 					result.SUCCESS,
 					p.URL)
 
@@ -99,12 +99,12 @@ func (g *Gitea) isRemoteBranchesExist() (bool, error) {
 	)
 
 	if err != nil {
-		logrus.Debugf("Error: %s", err)
+		log.Debugf("Error: %s", err)
 		return false, err
 	}
 
 	if resp != nil && resp.StatusCode > 400 {
-		logrus.Debugf("gitea/ListRepoBranches RC: %d", resp.StatusCode)
+		log.Debugf("gitea/ListRepoBranches RC: %d", resp.StatusCode)
 	}
 
 	foundRemoteSourceBranch := false
@@ -124,14 +124,14 @@ func (g *Gitea) isRemoteBranchesExist() (bool, error) {
 	}
 
 	if !foundRemoteSourceBranch {
-		logrus.Debugf("Branch %q not found on remote repository %s/%s",
+		log.Debugf("Branch %q not found on remote repository %s/%s",
 			sourceBranch,
 			owner,
 			repository)
 	}
 
 	if !foundRemoteTargetBranch {
-		logrus.Debugf("Branch %q not found on remote repository %s/%s",
+		log.Debugf("Branch %q not found on remote repository %s/%s",
 			targetBranch,
 			owner,
 			repository)

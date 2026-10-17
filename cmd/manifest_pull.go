@@ -3,7 +3,7 @@ package cmd
 import (
 	"os"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 
 	"github.com/spf13/cobra"
 )
@@ -21,7 +21,7 @@ var (
 
 			err := run("manifest/pull")
 			if err != nil {
-				logrus.Errorf("command failed: %s", err)
+				log.Errorf("command failed: %s", err)
 				os.Exit(1)
 			}
 		},

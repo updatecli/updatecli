@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
@@ -14,7 +14,7 @@ func (g *Stash) Source(_ context.Context, pathResolver pathresolver.Resolver, re
 	versions, err := g.SearchReleases()
 
 	if err != nil {
-		logrus.Error(err)
+		log.Error(err)
 		return fmt.Errorf("searching Bitbucket releases: %w", err)
 	}
 

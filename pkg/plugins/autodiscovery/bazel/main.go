@@ -9,7 +9,7 @@ import (
 	"text/template"
 
 	"github.com/go-viper/mapstructure/v2"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
@@ -74,7 +74,7 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Bazel, error) {
 
 	newFilter := s.VersionFilter
 	if s.VersionFilter.IsZero() {
-		logrus.Debugln("no versioning filtering specified, fallback to semantic versioning")
+		log.Debugln("no versioning filtering specified, fallback to semantic versioning")
 		// By default, Bazel versioning uses semantic versioning
 		newFilter.Kind = "semver"
 		newFilter.Pattern = "*"
@@ -83,14 +83,14 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Bazel, error) {
 	dir := rootDir
 	if path.IsAbs(s.RootDir) {
 		if scmID != "" {
-			logrus.Warningf("rootdir %q is an absolute path, scmID %q will be ignored", s.RootDir, scmID)
+			log.Warningf("rootdir %q is an absolute path, scmID %q will be ignored", s.RootDir, scmID)
 		}
 		dir = s.RootDir
 	}
 
 	// Fallback to the current process path if not rootdir specified.
 	if len(dir) == 0 {
-		logrus.Errorln("no working directory defined")
+		log.Errorln("no working directory defined")
 		return Bazel{}, fmt.Errorf("no working directory defined")
 	}
 
@@ -105,8 +105,7 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Bazel, error) {
 
 // DiscoverManifests discovers Bazel module dependencies and generates Updatecli manifests.
 func (b Bazel) DiscoverManifests() ([][]byte, error) {
-	logrus.Infof("\n\n%s\n", strings.ToTitle("Bazel"))
-	logrus.Infof("%s\n", strings.Repeat("=", len("Bazel")+1))
+	log.Heading("Bazel")
 
 	manifests, err := b.discoverBazelModuleManifests()
 	if err != nil {
@@ -132,17 +131,17 @@ func (b Bazel) discoverBazelModuleManifests() ([][]byte, error) {
 	}
 
 	for _, foundFile := range foundFiles {
-		logrus.Debugf("parsing file %q", foundFile)
+		log.Debugf("parsing file %q", foundFile)
 
 		relativeFoundFile, err := filepath.Rel(b.rootDir, foundFile)
 		if err != nil {
-			logrus.Debugln(err)
+			log.Debugln(err)
 			continue
 		}
 
 		dependencies, err := parseModuleDependencies(foundFile)
 		if err != nil {
-			logrus.Debugf("skipping file %q due to: %s", foundFile, err)
+			log.Debugf("skipping file %q due to: %s", foundFile, err)
 			continue
 		}
 
@@ -150,7 +149,7 @@ func (b Bazel) discoverBazelModuleManifests() ([][]byte, error) {
 			// Test if the ignore rule based on path is respected
 			if len(b.spec.Ignore) > 0 {
 				if shouldIgnore(dep.Name, dep.Version, foundFile, b.rootDir, b.spec.Ignore) {
-					logrus.Debugf("Ignoring module %q from file %q, as matching ignore rule(s)\n", dep.Name, relativeFoundFile)
+					log.Debugf("Ignoring module %q from file %q, as matching ignore rule(s)\n", dep.Name, relativeFoundFile)
 					continue
 				}
 			}
@@ -158,14 +157,14 @@ func (b Bazel) discoverBazelModuleManifests() ([][]byte, error) {
 			// Test if the only rule based on path is respected
 			if len(b.spec.Only) > 0 {
 				if !shouldInclude(dep.Name, dep.Version, foundFile, b.rootDir, b.spec.Only) {
-					logrus.Debugf("Ignoring module %q from %q, as not matching only rule(s)\n", dep.Name, relativeFoundFile)
+					log.Debugf("Ignoring module %q from %q, as not matching only rule(s)\n", dep.Name, relativeFoundFile)
 					continue
 				}
 			}
 
 			versionPattern, err := b.versionFilter.GreaterThanPattern(dep.Version)
 			if err != nil {
-				logrus.Debugf("skipping module %q due to: %s", dep.Name, err)
+				log.Debugf("skipping module %q due to: %s", dep.Name, err)
 				continue
 			}
 
@@ -175,7 +174,7 @@ func (b Bazel) discoverBazelModuleManifests() ([][]byte, error) {
 				versionPattern,
 			)
 			if err != nil {
-				logrus.Debugf("skipping module %q due to: %s", dep.Name, err)
+				log.Debugf("skipping module %q due to: %s", dep.Name, err)
 				continue
 			}
 
@@ -183,7 +182,7 @@ func (b Bazel) discoverBazelModuleManifests() ([][]byte, error) {
 		}
 	}
 
-	logrus.Printf("%v manifests identified", len(manifests))
+	log.Printf("%v manifests identified", len(manifests))
 
 	return manifests, nil
 }
@@ -228,7 +227,7 @@ func (b Bazel) getBazelModuleManifest(filename, moduleName, versionFilterPattern
 
 	manifest := bytes.Buffer{}
 	if err := tmpl.Execute(&manifest, params); err != nil {
-		logrus.Debugln(err)
+		log.Debugln(err)
 		return nil, err
 	}
 	return manifest.Bytes(), nil

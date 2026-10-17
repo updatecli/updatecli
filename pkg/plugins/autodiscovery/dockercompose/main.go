@@ -3,10 +3,9 @@ package dockercompose
 import (
 	"fmt"
 	"path"
-	"strings"
 
 	"github.com/go-viper/mapstructure/v2"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/docker"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
@@ -141,7 +140,7 @@ func New(spec interface{}, rootDir, scmID, actionID string) (DockerCompose, erro
 	dir := rootDir
 	if path.IsAbs(s.RootDir) {
 		if scmID != "" {
-			logrus.Warningf("rootdir %q is an absolute path, scmID %q will be ignored", s.RootDir, scmID)
+			log.Warningf("rootdir %q is an absolute path, scmID %q will be ignored", s.RootDir, scmID)
 		}
 		dir = s.RootDir
 	}
@@ -149,7 +148,7 @@ func New(spec interface{}, rootDir, scmID, actionID string) (DockerCompose, erro
 	// If no RootDir have been provided via settings,
 	// then fallback to the current process path.
 	if len(dir) == 0 {
-		logrus.Errorln("no working directory defined")
+		log.Errorln("no working directory defined")
 		return DockerCompose{}, err
 	}
 
@@ -184,8 +183,7 @@ func New(spec interface{}, rootDir, scmID, actionID string) (DockerCompose, erro
 
 func (d DockerCompose) DiscoverManifests() ([][]byte, error) {
 	// Print the header to get started
-	logrus.Infof("\n\n%s\n", strings.ToTitle("Docker Compose"))
-	logrus.Infof("%s\n", strings.Repeat("=", len("Docker Compose")+1))
+	log.Heading("Docker Compose")
 
 	return d.discoverDockerComposeImageManifests()
 }

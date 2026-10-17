@@ -7,7 +7,7 @@ import (
 	"text/template/parse"
 
 	"github.com/heimdalr/dag"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
@@ -257,7 +257,7 @@ func (p *Pipeline) traverseAndWriteGraph(d *dag.DAG, node string, graphFlavor st
 				closingBracket,
 			)
 		default:
-			logrus.Warningf("Unsupported graph flavor: %s", graphFlavor)
+			log.Warningf("Unsupported graph flavor: %s", graphFlavor)
 		}
 	}
 	for successor := range successors {
@@ -278,7 +278,7 @@ func (p *Pipeline) traverseAndWriteGraph(d *dag.DAG, node string, graphFlavor st
 					successor,
 				)
 			default:
-				logrus.Warningf("Unsupported graph flavor: %s", graphFlavor)
+				log.Warningf("Unsupported graph flavor: %s", graphFlavor)
 			}
 		}
 		err = p.traverseAndWriteGraph(d, successor, graphFlavor, graphOutput, visited)

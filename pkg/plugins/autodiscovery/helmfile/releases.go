@@ -9,7 +9,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/helm"
 )
 
@@ -62,12 +62,12 @@ func (h Helmfile) discoverHelmfileReleaseManifests() ([][]byte, error) {
 	}
 
 	for _, foundHelmfile := range foundHelmfileFiles {
-		logrus.Debugf("parsing file %q", foundHelmfile)
+		log.Debugf("parsing file %q", foundHelmfile)
 
 		relativeFoundChartFile, err := filepath.Rel(h.rootDir, foundHelmfile)
 		if err != nil {
 			// Jump to the next Helmfile if current failed
-			logrus.Debugln(err)
+			log.Debugln(err)
 			continue
 		}
 
@@ -78,7 +78,7 @@ func (h Helmfile) discoverHelmfileReleaseManifests() ([][]byte, error) {
 
 		metadata, err := getHelmfileMetadata(foundHelmfile)
 		if err != nil {
-			logrus.Debugln(err)
+			log.Debugln(err)
 			continue
 		}
 
@@ -106,7 +106,7 @@ func (h Helmfile) discoverHelmfileReleaseManifests() ([][]byte, error) {
 			}
 
 			if chartName == "" || chartURL == "" {
-				logrus.Debugf("repository not identified for release %q, skipping", release.Chart)
+				log.Debugf("repository not identified for release %q, skipping", release.Chart)
 				continue
 			}
 
@@ -125,7 +125,7 @@ func (h Helmfile) discoverHelmfileReleaseManifests() ([][]byte, error) {
 			}
 
 			if release.Version == "" {
-				logrus.Debugf("no version specified for release %q, skipping", release.Chart)
+				log.Debugf("no version specified for release %q, skipping", release.Chart)
 				continue
 			}
 
@@ -147,10 +147,10 @@ func (h Helmfile) discoverHelmfileReleaseManifests() ([][]byte, error) {
 			case nil:
 				if _, ok := h.spec.Auths[repoURL.Host]; ok {
 					token = h.spec.Auths[repoURL.Host].Token
-					logrus.Debugf("found token for repository %q", chartURL)
+					log.Debugf("found token for repository %q", chartURL)
 				}
 			default:
-				logrus.Debugf("Ignoring auth configuration due to invalid Helm repository URL: %s", err)
+				log.Debugf("Ignoring auth configuration due to invalid Helm repository URL: %s", err)
 			}
 
 			sourceVersionFilterKind := "semver"
@@ -162,28 +162,28 @@ func (h Helmfile) discoverHelmfileReleaseManifests() ([][]byte, error) {
 				sourceVersionFilterPattern, err = h.versionFilter.GreaterThanPattern(release.Version)
 				sourceVersionFilterRegex = h.versionFilter.Regex
 				if err != nil {
-					logrus.Debugf("building version filter pattern: %s", err)
+					log.Debugf("building version filter pattern: %s", err)
 					sourceVersionFilterPattern = "*"
 				}
 			}
 
 			if len(h.spec.Ignore) > 0 {
 				if h.spec.Ignore.isMatchingRules(h.rootDir, relativeFoundChartFile, chartURL, chartName, release.Version) {
-					logrus.Debugf("Ignoring Helmfile release %q from %q, as matching ignore rule(s)\n", chartURL, helmfileFilename)
+					log.Debugf("Ignoring Helmfile release %q from %q, as matching ignore rule(s)\n", chartURL, helmfileFilename)
 					continue
 				}
 			}
 
 			if len(h.spec.Only) > 0 {
 				if !h.spec.Only.isMatchingRules(h.rootDir, relativeFoundChartFile, chartURL, chartName, release.Version) {
-					logrus.Debugf("Ignoring Helmfile release %q from %q, as not matching only rule(s)\n", chartURL, helmfileFilename)
+					log.Debugf("Ignoring Helmfile release %q from %q, as not matching only rule(s)\n", chartURL, helmfileFilename)
 					continue
 				}
 			}
 
 			tmpl, err := template.New("manifest").Parse(manifestTemplate)
 			if err != nil {
-				logrus.Debugln(err)
+				log.Debugln(err)
 				continue
 			}
 
@@ -233,7 +233,7 @@ func (h Helmfile) discoverHelmfileReleaseManifests() ([][]byte, error) {
 
 			manifest := bytes.Buffer{}
 			if err := tmpl.Execute(&manifest, params); err != nil {
-				logrus.Debugln(err)
+				log.Debugln(err)
 				continue
 			}
 

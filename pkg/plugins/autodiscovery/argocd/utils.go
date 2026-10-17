@@ -8,7 +8,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	goyaml "go.yaml.in/yaml/v4"
 )
 
@@ -16,7 +16,7 @@ import (
 func searchArgoCDFiles(rootDir string, files []string) ([]string, error) {
 	manifestFiles := []string{}
 
-	logrus.Debugf("Looking for ArgoCD manifests in %q", rootDir)
+	log.Debugf("Looking for ArgoCD manifests in %q", rootDir)
 
 	err := filepath.Walk(rootDir, func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
@@ -37,7 +37,7 @@ func searchArgoCDFiles(rootDir string, files []string) ([]string, error) {
 				// First try to see if our file contains a Helm release definition
 				data, err := readManifest(path)
 				if err != nil {
-					logrus.Debugf("Failed loading file %s as ArgoCD manifest: %s", path, err)
+					log.Debugf("Failed loading file %s as ArgoCD manifest: %s", path, err)
 					continue
 				}
 
@@ -53,11 +53,11 @@ func searchArgoCDFiles(rootDir string, files []string) ([]string, error) {
 		return nil, err
 	}
 
-	logrus.Debugf("%d Argocd manifest(s) found", len(manifestFiles))
+	log.Debugf("%d Argocd manifest(s) found", len(manifestFiles))
 	for _, manifestFile := range manifestFiles {
 		manifestFile, err = filepath.Rel(rootDir, manifestFile)
 		if err == nil {
-			logrus.Debugf("    * %q", manifestFile)
+			log.Debugf("    * %q", manifestFile)
 		}
 	}
 

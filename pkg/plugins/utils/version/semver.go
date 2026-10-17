@@ -4,7 +4,7 @@ import (
 	"sort"
 
 	sv "github.com/Masterminds/semver/v3"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 // Semver is an interface in front the masterminds/semver used across the updatecli project
@@ -30,7 +30,7 @@ func (s *Semver) Init(versions []string) error {
 		}
 
 		if err != nil {
-			logrus.Debugf("Skipping %q because %s, skipping", version, err)
+			log.Debugf("Skipping %q because %s, skipping", version, err)
 		} else {
 			s.versions = append(s.versions, v)
 		}
@@ -57,7 +57,7 @@ func (s *Semver) Search(versions []string) error {
 
 	err := s.Init(versions)
 	if err != nil {
-		logrus.Error(err)
+		log.Error(err)
 		return err
 	}
 

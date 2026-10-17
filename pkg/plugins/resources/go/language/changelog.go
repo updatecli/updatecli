@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/Masterminds/semver/v3"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
 )
@@ -21,7 +21,7 @@ func (l *Language) Changelog(from, to string) *result.Changelogs {
 	// Parse the target version (to) for changelog generation
 	toVersion, err := semver.NewVersion(to)
 	if err != nil {
-		logrus.Errorf("failing parsing to version %q - %q",
+		log.Errorf("failing parsing to version %q - %q",
 			to, err)
 		return nil
 	}

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/config"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
@@ -17,7 +17,7 @@ import (
 // can gate a pipeline.
 func (e *Engine) ValidateManifests(strict bool) error {
 
-	PrintTitle("Manifest Validation")
+	log.Title("Manifest Validation")
 
 	problems := []config.SchemaProblem{}
 	manifestCount := 0
@@ -89,21 +89,21 @@ func (e *Engine) ValidateManifests(strict bool) error {
 	for _, problem := range problems {
 		if problem.Severity == config.SeverityError || strict {
 			errorCount++
-			logrus.Errorf("%s", problem.String())
+			log.Errorf("%s", problem.String())
 			continue
 		}
 
-		logrus.Warningf("%s", problem.String())
+		log.Warningf("%s", problem.String())
 	}
 
 	switch {
 	case errorCount > 0:
 		return fmt.Errorf("%d manifest problem(s) detected in %d manifest(s)", errorCount, manifestCount)
 	case len(problems) > 0:
-		logrus.Infof("\n%s %d warning(s) detected in %d manifest(s)",
+		log.Infof("\n%s %d warning(s) detected in %d manifest(s)",
 			result.ATTENTION, len(problems), manifestCount)
 	default:
-		logrus.Infof("\n%s %d manifest(s) successfully validated", result.SUCCESS, manifestCount)
+		log.Infof("\n%s %d manifest(s) successfully validated", result.SUCCESS, manifestCount)
 	}
 
 	return nil

@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 
 	extism "github.com/extism/go-sdk"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/dockerimage"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/docker"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
@@ -26,10 +26,10 @@ import (
 //	  "tagfilter": "^v[0-9]+\\.[0-9]+\\.[0-9]+$"
 //	}
 func generate_docker_source_spec(ctx context.Context, p *extism.CurrentPlugin, stack []uint64) {
-	logrus.Debugf("Calling generate_docker_source_spec wasm host function")
+	log.Debugf("Calling generate_docker_source_spec wasm host function")
 	input, err := p.ReadString(stack[0])
 	if err != nil {
-		logrus.Debugf("reading input string: %s", err)
+		log.Debugf("reading input string: %s", err)
 		stack[0] = 0
 		return
 	}
@@ -41,7 +41,7 @@ func generate_docker_source_spec(ctx context.Context, p *extism.CurrentPlugin, s
 
 	err = json.Unmarshal([]byte(input), &inputData)
 	if err != nil {
-		logrus.Debugf("unmarshalling input string: %s", err)
+		log.Debugf("unmarshalling input string: %s", err)
 		stack[0] = 0
 		return
 	}
@@ -50,21 +50,21 @@ func generate_docker_source_spec(ctx context.Context, p *extism.CurrentPlugin, s
 	sourceSpec := dockerimage.NewDockerImageSpecFromImage(inputData.Image, inputData.Tag, auths)
 
 	if sourceSpec == nil {
-		logrus.Debugf("no source spec generated for image %q and tag %q", inputData.Image, inputData.Tag)
+		log.Debugf("no source spec generated for image %q and tag %q", inputData.Image, inputData.Tag)
 		stack[0] = 0
 		return
 	}
 
 	outputBytes, err := json.Marshal(sourceSpec)
 	if err != nil {
-		logrus.Debugf("marshaling output string: %s", err)
+		log.Debugf("marshaling output string: %s", err)
 		stack[0], stack[1] = 0, 0
 		return
 	}
 
 	output, err := p.WriteString(string(outputBytes))
 	if err != nil {
-		logrus.Debugf("writing output string: %s", err)
+		log.Debugf("writing output string: %s", err)
 		stack[0] = 0
 		return
 	}
@@ -79,10 +79,10 @@ func generate_docker_source_spec(ctx context.Context, p *extism.CurrentPlugin, s
 // The input is expected to be a JSON string containing "versionfilter" and "pattern" fields.
 // The output is a JSON string containing the modified "pattern".
 func versionfilter_greater_than_pattern(ctx context.Context, p *extism.CurrentPlugin, stack []uint64) {
-	logrus.Debugf("Calling versionfilter_greater_than_pattern wasm host function")
+	log.Debugf("Calling versionfilter_greater_than_pattern wasm host function")
 	input, err := p.ReadString(stack[0])
 	if err != nil {
-		logrus.Debugf("reading input string: %s", err)
+		log.Debugf("reading input string: %s", err)
 		stack[0] = 0
 		return
 	}
@@ -94,7 +94,7 @@ func versionfilter_greater_than_pattern(ctx context.Context, p *extism.CurrentPl
 
 	err = json.Unmarshal([]byte(input), &inputData)
 	if err != nil {
-		logrus.Debugf("unmarshalling input string: %s", err)
+		log.Debugf("unmarshalling input string: %s", err)
 		stack[0] = 0
 		return
 	}
@@ -103,7 +103,7 @@ func versionfilter_greater_than_pattern(ctx context.Context, p *extism.CurrentPl
 		inputData.Pattern,
 	)
 	if err != nil {
-		logrus.Debugf("generating greater than pattern: %s", err)
+		log.Debugf("generating greater than pattern: %s", err)
 		stack[0] = 0
 		return
 	}
@@ -116,14 +116,14 @@ func versionfilter_greater_than_pattern(ctx context.Context, p *extism.CurrentPl
 
 	outputBytes, err := json.Marshal(outputData)
 	if err != nil {
-		logrus.Debugf("marshaling output string: %s", err)
+		log.Debugf("marshaling output string: %s", err)
 		stack[0] = 0
 		return
 	}
 
 	output, err := p.WriteString(string(outputBytes))
 	if err != nil {
-		logrus.Debugf("writing output string: %s", err)
+		log.Debugf("writing output string: %s", err)
 		stack[0] = 0
 		return
 	}

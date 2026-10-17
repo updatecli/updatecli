@@ -6,7 +6,7 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
@@ -31,7 +31,7 @@ func (h *Http) Source(_ context.Context, pathResolver pathresolver.Resolver, res
 
 	if h.spec.ReturnResponseHeader != "" {
 		resultSource.Information = httpRes.Header.Get(h.spec.ReturnResponseHeader)
-		logrus.Debugf("[http] source: header %q found with %d characters", h.spec.ReturnResponseHeader, len(resultSource.Information))
+		log.Debugf("[http] source: header %q found with %d characters", h.spec.ReturnResponseHeader, len(resultSource.Information))
 	} else {
 		b, err := io.ReadAll(httpRes.Body)
 		if err != nil {
@@ -39,7 +39,7 @@ func (h *Http) Source(_ context.Context, pathResolver pathresolver.Resolver, res
 		}
 		bodyContent := string(b)
 
-		logrus.Debugf("[http] source: response body received (with %d characters)", len(bodyContent))
+		log.Debugf("[http] source: response body received (with %d characters)", len(bodyContent))
 
 		resultSource.Information = bodyContent
 	}

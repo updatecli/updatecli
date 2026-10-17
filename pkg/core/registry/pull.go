@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	spec "github.com/opencontainers/image-spec/specs-go/v1"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 
 	oras "oras.land/oras-go/v2"
 	"oras.land/oras-go/v2/content"
@@ -55,7 +55,7 @@ func Pull(ociName string, disableTLS bool) (result PullResult, err error) {
 	ctx = auth.AppendRepositoryScope(ctx, repo.Reference, auth.ActionPull)
 
 	if disableTLS {
-		logrus.Debugln("TLS connection is disabled")
+		log.Debugln("TLS connection is disabled")
 		repo.PlainHTTP = true
 	}
 
@@ -94,9 +94,9 @@ func Pull(ociName string, disableTLS bool) (result PullResult, err error) {
 	}
 
 	if isPolicyFilesExistLocally(policyRootDir, result) {
-		logrus.Debugf("Policy %q already available in:\n\t* %s\n", ociName, policyRootDir)
+		log.Debugf("Policy %q already available in:\n\t* %s\n", ociName, policyRootDir)
 	} else {
-		logrus.Infof("Pulling Updatecli policy %q\n", ociName)
+		log.Infof("Pulling Updatecli policy %q\n", ociName)
 
 		manifestDescriptor, err := oras.Copy(ctx, repo, ref.Reference, fs, ref.Reference, oras.DefaultCopyOptions)
 		if err != nil {
@@ -114,33 +114,33 @@ func Pull(ociName string, disableTLS bool) (result PullResult, err error) {
 		}
 	}
 
-	logrus.Debugf("Manifests:\n")
+	log.Debugf("Manifests:\n")
 	for _, manifest := range result.Manifests {
-		logrus.Debugf("\t*%q\n", manifest)
+		log.Debugf("\t*%q\n", manifest)
 	}
 
 	if len(result.Values) > 0 {
-		logrus.Debugf("Values:\n")
+		log.Debugf("Values:\n")
 		for _, value := range result.Values {
-			logrus.Debugf("\t*%q\n", value)
+			log.Debugf("\t*%q\n", value)
 		}
 	}
 
 	if len(result.Secrets) > 0 {
-		logrus.Debugf("Secrets:\n")
+		log.Debugf("Secrets:\n")
 		for _, secret := range result.Secrets {
-			logrus.Debugf("\t*%q\n", secret)
+			log.Debugf("\t*%q\n", secret)
 		}
 	}
 
 	if len(result.Assets) > 0 {
-		logrus.Debugf("Assets:\n")
+		log.Debugf("Assets:\n")
 		for _, asset := range result.Assets {
-			logrus.Debugf("\t*%q\n", asset)
+			log.Debugf("\t*%q\n", asset)
 		}
 	}
 
-	logrus.Debugf("policy successfully pulled in %s", policyRootDir)
+	log.Debugf("policy successfully pulled in %s", policyRootDir)
 
 	return result, nil
 }
@@ -178,7 +178,7 @@ func getUpdatecliFilesFromManifestLayers(manifestData []byte, policyRootDir stri
 		case updatecliAssetMediaType:
 			files = &result.Assets
 		default:
-			logrus.Warningf("unknown media type: %q\n", layer.MediaType)
+			log.Warningf("unknown media type: %q\n", layer.MediaType)
 			continue
 		}
 
@@ -231,7 +231,7 @@ func isPolicyFilesExistLocally(policyRootDir string, files PullResult) bool {
 
 	if len(errs) > 0 {
 		for i := range errs {
-			logrus.Debugln(errs[i])
+			log.Debugln(errs[i])
 		}
 		return false
 	}

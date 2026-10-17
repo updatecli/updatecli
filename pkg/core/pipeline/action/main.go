@@ -8,8 +8,8 @@ import (
 
 	"github.com/go-viper/mapstructure/v2"
 	jschema "github.com/invopop/jsonschema"
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/jsonschema"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/reports"
 	azuredevops "github.com/updatecli/updatecli/pkg/plugins/resources/azuredevops/pullrequest"
@@ -109,27 +109,27 @@ func (c *Config) Validate() (err error) {
 
 	// Ensure kind is lowercase
 	if c.Kind != strings.ToLower(c.Kind) {
-		logrus.Warningf("kind value %q must be lowercase", c.Kind)
+		log.Warningf("kind value %q must be lowercase", c.Kind)
 		c.Kind = strings.ToLower(c.Kind)
 	}
 
 	/** Deprecated items **/
 	if c.Kind == githubIdentifier {
-		logrus.Warnf("The kind %q for actions is deprecated in favor of '%s/pullrequest'", githubIdentifier, githubIdentifier)
+		log.Warnf("The kind %q for actions is deprecated in favor of '%s/pullrequest'", githubIdentifier, githubIdentifier)
 		c.Kind = githubPullRequestIdentifier
 	}
 	if c.Kind == giteaIdentifier {
-		logrus.Warnf("The kind %q for actions is deprecated in favor of '%s/pullrequest'", giteaIdentifier, giteaIdentifier)
+		log.Warnf("The kind %q for actions is deprecated in favor of '%s/pullrequest'", giteaIdentifier, giteaIdentifier)
 		c.Kind = giteaPullRequestIdentifier
 	}
 	if c.DeprecatedScmID != "" {
 		if c.ScmID == "" {
-			logrus.Warningf("%q is deprecated in favor of %q.", "scmID", "scmid")
+			log.Warningf("%q is deprecated in favor of %q.", "scmID", "scmid")
 			c.ScmID = c.DeprecatedScmID
 		} else {
-			logrus.Warningf("deprecatedscmID: %q", c.DeprecatedScmID)
-			logrus.Warningf("scmid: %q", c.ScmID)
-			logrus.Warningf("%q and %q are mutually exclusive, ignoring %q",
+			log.Warningf("deprecatedscmID: %q", c.DeprecatedScmID)
+			log.Warningf("scmid: %q", c.ScmID)
+			log.Warningf("%q and %q are mutually exclusive, ignoring %q",
 				"scmid", "deprecatedscmID", "deprecatedscmID")
 		}
 		c.DeprecatedScmID = ""
@@ -303,7 +303,7 @@ func (a *Action) generateActionHandler() error {
 		a.Handler = &g
 
 	default:
-		logrus.Errorf("action of kind %q is not supported", a.Config.Kind)
+		log.Errorf("action of kind %q is not supported", a.Config.Kind)
 	}
 
 	return nil

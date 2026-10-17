@@ -7,7 +7,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/jsonschema"
 	"github.com/updatecli/updatecli/pkg/core/result"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/shell/success/checksum"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/shell/success/console"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/shell/success/exitcode"
@@ -59,7 +59,7 @@ type Evaluator interface {
 func (s *Shell) InitChangedIf() error {
 
 	if s.spec.ChangedIf.Kind == "" {
-		logrus.Debugf("No shell success criteria defined, updatecli fallbacks to historical workflow")
+		log.Debugf("No shell success criteria defined, updatecli fallbacks to historical workflow")
 		s.spec.ChangedIf.Kind = consoleOutputIdentifier
 	}
 

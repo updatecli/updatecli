@@ -9,7 +9,7 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 // ErrNoCommitFound is returned when the history of a branch ends without any
@@ -122,7 +122,7 @@ func (g GoGit) SearchCommit(workingDir, branch string, match func(when time.Time
 			}, nil
 		}
 
-		logrus.Debugf("ignoring commit %q, dated %s, as rejected by the commit filter",
+		log.Debugf("ignoring commit %q, dated %s, as rejected by the commit filter",
 			commit.Hash.String(), commit.Committer.When)
 
 		for _, parentHash := range commit.ParentHashes {
@@ -138,7 +138,7 @@ func (g GoGit) SearchCommit(workingDir, branch string, match func(when time.Time
 					failing the whole lookup.
 				*/
 				if errors.Is(err, plumbing.ErrObjectNotFound) {
-					logrus.Debugf("history of %q in %q is truncated at commit %q",
+					log.Debugf("history of %q in %q is truncated at commit %q",
 						branch, workingDir, commit.Hash.String())
 					truncated = true
 					continue

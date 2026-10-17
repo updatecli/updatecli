@@ -10,7 +10,7 @@ import (
 	"text/template"
 
 	"github.com/Masterminds/semver/v3"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/vulnerability"
 )
@@ -36,7 +36,7 @@ func detectLockFileSupport(dir string) (lockFileSupport, bool) {
 		case true:
 			support.yarn = true
 		case false:
-			logrus.Warning("skipping, Yarn lock file detected but Updatecli couldn't detect the yarn command to update it in case of a package.json update")
+			log.Warning("skipping, Yarn lock file detected but Updatecli couldn't detect the yarn command to update it in case of a package.json update")
 			return support, true
 		}
 	}
@@ -47,7 +47,7 @@ func detectLockFileSupport(dir string) (lockFileSupport, bool) {
 		case true:
 			support.pnpm = true
 		case false:
-			logrus.Warning("skipping, Pnpm lock file detected but Updatecli couldn't detect the pnpm command to update it in case of a package.json update")
+			log.Warning("skipping, Pnpm lock file detected but Updatecli couldn't detect the pnpm command to update it in case of a package.json update")
 			return support, true
 		}
 	}
@@ -58,7 +58,7 @@ func detectLockFileSupport(dir string) (lockFileSupport, bool) {
 		case true:
 			support.npm = true
 		case false:
-			logrus.Warning("skipping, NPM lock file detected but Updatecli couldn't detect the npm command to update it in case of a package.json update")
+			log.Warning("skipping, NPM lock file detected but Updatecli couldn't detect the npm command to update it in case of a package.json update")
 			return support, true
 		}
 	}
@@ -76,7 +76,7 @@ func (n Npm) reportUnresolvedDependencies(dependencies []string, packageJson str
 	skipped := strings.Join(dependencies, ", ")
 
 	if locked.lockFile == "" {
-		logrus.Warningf("no lock file found for %q, skipping its dependencies using a version constraint: %s", packageJson, skipped)
+		log.Warningf("no lock file found for %q, skipping its dependencies using a version constraint: %s", packageJson, skipped)
 		return
 	}
 
@@ -85,7 +85,7 @@ func (n Npm) reportUnresolvedDependencies(dependencies []string, packageJson str
 		lockFile = locked.lockFile
 	}
 
-	logrus.Warningf("no version resolved in %q for some dependencies of %q, skipping: %s", lockFile, packageJson, skipped)
+	log.Warningf("no version resolved in %q for some dependencies of %q, skipping: %s", lockFile, packageJson, skipped)
 }
 
 // lockFileLocation returns the directory of the lock file of a project, and the path to it from the project directory
@@ -125,19 +125,19 @@ func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 
 	for _, foundFile := range foundFiles {
 
-		logrus.Debugf("parsing file %q", foundFile)
+		log.Debugf("parsing file %q", foundFile)
 
 		relativeFoundFile, err := filepath.Rel(n.rootDir, foundFile)
 		if err != nil {
 			// Let's try the next pom.xml if one fail
-			logrus.Debugln(err)
+			log.Debugln(err)
 			continue
 		}
 
 		locked, lockErr := loadLockedVersions(filepath.Dir(foundFile), searchFromDir)
 		if lockErr != nil && n.spec.Vulnerability != nil {
 			// Without the lock file, no dependency using a version constraint can be scanned
-			logrus.Warningf("%s: skipping the dependencies of %q using a version constraint", lockErr, relativeFoundFile)
+			log.Warningf("%s: skipping the dependencies of %q using a version constraint", lockErr, relativeFoundFile)
 		}
 
 		lockDir, lockFilePrefix := lockFileLocation(filepath.Dir(foundFile), locked)
@@ -150,7 +150,7 @@ func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 		data, err := loadPackageJsonData(foundFile)
 
 		if err != nil {
-			logrus.Debugln(err)
+			log.Debugln(err)
 			continue
 		}
 
@@ -160,7 +160,7 @@ func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 
 		getManifest := func(dependencies map[string]string, dependencyType string) {
 			if len(dependencies) == 0 {
-				logrus.Debugf("no NPM %s found in %q\n", dependencyType, foundFile)
+				log.Debugf("no NPM %s found in %q\n", dependencyType, foundFile)
 				return
 			}
 			for dependencyName, dependencyVersion := range dependencies {
@@ -170,14 +170,14 @@ func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 
 				if len(n.spec.Ignore) > 0 {
 					if n.spec.Ignore.isMatchingRules(n.rootDir, relativeFoundFile, dependencyName, dependencyVersion) {
-						logrus.Debugf("Ignoring NPM package %q from %q, as matching ignore rule(s)\n", dependencyName, relativeFoundFile)
+						log.Debugf("Ignoring NPM package %q from %q, as matching ignore rule(s)\n", dependencyName, relativeFoundFile)
 						continue
 					}
 				}
 
 				if len(n.spec.Only) > 0 {
 					if !n.spec.Only.isMatchingRules(n.rootDir, relativeFoundFile, dependencyName, dependencyVersion) {
-						logrus.Debugf("Ignoring NPM package %q from %q, as not matching only rule(s)\n", dependencyName, relativeFoundFile)
+						log.Debugf("Ignoring NPM package %q from %q, as not matching only rule(s)\n", dependencyName, relativeFoundFile)
 						continue
 					}
 				}
@@ -218,7 +218,7 @@ func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 					}
 
 					if _, err := semver.StrictNewVersion(currentVersion); err != nil {
-						logrus.Debugf("Ignoring NPM package %q from %q, as no installed version could be identified for %q\n", dependencyName, relativeFoundFile, dependencyVersion)
+						log.Debugf("Ignoring NPM package %q from %q, as no installed version could be identified for %q\n", dependencyName, relativeFoundFile, dependencyVersion)
 						unresolvedDependencies = append(unresolvedDependencies, dependencyName)
 						continue
 					}
@@ -240,14 +240,14 @@ func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 						if !n.spec.VersionFilter.IsZero() && dependencyVersion != "latest" {
 							guessedVersion, err := convertSemverVersionConstraintToVersion(dependencyVersion)
 							if err != nil {
-								logrus.Debugf("converting version constraint to version: %s", err)
+								log.Debugf("converting version constraint to version: %s", err)
 								guessedVersion = ""
 							}
 							sourceVersionFilterKind = n.versionFilter.Kind
 							sourceVersionFilterPattern, err = n.versionFilter.GreaterThanPattern(guessedVersion)
 							sourceVersionFilterRegex = n.versionFilter.Regex
 							if err != nil {
-								logrus.Debugf("building version filter pattern: %s", err)
+								log.Debugf("building version filter pattern: %s", err)
 								sourceVersionFilterPattern = "*"
 							}
 						}
@@ -257,8 +257,8 @@ func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 						// User want to respect the version constraint defined in package.json
 						// but also want to apply a version filter on top of it.
 						// This is not supported at this time as we don't have a clear use case.
-						logrus.Warningf("NPM package %q from %q: Ignoring version filter as version constraint %q is defined and ignoreVersionConstraints is set to false", dependencyName, relativeFoundFile, dependencyVersion)
-						logrus.Warningf("NPM package %q from %q: If you want to apply a version filter, please set ignoreVersionConstraints to true", dependencyName, relativeFoundFile)
+						log.Warningf("NPM package %q from %q: Ignoring version filter as version constraint %q is defined and ignoreVersionConstraints is set to false", dependencyName, relativeFoundFile, dependencyVersion)
+						log.Warningf("NPM package %q from %q: If you want to apply a version filter, please set ignoreVersionConstraints to true", dependencyName, relativeFoundFile)
 					}
 
 					/*
@@ -277,7 +277,7 @@ func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 							sourceVersionFilterPattern, err = n.versionFilter.GreaterThanPattern(dependencyVersion)
 							sourceVersionFilterRegex = n.versionFilter.Regex
 							if err != nil {
-								logrus.Debugf("building version filter pattern: %s", err)
+								log.Debugf("building version filter pattern: %s", err)
 								sourceVersionFilterPattern = "*"
 							}
 						}
@@ -293,13 +293,13 @@ func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 
 				tmpl, err := template.New("manifest").Parse(age.ManifestTemplate + vulnerability.ManifestTemplate + manifestTemplate)
 				if err != nil {
-					logrus.Debugln(err)
+					log.Debugln(err)
 					continue
 				}
 
 				manifest := bytes.Buffer{}
 				if err := tmpl.Execute(&manifest, params); err != nil {
-					logrus.Debugln(err)
+					log.Debugln(err)
 					continue
 				}
 
@@ -316,7 +316,7 @@ func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 		}
 	}
 
-	logrus.Printf("%v manifests identified", len(manifests))
+	log.Printf("%v manifests identified", len(manifests))
 
 	return manifests, nil
 }

@@ -9,7 +9,7 @@ import (
 	"text/template"
 
 	"github.com/BurntSushi/toml"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
@@ -47,7 +47,7 @@ func (p Pyproject) discoverDependencyManifests() ([][]byte, error) {
 	}
 
 	for _, foundFile := range foundFiles {
-		logrus.Debugf("parsing file %q", foundFile)
+		log.Debugf("parsing file %q", foundFile)
 
 		dir := filepath.Dir(foundFile)
 
@@ -58,19 +58,19 @@ func (p Pyproject) discoverDependencyManifests() ([][]byte, error) {
 
 		data, err := loadPyprojectData(foundFile)
 		if err != nil {
-			logrus.Debugln(err)
+			log.Debugln(err)
 			continue
 		}
 
 		relativeFile, err := filepath.Rel(p.rootDir, foundFile)
 		if err != nil {
-			logrus.Debugln(err)
+			log.Debugln(err)
 			continue
 		}
 
 		workdir, err := filepath.Rel(p.rootDir, dir)
 		if err != nil {
-			logrus.Debugln(err)
+			log.Debugln(err)
 			continue
 		}
 
@@ -99,7 +99,7 @@ func (p Pyproject) discoverDependencyManifests() ([][]byte, error) {
 		}
 	}
 
-	logrus.Printf("%v manifests identified", len(manifests))
+	log.Printf("%v manifests identified", len(manifests))
 
 	return manifests, nil
 }
@@ -118,24 +118,24 @@ func (p Pyproject) processDependencies(
 
 	tmpl, err := template.New("manifest").Parse(manifestTemplate)
 	if err != nil {
-		logrus.Errorln(err)
+		log.Errorln(err)
 		return manifests
 	}
 
 	for _, depStr := range deps {
 		dep, err := parsePEP508(depStr)
 		if err != nil {
-			logrus.Warningf("skipping dependency %q from %q: %s", depStr, relativeFile, err)
+			log.Warningf("skipping dependency %q from %q: %s", depStr, relativeFile, err)
 			continue
 		}
 
 		if len(p.spec.Ignore) > 0 && p.spec.Ignore.isMatchingRules(p.rootDir, relativeFile, dep.Name, dep.Version) {
-			logrus.Debugf("ignoring %q from %q as matching ignore rule(s)", dep.Name, relativeFile)
+			log.Debugf("ignoring %q from %q as matching ignore rule(s)", dep.Name, relativeFile)
 			continue
 		}
 
 		if len(p.spec.Only) > 0 && !p.spec.Only.isMatchingRules(p.rootDir, relativeFile, dep.Name, dep.Version) {
-			logrus.Debugf("ignoring %q from %q as not matching only rule(s)", dep.Name, relativeFile)
+			log.Debugf("ignoring %q from %q as not matching only rule(s)", dep.Name, relativeFile)
 			continue
 		}
 
@@ -143,7 +143,7 @@ func (p Pyproject) processDependencies(
 
 		var buf bytes.Buffer
 		if err := tmpl.Execute(&buf, params); err != nil {
-			logrus.Debugln(err)
+			log.Debugln(err)
 			continue
 		}
 
@@ -183,7 +183,7 @@ func (p Pyproject) buildTemplateParams(
 		var err error
 		sourceVersionFilterPattern, err = p.versionFilter.GreaterThanPattern(dep.Version)
 		if err != nil {
-			logrus.Debugf("building version filter pattern for %q: %s", dep.Name, err)
+			log.Debugf("building version filter pattern for %q: %s", dep.Name, err)
 			sourceVersionFilterPattern = p.versionFilter.Pattern
 		}
 	}

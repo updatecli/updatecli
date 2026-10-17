@@ -10,7 +10,7 @@ import (
 	"regexp"
 
 	"github.com/beevik/etree"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 // discoverDependencyManifests discovers manifests for Maven dependencies
@@ -38,15 +38,15 @@ func (m Maven) discoverDependencyManifests(kind string) ([][]byte, error) {
 		relativePomFile, err := filepath.Rel(m.rootDir, pomFile)
 		if err != nil {
 			// Let's try the next pom.xml if one fail
-			logrus.Debugln(err)
+			log.Debugln(err)
 			continue
 		}
 
-		logrus.Debugf("parsing file %q", relativePomFile)
+		log.Debugf("parsing file %q", relativePomFile)
 
 		doc := etree.NewDocument()
 		if err := doc.ReadFromFile(pomFile); err != nil {
-			logrus.Debugln(err)
+			log.Debugln(err)
 			continue
 		}
 
@@ -69,14 +69,14 @@ func (m Maven) discoverDependencyManifests(kind string) ([][]byte, error) {
 		}
 
 		if len(dependencies) == 0 {
-			logrus.Debugf("no maven %s found in %q\n", dependencyKind, relativePomFile)
+			log.Debugf("no maven %s found in %q\n", dependencyKind, relativePomFile)
 			continue
 		}
 
 		containsVariableRegex, err := regexp.Compile(`.*\$\{.*\}.*`)
 
 		if err != nil {
-			logrus.Errorln(err)
+			log.Errorln(err)
 			continue
 		}
 
@@ -86,12 +86,12 @@ func (m Maven) discoverDependencyManifests(kind string) ([][]byte, error) {
 			isContainVariable := containsVariableRegex.Match([]byte(dependency.Version))
 
 			if err != nil {
-				logrus.Debugln(err)
+				log.Debugln(err)
 				continue
 			}
 
 			if isContainVariable {
-				logrus.Printf("Skipping dependency %q in %q as it relies on property %q", dependency.ArtifactID, relativePomFile, dependency.Version)
+				log.Printf("Skipping dependency %q in %q as it relies on property %q", dependency.ArtifactID, relativePomFile, dependency.Version)
 				continue
 			}
 
@@ -110,28 +110,28 @@ func (m Maven) discoverDependencyManifests(kind string) ([][]byte, error) {
 				sourceVersionFilterPattern, err = m.versionFilter.GreaterThanPattern(dependency.Version)
 				sourceVersionFilterRegex = m.versionFilter.Regex
 				if err != nil {
-					logrus.Debugf("building version filter pattern: %s", err)
+					log.Debugf("building version filter pattern: %s", err)
 					sourceVersionFilterPattern = "*"
 				}
 			}
 
 			if len(m.spec.Ignore) > 0 {
 				if m.spec.Ignore.isMatchingRules(m.rootDir, relativePomFile, dependency.GroupID, dependency.ArtifactID, dependency.Version) {
-					logrus.Debugf("Ignoring %s.%s from %q, as matching ignore rule(s)\n", dependency.GroupID, dependency.ArtifactID, relativePomFile)
+					log.Debugf("Ignoring %s.%s from %q, as matching ignore rule(s)\n", dependency.GroupID, dependency.ArtifactID, relativePomFile)
 					continue
 				}
 			}
 
 			if len(m.spec.Only) > 0 {
 				if !m.spec.Only.isMatchingRules(m.rootDir, relativePomFile, dependency.GroupID, dependency.ArtifactID, dependency.Version) {
-					logrus.Debugf("Ignoring package %s.%s from %q, as not matching only rule(s)\n", dependency.GroupID, dependency.ArtifactID, relativePomFile)
+					log.Debugf("Ignoring package %s.%s from %q, as not matching only rule(s)\n", dependency.GroupID, dependency.ArtifactID, relativePomFile)
 					continue
 				}
 			}
 
 			tmpl, err := template.New("manifest").Parse(manifestTemplate)
 			if err != nil {
-				logrus.Debugln(err)
+				log.Debugln(err)
 				continue
 			}
 
@@ -191,7 +191,7 @@ func (m Maven) discoverDependencyManifests(kind string) ([][]byte, error) {
 
 			manifest := bytes.Buffer{}
 			if err := tmpl.Execute(&manifest, params); err != nil {
-				logrus.Debugln(err)
+				log.Debugln(err)
 				continue
 			}
 

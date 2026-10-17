@@ -14,8 +14,8 @@ import (
 	"strings"
 
 	"github.com/Masterminds/semver/v3"
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/yaml"
@@ -138,8 +138,8 @@ func (c *Chart) GetRepoIndexFromURL(ctx context.Context) (repo.IndexFile, error)
 	if res.StatusCode >= 400 {
 		body, err := httputil.DumpResponse(res, false)
 
-		logrus.Errorf("something went wrong while contacting %q\n", URL)
-		logrus.Debugf("\n%v\n", string(body))
+		log.Errorf("something went wrong while contacting %q\n", URL)
+		log.Debugf("\n%v\n", string(body))
 
 		return *repo.NewIndexFile(), err
 
@@ -292,7 +292,7 @@ forLoop:
 				computedVersion = v.IncMinor().String()
 			}
 		default:
-			logrus.Warningf("Wrong increment rule %q, ignoring", inc)
+			log.Warningf("Wrong increment rule %q, ignoring", inc)
 		}
 	}
 
@@ -325,7 +325,7 @@ forLoop:
 			resultTarget.Result = result.ATTENTION
 		}
 
-		logrus.Debugf("Updating chart version from %q to %q", currentChartMetadata.Version, computedVersion)
+		log.Debugf("Updating chart version from %q to %q", currentChartMetadata.Version, computedVersion)
 	}
 
 	if err := c.metadataYamlPathUpdate(ctx, "$.version", computedVersion, scm, pathResolver, dryRun, resultTarget); err != nil {

@@ -4,7 +4,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 // sanitizeGoModuleNameForProxy is used to lowercase any uppercase character with a ! prefix as explained on https://go.dev/ref/mod#goproxy-protocol
@@ -23,11 +23,11 @@ func sanitizeGoModuleNameForProxy(module string) string {
 
 func isSupportedGoProxy(proxy string) bool {
 	if proxy == "direct" || proxy == "off" {
-		logrus.Debugf("proxy %q has no meaning from an Updatecli stand point", proxy)
+		log.Debugf("proxy %q has no meaning from an Updatecli stand point", proxy)
 		return false
 	}
 	if strings.HasPrefix(proxy, "file://") {
-		logrus.Debugln("updatecli do not support proxy using file protocol at this time. Feel free to open a pullrequest")
+		log.Debugln("updatecli do not support proxy using file protocol at this time. Feel free to open a pullrequest")
 		return false
 	}
 

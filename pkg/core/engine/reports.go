@@ -3,7 +3,7 @@ package engine
 import (
 	"fmt"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 // showReports display the reports
@@ -20,27 +20,26 @@ func (e *Engine) showReports() error {
 
 	totalPipeline := totalSuccessPipeline + totalChangedAppliedPipeline + totalFailedPipeline + totalSkippedPipeline
 
-	logrus.Infof("Run Summary")
-	logrus.Infof("===========\n")
-	logrus.Infof("Pipeline(s) run:")
-	logrus.Infof("  * Changed:\t%d", totalChangedAppliedPipeline)
-	logrus.Infof("  * Failed:\t%d", totalFailedPipeline)
-	logrus.Infof("  * Skipped:\t%d", totalSkippedPipeline)
-	logrus.Infof("  * Succeeded:\t%d", totalSuccessPipeline)
-	logrus.Infof("  * Total:\t%d\n\n", totalPipeline)
+	log.Heading("Run Summary")
+	log.Infof("Pipeline(s) run:")
+	log.Infof("  * Changed:\t%d", totalChangedAppliedPipeline)
+	log.Infof("  * Failed:\t%d", totalFailedPipeline)
+	log.Infof("  * Skipped:\t%d", totalSkippedPipeline)
+	log.Infof("  * Succeeded:\t%d", totalSuccessPipeline)
+	log.Infof("  * Total:\t%d\n\n", totalPipeline)
 
 	switch len(actionLinks) {
 	case 0:
 		//
 	case 1:
-		logrus.Infof("One action to follow up:")
+		log.Infof("One action to follow up:")
 		for i := range actionLinks {
-			logrus.Infof("  * %s", actionLinks[i])
+			log.Infof("  * %s", actionLinks[i])
 		}
 	default:
-		logrus.Infof("%d action(s) to follow up:", len(actionLinks))
+		log.Infof("%d action(s) to follow up:", len(actionLinks))
 		for i := range actionLinks {
-			logrus.Infof("  * %s", actionLinks[i])
+			log.Infof("  * %s", actionLinks[i])
 		}
 	}
 

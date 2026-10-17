@@ -5,13 +5,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
-	"os"
 	"strings"
 
 	jschema "github.com/invopop/jsonschema"
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/jsonschema"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
@@ -102,16 +100,10 @@ func (t *Target) Check() (bool, error) {
 // Run applies a specific target configuration
 func (t *Target) Run(ctx context.Context, source string, o *Options) (err error) {
 	var consoleOutput bytes.Buffer
-	// By default logrus logs to stderr, so I guess we want to keep this behavior...
-	logrus.SetOutput(io.MultiWriter(os.Stdout, &consoleOutput))
-	/*
-		The last defer will be executed first,
-		so in this case we want to first save the console output
-		before setting back the logrus output to stdout.
-	*/
-	// By default logrus logs to stdout and we want to keep this behavior...
-	defer logrus.SetOutput(os.Stdout)
+	stopCapture := log.Capture(&consoleOutput)
+	// The last defer runs first: stop capturing before saving the console output
 	defer t.Result.SetConsoleOutput(&consoleOutput)
+	defer stopCapture()
 
 	failTargetRun := func() {
 		t.Result.Result = result.FAILURE
@@ -141,7 +133,7 @@ func (t *Target) Run(ctx context.Context, source string, o *Options) (err error)
 		}
 
 		// Could be improve to show attention description in yellow, success in green, failure in red
-		logrus.Infof("%s - %s", t.Result.Result, t.Result.Description)
+		log.Infof("%s - %s", t.Result.Result, t.Result.Description)
 
 		return nil
 	}
@@ -166,7 +158,7 @@ func (t *Target) Run(ctx context.Context, source string, o *Options) (err error)
 	}
 
 	// Could be improve to show attention description in yellow, success in green, failure in red
-	logrus.Infof("%s - %s", t.Result.Result, t.Result.Description)
+	log.Infof("%s - %s", t.Result.Result, t.Result.Description)
 
 	if !t.Result.Changed {
 		return nil
@@ -180,7 +172,7 @@ func (t *Target) Run(ctx context.Context, source string, o *Options) (err error)
 			}
 
 			if !upToDate {
-				logrus.Infof("No new pipeline run will be created as the pipeline is running in existing-only mode")
+				log.Infof("No new pipeline run will be created as the pipeline is running in existing-only mode")
 				t.Result.Result = result.SKIPPED
 				t.Result.Description = "pipeline is running in existing-only mode, skipping publish step"
 				return nil
@@ -271,29 +263,29 @@ func (c *Config) Validate() error {
 	if len(c.DeprecatedDependsOn) > 0 {
 		switch len(c.DependsOn) == 0 {
 		case true:
-			logrus.Warningln("\"depends_on\" is deprecated in favor of \"dependson\".")
+			log.Warningln("\"depends_on\" is deprecated in favor of \"dependson\".")
 			c.DependsOn = c.DeprecatedDependsOn
 			c.DeprecatedDependsOn = []string{}
 		case false:
-			logrus.Warningln("\"depends_on\" is ignored in favor of \"dependson\".")
+			log.Warningln("\"depends_on\" is ignored in favor of \"dependson\".")
 			c.DeprecatedDependsOn = []string{}
 		}
 	}
 
 	// Ensure kind is lowercase
 	if c.Kind != strings.ToLower(c.Kind) {
-		logrus.Warningf("kind value %q must be lowercase", c.Kind)
+		log.Warningf("kind value %q must be lowercase", c.Kind)
 		c.Kind = strings.ToLower(c.Kind)
 	}
 
 	if len(c.DeprecatedSCMID) > 0 {
 		switch len(c.SCMID) {
 		case 0:
-			logrus.Warningf("%q is deprecated in favor of %q.", "scmID", "scmid")
+			log.Warningf("%q is deprecated in favor of %q.", "scmID", "scmid")
 			c.SCMID = c.DeprecatedSCMID
 			c.DeprecatedSCMID = ""
 		default:
-			logrus.Warningf("%q and %q are mutually exclusive, ignoring %q",
+			log.Warningf("%q and %q are mutually exclusive, ignoring %q",
 				"scmID", "scmid", "scmID")
 		}
 	}
@@ -302,11 +294,11 @@ func (c *Config) Validate() error {
 	if len(c.DeprecatedSourceID) > 0 {
 		switch len(c.SourceID) {
 		case 0:
-			logrus.Warningf("%q is deprecated in favor of %q.", "sourceID", "sourceid")
+			log.Warningf("%q is deprecated in favor of %q.", "sourceID", "sourceid")
 			c.SourceID = c.DeprecatedSourceID
 			c.DeprecatedSourceID = ""
 		default:
-			logrus.Warningf("%q and %q are mutually exclusive, ignoring %q",
+			log.Warningf("%q and %q are mutually exclusive, ignoring %q",
 				"sourceID", "sourceid", "sourceID")
 		}
 	}
@@ -314,11 +306,11 @@ func (c *Config) Validate() error {
 	// Handle ConditionIDs deprecation
 	if len(c.DeprecatedConditionIDs) > 0 {
 		if len(c.DependsOn) > 0 {
-			logrus.Warningf("%q and %q are mutually exclusive, ignoring %q", "conditionids", "dependson", "conditionids")
+			log.Warningf("%q and %q are mutually exclusive, ignoring %q", "conditionids", "dependson", "conditionids")
 		} else {
-			logrus.Warningf("%q is deprecated in favor of %q", "conditionids", "dependson")
+			log.Warningf("%q is deprecated in favor of %q", "conditionids", "dependson")
 			for _, condition := range c.DeprecatedConditionIDs {
-				logrus.Warningf("%q is deprecated in favor of %q: %s", "conditionids", "dependson", condition)
+				log.Warningf("%q is deprecated in favor of %q: %s", "conditionids", "dependson", condition)
 				c.DependsOn = append(c.DependsOn, fmt.Sprintf("condition#%s", condition))
 			}
 			c.DeprecatedConditionIDs = []string{}
@@ -328,17 +320,17 @@ func (c *Config) Validate() error {
 
 	err := c.Transformers.Validate()
 	if err != nil {
-		logrus.Errorln(err)
+		log.Errorln(err)
 		gotError = true
 	}
 
 	if len(c.SourceID) > 0 && c.DisableSourceInput {
-		logrus.Errorln("disablesourceinput is incompatible with sourceid, ignoring the latter")
+		log.Errorln("disablesourceinput is incompatible with sourceid, ignoring the latter")
 		gotError = true
 	}
 
 	if len(missingParameters) > 0 {
-		logrus.Errorf("missing value for parameter(s) [%q]", strings.Join(missingParameters, ","))
+		log.Errorf("missing value for parameter(s) [%q]", strings.Join(missingParameters, ","))
 		gotError = true
 	}
 

@@ -8,7 +8,7 @@ import (
 
 	azdocore "github.com/microsoft/azure-devops-go-api/azuredevops/v7/core"
 	azdogit "github.com/microsoft/azure-devops-go-api/azuredevops/v7/git"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	azdoclient "github.com/updatecli/updatecli/pkg/plugins/resources/azuredevops/client"
 	azdoscm "github.com/updatecli/updatecli/pkg/plugins/scms/azuredevops"
 )
@@ -38,7 +38,7 @@ func (a *AzureDevOpsSearch) ScmsGenerator(ctx context.Context) ([]azdoscm.Spec, 
 		return nil, fmt.Errorf("failed to list Azure DevOps projects for organization %q: %w", a.spec.Organization, err)
 	}
 
-	logrus.Debugf("Found %d Azure DevOps projects in organization %q", len(projects), a.spec.Organization)
+	log.Debugf("Found %d Azure DevOps projects in organization %q", len(projects), a.spec.Organization)
 
 	for _, project := range projects {
 		projectName := stringValue(project.Name)
@@ -47,7 +47,7 @@ func (a *AzureDevOpsSearch) ScmsGenerator(ctx context.Context) ([]azdoscm.Spec, 
 		}
 
 		if !projectRegex.MatchString(projectName) {
-			logrus.Debugf("Skipping Azure DevOps project %q that does not match regex %q", projectName, a.projectPattern)
+			log.Debugf("Skipping Azure DevOps project %q that does not match regex %q", projectName, a.projectPattern)
 			continue
 		}
 
@@ -58,7 +58,7 @@ func (a *AzureDevOpsSearch) ScmsGenerator(ctx context.Context) ([]azdoscm.Spec, 
 			return nil, fmt.Errorf("failed to list Azure DevOps repositories for project %q: %w", projectName, err)
 		}
 
-		logrus.Debugf("Found %d Azure DevOps repositories in project %q", len(*repositories), projectName)
+		log.Debugf("Found %d Azure DevOps repositories in project %q", len(*repositories), projectName)
 
 		for _, repository := range *repositories {
 			if repository.IsDisabled != nil && *repository.IsDisabled {
@@ -67,21 +67,21 @@ func (a *AzureDevOpsSearch) ScmsGenerator(ctx context.Context) ([]azdoscm.Spec, 
 
 			repositoryName := stringValue(repository.Name)
 			if repositoryName == "" {
-				logrus.Warning("Skipping Azure DevOps repository with no name")
+				log.Warning("Skipping Azure DevOps repository with no name")
 				continue
 			}
 
 			if !repositoryRegex.MatchString(repositoryName) {
-				logrus.Debugf("Skipping Azure DevOps repository %q that does not match regex %q", repositoryName, a.repositoryPattern)
+				log.Debugf("Skipping Azure DevOps repository %q that does not match regex %q", repositoryName, a.repositoryPattern)
 				continue
 			}
 
 			if repository.Id == nil {
-				logrus.Warningf("Skipping Azure DevOps repository %q with no ID", repositoryName)
+				log.Warningf("Skipping Azure DevOps repository %q with no ID", repositoryName)
 				continue
 			}
 
-			logrus.Debugf("Processing Azure DevOps repository: %s/%s", projectName, repositoryName)
+			log.Debugf("Processing Azure DevOps repository: %s/%s", projectName, repositoryName)
 
 			branches, err := a.listBranches(ctx, projectName, repository.Id.String())
 			if err != nil {

@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/Masterminds/semver/v3"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	githubChangelog "github.com/updatecli/updatecli/pkg/plugins/changelog/github/v3"
 	"golang.org/x/text/cases"
@@ -54,13 +54,13 @@ func (c Chart) Changelog(from, to string) *result.Changelogs {
 	index, err := c.GetRepoIndexFromURL(context.TODO())
 
 	if err != nil {
-		logrus.Debugf("failed to get helm repository index: %s", err)
+		log.Debugf("failed to get helm repository index: %s", err)
 		return nil
 	}
 
 	e, err := index.Get(c.spec.Name, c.foundVersion.OriginalVersion)
 	if err != nil {
-		logrus.Debugf("failed to get helm chart information: %s", err)
+		log.Debugf("failed to get helm chart information: %s", err)
 		return nil
 	}
 
@@ -72,7 +72,7 @@ func (c Chart) Changelog(from, to string) *result.Changelogs {
 		return &changelogs
 	}
 
-	logrus.Debugf("no changelog found in %s annotation for versions between %s and %s", artifactHubChangesAnnotation, from, to)
+	log.Debugf("no changelog found in %s annotation for versions between %s and %s", artifactHubChangesAnnotation, from, to)
 
 	changelogs = c.getChangelogsFromGithubReleases(index, from, to)
 	if len(changelogs) > 0 {
@@ -102,7 +102,7 @@ func (c Chart) Changelog(from, to string) *result.Changelogs {
 		Sources:     e.Sources})
 
 	if err != nil {
-		logrus.Debugf("failed to render helm chart information: %s", err)
+		log.Debugf("failed to render helm chart information: %s", err)
 		return nil
 	}
 
@@ -120,13 +120,13 @@ func (c Chart) getChangelogsFromGithubReleases(index repo.IndexFile, from string
 
 	chartVersion, err := index.Get(c.spec.Name, from)
 	if err != nil {
-		logrus.Debugf("failed to get helm chart information: %s", err)
+		log.Debugf("failed to get helm chart information: %s", err)
 		return nil
 	}
 
 	linksAnnotation, ok := chartVersion.Annotations[artifactHubLinksAnnotation]
 	if !ok {
-		logrus.Debugf("no %s annotation found in %s", artifactHubLinksAnnotation, from)
+		log.Debugf("no %s annotation found in %s", artifactHubLinksAnnotation, from)
 		return nil
 	}
 	type link struct {
@@ -136,7 +136,7 @@ func (c Chart) getChangelogsFromGithubReleases(index repo.IndexFile, from string
 	var links []link
 	err = yaml.Unmarshal([]byte(linksAnnotation), &links)
 	if err != nil {
-		logrus.Debugf("failed to unmarshal %s annotation: %s", artifactHubLinksAnnotation, err)
+		log.Debugf("failed to unmarshal %s annotation: %s", artifactHubLinksAnnotation, err)
 		return nil
 	}
 
@@ -144,14 +144,14 @@ func (c Chart) getChangelogsFromGithubReleases(index repo.IndexFile, from string
 		return l.Name == "Chart Source"
 	})
 	if linkIndex == -1 {
-		logrus.Debugf("no chart source link found in %s annotation", artifactHubLinksAnnotation)
+		log.Debugf("no chart source link found in %s annotation", artifactHubLinksAnnotation)
 		return nil
 	}
 
 	chartSourceLink := links[linkIndex].URL
-	logrus.Debugf("chart source link: %s", chartSourceLink)
+	log.Debugf("chart source link: %s", chartSourceLink)
 	if !strings.HasPrefix(chartSourceLink, "https://github.com/") {
-		logrus.Debugf("chart source link is not a github link: %s", chartSourceLink)
+		log.Debugf("chart source link is not a github link: %s", chartSourceLink)
 		return nil
 	}
 
@@ -162,7 +162,7 @@ func (c Chart) getChangelogsFromGithubReleases(index repo.IndexFile, from string
 func (c Chart) getChangelogFromGitHub(chartSourceLink, from, to string) result.Changelogs {
 	parsedRepo := strings.Split(strings.TrimPrefix(chartSourceLink, "https://github.com/"), "/")
 	if len(parsedRepo) < 2 {
-		logrus.Debugf("invalid chart source link: %s", chartSourceLink)
+		log.Debugf("invalid chart source link: %s", chartSourceLink)
 		return nil
 	}
 
@@ -175,7 +175,7 @@ func (c Chart) getChangelogFromGitHub(chartSourceLink, from, to string) result.C
 	toLongVersion := c.getLongVersion(to)
 	releases, err := changelog.Search(fromLongVersion, toLongVersion)
 	if err != nil {
-		logrus.Debugf("failed to search github releases: %s", err)
+		log.Debugf("failed to search github releases: %s", err)
 	}
 
 	// exclude fromVersion from releases and exclude releases of other charts
@@ -249,7 +249,7 @@ func parseChangeAnnotation(changesAnnotation string) string {
 		var simpleList []string
 		err = yaml.Unmarshal(yamlData, &simpleList)
 		if err != nil {
-			logrus.Debugf("failed to unmarshal %s annotation: %s", artifactHubChangesAnnotation, err)
+			log.Debugf("failed to unmarshal %s annotation: %s", artifactHubChangesAnnotation, err)
 			return changesAnnotation
 		}
 		return renderSimpleList(simpleList)

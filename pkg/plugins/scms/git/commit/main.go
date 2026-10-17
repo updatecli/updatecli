@@ -6,7 +6,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 const (
@@ -103,7 +103,7 @@ func (c *Commit) Generate(raw string) (string, error) {
 	err := c.Validate()
 
 	if err != nil {
-		logrus.Errorln(err.Error())
+		log.Errorln(err.Error())
 		return "", err
 	}
 
@@ -112,7 +112,7 @@ func (c *Commit) Generate(raw string) (string, error) {
 	commit, err := c.ParseMessage(raw)
 
 	if err != nil {
-		logrus.Errorln(err.Error())
+		log.Errorln(err.Error())
 		return "", err
 	}
 
@@ -197,7 +197,7 @@ func (c *Commit) Validate() error {
 
 	// Warn if deprecated Title field is used
 	if len(c.DeprecatedTitle) > 0 {
-		logrus.Warningf("commitMessage.title is deprecated and will be ignored. The commit title is now always generated from the target name or description.")
+		log.Warningf("commitMessage.title is deprecated and will be ignored. The commit title is now always generated from the target name or description.")
 		c.DeprecatedTitle = ""
 	}
 

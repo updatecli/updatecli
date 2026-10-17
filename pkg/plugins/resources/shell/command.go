@@ -6,7 +6,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 type command struct {
@@ -31,7 +31,7 @@ type nativeCommandExecutor struct{}
 func (nce *nativeCommandExecutor) ExecuteCommand(inputCmd command) (commandResult, error) {
 	var stdout, stderr bytes.Buffer
 
-	logrus.Debugf("\tcommand: %s\n", inputCmd.Cmd)
+	log.Debugf("\tcommand: %s\n", inputCmd.Cmd)
 
 	cmdFields := strings.Fields(inputCmd.Cmd)
 	command := exec.Command(cmdFields[0], cmdFields[1:]...) //nolint: gosec
@@ -44,9 +44,9 @@ func (nce *nativeCommandExecutor) ExecuteCommand(inputCmd command) (commandResul
 	err := command.Run()
 
 	// Display environment variables in debug mode
-	logrus.Debugf("Environment variables\n")
+	log.Debugf("Environment variables\n")
 	for _, env := range command.Env {
-		logrus.Debugf("\t* %s\n", env)
+		log.Debugf("\t* %s\n", env)
 	}
 
 	// Remove line returns from stdout

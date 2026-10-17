@@ -11,7 +11,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/protocol/packp/capability"
 	"github.com/go-git/go-git/v5/plumbing/transport"
 	"github.com/go-viper/mapstructure/v2"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/tmp"
 	azdoclient "github.com/updatecli/updatecli/pkg/plugins/resources/azuredevops/client"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/azuredevops/credential"
@@ -199,7 +199,7 @@ func New(spec interface{}, pipelineID string) (*AzureDevOps, error) {
 		clientSpec.Username = s.Username
 
 		if usernameFromEnv != "" {
-			logrus.Debugf("using Azure DevOps username from environment variable %s", credential.ENVIRONMENT_AZURE_DEVOPS_USERNAME)
+			log.Debugf("using Azure DevOps username from environment variable %s", credential.ENVIRONMENT_AZURE_DEVOPS_USERNAME)
 			clientSpec.Username = usernameFromEnv
 		}
 	}
@@ -207,7 +207,7 @@ func New(spec interface{}, pipelineID string) (*AzureDevOps, error) {
 	if clientSpec.Token == "" {
 		clientSpec.Token = s.Token
 		if tokenFromEnv != "" {
-			logrus.Debugf("using Azure DevOps token from environment variable %s", credential.ENVIRONMENT_AZURE_DEVOPS_TOKEN)
+			log.Debugf("using Azure DevOps token from environment variable %s", credential.ENVIRONMENT_AZURE_DEVOPS_TOKEN)
 			clientSpec.Token = tokenFromEnv
 		}
 	}
@@ -229,7 +229,7 @@ func New(spec interface{}, pipelineID string) (*AzureDevOps, error) {
 	}
 
 	if s.Branch == "" {
-		logrus.Warningf("no git branch specified, fallback to %q", "main")
+		log.Warningf("no git branch specified, fallback to %q", "main")
 		s.Branch = "main"
 	}
 
@@ -266,7 +266,7 @@ Some target plugin, like the shell one, run "git commit -A" to catch all changes
 If you know what you are doing, please set the force option to true in your configuration file to ignore this error message.
 `, s.Branch)
 
-		logrus.Errorln(errorMsg)
+		log.Errorln(errorMsg)
 		return nil, errors.New("unclear configuration, better safe than sorry")
 	}
 
@@ -371,7 +371,7 @@ func (a *AzureDevOps) Clone() (string, error) {
 		a.Spec.SingleBranch != nil && *a.Spec.SingleBranch,
 	)
 	if err != nil {
-		logrus.Errorf("failed cloning Azure DevOps repository %q", redact.URL(a.GetURL()))
+		log.Errorf("failed cloning Azure DevOps repository %q", redact.URL(a.GetURL()))
 		return "", err
 	}
 
@@ -437,7 +437,7 @@ func (a *AzureDevOps) CleanWorkingBranch() (bool, error) {
 	_, workingBranch, targetBranch := a.GetBranches()
 
 	if workingBranch == targetBranch {
-		logrus.Infof("Skipping cleaning working branch %q on %q (same as target branch)\n", workingBranch, redact.URL(a.GetURL()))
+		log.Infof("Skipping cleaning working branch %q on %q (same as target branch)\n", workingBranch, redact.URL(a.GetURL()))
 		return false, nil
 	}
 

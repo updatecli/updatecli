@@ -3,11 +3,11 @@ package reports
 import (
 	"bytes"
 	"encoding/xml"
-	"fmt"
 	"sort"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
+
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/ast"
 	"github.com/yuin/goldmark/text"
@@ -53,7 +53,7 @@ func (a *Actions) String() string {
 
 	output, err := xml.MarshalIndent(a, "", "    ")
 	if err != nil {
-		fmt.Printf("error: %v\n", err)
+		log.Errorf("%v", err)
 	}
 
 	return string(output[:])
@@ -73,14 +73,14 @@ func MergeFromString(old, new string) string {
 
 	err := unmarshal([]byte(old), &oldReport)
 	if err != nil {
-		logrus.Errorf("failed parsing old report: %s", err)
+		log.Errorf("failed parsing old report: %s", err)
 		// Return the new report by default if something went wrong
 		return new
 	}
 
 	err = unmarshal([]byte(new), &newReport)
 	if err != nil {
-		logrus.Errorf("failed parsing new report: %s", err)
+		log.Errorf("failed parsing new report: %s", err)
 		// Return the new report by default
 		return new
 	}

@@ -7,8 +7,8 @@ import (
 
 	"github.com/goware/urlx"
 	jschema "github.com/invopop/jsonschema"
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/jsonschema"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/azuredevops"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/azuredevopssearch"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/bitbucket"
@@ -53,7 +53,7 @@ func (c Config) Validate() error {
 		}
 		// Ensure kind is lowercase
 		if c.Kind != strings.ToLower(c.Kind) {
-			logrus.Warningf("The specified value for the parameter 'kind' (%q) should be lowercase", c.Kind)
+			log.Warningf("The specified value for the parameter 'kind' (%q) should be lowercase", c.Kind)
 		}
 		if c.Spec == nil {
 			validationErrs = append(validationErrs, "missing value for parameter 'value'")
@@ -77,7 +77,7 @@ func (c *Config) AutoGuess(configName, workingDir, directory string, gitHandler 
 	if err != nil {
 		return err
 	}
-	logrus.Debugf("Found the following remotes in %s: %s", workingDir, remotes)
+	log.Debugf("Found the following remotes in %s: %s", workingDir, remotes)
 
 	originRemoteURL, ok := remotes["origin"]
 	if !ok {

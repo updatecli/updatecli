@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/google/go-github/v69/github"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 // getReleasesFromAPI returns a list of releases,
@@ -41,7 +41,7 @@ func getReleasesFromAPI(client *github.Client, owner, repository string) (allRel
 
 		allReleases = append(allReleases, releases...)
 		if resp.NextPage == 0 {
-			logrus.Debugf("GitHub Api limit: %q", resp.Rate.String())
+			log.Debugf("GitHub Api limit: %q", resp.Rate.String())
 			return allReleases, nil
 		}
 

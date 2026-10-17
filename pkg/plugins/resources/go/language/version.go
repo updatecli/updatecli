@@ -10,7 +10,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 var (
@@ -27,26 +27,26 @@ func (l *Language) versions(ctx context.Context) (versions []string, err error) 
 
 	req, err := http.NewRequestWithContext(ctx, "GET", "https://go.dev/dl/?mode=json&include=all", nil)
 	if err != nil {
-		logrus.Errorf("something went wrong while getting go version data %q\n", err)
+		log.Errorf("something went wrong while getting go version data %q\n", err)
 		return []string{}, err
 	}
 
 	res, err := l.webClient.Do(req)
 	if err != nil {
-		logrus.Errorf("something went wrong while getting go version data %q\n", err)
+		log.Errorf("something went wrong while getting go version data %q\n", err)
 		return []string{}, err
 	}
 
 	defer res.Body.Close()
 	if res.StatusCode >= 400 {
 		body, err := httputil.DumpResponse(res, false)
-		logrus.Errorf("something went wrong while getting golang version data %q\n", err)
-		logrus.Debugf("\n%v\n", string(body))
+		log.Errorf("something went wrong while getting golang version data %q\n", err)
+		log.Debugf("\n%v\n", string(body))
 	}
 
 	data, err := io.ReadAll(res.Body)
 	if err != nil {
-		logrus.Errorf("something went wrong while getting npm api data%q\n", err)
+		log.Errorf("something went wrong while getting npm api data%q\n", err)
 		return []string{}, err
 	}
 
@@ -54,7 +54,7 @@ func (l *Language) versions(ctx context.Context) (versions []string, err error) 
 
 	err = json.Unmarshal(data, &versionsInfo)
 	if err != nil {
-		logrus.Errorf("error unmarshalling json: %q", err)
+		log.Errorf("error unmarshalling json: %q", err)
 		return []string{}, err
 	}
 

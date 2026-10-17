@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
@@ -99,7 +99,7 @@ func (s *Shell) target(source string, pathResolver pathresolver.Resolver, dryRun
 		resultTarget.Information = source
 
 		resultTarget.Result = result.SUCCESS
-		logrus.Info("No change detected")
+		log.Info("No change detected")
 		return nil
 	}
 

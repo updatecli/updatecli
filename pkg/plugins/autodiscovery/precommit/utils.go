@@ -1,11 +1,10 @@
 package precommit
 
 import (
-	"fmt"
 	"io/fs"
 	"path/filepath"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 const (
@@ -17,11 +16,11 @@ const (
 func searchPrecommitConfigFiles(rootDir string) ([]string, error) {
 	foundFiles := []string{}
 
-	logrus.Debugf("Looking for Precommit configuration modules in %q", rootDir)
+	log.Debugf("Looking for Precommit configuration modules in %q", rootDir)
 
 	err := filepath.WalkDir(rootDir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
-			fmt.Printf("prevent panic by handling failure accessing a path %q: %v\n", path, err)
+			log.Warningf("prevent panic by handling failure accessing a path %q: %v\n", path, err)
 			return err
 		}
 

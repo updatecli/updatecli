@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
@@ -37,7 +37,7 @@ func (g *GoModule) Condition(ctx context.Context, source string, scm scm.ScmHand
 		}
 		versionInfo, err := getVersionInfoFromProxy(ctx, g.webClient, proxy, g.Spec.Module, versionToCheck)
 		if err != nil {
-			logrus.Debugf("skipping proxy %q due to %q\n", proxy, err)
+			log.Debugf("skipping proxy %q due to %q\n", proxy, err)
 			continue
 		}
 
@@ -48,7 +48,7 @@ func (g *GoModule) Condition(ctx context.Context, source string, scm scm.ScmHand
 			}
 		case false:
 			if !isVersionMatchingAge(versionInfo, g.Spec.Age) {
-				logrus.Debugf("ignoring version %q from proxy %q because it doesn't match the age filter\n", versionToCheck, proxy)
+				log.Debugf("ignoring version %q from proxy %q because it doesn't match the age filter\n", versionToCheck, proxy)
 				continue
 			}
 

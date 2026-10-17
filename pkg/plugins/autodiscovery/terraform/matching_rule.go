@@ -4,7 +4,7 @@ import (
 	"path/filepath"
 
 	"github.com/Masterminds/semver/v3"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 // MatchingRule defines a rule to select Terraform providers.
@@ -56,12 +56,12 @@ func (m MatchingRules) isMatchingRules(rootDir, filePath, providerName, provider
 
 				match, err := filepath.Match(rule.Path, filePath)
 				if err != nil {
-					logrus.Errorf("%s - %q", err, rule.Path)
+					log.Errorf("%s - %q", err, rule.Path)
 					continue
 				}
 				ruleResults = append(ruleResults, match)
 				if match {
-					logrus.Debugf("file path %q matching rule %q", filePath, rule.Path)
+					log.Debugf("file path %q matching rule %q", filePath, rule.Path)
 				}
 			}
 
@@ -88,14 +88,14 @@ func (m MatchingRules) isMatchingRules(rootDir, filePath, providerName, provider
 							v, err := semver.NewVersion(providerVersion)
 							if err != nil {
 								match = providerVersion == ruleProviderVersion
-								logrus.Debugf("%q - %s", providerVersion, err)
+								log.Debugf("%q - %s", providerVersion, err)
 								break
 							}
 
 							c, err := semver.NewConstraint(ruleProviderVersion)
 							if err != nil {
 								match = providerVersion == ruleProviderVersion
-								logrus.Debugf("%q %s", err, ruleProviderVersion)
+								log.Debugf("%q %s", err, ruleProviderVersion)
 								break
 							}
 

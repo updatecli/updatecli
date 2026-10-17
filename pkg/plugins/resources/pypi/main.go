@@ -12,8 +12,8 @@ import (
 	"strings"
 
 	"github.com/go-viper/mapstructure/v2"
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
@@ -166,7 +166,7 @@ func (p *Pypi) getPackageData(ctx context.Context) (pypiData, error) {
 
 	res, err := p.webClient.Do(req)
 	if err != nil {
-		logrus.Errorf("fetching pypi package data for %q: %s", p.spec.Name, err)
+		log.Errorf("fetching pypi package data for %q: %s", p.spec.Name, err)
 		return pypiData{}, err
 	}
 	defer res.Body.Close()

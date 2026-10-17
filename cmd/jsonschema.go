@@ -3,8 +3,8 @@ package cmd
 import (
 	"os"
 
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 const (
@@ -20,7 +20,7 @@ var (
 		Run: func(cmd *cobra.Command, args []string) {
 			err := run(jsonschemaCmdName)
 			if err != nil {
-				logrus.Errorf("command failed")
+				log.Errorf("command failed")
 				os.Exit(1)
 			}
 		},
