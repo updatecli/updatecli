@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/drone/go-scm/scm"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/reports"
 	utils "github.com/updatecli/updatecli/pkg/plugins/utils/action"
 )
@@ -24,7 +24,7 @@ func (s *Stash) CreateAction(ctx context.Context, report *reports.Action, resetD
 	// similar to what we did for github pullrequest.
 	body, err := utils.GeneratePullRequestBodyMarkdown("", report.ToActionsMarkdownString())
 	if err != nil {
-		logrus.Warningf("something wrong happened while generating stash pullrequest body: %s", err)
+		log.Warningf("something wrong happened while generating stash pullrequest body: %s", err)
 	}
 
 	if len(s.spec.Body) > 0 {
@@ -62,7 +62,7 @@ func (s *Stash) CreateAction(ctx context.Context, report *reports.Action, resetD
 	*/
 
 	if !ok {
-		logrus.Debugln("skipping pullrequest creation")
+		log.Debugln("skipping pullrequest creation")
 		return nil
 	}
 
@@ -73,7 +73,7 @@ func (s *Stash) CreateAction(ctx context.Context, report *reports.Action, resetD
 		Target: s.TargetBranch,
 	}
 
-	logrus.Debugf("Title:\t%q\nBody:\t%q\nSource:\n%q\ntarget:\t%q\n",
+	log.Debugf("Title:\t%q\nBody:\t%q\nSource:\n%q\ntarget:\t%q\n",
 		title,
 		body,
 		s.SourceBranch,
@@ -92,12 +92,12 @@ func (s *Stash) CreateAction(ctx context.Context, report *reports.Action, resetD
 	)
 
 	if resp.Status > 400 {
-		logrus.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
+		log.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
 	}
 
 	if err != nil {
 		if err.Error() == scm.ErrNotFound.Error() {
-			logrus.Infof("Bitbucket pullrequest not created, skipping")
+			log.Infof("Bitbucket pullrequest not created, skipping")
 			return nil
 		}
 		return err
@@ -107,7 +107,7 @@ func (s *Stash) CreateAction(ctx context.Context, report *reports.Action, resetD
 	report.Title = pr.Title
 	report.Description = pr.Body
 
-	logrus.Infof("Bitbucket pullrequest successfully opened on %q", pr.Link)
+	log.Infof("Bitbucket pullrequest successfully opened on %q", pr.Link)
 
 	return nil
 }

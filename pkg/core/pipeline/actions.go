@@ -7,7 +7,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/action"
 	"github.com/updatecli/updatecli/pkg/core/reports"
 	"github.com/updatecli/updatecli/pkg/core/result"
@@ -22,13 +22,13 @@ var (
 func (p *Pipeline) RunActions(ctx context.Context) error {
 
 	if len(p.Actions) == 0 {
-		logrus.Debugf("No action found for pipeline %q", p.Name)
+		log.Debugf("No action found for pipeline %q", p.Name)
 		return nil
 	}
 
 	// Early return
 	if len(p.Targets) == 0 {
-		logrus.Debugf("No target found for pipeline %q, skipping depends on action", p.Name)
+		log.Debugf("No target found for pipeline %q, skipping depends on action", p.Name)
 		return nil
 	}
 
@@ -39,7 +39,7 @@ func (p *Pipeline) RunActions(ctx context.Context) error {
 
 		// Update pipeline before each action run
 		if err := p.Update(); err != nil {
-			logrus.Errorf("Pipeline %q failed to update: %s", p.Name, err.Error())
+			log.Errorf("Pipeline %q failed to update: %s", p.Name, err.Error())
 			continue
 		}
 
@@ -58,18 +58,18 @@ func (p *Pipeline) RunActions(ctx context.Context) error {
 		showActionTitle := func() {
 			updateActionTitle()
 			if firstPipelineAction {
-				logrus.Infof("\n---")
-				logrus.Infof("Pipeline Name\t: %s", p.Name)
-				logrus.Infof("Pipeline ID\t: %s", p.ID)
-				logrus.Infof("Dry run\t\t: %t", p.Options.Target.DryRun)
+				log.Infof("\n---")
+				log.Infof("Pipeline Name\t: %s", p.Name)
+				log.Infof("Pipeline ID\t: %s", p.ID)
+				log.Infof("Dry run\t\t: %t", p.Options.Target.DryRun)
 			}
 
 			if action.Scm != nil {
-				logrus.Infof("Repository\t: %s", action.Scm.Handler.Summary())
+				log.Infof("Repository\t: %s", action.Scm.Handler.Summary())
 			}
 
-			logrus.Infof("Action\t\t: %s\n", action.Title)
-			logrus.Infof("---\n\n")
+			log.Infof("Action\t\t: %s\n", action.Title)
+			log.Infof("---\n\n")
 			firstPipelineAction = false
 		}
 
@@ -77,12 +77,12 @@ func (p *Pipeline) RunActions(ctx context.Context) error {
 
 		relatedTargets, err := p.searchAssociatedTargetsID(id)
 		if err != nil {
-			logrus.Errorf("searching associated targets ID: %s", err.Error())
+			log.Errorf("searching associated targets ID: %s", err.Error())
 			continue
 		}
 
 		if len(relatedTargets) == 0 {
-			logrus.Infof("No target found for action %q", id)
+			log.Infof("No target found for action %q", id)
 			continue
 		}
 
@@ -111,16 +111,16 @@ func (p *Pipeline) RunActions(ctx context.Context) error {
 
 		// Ignoring failed targets
 		if len(failedTargetIDs) > 0 {
-			logrus.Warningf("%d/%d target(s) (%s) failed for action %q", len(failedTargetIDs), len(relatedTargets), strings.Join(failedTargetIDs, ","), id)
+			log.Warningf("%d/%d target(s) (%s) failed for action %q", len(failedTargetIDs), len(relatedTargets), strings.Join(failedTargetIDs, ","), id)
 			for _, tID := range failedTargetIDs {
-				logrus.Infof("  - %s: %s — %s", p.Targets[tID].Config.Name, p.Report.Targets[tID].Result, p.Report.Targets[tID].Description)
+				log.Infof("  - %s: %s — %s", p.Targets[tID].Config.Name, p.Report.Targets[tID].Result, p.Report.Targets[tID].Description)
 			}
-			logrus.Infof("\n")
+			log.Infof("\n")
 		}
 
 		// Ignoring skipped targets
 		if len(skippedTargetIDs) > 0 {
-			logrus.Debugf("%d/%d target(s) (%s) skipped for action %q", len(skippedTargetIDs), len(relatedTargets), strings.Join(skippedTargetIDs, ","), id)
+			log.Debugf("%d/%d target(s) (%s) skipped for action %q", len(skippedTargetIDs), len(relatedTargets), strings.Join(skippedTargetIDs, ","), id)
 		}
 
 		// If no target require attention while processing action in a attention state,
@@ -134,12 +134,12 @@ func (p *Pipeline) RunActions(ctx context.Context) error {
 
 					err = action.Handler.CheckActionExist(ctx, &action.Report)
 					if err != nil {
-						logrus.Warningf("Action %q failed: %s", id, err.Error())
+						log.Warningf("Action %q failed: %s", id, err.Error())
 					}
 
 					CheckedPipelines = append(CheckedPipelines, alreadyCheckedAction)
 					if action.Report.Link == "" {
-						logrus.Infof("No follow up action needed")
+						log.Infof("No follow up action needed")
 					}
 
 					p.Report.Actions[id] = &action.Report
@@ -196,23 +196,23 @@ func (p *Pipeline) RunActions(ctx context.Context) error {
 			action.Report.UpdatePipelineURL()
 		}
 		if isBranchReset {
-			logrus.Warningf("Git branch reset detected, the action must reset previous action description")
+			log.Warningf("Git branch reset detected, the action must reset previous action description")
 		}
 
 		if p.Options.Target.DryRun || !p.Options.Target.Push {
 			if len(attentionTargetIDs) > 0 {
-				logrus.Infof("An action of kind %q is expected.", action.Config.Kind)
+				log.Infof("An action of kind %q is expected.", action.Config.Kind)
 
 				actionDebugOutput := fmt.Sprintf("The expected action would have the following information:\n\n##Title:\n%s\n##Report:\n\n%s\n\n=====\n",
 					action.Title,
 					action.Report.String())
-				logrus.Debugf("%s", strings.ReplaceAll(actionDebugOutput, "\n", "\n\t|\t"))
+				log.Debugf("%s", strings.ReplaceAll(actionDebugOutput, "\n", "\n\t|\t"))
 			}
 
 			actionOutput := fmt.Sprintf("The expected action would have the following information:\n\n##Title:\n%s\n\n\n##Report:\n\n%s\n\n=====\n",
 				action.Title,
 				action.Report.String())
-			logrus.Debugf("%s", strings.ReplaceAll(actionOutput, "\n", "\n\t|\t"))
+			log.Debugf("%s", strings.ReplaceAll(actionOutput, "\n", "\n\t|\t"))
 
 			action.Report.Description = actionOutput
 
@@ -265,7 +265,7 @@ func (p *Pipeline) RunCleanActions(ctx context.Context, handled map[string]bool)
 		// An action published by the current execution must not be cleaned up by that
 		// same execution.
 		if action.Published {
-			logrus.Debugf("Action %q published during this execution, skipping its cleanup", id)
+			log.Debugf("Action %q published during this execution, skipping its cleanup", id)
 			continue
 		}
 
@@ -284,9 +284,9 @@ func (p *Pipeline) RunCleanActions(ctx context.Context, handled map[string]bool)
 	}
 
 	if len(errs) > 0 {
-		logrus.Errorf("Failed to clean up action(s): %s", strings.Join(errs, ", "))
+		log.Errorf("Failed to clean up action(s): %s", strings.Join(errs, ", "))
 		for i := range errs {
-			logrus.Errorf("  - %s", errs[i])
+			log.Errorf("  - %s", errs[i])
 		}
 		return fmt.Errorf("failed to clean up action(s):\n\t%s", strings.Join(errs, "\n\t* "))
 	}
@@ -353,7 +353,7 @@ func (p *Pipeline) detectActionTitle(action *action.Action) {
 	}
 
 	if len(action.Report.Targets) == 0 {
-		logrus.Debugf("We don't know how to name the action")
+		log.Debugf("We don't know how to name the action")
 		return
 	}
 

@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 func getAllowedPaths(rootDir string, allowedPaths []string) map[string]string {
@@ -22,7 +22,7 @@ func getAllowedPaths(rootDir string, allowedPaths []string) map[string]string {
 
 	getAbsolutePath := func(path string) string {
 		if !filepath.IsAbs(path) {
-			logrus.Debugf("Relative path %q detected, converting to absolute path based on working directory %q\n", path, rootDir)
+			log.Debugf("Relative path %q detected, converting to absolute path based on working directory %q\n", path, rootDir)
 			absPath := filepath.Join(rootDir, path)
 			return absPath
 		}

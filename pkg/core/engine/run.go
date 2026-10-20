@@ -3,10 +3,11 @@ package engine
 import (
 	"context"
 	"fmt"
+	"time"
 
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/cache"
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/telemetry"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -16,7 +17,7 @@ import (
 // Run runs the full process under the provided context, emitting
 // OpenTelemetry spans for each major operation so failures are observable.
 func (e *Engine) Run(ctx context.Context) (err error) {
-	PrintTitle("Pipeline")
+	log.Title("Pipeline")
 
 	tracer := e.tracer
 	ctx, span := tracer.Start(ctx, "updatecli.run",
@@ -38,6 +39,15 @@ func (e *Engine) Run(ctx context.Context) (err error) {
 		pipeline := e.Pipelines[i]
 		pipeline.SourceCache = e.sourceCache
 
+		stopCapture := pipeline.CaptureConsoleOutput()
+		log.PipelineTitle(log.Pipeline{
+			Name:     pipeline.Name,
+			ID:       pipeline.ID,
+			DryRun:   pipeline.Options.Target.DryRun,
+			Position: i + 1,
+			Total:    len(e.Pipelines),
+		})
+		start := time.Now()
 		err := pipeline.Run(ctx)
 		if err != nil {
 			errs = append(errs, fmt.Errorf("pipeline %q failed: %w", pipeline.Name, err))
@@ -45,10 +55,16 @@ func (e *Engine) Run(ctx context.Context) (err error) {
 				attribute.String("pipeline.name", pipeline.Name),
 				attribute.String("error", telemetry.SanitizeError(err)),
 			))
-			logrus.Printf("Pipeline %q failed\n", pipeline.Name)
-			logrus.Printf("Skipping due to:\n\t%s\n", err)
-			continue
+			log.Printf("Pipeline %q failed\n", pipeline.Name)
+			log.Printf("Skipping due to:\n\t%s\n", err)
 		}
+
+		status := pipeline.Status()
+		if err != nil {
+			status = log.StatusFailed
+		}
+		log.PipelineResult(status, time.Since(start))
+		stopCapture()
 	}
 
 	if !e.Options.Pipeline.Target.DryRun && e.Options.Pipeline.Target.Push {
@@ -78,9 +94,10 @@ func (e *Engine) Run(ctx context.Context) (err error) {
 
 	for i := range e.Pipelines {
 		pipeline := e.Pipelines[i]
+		pipeline.SaveConsoleOutput()
 		err = pipeline.Report.UpdateCIJob()
 		if err != nil {
-			logrus.Debugf("updating CI job information: %s", err)
+			log.Debugf("updating CI job information: %s", err)
 		}
 		err = pipeline.Report.UpdateID()
 		if err != nil {
@@ -93,7 +110,7 @@ func (e *Engine) Run(ctx context.Context) (err error) {
 		_, publishSpan := tracer.Start(ctx, "updatecli.publish_udash")
 		// A publish failure is logged and kept apart from the pipeline errors.
 		if e.publishErr = e.publishToUdash(); e.publishErr != nil {
-			logrus.Error(e.publishErr)
+			log.Error(e.publishErr)
 			telemetry.RecordSpanError(publishSpan, e.publishErr)
 		}
 		publishSpan.End()
@@ -117,7 +134,7 @@ func (e *Engine) Run(ctx context.Context) (err error) {
 
 	if len(errs) > 0 {
 		for _, e := range errs {
-			logrus.Error(e)
+			log.Error(e)
 		}
 		span.SetStatus(codes.Error, fmt.Sprintf("%d pipeline(s) failed", len(errs)))
 		return fmt.Errorf("%d pipeline(s) failed during execution", len(errs))

@@ -3,13 +3,13 @@ package reports
 import (
 	"bytes"
 	"encoding/xml"
-	"fmt"
 	"sort"
 	"strings"
 	"text/template"
 
+	"github.com/updatecli/updatecli/pkg/core/log"
+
 	"github.com/Masterminds/semver/v3"
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/ci"
 )
 
@@ -52,7 +52,7 @@ func (a *Action) String() string {
 	a.sort()
 	output, err := xml.MarshalIndent(a, "", "    ")
 	if err != nil {
-		fmt.Printf("error: %v\n", err)
+		log.Errorf("%v", err)
 	}
 
 	return string(output[:])
@@ -146,7 +146,7 @@ func (a Action) ToActionsString() string {
 			},
 		}, "", "    ")
 	if err != nil {
-		logrus.Errorf("error: %v\n", err)
+		log.Errorf("error: %v\n", err)
 	}
 
 	return string(output[:])
@@ -158,13 +158,13 @@ func (a Action) ToActionsMarkdownString() string {
 
 	tmpl, err := template.New("actions").Parse(markdownReportTemplate)
 	if err != nil {
-		logrus.Errorf("error: %v\n", err)
+		log.Errorf("error: %v\n", err)
 	}
 
 	manifest := bytes.Buffer{}
 	if err := tmpl.Execute(&manifest, a); err != nil {
-		logrus.Debugln(err)
-		logrus.Errorf("error: %v\n", err)
+		log.Debugln(err)
+		log.Errorf("error: %v\n", err)
 	}
 	return manifest.String()
 }
@@ -173,7 +173,7 @@ func (a Action) ToActionsMarkdownString() string {
 func (a *Action) UpdatePipelineURL() {
 	detectedCi, err := ci.New()
 	if err != nil {
-		logrus.Debugf("No CI pipeline detected (%s)\n", err)
+		log.Debugf("No CI pipeline detected (%s)\n", err)
 	}
 
 	if detectedCi == nil {

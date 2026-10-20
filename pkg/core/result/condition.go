@@ -22,7 +22,8 @@ type Condition struct {
 	Scm SCM
 	// ID contains a uniq identifier for the condition
 	ID string
-	// ConsoleOutput stores the console output of the condition execution
+	// ConsoleOutput stores the console output of the condition execution.
+	// It may include lines from resources running at the same time.
 	ConsoleOutput string
 	// Config stores the source configuration
 	Config any

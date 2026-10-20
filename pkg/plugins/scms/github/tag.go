@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/shurcooL/githubv4"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github/client"
 )
 
@@ -83,13 +83,13 @@ func (g *Github) SearchTags(ctx context.Context, retry int) (tags []string, err 
 				// then we need to re-requery the rate limit to get the latest information
 				rateLimit, err := queryRateLimit(g.client, ctx)
 				if err != nil {
-					logrus.Errorf("Error querying GitHub API rate limit: %s", err)
+					log.Errorf("Error querying GitHub API rate limit: %s", err)
 				}
 
-				logrus.Debugln(rateLimit)
+				log.Debugln(rateLimit)
 
 				if retry < client.MaxRetry {
-					logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
+					log.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
 					rateLimit.Pause()
 					return g.SearchTags(ctx, retry+1)
 				}
@@ -98,7 +98,7 @@ func (g *Github) SearchTags(ctx context.Context, retry int) (tags []string, err 
 			return nil, fmt.Errorf("querying GitHub API: %w", err)
 		}
 
-		logrus.Debugln(query.RateLimit)
+		log.Debugln(query.RateLimit)
 
 		expectedFound = query.Repository.Refs.TotalCount
 
@@ -118,7 +118,7 @@ func (g *Github) SearchTags(ctx context.Context, retry int) (tags []string, err 
 		return tags, fmt.Errorf("something went wrong, found %d, expected %d", tagCounter, expectedFound)
 	}
 
-	logrus.Debugf("%d tags found", len(tags))
+	log.Debugf("%d tags found", len(tags))
 
 	return tags, err
 }

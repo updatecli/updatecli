@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
@@ -13,13 +13,13 @@ import (
 func (gc *GitCommit) Condition(_ context.Context, source string, scm scm.ScmHandler, pathResolver pathresolver.Resolver) (pass bool, message string, err error) {
 
 	if gc.spec.Path != "" && scm != nil {
-		logrus.Warningf("Path setting value %q is overriding the scm configuration (value %q)",
+		log.Warningf("Path setting value %q is overriding the scm configuration (value %q)",
 			gc.spec.Path,
 			scm.GetDirectory())
 	}
 
 	if gc.spec.URL != "" && scm != nil {
-		logrus.Warningf("URL setting value %q is overriding the scm configuration (value %q)",
+		log.Warningf("URL setting value %q is overriding the scm configuration (value %q)",
 			gc.spec.URL,
 			scm.GetURL())
 	}

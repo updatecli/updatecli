@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
@@ -19,7 +19,7 @@ func (gt *GitTag) Condition(_ context.Context, source string, scm scm.ScmHandler
 	}
 
 	if gt.spec.URL != "" && scm != nil {
-		logrus.Warningf("URL setting value %q is overriding the scm configuration (value %q)",
+		log.Warningf("URL setting value %q is overriding the scm configuration (value %q)",
 			gt.spec.URL,
 			scm.GetURL())
 	}
@@ -40,7 +40,7 @@ func (gt *GitTag) Condition(_ context.Context, source string, scm scm.ScmHandler
 
 	case false:
 		if gt.spec.Path != "" && scm != nil {
-			logrus.Warningf("Path setting value %q is overriding the scm configuration (value %q)",
+			log.Warningf("Path setting value %q is overriding the scm configuration (value %q)",
 				gt.spec.Path,
 				scm.GetDirectory())
 		}
@@ -55,7 +55,7 @@ func (gt *GitTag) Condition(_ context.Context, source string, scm scm.ScmHandler
 
 	// If source input is empty, then it means that it was disabled by the user with `disablesourceinput: true`
 	if source != "" {
-		logrus.Infof("Source input value detected: using it as spec.versionfilter.pattern")
+		log.Infof("Source input value detected: using it as spec.versionfilter.pattern")
 		gt.versionFilter.Pattern = source
 	}
 

@@ -7,7 +7,7 @@ import (
 
 	yaml "github.com/goccy/go-yaml"
 	"github.com/goccy/go-yaml/parser"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 type Workflow struct {
@@ -78,19 +78,19 @@ func loadCompositeAction(filename string) (*CompositeAction, error) {
 func parseStepComment(step *Step, query string, data []byte) {
 	path, err := yaml.PathString(query)
 	if err != nil {
-		logrus.Debugf("skipping %q, error creating yaml path: %v", query, err)
+		log.Debugf("skipping %q, error creating yaml path: %v", query, err)
 		return
 	}
 
 	d, err := parser.ParseBytes(data, parser.ParseComments)
 	if err != nil {
-		logrus.Debugf("skipping %q, error parsing yaml file: %v", query, err)
+		log.Debugf("skipping %q, error parsing yaml file: %v", query, err)
 		return
 	}
 
 	n, err := path.FilterFile(d)
 	if err != nil {
-		logrus.Debugf("skipping %q, error filtering node: %v", query, err)
+		log.Debugf("skipping %q, error filtering node: %v", query, err)
 		return
 	}
 

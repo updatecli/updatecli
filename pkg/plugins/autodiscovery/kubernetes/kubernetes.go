@@ -3,7 +3,7 @@ package kubernetes
 import (
 	"fmt"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 func (k Kubernetes) discoverKubernetesManifest(file, relativeFile string) [][]byte {
@@ -11,7 +11,7 @@ func (k Kubernetes) discoverKubernetesManifest(file, relativeFile string) [][]by
 
 	kubernetesManifestData, err := getKubernetesManifestData(file)
 	if err != nil {
-		logrus.Debugln(err)
+		log.Debugln(err)
 		return manifests
 	}
 	if kubernetesManifestData == nil {
@@ -69,7 +69,7 @@ func (k Kubernetes) discoverKubernetesManifest(file, relativeFile string) [][]by
 					yamlDocument,
 				)
 				if err != nil {
-					logrus.Debugln(err)
+					log.Debugln(err)
 					continue
 				}
 

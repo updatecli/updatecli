@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 // Resolver tells a resource where its relative paths resolve from and, when Updatecli
@@ -156,7 +156,7 @@ func (r Resolver) Dir() string {
 
 	workingDirectory, err := os.Getwd()
 	if err != nil {
-		logrus.Debugln("fail getting current working directory")
+		log.Debugln("fail getting current working directory")
 		return "."
 	}
 

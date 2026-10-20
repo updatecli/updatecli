@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/yaml"
@@ -56,7 +56,7 @@ func (c *Chart) Target(ctx context.Context, source string, scm scm.ScmHandler, p
 	if !dryRun && !c.spec.SkipPackaging {
 		err = c.DependencyUpdate(&out, chartPath)
 
-		logrus.Debug(out.String())
+		log.Debug(out.String())
 
 		if err != nil {
 			return err

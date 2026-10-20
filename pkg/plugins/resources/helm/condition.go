@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"helm.sh/helm/v3/pkg/repo"
 
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
@@ -20,7 +20,7 @@ func (c *Chart) Condition(ctx context.Context, source string, scm scm.ScmHandler
 	}
 
 	if c.spec.Version != "" {
-		logrus.Infof("Version %v, already defined from configuration file", c.spec.Version)
+		log.Infof("Version %v, already defined from configuration file", c.spec.Version)
 	} else {
 		c.spec.Version = source
 	}

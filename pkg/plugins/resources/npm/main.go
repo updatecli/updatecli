@@ -18,7 +18,7 @@ import (
 	"gopkg.in/ini.v1"
 
 	"github.com/go-viper/mapstructure/v2"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
@@ -205,7 +205,7 @@ func New(spec interface{}) (*Npm, error) {
 // Validate run some validation on the Npm struct
 func (s *Spec) Validate() (err error) {
 	if len(s.Name) == 0 {
-		logrus.Errorf("npm package name not defined")
+		log.Errorf("npm package name not defined")
 		return errors.New("npm package name not defined")
 	}
 	return nil
@@ -350,7 +350,7 @@ func (n *Npm) getPackageData(ctx context.Context, packageName string) (Data, err
 
 	req, err := http.NewRequestWithContext(ctx, "GET", URL, nil)
 	if err != nil {
-		logrus.Errorf("something went wrong while getting npm api data %q\n", err)
+		log.Errorf("something went wrong while getting npm api data %q\n", err)
 	}
 
 	if registry.AuthToken != "" {
@@ -359,28 +359,28 @@ func (n *Npm) getPackageData(ctx context.Context, packageName string) (Data, err
 
 	res, err := n.webClient.Do(req)
 	if err != nil {
-		logrus.Errorf("something went wrong while getting npm api data %q\n", err)
+		log.Errorf("something went wrong while getting npm api data %q\n", err)
 		return Data{}, err
 	}
 
 	defer res.Body.Close()
 	if res.StatusCode >= 400 {
 		body, err := httputil.DumpResponse(res, false)
-		logrus.Errorf("something went wrong while getting npm api data %q\n", URL)
-		logrus.Errorf("Error %q\n", err)
-		logrus.Debugf("\n%v\n", string(body))
+		log.Errorf("something went wrong while getting npm api data %q\n", URL)
+		log.Errorf("Error %q\n", err)
+		log.Debugf("\n%v\n", string(body))
 		return Data{}, err
 	}
 
 	data, err := io.ReadAll(res.Body)
 	if err != nil {
-		logrus.Errorf("something went wrong while getting npm api data%q\n", err)
+		log.Errorf("something went wrong while getting npm api data%q\n", err)
 		return Data{}, err
 	}
 
 	err = json.Unmarshal(data, &d)
 	if err != nil {
-		logrus.Errorf("error unmarshalling json: %q", err)
+		log.Errorf("error unmarshalling json: %q", err)
 		return Data{}, err
 	}
 
@@ -422,7 +422,6 @@ func getOrderedVersions(data []byte) ([]string, error) {
 		// Read key
 		t, err := decoder.Token()
 		if err != nil {
-			fmt.Println("Error reading version key:", err)
 			return nil, err
 		}
 

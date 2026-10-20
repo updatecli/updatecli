@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
@@ -17,9 +17,9 @@ If no assertion is specified, it only checks for successful HTTP response code (
 */
 func (t *Temurin) Condition(ctx context.Context, source string, scm scm.ScmHandler, pathResolver pathresolver.Resolver) (pass bool, message string, err error) {
 	if len(source) > 0 {
-		logrus.Infof("[temurin] using specific version (`spec.SpecificVersion`) from source value %q. Set `disablesourceinput` to true to avoid this behavior.", source)
+		log.Infof("[temurin] using specific version (`spec.SpecificVersion`) from source value %q. Set `disablesourceinput` to true to avoid this behavior.", source)
 		if t.spec.SpecificVersion != "" {
-			logrus.Warning("[temurin] Overriding specified version (`spec.SpecificVersion`) with the source input value", source)
+			log.Warning("[temurin] Overriding specified version (`spec.SpecificVersion`) with the source input value", source)
 		}
 		t.spec.SpecificVersion = source
 	}
@@ -36,9 +36,9 @@ func (t *Temurin) Condition(ctx context.Context, source string, scm scm.ScmHandl
 			}
 
 			if found {
-				logrus.Infof(result.SUCCESS+" (Platform %q) "+message, platform)
+				log.Infof(result.SUCCESS+" (Platform %q) "+message, platform)
 			} else {
-				logrus.Infof(result.FAILURE+" (Platform %q) "+message, platform)
+				log.Infof(result.FAILURE+" (Platform %q) "+message, platform)
 			}
 
 			pass = pass && found

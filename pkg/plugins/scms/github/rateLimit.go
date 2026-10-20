@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github/client"
 )
 
@@ -37,19 +37,19 @@ func (a RateLimit) String() string {
 func (a RateLimit) Pause() {
 
 	if a.isEmpty() {
-		logrus.Debug("GitHub RateLimit is empty, skipping Pause()")
+		log.Debug("GitHub RateLimit is empty, skipping Pause()")
 		return
 	}
 
 	if a.Remaining == 0 {
 		resetAtTime, err := time.Parse(time.RFC3339, a.ResetAt)
 		if err != nil {
-			logrus.Errorf("Parsing GitHub API rate limit reset time: %s", err)
+			log.Errorf("Parsing GitHub API rate limit reset time: %s", err)
 			return
 		}
 		sleepDuration := time.Until(resetAtTime)
 
-		logrus.Warningf(
+		log.Warningf(
 			"GitHub API rate limit reached, on hold for %d minute(s) until %s. The process will resume automatically.\n",
 			int(sleepDuration.Minutes()),
 			resetAtTime.UTC().Format("2006-01-02 15:04:05 UTC"))
@@ -58,7 +58,7 @@ func (a RateLimit) Pause() {
 		return
 	}
 
-	logrus.Debugf("GitHub API credit used %d, remaining %d (reset at %s)",
+	log.Debugf("GitHub API credit used %d, remaining %d (reset at %s)",
 		a.Cost, a.Remaining, a.ResetAt)
 }
 

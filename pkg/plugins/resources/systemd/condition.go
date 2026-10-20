@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
@@ -40,7 +40,7 @@ func (s *Systemd) Condition(_ context.Context, source string, scm scm.ScmHandler
 		for i, opt := range matchingOpts {
 			if opt.Section == s.spec.Section && opt.Name == s.spec.Option {
 				if expected != opt.Value {
-					logrus.Debugf("option %d %q value %q doesn't match expected value %q",
+					log.Debugf("option %d %q value %q doesn't match expected value %q",
 						i, opt.Name, opt.Value, expected)
 					totalNotMatchingOpts++
 				}

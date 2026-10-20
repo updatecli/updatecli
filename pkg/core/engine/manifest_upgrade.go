@@ -3,26 +3,26 @@ package engine
 import (
 	"fmt"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 // ManifestUpgrade load Updatecli Manifest to update them then written them back on disk
 func (e *Engine) ManifestUpgrade(saveToDisk bool) (err error) {
 
-	PrintTitle("Manifest Upgrade")
+	log.Title("Manifest Upgrade")
 
 	err = e.LoadConfigurations()
 
 	if len(e.Pipelines) == 0 {
-		logrus.Errorln(err)
+		log.Errorln(err)
 		return fmt.Errorf("no valid pipeline found")
 	}
 
 	// Don't exit if we identify at least one valid pipeline configuration
 	if err != nil {
-		logrus.Errorln(err)
-		logrus.Infof("\n%d pipeline(s) successfully loaded\n", len(e.Pipelines))
+		log.Errorln(err)
+		log.Infof("\n%d pipeline(s) successfully loaded\n", len(e.Pipelines))
 	}
 
 	for _, pipeline := range e.Pipelines {
@@ -32,7 +32,7 @@ func (e *Engine) ManifestUpgrade(saveToDisk bool) (err error) {
 		if err != nil {
 			pipeline.Report.Result = result.FAILURE
 			e.Reports = append(e.Reports, pipeline.Report)
-			logrus.Errorf("skipping manifest upgrade because of %q", err)
+			log.Errorf("skipping manifest upgrade because of %q", err)
 			continue
 		}
 
@@ -41,7 +41,7 @@ func (e *Engine) ManifestUpgrade(saveToDisk bool) (err error) {
 			if err != nil {
 				pipeline.Report.Result = result.FAILURE
 				e.Reports = append(e.Reports, pipeline.Report)
-				logrus.Errorf("failed writing manifest change back to disk because of %q", err)
+				log.Errorf("failed writing manifest change back to disk because of %q", err)
 				continue
 			}
 		}
@@ -60,15 +60,13 @@ func (e *Engine) ManifestUpgrade(saveToDisk bool) (err error) {
 
 	totalUpgrade := totalSuccessUpgrade + totalChangedAppliedUpgrade + totalFailedUpgrade + totalSkippedUpgrade
 
-	logrus.Infof("\n\n\n")
-	logrus.Infof("Summary")
-	logrus.Infof("===========\n")
-	logrus.Infof("Manifest(s) upgrade:")
-	logrus.Infof("  * Changed:\t%d", totalChangedAppliedUpgrade)
-	logrus.Infof("  * Failed:\t%d", totalFailedUpgrade)
-	logrus.Infof("  * Skipped:\t%d", totalSkippedUpgrade)
-	logrus.Infof("  * Succeeded:\t%d", totalSuccessUpgrade)
-	logrus.Infof("  * Total:\t%d", totalUpgrade)
+	log.Title("Summary")
+	log.Infof("Manifest(s) upgrade:")
+	log.Infof("  * Changed:\t%d", totalChangedAppliedUpgrade)
+	log.Infof("  * Failed:\t%d", totalFailedUpgrade)
+	log.Infof("  * Skipped:\t%d", totalSkippedUpgrade)
+	log.Infof("  * Succeeded:\t%d", totalSuccessUpgrade)
+	log.Infof("  * Total:\t%d", totalUpgrade)
 
 	// Exit on error if at least one upgrade failed
 	if totalFailedUpgrade > 0 {

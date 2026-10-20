@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
@@ -33,7 +33,7 @@ func (df *Dockerfile) Source(_ context.Context, pathResolver pathresolver.Resolv
 			return fmt.Errorf("reading dockerfile: %w", err)
 		}
 
-		logrus.Debugf("\n🐋 On (Docker)file %q:\n\n", file)
+		log.Debugf("\n🐋 On (Docker)file %q:\n\n", file)
 
 		value := df.parser.GetInstruction([]byte(dockerfileContent), df.spec.Stage)
 		stageInfo := "last stage"

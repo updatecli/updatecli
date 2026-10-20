@@ -11,7 +11,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/cargo"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 var (
@@ -50,7 +50,7 @@ func (c Cargo) generateManifest(
 
 	tmpl, err := template.New("manifest").Parse(dependencyManifest)
 	if err != nil {
-		logrus.Errorln(err)
+		log.Errorln(err)
 		return manifest, err
 	}
 	var existingSourceKey string
@@ -95,7 +95,7 @@ func (c Cargo) generateManifest(
 
 			sourceVersionFilterPattern, err = c.versionFilter.GreaterThanPattern(dependency.Version)
 			if err != nil {
-				logrus.Debugf("building version filter pattern: %s", err)
+				log.Debugf("building version filter pattern: %s", err)
 				sourceVersionFilterPattern = "*"
 			}
 		}
@@ -182,7 +182,7 @@ func (c Cargo) generateManifest(
 	}
 
 	if err := tmpl.Execute(&manifest, params); err != nil {
-		logrus.Errorln(err)
+		log.Errorln(err)
 		return manifest, err
 	}
 	return manifest, nil
@@ -209,12 +209,12 @@ func (c Cargo) discoverCargoDependenciesManifests() ([][]byte, error) {
 	}
 
 	for _, foundCargoFile := range foundCargoFiles {
-		logrus.Debugf("parsing file %q", foundCargoFile)
+		log.Debugf("parsing file %q", foundCargoFile)
 
 		// Retrieve Cargo dependencies for each crate
 		crate, err := getCrateMetadata(filepath.Dir(foundCargoFile))
 		if err != nil {
-			logrus.Debugln(err)
+			log.Debugln(err)
 			continue
 		}
 		c.processCrateMetadata(&manifests, crate)
@@ -239,7 +239,7 @@ func (c Cargo) processCrateMetadata(
 		return
 	}
 	if crate.CargoLockFile != "" && !c.cargoAvailable && !c.cargoUpgradeAvailable {
-		logrus.Warning("skipping, Cargo lock file detected but Updatecli couldn't detect nor the `cargo` command neither the `cargo upgrade` to update it in case of a Cargo.lock update")
+		log.Warning("skipping, Cargo lock file detected but Updatecli couldn't detect nor the `cargo` command neither the `cargo upgrade` to update it in case of a Cargo.lock update")
 		return
 	}
 
@@ -290,22 +290,22 @@ func (c Cargo) processDependencies(
 
 		if err != nil {
 			// Jump to the next Cargo if current failed
-			logrus.Debugln(err)
+			log.Debugln(err)
 			continue
 		}
 
 		if len(c.spec.Ignore) > 0 && c.spec.Ignore.isMatchingRules(c.rootDir, relativeFoundCargoFile, dependency.Registry, dependency.Name, dependency.Version) {
-			logrus.Debugf("Ignoring %s.%s from %q, as matching ignore rule(s)\n", dependency.Registry, dependency.Name, crate.CargoFile)
+			log.Debugf("Ignoring %s.%s from %q, as matching ignore rule(s)\n", dependency.Registry, dependency.Name, crate.CargoFile)
 			continue
 		}
 		if len(c.spec.Only) > 0 && !c.spec.Only.isMatchingRules(c.rootDir, relativeFoundCargoFile, dependency.Registry, dependency.Name, dependency.Version) {
-			logrus.Debugf("Ignoring package %s.%s from %q, as not matching only rule(s)\n", dependency.Registry, dependency.Name, crate.CargoFile)
+			log.Debugf("Ignoring package %s.%s from %q, as not matching only rule(s)\n", dependency.Registry, dependency.Name, crate.CargoFile)
 			continue
 		}
 
 		manifest, err := c.generateManifest(crate, &dependency, depType, depTypeLabel)
 		if err != nil {
-			logrus.Debugln(err)
+			log.Debugln(err)
 			continue
 		}
 		*manifests = append(*manifests, manifest.Bytes())

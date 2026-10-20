@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
@@ -27,7 +27,7 @@ func (d *Dockerfile) Condition(_ context.Context, source string, scm scm.ScmHand
 			return false, "", fmt.Errorf("reading dockerfile: %w", err)
 		}
 
-		logrus.Debugf("\n🐋 On (Docker)file %q:\n\n", file)
+		log.Debugf("\n🐋 On (Docker)file %q:\n\n", file)
 
 		found := d.parser.FindInstruction([]byte(dockerfileContent), d.spec.Stage)
 

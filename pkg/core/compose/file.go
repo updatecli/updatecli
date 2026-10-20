@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"go.yaml.in/yaml/v3"
 )
 
@@ -25,13 +25,13 @@ func GetDefaultComposeFilename() string {
 	result := DefaultComposeFilename
 
 	if _, err := os.Stat(DeprecatedDefaultComposeFilename); err == nil {
-		logrus.Warnf("Deprecated default compose file %q detected. Please rename it to %q", DeprecatedDefaultComposeFilename, DefaultComposeFilename)
+		log.Warnf("Deprecated default compose file %q detected. Please rename it to %q", DeprecatedDefaultComposeFilename, DefaultComposeFilename)
 		result = DeprecatedDefaultComposeFilename
 	}
 
 	if _, err := os.Stat(DefaultComposeFilename); err == nil {
 		if result == DeprecatedDefaultComposeFilename {
-			logrus.Warnf("Both default compose files %q and %q detected. Please remove %q to start using %q", DeprecatedDefaultComposeFilename, DefaultComposeFilename, DeprecatedDefaultComposeFilename, DefaultComposeFilename)
+			log.Warnf("Both default compose files %q and %q detected. Please remove %q to start using %q", DeprecatedDefaultComposeFilename, DefaultComposeFilename, DeprecatedDefaultComposeFilename, DefaultComposeFilename)
 		}
 	}
 

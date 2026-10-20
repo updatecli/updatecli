@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
@@ -15,7 +15,7 @@ import (
 func (m *Maven) Condition(_ context.Context, source string, scm scm.ScmHandler, pathResolver pathresolver.Resolver) (pass bool, message string, err error) {
 
 	if scm != nil {
-		logrus.Warningf("SCM configuration is not supported for maven condition, aborting")
+		log.Warningf("SCM configuration is not supported for maven condition, aborting")
 	}
 
 	if m.spec.Version == "" {

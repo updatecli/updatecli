@@ -45,6 +45,15 @@ func DefaultTransport() http.RoundTripper {
 		return &retryTransport{transport: inner}
 	}
 
+	return UncachedTransport()
+}
+
+// UncachedTransport returns a RoundTripper with retry and proxy support that
+// never uses the HTTP cache, even when EnableHTTPCache was called.
+// Use it for API clients that also write, such as SCM clients: the cache keys
+// GET responses by URL only and nothing invalidates them after a write, so a
+// later read in the same run could miss a branch, tag or pull request just created.
+func UncachedTransport() http.RoundTripper {
 	return &retryTransport{
 		transport: otelhttp.NewTransport(&http.Transport{
 			Proxy: http.ProxyFromEnvironment,

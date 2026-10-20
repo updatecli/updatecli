@@ -10,7 +10,7 @@ import (
 
 	"github.com/drone/go-scm/scm"
 	"github.com/go-viper/mapstructure/v2"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/tmp"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/bitbucket/client"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git/commit"
@@ -199,7 +199,7 @@ func New(spec interface{}, pipelineID string) (*Bitbucket, error) {
 	}
 
 	if len(s.Branch) == 0 {
-		logrus.Warningf("no git branch specified, fallback to %q", "main")
+		log.Warningf("no git branch specified, fallback to %q", "main")
 		s.Branch = "main"
 	}
 
@@ -237,7 +237,7 @@ Some target plugin, like the shell one, run "git commit -A" to catch all changes
 If you know what you are doing, please set the force option to true in your configuration file to ignore this error message.
 `, s.Branch)
 
-			logrus.Errorln(errorMsg)
+			log.Errorln(errorMsg)
 			return nil, errors.New("unclear configuration, better safe than sorry")
 
 		}
@@ -286,7 +286,7 @@ func (b *Bitbucket) SearchTags() (tags []string, err error) {
 	}
 
 	if resp.Status > 400 {
-		logrus.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
+		log.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
 	}
 
 	for _, ref := range references {
@@ -301,7 +301,7 @@ func (s *Spec) Validate() error {
 	missingParameters := []string{}
 
 	if len(missingParameters) > 0 {
-		logrus.Errorf("missing parameter(s) [%s]", strings.Join(missingParameters, ","))
+		log.Errorf("missing parameter(s) [%s]", strings.Join(missingParameters, ","))
 	}
 
 	if gotError {

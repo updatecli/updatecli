@@ -9,8 +9,8 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/reports"
 	"github.com/updatecli/updatecli/pkg/core/version"
 )
@@ -23,12 +23,12 @@ var (
 // Publish publish a pipeline report to the updatecli api
 func Publish(r *reports.Report) error {
 
-	logrus.Infof("Publishing report to Udash")
+	log.Infof("Publishing report to Udash")
 
 	// setDefaultParam sets the default value for a parameter
 	setDefaultParam := func(envParam *string, configParam, envParamName, configParamName string) {
 		if *envParam != "" && configParam != "" {
-			logrus.Debugf("%s provided via environment variable %q supersede value %q from %q in config file",
+			log.Debugf("%s provided via environment variable %q supersede value %q from %q in config file",
 				*envParam,
 				envParamName,
 				configParamName,
@@ -43,7 +43,7 @@ func Publish(r *reports.Report) error {
 
 	configUdashURLString, configUdashApiURLString, configUdashToken, err := getConfigFromFile("")
 	if err != nil {
-		logrus.Debugf("get Udash config from file: %s", err)
+		log.Debugf("get Udash config from file: %s", err)
 	}
 
 	setDefaultParam(&envUdashApiURLString, configUdashApiURLString, DefaultEnvVariableAPIURL, "api")
@@ -94,7 +94,7 @@ func Publish(r *reports.Report) error {
 	}
 
 	if res.StatusCode >= 400 {
-		logrus.Debugf("response from %s:\n%s", u.String(), string(data))
+		log.Debugf("response from %s:\n%s", u.String(), string(data))
 		return responseError(res.Status, res.StatusCode, data, envUdashURLString)
 	}
 

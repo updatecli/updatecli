@@ -11,7 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/go-viper/mapstructure/v2"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
@@ -47,9 +47,9 @@ func New(spec interface{}) (*AMI, error) {
 
 	errs := newSpec.Validate()
 	if len(errs) > 0 {
-		logrus.Errorln("failed to validate aws/ami configuration")
+		log.Errorln("failed to validate aws/ami configuration")
 		for _, err := range errs {
-			logrus.Errorf("%s\n", err.Error())
+			log.Errorf("%s\n", err.Error())
 		}
 		return nil, ErrSpecNotValid
 	}
@@ -85,7 +85,7 @@ func New(spec interface{}) (*AMI, error) {
 
 	cfg, err := config.LoadDefaultConfig(ctx, configOptions...)
 	if err != nil {
-		logrus.Errorf("Failed to load AWS config: %v", err)
+		log.Errorf("Failed to load AWS config: %v", err)
 		return nil, ErrWrongServiceConnection
 	}
 

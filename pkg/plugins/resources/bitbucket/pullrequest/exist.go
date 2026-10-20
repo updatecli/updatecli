@@ -3,7 +3,7 @@ package pullrequest
 import (
 	"context"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/reports"
 )
 
@@ -15,7 +15,7 @@ func (b *Bitbucket) CheckActionExist(ctx context.Context, report *reports.Action
 	}
 
 	if pullRequestExists {
-		logrus.Debugf("Bitbucket pull request detected")
+		log.Debugf("Bitbucket pull request detected")
 
 		report.Title = pullRequestDetails.Title
 		report.Description = pullRequestDetails.Description

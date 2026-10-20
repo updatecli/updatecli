@@ -10,8 +10,8 @@ import (
 
 	validator "github.com/santhosh-tekuri/jsonschema/v6"
 	"github.com/santhosh-tekuri/jsonschema/v6/kind"
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/jsonschema"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"go.yaml.in/yaml/v3"
 )
 
@@ -88,7 +88,7 @@ func ValidateSchema(filename string, content []byte, options SchemaValidationOpt
 func reportSchemaProblems(filename string, content []byte, onProblem func(SchemaProblem)) {
 	report, err := ValidateSchema(filename, content, DefaultSchemaValidationOptions())
 	if err != nil {
-		logrus.Debugf("skipping the schema validation of %q: %s", filename, err)
+		log.Debugf("skipping the schema validation of %q: %s", filename, err)
 		return
 	}
 
@@ -98,7 +98,7 @@ func reportSchemaProblems(filename string, content []byte, onProblem func(Schema
 			continue
 		}
 
-		logrus.Warningf("%s", problem.String())
+		log.Warningf("%s", problem.String())
 	}
 }
 

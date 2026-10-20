@@ -8,7 +8,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 )
 
@@ -52,7 +52,7 @@ func (g GitHubAction) getGitHubActionManifest(spec *githubActionManifestSpec) ([
 	} else {
 		actionName, err = url.JoinPath(spec.URL, spec.Owner, spec.Repository)
 		if err != nil {
-			logrus.Errorf("building URL: %s", err)
+			log.Errorf("building URL: %s", err)
 		}
 	}
 
@@ -67,20 +67,20 @@ func (g GitHubAction) getGitHubActionManifest(spec *githubActionManifestSpec) ([
 
 	if len(g.spec.Ignore) > 0 {
 		if g.spec.Ignore.isMatchingRules(g.rootDir, spec.RelativeFoundFile, actionName, spec.Reference) {
-			logrus.Debugf("Ignoring GitHub Action %q as matching ignore rule(s)\n", actionName)
+			log.Debugf("Ignoring GitHub Action %q as matching ignore rule(s)\n", actionName)
 			return nil, nil
 		}
 	}
 
 	if len(g.spec.Only) > 0 {
 		if !g.spec.Only.isMatchingRules(g.rootDir, spec.RelativeFoundFile, actionName, spec.Reference) {
-			logrus.Debugf("Ignoring GitHub Action %q as not matching only rule(s)\n", actionName)
+			log.Debugf("Ignoring GitHub Action %q as not matching only rule(s)\n", actionName)
 			return nil, nil
 		}
 	}
 
 	if !g.digest && slices.Contains([]string{latestVersionIdentifier, "master", "main"}, spec.Reference) {
-		logrus.Debugf("Ignoring GitHub Action %q as it uses the reference %q \n",
+		log.Debugf("Ignoring GitHub Action %q as it uses the reference %q \n",
 			actionName,
 			spec.Reference,
 		)
@@ -99,7 +99,7 @@ func (g GitHubAction) getGitHubActionManifest(spec *githubActionManifestSpec) ([
 		versionFilterPattern, err = g.versionFilter.GreaterThanPattern(versionFilterRef)
 		versionFilterRegex = g.versionFilter.Regex
 		if err != nil {
-			logrus.Debugf("building version filter pattern: %s", err)
+			log.Debugf("building version filter pattern: %s", err)
 			versionFilterPattern = versionFilterRef
 		}
 	}

@@ -33,7 +33,8 @@ type Target struct {
 	Scm SCM
 	// ID contains a uniq identifier for the target
 	ID string
-	// ConsoleOutput stores the console output of the target execution
+	// ConsoleOutput stores the console output of the target execution.
+	// It may include lines from resources running at the same time.
 	ConsoleOutput string
 	//Changelogs holds the changelog description
 	Changelogs []Changelog

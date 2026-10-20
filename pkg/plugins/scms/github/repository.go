@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/shurcooL/githubv4"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github/client"
 )
 
@@ -61,11 +61,11 @@ func SearchRepositories(c client.Client, queryStr string, retry int, ctx context
 			if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) && retry < client.MaxRetry {
 				rateLimit, err := queryRateLimit(c, ctx)
 				if err != nil {
-					logrus.Errorf("Error querying GitHub API rate limit: %s", err)
+					log.Errorf("Error querying GitHub API rate limit: %s", err)
 				}
-				logrus.Debugln(rateLimit)
+				log.Debugln(rateLimit)
 				if retry < client.MaxRetry {
-					logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
+					log.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
 					rateLimit.Pause()
 					return SearchRepositories(c, queryStr, retry+1, ctx)
 				}

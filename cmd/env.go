@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 const DisableChangelogEnvVar = "UPDATECLI_DISABLE_CHANGELOG"
@@ -26,7 +26,7 @@ func getEnvBoolOrDefault(envVar string, defaultValue bool) bool {
 
 	parsed, err := strconv.ParseBool(strings.TrimSpace(value))
 	if err != nil {
-		logrus.Debugf(
+		log.Debugf(
 			"invalid boolean value for environment variable %q: %q, defaulting to %t",
 			envVar,
 			value,

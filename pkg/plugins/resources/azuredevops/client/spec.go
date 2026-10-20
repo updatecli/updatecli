@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 // Spec defines the settings used to connect to an Azure DevOps repository.
@@ -68,7 +68,7 @@ func (s Spec) Validate() error {
 	}
 
 	if len(missingParameters) > 0 {
-		logrus.Errorf("missing parameter(s) [%s]", strings.Join(missingParameters, ","))
+		log.Errorf("missing parameter(s) [%s]", strings.Join(missingParameters, ","))
 		return fmt.Errorf("wrong azure devops configuration")
 	}
 

@@ -7,7 +7,7 @@ import (
 	"text/template"
 
 	"github.com/Masterminds/semver/v3"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 func (f Flux) discoverHelmreleaseManifests() [][]byte {
@@ -18,20 +18,20 @@ func (f Flux) discoverHelmreleaseManifests() [][]byte {
 
 		relativeFoundFluxFile, err := filepath.Rel(f.rootDir, foundFluxFile)
 		if err != nil {
-			logrus.Debugln(err)
+			log.Debugln(err)
 			continue
 		}
 
 		// Retrieve chart dependencies for each chart
 		dataDocuments, err := loadHelmRelease(foundFluxFile)
 		if err != nil {
-			logrus.Debugln(err)
+			log.Debugln(err)
 			continue
 		}
 
 		for index, d := range dataDocuments {
 			if d.Spec.Chart == nil {
-				logrus.Debugf("Ignoring Helmrelease from %q, as it does not define a chart template", relativeFoundFluxFile)
+				log.Debugf("Ignoring Helmrelease from %q, as it does not define a chart template", relativeFoundFluxFile)
 				continue
 			}
 			helmChartName := d.Spec.Chart.Spec.Chart
@@ -59,22 +59,22 @@ func (f Flux) discoverHelmreleaseManifests() [][]byte {
 			_, err = semver.NewVersion(helmChartVersion)
 			if err != nil {
 				if semver.ErrInvalidSemVer == err {
-					logrus.Debugf("Ignoring Helm chart %q from %q, as %q not a valid semver version\n", helmChartName, relativeFoundFluxFile, helmChartVersion)
+					log.Debugf("Ignoring Helm chart %q from %q, as %q not a valid semver version\n", helmChartName, relativeFoundFluxFile, helmChartVersion)
 					continue
 				}
-				logrus.Debugf("parsing Helm chart version %q: %s", helmChartVersion, err)
+				log.Debugf("parsing Helm chart version %q: %s", helmChartVersion, err)
 			}
 
 			if len(f.spec.Ignore) > 0 {
 				if f.spec.Ignore.isMatchingRules(f.rootDir, relativeFoundFluxFile, helmRepositoryURL, helmChartName, helmChartVersion) {
-					logrus.Debugf("Ignoring Helm chart %q from %q, as matching ignore rule(s)\n", helmChartName, relativeFoundFluxFile)
+					log.Debugf("Ignoring Helm chart %q from %q, as matching ignore rule(s)\n", helmChartName, relativeFoundFluxFile)
 					continue
 				}
 			}
 
 			if len(f.spec.Only) > 0 {
 				if !f.spec.Only.isMatchingRules(f.rootDir, relativeFoundFluxFile, helmRepositoryURL, helmChartName, helmChartVersion) {
-					logrus.Debugf("Ignoring Helm chart %q from %q, as not matching only rule(s)\n", helmChartName, relativeFoundFluxFile)
+					log.Debugf("Ignoring Helm chart %q from %q, as not matching only rule(s)\n", helmChartName, relativeFoundFluxFile)
 					continue
 				}
 			}
@@ -85,10 +85,10 @@ func (f Flux) discoverHelmreleaseManifests() [][]byte {
 			case nil:
 				if _, ok := f.spec.Auths[repoURL.Host]; ok {
 					token = f.spec.Auths[repoURL.Host].Token
-					logrus.Debugf("found token for repository %q", repoURL.Host)
+					log.Debugf("found token for repository %q", repoURL.Host)
 				}
 			default:
-				logrus.Debugf("Ignoring auth configuration due to invalid Helm repository URL: %s", err)
+				log.Debugf("Ignoring auth configuration due to invalid Helm repository URL: %s", err)
 			}
 
 			sourceVersionFilterKind := defaultVersionFilterKind
@@ -100,14 +100,14 @@ func (f Flux) discoverHelmreleaseManifests() [][]byte {
 				sourceVersionFilterPattern, err = f.versionFilter.GreaterThanPattern(helmChartVersion)
 				sourceVersionFilterRegex = f.versionFilter.Regex
 				if err != nil {
-					logrus.Debugf("building version filter pattern: %s", err)
+					log.Debugf("building version filter pattern: %s", err)
 					sourceVersionFilterPattern = helmChartVersion
 				}
 			}
 
 			tmpl, err := template.New("manifest").Parse(helmreleaseManifestTemplate)
 			if err != nil {
-				logrus.Debugln(err)
+				log.Debugln(err)
 				continue
 			}
 
@@ -138,7 +138,7 @@ func (f Flux) discoverHelmreleaseManifests() [][]byte {
 
 			manifest := bytes.Buffer{}
 			if err := tmpl.Execute(&manifest, params); err != nil {
-				logrus.Debugln(err)
+				log.Debugln(err)
 				continue
 			}
 

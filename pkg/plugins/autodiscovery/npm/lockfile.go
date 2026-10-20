@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"go.yaml.in/yaml/v3"
 )
 
@@ -56,7 +56,7 @@ var lockFiles = []struct {
 func loadLockedVersions(dir, rootDir string) (lockedVersions, error) {
 	lockFile, parse := searchLockFile(dir, rootDir)
 	if parse == nil {
-		logrus.Debugf("no lock file found for %q", dir)
+		log.Debugf("no lock file found for %q", dir)
 		return lockedVersions{}, nil
 	}
 
@@ -73,7 +73,7 @@ func loadLockedVersions(dir, rootDir string) (lockedVersions, error) {
 	versions, err := parse(lockFile, data, filepath.ToSlash(importer))
 	if errors.Is(err, errUnknownImporter) {
 		// The lock file belongs to another project, so it says nothing about the versions installed for this one
-		logrus.Debugf("%q is not a project of lock file %q", dir, lockFile)
+		log.Debugf("%q is not a project of lock file %q", dir, lockFile)
 		return lockedVersions{}, nil
 	}
 	if err != nil {
@@ -288,7 +288,7 @@ func parseYarnLock(lockFile string, data []byte, importer string) (lockedVersion
 func isWorkspace(dir, importer string) bool {
 	data, err := os.ReadFile(filepath.Join(dir, "package.json"))
 	if err != nil {
-		logrus.Debugf("reading workspaces of %q: %s", dir, err)
+		log.Debugf("reading workspaces of %q: %s", dir, err)
 		return false
 	}
 

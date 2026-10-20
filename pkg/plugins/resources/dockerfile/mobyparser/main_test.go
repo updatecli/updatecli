@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 type dataSet struct {
@@ -247,7 +247,7 @@ func TestGetPositionKeys(t *testing.T) {
 		gotKey, gotInstPos, gotElemPos, err := getPositionKeys(d.key)
 
 		if err != nil {
-			logrus.Errorf("err - %s", err)
+			log.Errorf("err - %s", err)
 		}
 
 		if gotInstPos != d.expectedInstructionPosition {
@@ -277,13 +277,13 @@ func TestReplaceNode(t *testing.T) {
 		d, err := parser.Parse(bytes.NewReader([]byte(data.dockerfile)))
 
 		if err != nil {
-			logrus.Errorf("err - %s", err)
+			log.Errorf("err - %s", err)
 		}
 
 		found, val, err := data.spec.replace(d.AST)
 
 		if err != nil {
-			logrus.Errorf("err - %s", err)
+			log.Errorf("err - %s", err)
 		}
 
 		if found != data.expectedFound {

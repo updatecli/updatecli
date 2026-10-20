@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/reports"
 	utils "github.com/updatecli/updatecli/pkg/plugins/utils/action"
 
@@ -29,7 +29,7 @@ func (a *AzureDevOps) CreateAction(ctx context.Context, report *reports.Action, 
 	}
 
 	if existingPR != nil {
-		logrus.Debugln("Azure DevOps pull request already exists, updating it")
+		log.Debugln("Azure DevOps pull request already exists, updating it")
 
 		body, err = a.pullRequestBody(stringValue(existingPR.Description), report, resetDescription)
 		if err != nil {
@@ -128,7 +128,7 @@ func (a *AzureDevOps) CreateAction(ctx context.Context, report *reports.Action, 
 	report.Description = stringValue(pr.Description)
 	report.Link = a.pullRequestLink(pr)
 
-	logrus.Infof("Azure DevOps pull request successfully opened on %q", report.Link)
+	log.Infof("Azure DevOps pull request successfully opened on %q", report.Link)
 
 	return nil
 }
@@ -139,11 +139,11 @@ func (a *AzureDevOps) pullRequestBody(existingDescription string, report *report
 	}
 
 	if resetBody {
-		logrus.Debugf("Resetting pull request description with new report")
+		log.Debugf("Resetting pull request description with new report")
 		return utils.GeneratePullRequestBodyMarkdown("", report.ToActionsMarkdownString())
 	}
 
-	logrus.Debugf("Merging pull request description with new report")
+	log.Debugf("Merging pull request description with new report")
 
 	actionsMarkdown := report.ToActionsMarkdownString()
 	if existingDescription != "" {

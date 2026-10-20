@@ -2,12 +2,13 @@ package engine
 
 import (
 	"fmt"
+	"io"
 	"slices"
 	"strings"
 	"sync"
 
 	"github.com/mitchellh/hashstructure"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
@@ -35,7 +36,7 @@ func (e *Engine) InitSCM() (err error) {
 			}
 		}
 	}
-	logrus.Infof("\nSCM repository retrieved: %d", len(hashes))
+	log.Infof("\nSCM repository retrieved: %d", len(hashes))
 
 	return err
 }
@@ -69,7 +70,7 @@ func Clone(
 			defer wg.Done()
 			_, err := s.Clone()
 			if err != nil {
-				logrus.Errorf("err - %s", err)
+				log.Errorf("err - %s", err)
 			}
 		}(scmhandler)
 		<-channel
@@ -87,8 +88,7 @@ func (e *Engine) pushSCMCommits() error {
 	inconclusiveSCM := e.inconclusiveSCMBranches()
 
 	allScm := map[string]map[string]*scm.ScmHandler{}
-	logrus.Infof("\n\n%s\n", strings.ToTitle("Pushing Git changes"))
-	logrus.Infof("%s\n\n", strings.Repeat("=", len("Pushing Git changes")+1))
+	log.Title("Pushing Git changes")
 
 	countScms := 0
 	countPushedScms := 0
@@ -99,6 +99,7 @@ func (e *Engine) pushSCMCommits() error {
 			continue
 		}
 
+		stopCapture := pipeline.CaptureConsoleOutput()
 		for id := range pipeline.Targets {
 			target := pipeline.Targets[id]
 
@@ -124,25 +125,29 @@ func (e *Engine) pushSCMCommits() error {
 			if target.ToPush {
 				if _, ok := changedSCM[url]; ok {
 					if slices.Contains(changedSCM[url], branch) {
-						logrus.Debugf("Changes for target %q already pushed to %q on branch %q, skipping...\n", target.Config.Name, redact.URL(url), branch)
+						log.Debugf("Changes for target %q already pushed to %q on branch %q, skipping...\n", target.Config.Name, redact.URL(url), branch)
 						continue
 					}
 				}
 
 				err := scmHandler.Checkout()
 				if err != nil {
-					errs = append(errs, fmt.Sprintf("checking out git repository: %v", err))
+					msg := fmt.Sprintf("checking out git repository: %v", err)
+					log.Errorf("%s", msg)
+					errs = append(errs, msg)
 					target.Result.Result = result.FAILURE
 					continue
 				}
 
 				err = target.PushCommits()
 				if err != nil {
-					errs = append(errs, fmt.Sprintf("pushing commits for target %q: %s", target.Config.Name, err.Error()))
+					msg := fmt.Sprintf("pushing commits for target %q: %s", target.Config.Name, err.Error())
+					log.Errorf("%s", msg)
+					errs = append(errs, msg)
 					target.Result.Result = result.FAILURE
 					continue
 				}
-				logrus.Debugf("Pushed to URL: %q on branch: %q", redact.URL(url), branch)
+				log.Debugf("Pushed to URL: %q on branch: %q", redact.URL(url), branch)
 
 				if _, ok := changedSCM[url]; !ok {
 					changedSCM[url] = []string{}
@@ -153,12 +158,13 @@ func (e *Engine) pushSCMCommits() error {
 				countPushedScms++
 			}
 		}
+		stopCapture()
 	}
 
 	if countPushedScms == 0 {
-		logrus.Info("No SCM repositories have changes to push")
+		log.Info("No SCM repositories have changes to push")
 	} else {
-		logrus.Infof("Pushed changes to %d of %d SCM repositories", countPushedScms, countScms)
+		log.Infof("Pushed changes to %d of %d SCM repositories", countPushedScms, countScms)
 	}
 
 	for url := range allScm {
@@ -169,37 +175,12 @@ func (e *Engine) pushSCMCommits() error {
 				continue
 			}
 
-			scmHandler := *scmHandlerPtr
-
-			if slices.Contains(inconclusiveSCM[url], branch) {
-				logrus.Debugf("Not publishing branch %q to %q as at least one of its target(s) didn't run during this execution\n", branch, redact.URL(url))
-				continue
+			stopCapture := e.captureSCMConsoleOutput(url, branch)
+			if err := pushSCMBranch(*scmHandlerPtr, url, branch, slices.Contains(inconclusiveSCM[url], branch)); err != nil {
+				log.Errorf("%s", err)
+				errs = append(errs, err.Error())
 			}
-
-			isRemoteBranchUpToDate, err := scmHandler.IsRemoteBranchUpToDate()
-			if err != nil {
-				errs = append(errs, fmt.Sprintf("checking remote branch status for %q on branch %q: %s", redact.URL(url), branch, err.Error()))
-				continue
-			}
-
-			if isRemoteBranchUpToDate {
-				logrus.Debugf("No changes to push to %q on branch %q\n", redact.URL(url), branch)
-				continue
-			}
-
-			logrus.Infof("\n\u26A0 According to the git history, some commits must be pushed to %q %q\n", redact.URL(url), branch)
-
-			err = scmHandler.Checkout()
-			if err != nil {
-				errs = append(errs, fmt.Sprintf("checking out git repository: %v", err))
-				continue
-			}
-
-			isPushed, err := scmHandler.Push()
-			if err != nil {
-				errs = append(errs, fmt.Sprintf("pushing commits to %q on branch %q: %s", redact.URL(url), branch, err.Error()))
-			}
-			logrus.Debugf("Pushed changes to %q on branch %q: %t\n", redact.URL(url), branch, isPushed)
+			stopCapture()
 		}
 	}
 
@@ -212,6 +193,39 @@ func (e *Engine) pushSCMCommits() error {
 	return nil
 }
 
+// pushSCMBranch pushes the commits of a working branch, unless one of its targets didn't run.
+func pushSCMBranch(scmHandler scm.ScmHandler, url, branch string, inconclusive bool) error {
+	if inconclusive {
+		log.Debugf("Not publishing branch %q to %q as at least one of its target(s) didn't run during this execution\n", branch, redact.URL(url))
+		return nil
+	}
+
+	isRemoteBranchUpToDate, err := scmHandler.IsRemoteBranchUpToDate()
+	if err != nil {
+		return fmt.Errorf("checking remote branch status for %q on branch %q: %s", redact.URL(url), branch, err.Error())
+	}
+
+	if isRemoteBranchUpToDate {
+		log.Debugf("No changes to push to %q on branch %q\n", redact.URL(url), branch)
+		return nil
+	}
+
+	log.Infof("\n\u26A0 According to the git history, some commits must be pushed to %q %q\n", redact.URL(url), branch)
+
+	err = scmHandler.Checkout()
+	if err != nil {
+		return fmt.Errorf("checking out git repository: %v", err)
+	}
+
+	isPushed, err := scmHandler.Push()
+	if err != nil {
+		return fmt.Errorf("pushing commits to %q on branch %q: %s", redact.URL(url), branch, err.Error())
+	}
+	log.Debugf("Pushed changes to %q on branch %q: %t\n", redact.URL(url), branch, isPushed)
+
+	return nil
+}
+
 // pruneSCMBranches removes all working branches from the SCM.
 func (e *Engine) pruneSCMBranches() error {
 	errs := []string{}
@@ -219,7 +233,7 @@ func (e *Engine) pruneSCMBranches() error {
 	allScm := e.getUniqueTargetSCMTargets()
 	inconclusiveSCM := e.inconclusiveSCMBranches()
 
-	logrus.Debugf("Cleaning working branches")
+	log.Debugf("Cleaning working branches")
 
 	for url := range allScm {
 		for branch := range allScm[url] {
@@ -231,33 +245,12 @@ func (e *Engine) pruneSCMBranches() error {
 				continue
 			}
 
-			scmHandler := *scmHandlerPtr
-
-			_, workingBranch, targetBranch := scmHandler.GetBranches()
-
-			/*
-				Deleting a working branch closes the pull request associated with it so it
-				must only happen when Updatecli knows that the working branch isn't needed
-				anymore.
-			*/
-			if slices.Contains(inconclusiveSCM[url], branch) {
-				logrus.Debugf("Not cleaning working branch %q on %q as at least one of its target(s) didn't run during this execution\n", workingBranch, redact.URL(url))
-				continue
+			stopCapture := e.captureSCMConsoleOutput(url, branch)
+			if err := pruneSCMBranch(*scmHandlerPtr, url, branch, slices.Contains(inconclusiveSCM[url], branch)); err != nil {
+				log.Errorf("%s", err)
+				errs = append(errs, err.Error())
 			}
-
-			if workingBranch == targetBranch {
-				logrus.Debugf("Skipping cleaning working branch %q on %q (same as target branch)\n", workingBranch, redact.URL(url))
-				continue
-			}
-
-			isCleaned, err := scmHandler.CleanWorkingBranch()
-			if err != nil {
-				errs = append(errs, fmt.Sprintf("cleaning working branch on %q for branch %q: %s", redact.URL(url), branch, err.Error()))
-			}
-
-			if isCleaned {
-				logrus.Debugf("cleaning working branch %q for %q\n", branch, redact.URL(url))
-			}
+			stopCapture()
 		}
 	}
 
@@ -268,6 +261,64 @@ func (e *Engine) pruneSCMBranches() error {
 	}
 
 	return nil
+}
+
+// pruneSCMBranch deletes a working branch, unless one of its targets didn't run.
+func pruneSCMBranch(scmHandler scm.ScmHandler, url, branch string, inconclusive bool) error {
+	_, workingBranch, targetBranch := scmHandler.GetBranches()
+
+	/*
+		Deleting a working branch closes the pull request associated with it so it
+		must only happen when Updatecli knows that the working branch isn't needed
+		anymore.
+	*/
+	if inconclusive {
+		log.Debugf("Not cleaning working branch %q on %q as at least one of its target(s) didn't run during this execution\n", workingBranch, redact.URL(url))
+		return nil
+	}
+
+	if workingBranch == targetBranch {
+		log.Debugf("Skipping cleaning working branch %q on %q (same as target branch)\n", workingBranch, redact.URL(url))
+		return nil
+	}
+
+	isCleaned, err := scmHandler.CleanWorkingBranch()
+	if err != nil {
+		return fmt.Errorf("cleaning working branch on %q for branch %q: %s", redact.URL(url), branch, err.Error())
+	}
+
+	if isCleaned {
+		log.Debugf("cleaning working branch %q for %q\n", branch, redact.URL(url))
+	}
+
+	return nil
+}
+
+// captureSCMConsoleOutput collects the console output in the report of every pipeline
+// having a target on the given repository branch, until stop is called.
+func (e *Engine) captureSCMConsoleOutput(url, branch string) (stop func()) {
+	var writers []io.Writer
+
+	for _, p := range e.Pipelines {
+		for _, target := range p.Targets {
+			if target.Scm == nil {
+				continue
+			}
+
+			scmHandler := *target.Scm
+			_, targetBranch, _ := scmHandler.GetBranches()
+			if scmHandler.GetURL() == url && targetBranch == branch {
+				writers = append(writers, p.ConsoleOutputWriter())
+				break
+			}
+		}
+	}
+
+	if len(writers) == 0 {
+		return func() {}
+	}
+
+	return log.Capture(io.MultiWriter(writers...))
 }
 
 /*

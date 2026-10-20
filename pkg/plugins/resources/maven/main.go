@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/go-viper/mapstructure/v2"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/mavenmetadata"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
@@ -210,7 +210,7 @@ func (m Maven) Validate() error {
 
 	if len(errs) > 0 {
 		for _, e := range errs {
-			logrus.Errorln(e.Error())
+			log.Errorln(e.Error())
 		}
 		return ErrWrongSpec
 	}
@@ -224,10 +224,10 @@ func (s *Spec) Sanitize() error {
 	var err error
 
 	if len(s.URL) > 0 {
-		logrus.Warningf("Parameter %q is deprecate, please prefix its content to parameter %q", "URL", "repository")
+		log.Warningf("Parameter %q is deprecate, please prefix its content to parameter %q", "URL", "repository")
 		s.Repository, err = joinURL([]string{s.URL, s.Repository})
 		if err != nil {
-			logrus.Errorln(err)
+			log.Errorln(err)
 		}
 	}
 
@@ -251,7 +251,7 @@ func (s *Spec) Sanitize() error {
 
 	if len(errs) > 0 {
 		for i := range errs {
-			logrus.Errorf("%s", errs[i])
+			log.Errorf("%s", errs[i])
 		}
 		return fmt.Errorf("failed sanitizing Maven spec")
 

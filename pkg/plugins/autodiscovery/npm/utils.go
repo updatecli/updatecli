@@ -11,8 +11,9 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/updatecli/updatecli/pkg/core/log"
+
 	"github.com/Masterminds/semver/v3"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -35,12 +36,12 @@ func searchPackageJsonFiles(rootDir string) ([]string, error) {
 
 	foundFiles := []string{}
 
-	logrus.Debugf("Looking for package.json files in %q", rootDir)
+	log.Debugf("Looking for package.json files in %q", rootDir)
 
 	// To do switch to WalkDir which is more efficient, introduced in 1.16
 	err := filepath.Walk(rootDir, func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
-			fmt.Printf("prevent panic by handling failure accessing a path %q: %v\n", path, err)
+			log.Warningf("prevent panic by handling failure accessing a path %q: %v\n", path, err)
 			return err
 		}
 
@@ -84,7 +85,7 @@ func isVersionConstraintSupported(packageName, packageVersion string) bool {
 
 	for _, uriPrefix := range uriPrefixes {
 		if strings.HasPrefix(packageVersion, uriPrefix) {
-			logrus.Debugf("Ignoring dependency %q. Updating uri type %q is not supported at this time. Feel free to reach out to suggest an update scenario", packageName, uriPrefix)
+			log.Debugf("Ignoring dependency %q. Updating uri type %q is not supported at this time. Feel free to reach out to suggest an update scenario", packageName, uriPrefix)
 			return false
 		}
 	}
@@ -93,21 +94,21 @@ func isVersionConstraintSupported(packageName, packageVersion string) bool {
 	// https://docs.npmjs.com/cli/v6/configuring-npm/package-json#local-paths
 	for _, localPath := range []string{"../", "./", "~/", "/"} {
 		if strings.HasPrefix(packageVersion, localPath) {
-			logrus.Debugf("Ignoring dependency %q. Updating local path is not supported at this time. Feel free to reach out to suggest an update scenario", packageName)
+			log.Debugf("Ignoring dependency %q. Updating local path is not supported at this time. Feel free to reach out to suggest an update scenario", packageName)
 			return false
 		}
 	}
 
 	if packageVersion == "" || packageVersion == latestVersionIdentifier || packageVersion == "*" {
-		logrus.Debugf("Ignoring dependency %q. It contains a version constraint %q handled by NPM", packageName, packageVersion)
-		logrus.Debugln("You probably want to adopt a better versioning strategy")
+		log.Debugf("Ignoring dependency %q. It contains a version constraint %q handled by NPM", packageName, packageVersion)
+		log.Debugln("You probably want to adopt a better versioning strategy")
 		return true
 	}
 
 	_, err := semver.NewConstraint(packageVersion)
 	if err != nil {
-		logrus.Debugln(err)
-		logrus.Debugf("Semantic versioning constraint %q not supported for package %q", packageVersion, packageName)
+		log.Debugln(err)
+		log.Debugf("Semantic versioning constraint %q not supported for package %q", packageVersion, packageName)
 		return false
 	}
 
@@ -121,8 +122,8 @@ func isVersionConstraintSpecified(packageName, packageVersion string) bool {
 	// version set to an empty string is equivalent to *
 
 	if packageVersion == "" || packageVersion == latestVersionIdentifier || packageVersion == "*" {
-		logrus.Debugf("Ignoring dependency %q. It contains a version constraint %q handled by NPM", packageName, packageVersion)
-		logrus.Debugln("You probably want to adopt a better versioning strategy")
+		log.Debugf("Ignoring dependency %q. It contains a version constraint %q handled by NPM", packageName, packageVersion)
+		log.Debugln("You probably want to adopt a better versioning strategy")
 		return true
 	}
 
@@ -137,7 +138,7 @@ func isVersionConstraintSpecified(packageName, packageVersion string) bool {
 	// https://docs.npmjs.com/cli/v6/configuring-npm/package-json#git-urls-as-dependencies
 	for _, uriPrefix := range []string{"https://", "http://", "ftp://", "file://"} {
 		if strings.HasPrefix(packageVersion, uriPrefix) {
-			logrus.Debugf("Ignoring dependency %q. Updating URL is not supported at this time. Feel free to reach out to suggest an update scenario", packageName)
+			log.Debugf("Ignoring dependency %q. Updating URL is not supported at this time. Feel free to reach out to suggest an update scenario", packageName)
 			return true
 		}
 	}
@@ -146,7 +147,7 @@ func isVersionConstraintSpecified(packageName, packageVersion string) bool {
 	// https://docs.npmjs.com/cli/v6/configuring-npm/package-json#git-urls-as-dependencies
 	for _, gitPrefix := range []string{"git://", "git+ssh://", "git+https://", "git+file://"} {
 		if strings.HasPrefix(packageVersion, gitPrefix) {
-			logrus.Debugf("Ignoring dependency %q. Updating Git URL is not supported at this time. Feel free to reach out to suggest an update scenario", packageName)
+			log.Debugf("Ignoring dependency %q. Updating Git URL is not supported at this time. Feel free to reach out to suggest an update scenario", packageName)
 			return true
 		}
 	}
@@ -155,15 +156,15 @@ func isVersionConstraintSpecified(packageName, packageVersion string) bool {
 	// https://docs.npmjs.com/cli/v6/configuring-npm/package-json#local-paths
 	for _, localPath := range []string{"../", "./", "~/", "/"} {
 		if strings.HasPrefix(packageVersion, localPath) {
-			logrus.Debugf("Ignoring dependency %q. Updating local path is not supported at this time. Feel free to reach out to suggest an update scenario", packageName)
+			log.Debugf("Ignoring dependency %q. Updating local path is not supported at this time. Feel free to reach out to suggest an update scenario", packageName)
 			return true
 		}
 	}
 
 	_, err := semver.StrictNewVersion(packageVersion)
 	if err != nil {
-		logrus.Debugln(err)
-		logrus.Debugf("None strict semantic version detected %s for package %q", packageVersion, packageName)
+		log.Debugln(err)
+		log.Debugf("None strict semantic version detected %s for package %q", packageVersion, packageName)
 		return true
 	}
 
@@ -187,19 +188,19 @@ func isNpmSupportYarnUpdate() bool {
 
 	err := cmd.Run()
 	if err != nil {
-		logrus.Debugf("failed while running npm command - %s", stderr.String())
+		log.Debugf("failed while running npm command - %s", stderr.String())
 		return false
 	}
 
 	currentVersion, err := semver.NewVersion(strings.TrimSuffix(stdout.String(), "\n"))
 	if err != nil {
-		logrus.Debugf("failed verifying current npm version - %s\n%s", err, stdout.String())
+		log.Debugf("failed verifying current npm version - %s\n%s", err, stdout.String())
 		return false
 	}
 
 	c, err := semver.NewConstraint(">= 8.0.0")
 	if err != nil {
-		logrus.Debugln(err)
+		log.Debugln(err)
 	}
 
 	return c.Check(currentVersion)
@@ -235,10 +236,10 @@ func getTargetCommand(cmd, dependencyName string) string {
 		if isNpmSupportYarnUpdate() {
 			return fmt.Sprintf("npm install --package-lock-only --dry-run=%s %s@{{ source %q }}", dryRunVariable, dependencyName, npmIdentifier)
 		}
-		logrus.Infof("In the current state, yarn package update do not support dry-run mode")
+		log.Infof("In the current state, yarn package update do not support dry-run mode")
 		return fmt.Sprintf("yarn add --mode update-lockfile %s@{{ source %q }}", dependencyName, npmIdentifier)
 	case "pnpm":
-		logrus.Infof("In the current state, pnpm package update does not support dry-run mode")
+		log.Infof("In the current state, pnpm package update does not support dry-run mode")
 		return fmt.Sprintf("pnpm add --lockfile-only %s@{{ source %q }}", dependencyName, npmIdentifier)
 	}
 

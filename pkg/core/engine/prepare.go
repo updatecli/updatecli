@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/telemetry"
 	"github.com/updatecli/updatecli/pkg/core/tmp"
 	"go.opentelemetry.io/otel/attribute"
@@ -15,7 +15,7 @@ import (
 // Prepare runs all preparation phases under the provided context,
 // emitting an OTel span for the overall prepare phase and one child span per sub-phase.
 func (e *Engine) Prepare(ctx context.Context) (err error) {
-	PrintTitle("Prepare")
+	log.Title("Prepare")
 
 	tracer := e.tracer
 	ctx, span := tracer.Start(ctx, "updatecli.prepare")
@@ -33,8 +33,8 @@ func (e *Engine) Prepare(ctx context.Context) (err error) {
 		_, loadSpan := tracer.Start(ctx, "updatecli.load_configurations")
 		err = e.LoadConfigurations()
 		if !errors.Is(err, ErrNoManifestDetected) && err != nil {
-			logrus.Errorln(err)
-			logrus.Infof("\n%d pipeline(s) successfully loaded\n", len(e.Pipelines))
+			log.Errorln(err)
+			log.Infof("\n%d pipeline(s) successfully loaded\n", len(e.Pipelines))
 			telemetry.RecordSpanError(loadSpan, err)
 		}
 		if errors.Is(err, ErrNoManifestDetected) {

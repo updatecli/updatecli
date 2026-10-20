@@ -3,10 +3,9 @@ package engine
 import (
 	"errors"
 	"fmt"
-	"strings"
 
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/cmdoptions"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/udash"
 )
 
@@ -22,13 +21,12 @@ func (e *Engine) publishToUdash() error {
 
 	if !cmdoptions.Experimental {
 		if udash.IsConfigured() {
-			logrus.Warningf("A Udash endpoint is configured but publishing reports requires the flag --experimental, skipping. Use --disable-udash-report to silence this warning.")
+			log.Warningf("A Udash endpoint is configured but publishing reports requires the flag --experimental, skipping. Use --disable-udash-report to silence this warning.")
 		}
 		return nil
 	}
 
-	logrus.Infof("\n\n%s\n", strings.ToTitle("Udash - Experimental"))
-	logrus.Infof("%s\n\n", strings.Repeat("=", len("Udash - Experimental")+1))
+	log.Title("Udash - Experimental")
 
 	errs := []error{}
 
@@ -37,13 +35,13 @@ func (e *Engine) publishToUdash() error {
 		err := udash.Publish(&pipeline.Report)
 		if err != nil {
 			if errors.Is(err, udash.ErrNoUdashAPIURL) {
-				logrus.Infof("no Udash endpoint detected, skipping")
+				log.Infof("no Udash endpoint detected, skipping")
 				break
 			}
 			errs = append(errs, fmt.Errorf("pipeline %q: %w", pipeline.Name, err))
 		}
 		if pipeline.Report.ReportURL != "" {
-			logrus.Infof("%s:\n\t=> %q", pipeline.Name, pipeline.Report.ReportURL)
+			log.Infof("%s:\n\t=> %q", pipeline.Name, pipeline.Report.ReportURL)
 		}
 		e.Pipelines[id] = pipeline
 	}

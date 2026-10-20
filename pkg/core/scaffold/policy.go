@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"text/template"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 var (
@@ -87,7 +87,7 @@ func (s *Scaffold) scaffoldPolicy(p *PolicySpec, dirname string) error {
 	policyFilePath := filepath.Join(dirname, s.PolicyFile)
 
 	if _, err := os.Stat(policyFilePath); err == nil {
-		logrus.Infof("Skipping, policy already exist: %s", policyFilePath)
+		log.Infof("Skipping, policy already exist: %s", policyFilePath)
 		return nil
 	}
 

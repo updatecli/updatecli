@@ -3,9 +3,9 @@ package cmd
 import (
 	"os"
 
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/config"
 	"github.com/updatecli/updatecli/pkg/core/engine/manifest"
+	"github.com/updatecli/updatecli/pkg/core/log"
 
 	"github.com/spf13/cobra"
 )
@@ -19,7 +19,7 @@ var (
 			policyReferences = args
 			err := getPolicyFilesFromRegistry()
 			if err != nil {
-				logrus.Errorf("command failed: %s", err)
+				log.Errorf("command failed: %s", err)
 				os.Exit(1)
 			}
 
@@ -40,7 +40,7 @@ var (
 
 			err = run("pipeline/diff")
 			if err != nil {
-				logrus.Errorf("command failed: %s", err)
+				log.Errorf("command failed: %s", err)
 				os.Exit(1)
 			}
 		},

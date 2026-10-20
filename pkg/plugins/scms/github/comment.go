@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/shurcooL/githubv4"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github/client"
 )
 
@@ -21,9 +21,9 @@ func (p *PullRequest) addComment(ctx context.Context, body string, retry int) er
 	rateLimit, err := queryRateLimit(p.gh.client, ctx)
 	if err != nil {
 		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
-			logrus.Debugln(rateLimit)
+			log.Debugln(rateLimit)
 			if retry < client.MaxRetry {
-				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
+				log.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
 				rateLimit.Pause()
 				return p.addComment(ctx, body, retry+1)
 			}
@@ -32,7 +32,7 @@ func (p *PullRequest) addComment(ctx context.Context, body string, retry int) er
 		return fmt.Errorf("unable to query GitHub API rate limit: %w", err)
 	}
 
-	logrus.Debugln(rateLimit)
+	log.Debugln(rateLimit)
 
 	// cfr https://docs.github.com/en/graphql/reference/objects#issuecomment
 	var mutation struct {
@@ -53,7 +53,7 @@ func (p *PullRequest) addComment(ctx context.Context, body string, retry int) er
 		} `graphql:"addComment(input: $input)"`
 	}
 
-	logrus.Debugf("Commenting GitHub pull request %s", p.remotePullRequest.Url)
+	log.Debugf("Commenting GitHub pull request %s", p.remotePullRequest.Url)
 
 	input := githubv4.AddCommentInput{
 		SubjectID: githubv4.ID(p.remotePullRequest.ID),

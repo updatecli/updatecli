@@ -3,7 +3,7 @@ package bitbucket
 import (
 	"os"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 func (b *Bitbucket) setDirectory() {
@@ -11,7 +11,7 @@ func (b *Bitbucket) setDirectory() {
 
 		err := os.MkdirAll(b.Spec.Directory, 0o755)
 		if err != nil {
-			logrus.Errorf("err - %s", err)
+			log.Errorf("err - %s", err)
 		}
 	}
 }

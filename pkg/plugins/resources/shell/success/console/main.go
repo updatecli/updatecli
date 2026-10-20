@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
@@ -62,7 +62,7 @@ func (c *Console) ConditionResult() (bool, error) {
 	case 0:
 		return true, nil
 	default:
-		logrus.Infof("shell command failed. Expected exit code 0 but got %d", *c.exitCode)
+		log.Infof("shell command failed. Expected exit code 0 but got %d", *c.exitCode)
 		return false, nil
 	}
 }

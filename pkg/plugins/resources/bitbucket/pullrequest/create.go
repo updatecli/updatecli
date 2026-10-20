@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/drone/go-scm/scm"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/reports"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	utils "github.com/updatecli/updatecli/pkg/plugins/utils/action"
@@ -38,7 +38,7 @@ func (b *Bitbucket) CreateAction(ctx context.Context, report *reports.Action, re
 		such as missing remote branches.
 	*/
 	if !ok {
-		logrus.Debugln("skipping pull request creation")
+		log.Debugln("skipping pull request creation")
 		return nil
 	}
 
@@ -65,7 +65,7 @@ func (b *Bitbucket) CreateAction(ctx context.Context, report *reports.Action, re
 			}
 		}
 
-		logrus.Debugf("Title:\t%q\nBody:\t%q\nSource:\n%q\nTarget:\t%q\n",
+		log.Debugf("Title:\t%q\nBody:\t%q\nSource:\n%q\nTarget:\t%q\n",
 			title,
 			body,
 			b.SourceBranch,
@@ -76,7 +76,7 @@ func (b *Bitbucket) CreateAction(ctx context.Context, report *reports.Action, re
 			return err
 		}
 
-		logrus.Infof("%s Bitbucket Cloud pull request successfully updated %q", result.SUCCESS, responseLink)
+		log.Infof("%s Bitbucket Cloud pull request successfully updated %q", result.SUCCESS, responseLink)
 	} else {
 
 		var body string
@@ -85,11 +85,11 @@ func (b *Bitbucket) CreateAction(ctx context.Context, report *reports.Action, re
 		} else {
 			body, err = utils.GeneratePullRequestBodyMarkdown("", report.ToActionsMarkdownString())
 			if err != nil {
-				logrus.Warningf("something went wrong while generating Bitbucket Pull Request body: %s", err)
+				log.Warningf("something went wrong while generating Bitbucket Pull Request body: %s", err)
 			}
 		}
 
-		logrus.Debugf("Title:\t%q\nBody:\t%q\nSource:\n%q\nTarget:\t%q\n",
+		log.Debugf("Title:\t%q\nBody:\t%q\nSource:\n%q\nTarget:\t%q\n",
 			title,
 			body,
 			b.SourceBranch,
@@ -100,7 +100,7 @@ func (b *Bitbucket) CreateAction(ctx context.Context, report *reports.Action, re
 			return err
 		}
 
-		logrus.Infof("%s Bitbucket Cloud pull request successfully opened %q", result.SUCCESS, responseLink)
+		log.Infof("%s Bitbucket Cloud pull request successfully opened %q", result.SUCCESS, responseLink)
 	}
 
 	report.Link = responseLink
@@ -135,7 +135,7 @@ func (b *Bitbucket) createPullRequest(title, body string) (responseTitle string,
 
 	if err != nil {
 		if err.Error() == scm.ErrNotFound.Error() {
-			logrus.Infof("Bitbucket Cloud pull request not created, skipping")
+			log.Infof("Bitbucket Cloud pull request not created, skipping")
 			return "", "", "", nil
 		}
 		return "", "", "", err
@@ -216,7 +216,7 @@ func (b *Bitbucket) updatePullRequest(pullRequestNumber int, title, body string)
 func (b *Bitbucket) logErrorResponse(resp *scm.Response) {
 	if resp != nil {
 		if resp.Status > 400 {
-			logrus.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
+			log.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
 		}
 	}
 }

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 type Environments []Environment
@@ -36,7 +36,7 @@ func (e Environments) isDuplicate() bool {
 	}
 
 	if len(foundDuplicatedName) > 0 {
-		logrus.Warningf("duplicated environment variable found: [%q]\n", strings.Join(foundDuplicatedName, ","))
+		log.Warningf("duplicated environment variable found: [%q]\n", strings.Join(foundDuplicatedName, ","))
 		return true
 	}
 
@@ -51,12 +51,12 @@ func (e Environments) Validate() error {
 		err := environment.Validate()
 		if err != nil {
 			gotErr = true
-			logrus.Errorf("error with environment variable %q - %q", environment.Name, err)
+			log.Errorf("error with environment variable %q - %q", environment.Name, err)
 		}
 
 		if environment.Name == DryRunVariableName {
 			gotErr = true
-			logrus.Errorf("environment variable %q is defined and overridden by the Updatecli process", DryRunVariableName)
+			log.Errorf("environment variable %q is defined and overridden by the Updatecli process", DryRunVariableName)
 
 		}
 	}
@@ -77,7 +77,7 @@ func (e *Environments) Load(ignoreNotFound bool) error {
 	for id := range environments {
 		err := environments[id].Load(ignoreNotFound)
 		if err != nil {
-			logrus.Errorln(err)
+			log.Errorln(err)
 		}
 	}
 	return nil

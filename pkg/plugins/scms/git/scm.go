@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
 )
@@ -30,7 +30,7 @@ func (g *Git) CleanWorkingBranch() (bool, error) {
 	_, workingBranch, targetBranch := g.GetBranches()
 
 	if workingBranch == targetBranch {
-		logrus.Infof("Skipping cleaning working branch %q on %q (same as target branch)\n", workingBranch, redact.URL(g.GetURL()))
+		log.Infof("Skipping cleaning working branch %q on %q (same as target branch)\n", workingBranch, redact.URL(g.GetURL()))
 		return false, nil
 	}
 
@@ -109,7 +109,7 @@ func (g *Git) Clone() (string, error) {
 		g.spec.SingleBranch != nil && *g.spec.SingleBranch,
 	)
 	if err != nil {
-		logrus.Errorf("failed cloning git repository %q - %s", redact.URL(g.GetURL()), err)
+		log.Errorf("failed cloning git repository %q - %s", redact.URL(g.GetURL()), err)
 		return "", err
 	}
 

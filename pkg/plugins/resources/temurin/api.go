@@ -10,8 +10,8 @@ import (
 	"net/url"
 	"slices"
 
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
 )
 
@@ -39,7 +39,7 @@ func (t Temurin) apiPerformHttpReq(ctx context.Context, endpoint string, webClie
 		return []byte{}, "", fmt.Errorf("something went wrong while performing a request to %q:\n%s", redact.URL(url), err)
 	}
 
-	logrus.Debugf("[temurin] Performing an http GET request to %q...", redact.URL(url))
+	log.Debugf("[temurin] Performing an http GET request to %q...", redact.URL(url))
 
 	res, err := webClient.Do(req)
 	if err != nil {
@@ -47,7 +47,7 @@ func (t Temurin) apiPerformHttpReq(ctx context.Context, endpoint string, webClie
 	}
 	defer res.Body.Close()
 
-	logrus.Debugf("[temurin] API client returned the following response:\n%v\n", res)
+	log.Debugf("[temurin] API client returned the following response:\n%v\n", res)
 
 	if res.StatusCode >= 400 {
 		_, _ = httputil.DumpResponse(res, false)
@@ -55,7 +55,7 @@ func (t Temurin) apiPerformHttpReq(ctx context.Context, endpoint string, webClie
 	}
 
 	locationHeader = res.Header.Get("Location")
-	logrus.Debugf("[temurin] API client got the following Location header value: %q.", locationHeader)
+	log.Debugf("[temurin] API client got the following Location header value: %q.", locationHeader)
 
 	body, err = io.ReadAll(res.Body)
 	if err != nil {
@@ -92,7 +92,7 @@ func (t Temurin) apiGetLastFeatureRelease(ctx context.Context) (result int, fall
 	slices.Sort(candidates)
 
 	if len(candidates) == 0 {
-		logrus.Debugf("[temurin] API returned no available releases for release line %q", t.spec.ReleaseLine)
+		log.Debugf("[temurin] API returned no available releases for release line %q", t.spec.ReleaseLine)
 	}
 
 	// Build fallbacks: all candidates except the primary, highest version first.
@@ -108,13 +108,13 @@ func (t Temurin) apiGetLastFeatureRelease(ctx context.Context) (result int, fall
 func (t Temurin) apiGetInfoReleases(ctx context.Context) (result *apiInfoReleases, err error) {
 	body, err := t.apiGetBody(ctx, availableReleasesEndpoint)
 	if err != nil {
-		logrus.Errorf("something went wrong while getting Temurin API releases information %q", err)
+		log.Errorf("something went wrong while getting Temurin API releases information %q", err)
 		return result, err
 	}
 
 	err = json.Unmarshal(body, &result)
 	if err != nil {
-		logrus.Errorf("something went wrong while decoding response from Temurin API releases information%q", err)
+		log.Errorf("something went wrong while decoding response from Temurin API releases information%q", err)
 		return result, err
 	}
 
@@ -124,13 +124,13 @@ func (t Temurin) apiGetInfoReleases(ctx context.Context) (result *apiInfoRelease
 func (t Temurin) apiGetArchitectures(ctx context.Context) (result []string, err error) {
 	body, err := t.apiGetBody(ctx, architecturesEndpoint)
 	if err != nil {
-		logrus.Errorf("something went wrong while getting Temurin API available architectures %q", err)
+		log.Errorf("something went wrong while getting Temurin API available architectures %q", err)
 		return result, err
 	}
 
 	err = json.Unmarshal(body, &result)
 	if err != nil {
-		logrus.Errorf("something went wrong while decoding response from Temurin API available architectures %q", err)
+		log.Errorf("something went wrong while decoding response from Temurin API available architectures %q", err)
 		return result, err
 	}
 
@@ -140,13 +140,13 @@ func (t Temurin) apiGetArchitectures(ctx context.Context) (result []string, err 
 func (t Temurin) apiGetOperatingSystems(ctx context.Context) (result []string, err error) {
 	body, err := t.apiGetBody(ctx, osEndpoints)
 	if err != nil {
-		logrus.Errorf("something went wrong while getting Temurin API available operating systems %q.", err)
+		log.Errorf("something went wrong while getting Temurin API available operating systems %q.", err)
 		return result, err
 	}
 
 	err = json.Unmarshal(body, &result)
 	if err != nil {
-		logrus.Errorf("something went wrong while decoding response from Temurin API operating systems %q.", err)
+		log.Errorf("something went wrong while decoding response from Temurin API operating systems %q.", err)
 		return result, err
 	}
 
@@ -186,7 +186,7 @@ func (t Temurin) apiQueryReleaseNamesForRange(ctx context.Context, versionRange 
 		url.QueryEscape(versionRange),
 	)
 
-	logrus.Debugf("[temurin] using API endpoint %q", apiEndpoint)
+	log.Debugf("[temurin] using API endpoint %q", apiEndpoint)
 
 	body, err := t.apiGetBody(ctx, apiEndpoint)
 	if err != nil {
@@ -195,7 +195,7 @@ func (t Temurin) apiQueryReleaseNamesForRange(ctx context.Context, versionRange 
 
 	var apiResult releaseInformation
 	if err := json.Unmarshal(body, &apiResult); err != nil {
-		logrus.Debugf("[temurin] Failed decoding the response: %q\n", err)
+		log.Debugf("[temurin] Failed decoding the response: %q\n", err)
 		return nil, fmt.Errorf("[temurin] No release found matching provided criteria. Use '--debug' to get details")
 	}
 
@@ -252,17 +252,17 @@ func (t Temurin) apiGetReleaseNames(ctx context.Context) (result []string, err e
 		if queryErr != nil {
 			if firstErr == nil {
 				firstErr = queryErr
-				logrus.Debugf("[temurin] feature version %d returned an error, trying fallback: %v", version, queryErr)
+				log.Debugf("[temurin] feature version %d returned an error, trying fallback: %v", version, queryErr)
 			}
-			logrus.Debugf("[temurin] falling back from feature version %d after error: %v", version, queryErr)
+			log.Debugf("[temurin] falling back from feature version %d after error: %v", version, queryErr)
 			continue
 		}
 		if len(releases) == 0 {
-			logrus.Debugf("[temurin] no releases found for feature version %d, trying fallback", version)
+			log.Debugf("[temurin] no releases found for feature version %d, trying fallback", version)
 			continue
 		}
 		if i > 0 {
-			logrus.Debugf("[temurin] using fallback feature version %d", version)
+			log.Debugf("[temurin] using fallback feature version %d", version)
 		}
 		return releases, nil
 	}
@@ -271,7 +271,7 @@ func (t Temurin) apiGetReleaseNames(ctx context.Context) (result []string, err e
 		return []string{}, firstErr
 	}
 
-	logrus.Debugf("[temurin] exhausted all %d candidate feature versions with no matching releases", len(candidates))
+	log.Debugf("[temurin] exhausted all %d candidate feature versions with no matching releases", len(candidates))
 	return []string{}, nil
 }
 
@@ -286,10 +286,10 @@ func (t Temurin) apiGetInstallerUrl(ctx context.Context, releaseName string) (re
 		t.spec.Project,
 	)
 
-	logrus.Debugf("[temurin] using API endpoint %q", apiEndpoint)
+	log.Debugf("[temurin] using API endpoint %q", apiEndpoint)
 	locationHeader, err := t.apiGetRedirectLocation(ctx, apiEndpoint)
 	if err != nil {
-		logrus.Errorf("something went wrong while getting Temurin API latest release information %q.", err)
+		log.Errorf("something went wrong while getting Temurin API latest release information %q.", err)
 		return result, err
 	}
 
@@ -307,11 +307,11 @@ func (t Temurin) apiGetChecksumUrl(ctx context.Context, releaseName string) (res
 		t.spec.Project,
 	)
 
-	logrus.Debugf("[temurin] using API endpoint %q", apiEndpoint)
+	log.Debugf("[temurin] using API endpoint %q", apiEndpoint)
 
 	installerChecksumUrl, err := t.apiGetRedirectLocation(ctx, apiEndpoint)
 	if err != nil {
-		logrus.Errorf("something went wrong while getting Temurin API latest release information %q.", err)
+		log.Errorf("something went wrong while getting Temurin API latest release information %q.", err)
 		return result, err
 	}
 
@@ -329,11 +329,11 @@ func (t Temurin) apiGetSignatureUrl(ctx context.Context, releaseName string) (re
 		t.spec.Project,
 	)
 
-	logrus.Debugf("[temurin] using API endpoint %q", apiEndpoint)
+	log.Debugf("[temurin] using API endpoint %q", apiEndpoint)
 
 	signatureUrl, err := t.apiGetRedirectLocation(ctx, apiEndpoint)
 	if err != nil {
-		logrus.Errorf("something went wrong while getting Temurin API latest release information %q", err)
+		log.Errorf("something went wrong while getting Temurin API latest release information %q", err)
 		return result, err
 	}
 

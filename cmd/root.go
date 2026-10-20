@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/exp/slices"
@@ -64,10 +63,8 @@ Updatecli  works into three stages:
 
 // Execute executes the root command.
 func Execute() {
-	logrus.SetFormatter(log.NewTextFormat())
-
 	if err := rootCmd.Execute(); err != nil {
-		logrus.Errorf("%s %s", result.FAILURE, err)
+		log.Errorf("%s %s", result.FAILURE, err)
 		os.Exit(1)
 	}
 }
@@ -86,8 +83,6 @@ var skipVersionCheckCommands = []string{
 
 func init() {
 
-	logrus.SetOutput(os.Stdout)
-
 	rootCmd.PersistentPostRun = func(cmd *cobra.Command, args []string) {
 		if disableVersionCheck {
 			return
@@ -99,7 +94,7 @@ func init() {
 		}
 		err := engine.CheckLatestPublishedVersion()
 		if err != nil {
-			logrus.Debugf("Unable to check for the latest version of updatecli: %v", err)
+			log.Debugf("Unable to check for the latest version of updatecli: %v", err)
 		}
 	}
 
@@ -109,24 +104,24 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(&disableVersionCheck, "disable-version-check", getEnvBoolOrDefault(DisableVersionCheckEnvVar, false), "Disable version check (env: "+DisableVersionCheckEnvVar+")")
 	rootCmd.PersistentPreRun = func(cmd *cobra.Command, args []string) {
 		if verbose {
-			logrus.SetLevel(logrus.DebugLevel)
+			log.SetLevel(log.DebugLevel)
 		} else {
 			detectedCi, err := ci.New()
 			if err == nil && detectedCi.IsDebug() {
-				logrus.Infof("CI pipeline detected in Debug Mode - hence enabling debug mode")
-				logrus.SetLevel(logrus.DebugLevel)
+				log.Infof("CI pipeline detected in Debug Mode - hence enabling debug mode")
+				log.SetLevel(log.DebugLevel)
 			}
 		}
 		if experimental {
 			cmdoptions.Experimental = true
-			logrus.Infof("Experimental Mode Enabled")
+			log.Infof("Experimental Mode Enabled")
 		}
 		if uniqueTmpDir {
 			if err := tmp.InitUnique(); err != nil {
-				logrus.Errorf("failed to initialize unique tmp dir: %s", err)
+				log.Errorf("failed to initialize unique tmp dir: %s", err)
 				os.Exit(1)
 			}
-			logrus.Infof("Using unique temporary directory: %s", tmp.Directory)
+			log.Infof("Using unique temporary directory: %s", tmp.Directory)
 		}
 	}
 	rootCmd.AddCommand(
@@ -151,7 +146,7 @@ func run(command string) error {
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 		if err := shutdown(shutdownCtx); err != nil {
-			logrus.Warnf("telemetry shutdown: %v", err)
+			log.Warnf("telemetry shutdown: %v", err)
 		}
 	}()
 
@@ -183,20 +178,20 @@ func run(command string) error {
 		if applyClean {
 			defer func() {
 				if err := e.Clean(); err != nil {
-					logrus.Errorf("error in apply clean - %s", err)
+					log.Errorf("error in apply clean - %s", err)
 				}
 			}()
 		}
 
 		err := e.Prepare(ctx)
 		if err != nil {
-			logrus.Errorf("%s %s", result.FAILURE, err)
+			log.Errorf("%s %s", result.FAILURE, err)
 			return err
 		}
 
 		err = e.Run(ctx)
 		if err != nil {
-			logrus.Errorf("%s %s", result.FAILURE, err)
+			log.Errorf("%s %s", result.FAILURE, err)
 			return err
 		}
 	case "diff", "compose/diff", "pipeline/diff":
@@ -204,20 +199,20 @@ func run(command string) error {
 		if diffClean {
 			defer func() {
 				if err := e.Clean(); err != nil {
-					logrus.Errorf("error in diff clean - %s", err)
+					log.Errorf("error in diff clean - %s", err)
 				}
 			}()
 		}
 
 		err := e.Prepare(ctx)
 		if err != nil {
-			logrus.Errorf("%s %s", result.FAILURE, err)
+			log.Errorf("%s %s", result.FAILURE, err)
 			return err
 		}
 
 		err = e.Run(ctx)
 		if err != nil {
-			logrus.Errorf("%s %s", result.FAILURE, err)
+			log.Errorf("%s %s", result.FAILURE, err)
 			return err
 		}
 
@@ -225,41 +220,41 @@ func run(command string) error {
 		if prepareClean {
 			defer func() {
 				if err := e.Clean(); err != nil {
-					logrus.Errorf("error in prepare clean - %s", err)
+					log.Errorf("error in prepare clean - %s", err)
 				}
 			}()
 		}
 
 		err := e.Prepare(ctx)
 		if err != nil {
-			logrus.Errorf("%s %s", result.FAILURE, err)
+			log.Errorf("%s %s", result.FAILURE, err)
 		}
 
 	case "manifest/init":
 
 		err := e.Scaffold(manifestInitPolicyRootDir)
 		if err != nil {
-			logrus.Errorf("%s %s", result.FAILURE, err)
+			log.Errorf("%s %s", result.FAILURE, err)
 		}
 
 	case "manifest/upgrade":
 		err := e.ManifestUpgrade(manifestUpgradeInPlace)
 		if err != nil {
-			logrus.Errorf("%s %s", result.FAILURE, err)
+			log.Errorf("%s %s", result.FAILURE, err)
 			return err
 		}
 
 	case "manifest/validate":
 		err := e.ValidateManifests(manifestValidateStrict)
 		if err != nil {
-			logrus.Errorf("%s %s", result.FAILURE, err)
+			log.Errorf("%s %s", result.FAILURE, err)
 			return err
 		}
 
 	case "manifest/pull":
 		err := e.PullFromRegistry(manifestPullPolicyReference, disableTLS)
 		if err != nil {
-			logrus.Errorf("%s %s", result.FAILURE, err)
+			log.Errorf("%s %s", result.FAILURE, err)
 			return err
 		}
 
@@ -276,7 +271,7 @@ func run(command string) error {
 			manifestPushOverwrite)
 
 		if err != nil {
-			logrus.Errorf("%s %s", result.FAILURE, err)
+			log.Errorf("%s %s", result.FAILURE, err)
 			return err
 		}
 
@@ -285,7 +280,7 @@ func run(command string) error {
 		if showClean {
 			defer func() {
 				if err := e.Clean(); err != nil {
-					logrus.Errorf("error in show clean - %s", err)
+					log.Errorf("error in show clean - %s", err)
 				}
 			}()
 		}
@@ -293,48 +288,48 @@ func run(command string) error {
 		if !showDisablePrepare {
 			err := e.Prepare(ctx)
 			if err != nil {
-				logrus.Errorf("%s %s", result.FAILURE, err)
+				log.Errorf("%s %s", result.FAILURE, err)
 				return err
 			}
 		}
 
 		err := e.Show()
 		if err != nil {
-			logrus.Errorf("%s %s", result.FAILURE, err)
+			log.Errorf("%s %s", result.FAILURE, err)
 			return err
 		}
 
 	case "udash/config":
 		configFilePath, err := udash.ConfigFilePath()
 		if err != nil {
-			logrus.Errorf("%s %s", result.FAILURE, err)
+			log.Errorf("%s %s", result.FAILURE, err)
 			return err
 		}
 
-		logrus.Infof("Config file located at %q", configFilePath)
+		log.Infof("Config file located at %q", configFilePath)
 
 	case "udash/login":
 		err := udash.Login(udashEndpointURL, udashEndpointAPIURL, udashAccessToken)
 		if err != nil {
-			logrus.Errorf("%s %s", result.FAILURE, err)
+			log.Errorf("%s %s", result.FAILURE, err)
 			return err
 		}
 
 	case "udash/logout":
 		err := udash.Logout(udashEndpointURL)
 		if err != nil {
-			logrus.Errorf("%s %s", result.FAILURE, err)
+			log.Errorf("%s %s", result.FAILURE, err)
 			return err
 		}
 
 	case jsonschemaCmdName:
 		err := engine.GenerateSchema(jsonschemaBaseID, jsonschemaDirectory)
 		if err != nil {
-			logrus.Errorf("%s %s", result.FAILURE, err)
+			log.Errorf("%s %s", result.FAILURE, err)
 			return err
 		}
 	default:
-		logrus.Warnf("Wrong command")
+		log.Warnf("Wrong command")
 	}
 	return nil
 }
@@ -348,7 +343,7 @@ func parseLabels(labels []string) map[string]string {
 		for _, entry := range strings.Split(label, ",") {
 			kv := strings.SplitN(entry, ":", 2)
 			if kv[0] == "" {
-				logrus.Warnf("Ignoring label with empty key: %q", entry)
+				log.Warnf("Ignoring label with empty key: %q", entry)
 				continue
 			}
 			if result == nil {

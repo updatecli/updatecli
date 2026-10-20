@@ -12,7 +12,7 @@ import (
 
 	"encoding/json"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/ci"
@@ -98,6 +98,9 @@ type Report struct {
 	Targets    map[string]*result.Target
 	ReportURL  string
 	CI         *CIData
+	// ConsoleOutput holds the end of the console output of the whole pipeline,
+	// including the output logged outside of any source, condition or target
+	ConsoleOutput string `json:",omitempty"`
 	// UpdatecliVersion is the version of Updatecli which produced the report
 	UpdatecliVersion string
 	// stableID holds the report ID frozen by FreezeID, before the configuration was rendered
@@ -118,7 +121,7 @@ func (r *Report) String(mode string) (report string, err error) {
 	case "all":
 		t = template.Must(template.New("reports").Parse(REPORTTEMPLATE))
 	default:
-		logrus.Infof("Wrong report template provided")
+		log.Infof("Wrong report template provided")
 	}
 
 	buffer := new(bytes.Buffer)

@@ -3,10 +3,9 @@ package helm
 import (
 	"fmt"
 	"path"
-	"strings"
 
 	"github.com/go-viper/mapstructure/v2"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/docker"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
@@ -166,14 +165,14 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Helm, error) {
 	dir := rootDir
 	if path.IsAbs(s.RootDir) {
 		if scmID != "" {
-			logrus.Warningf("rootdir %q is an absolute path, scmID %q will be ignored", s.RootDir, scmID)
+			log.Warningf("rootdir %q is an absolute path, scmID %q will be ignored", s.RootDir, scmID)
 		}
 		dir = s.RootDir
 	}
 
 	// Fallback to the current process path if not rootdir specified.
 	if len(dir) == 0 {
-		logrus.Errorln("no working directory defined")
+		log.Errorln("no working directory defined")
 		return Helm{}, err
 	}
 
@@ -202,8 +201,7 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Helm, error) {
 
 func (h Helm) DiscoverManifests() ([][]byte, error) {
 
-	logrus.Infof("\n\n%s\n", strings.ToTitle("Helm"))
-	logrus.Infof("%s\n", strings.Repeat("=", len("Helm")+1))
+	log.Heading("Helm")
 
 	var manifests [][]byte
 	var err error
@@ -211,14 +209,14 @@ func (h Helm) DiscoverManifests() ([][]byte, error) {
 	if !h.spec.IgnoreChartDependency {
 		manifests, err = h.discoverHelmDependenciesManifests()
 		if err != nil {
-			logrus.Errorf("generating Helm chart dependencies manifest(s): %s", err)
+			log.Errorf("generating Helm chart dependencies manifest(s): %s", err)
 		}
 	}
 
 	if !h.spec.IgnoreContainer {
 		containerManifest, err := h.discoverHelmContainerManifests()
 		if err != nil {
-			logrus.Errorf("generating container update manifest(s): %s", err)
+			log.Errorf("generating container update manifest(s): %s", err)
 		}
 
 		manifests = append(manifests, containerManifest...)

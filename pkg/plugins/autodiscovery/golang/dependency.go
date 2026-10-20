@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"text/template"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/vulnerability"
 )
@@ -34,17 +34,17 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 	}
 
 	for _, foundFile := range foundFiles {
-		logrus.Debugf("parsing file %q", foundFile)
+		log.Debugf("parsing file %q", foundFile)
 
 		relativeFoundFile, err := filepath.Rel(g.rootDir, foundFile)
 		if err != nil {
-			logrus.Debugln(err)
+			log.Debugln(err)
 			continue
 		}
 
 		relativeWorkDir, err := filepath.Rel(g.rootDir, filepath.Dir(foundFile))
 		if err != nil {
-			logrus.Debugln(err)
+			log.Debugln(err)
 			continue
 		}
 
@@ -65,13 +65,13 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 
 		case false:
 			if goSumFound {
-				logrus.Warningf("File %q detected but not Golang so we can't run go mod tidy if %s is modified", goSumFilePath, foundFile)
+				log.Warningf("File %q detected but not Golang so we can't run go mod tidy if %s is modified", goSumFilePath, foundFile)
 			}
 		}
 
 		goVersion, goModules, goModulesToReplace, appliedReplaces, err := getGoModContent(foundFile)
 		if err != nil {
-			logrus.Debugln(err)
+			log.Debugln(err)
 			continue
 		}
 
@@ -97,7 +97,7 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 				// Test if the ignore rule based on path is respected
 				if len(g.spec.Ignore) > 0 {
 					if g.spec.Ignore.isMatchingRules(g.rootDir, relativeFoundFile, goVersion, goModule, goModuleVersion, false) {
-						logrus.Debugf("Ignoring module %q from file %q, as matching ignore rule(s)\n", goModule, relativeFoundFile)
+						log.Debugf("Ignoring module %q from file %q, as matching ignore rule(s)\n", goModule, relativeFoundFile)
 						continue
 					}
 				}
@@ -105,14 +105,14 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 				// Test if the only rule based on path is respected
 				if len(g.spec.Only) > 0 {
 					if !g.spec.Only.isMatchingRules(g.rootDir, relativeFoundFile, goVersion, goModule, goModuleVersion, false) {
-						logrus.Debugf("Ignoring module %q from %q, as not matching only rule(s)\n", goModule, relativeFoundFile)
+						log.Debugf("Ignoring module %q from %q, as not matching only rule(s)\n", goModule, relativeFoundFile)
 						continue
 					}
 				}
 
 				goModuleVersionKind, goModuleVersionPattern, err := g.moduleVersionPattern(goModuleVersion)
 				if err != nil {
-					logrus.Debugf("skipping golang module %q due to: %s", goModule, err)
+					log.Debugf("skipping golang module %q due to: %s", goModule, err)
 					continue
 				}
 
@@ -129,7 +129,7 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 					g.spec.Age,
 				)
 				if err != nil {
-					logrus.Debugf("skipping golang module %q module due to: %s", goModule, err)
+					log.Debugf("skipping golang module %q module due to: %s", goModule, err)
 					continue
 				}
 
@@ -147,7 +147,7 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 				// Test if the ignore rule based on path is respected
 				if len(g.spec.Ignore) > 0 {
 					if g.spec.Ignore.isMatchingRules(g.rootDir, relativeFoundFile, goVersion, replace.NewPath, replace.NewVersion, true) {
-						logrus.Debugf("Ignoring module %q from file %q, as matching ignore rule(s)\n", replace.NewPath, relativeFoundFile)
+						log.Debugf("Ignoring module %q from file %q, as matching ignore rule(s)\n", replace.NewPath, relativeFoundFile)
 						continue
 					}
 				}
@@ -155,14 +155,14 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 				// Test if the only rule based on path is respected
 				if len(g.spec.Only) > 0 {
 					if !g.spec.Only.isMatchingRules(g.rootDir, relativeFoundFile, goVersion, replace.NewPath, replace.NewVersion, true) {
-						logrus.Debugf("Ignoring module %q from %q, as not matching only rule(s)\n", replace.NewPath, relativeFoundFile)
+						log.Debugf("Ignoring module %q from %q, as not matching only rule(s)\n", replace.NewPath, relativeFoundFile)
 						continue
 					}
 				}
 
 				goModuleVersionKind, goModuleVersionPattern, err := g.moduleVersionPattern(replace.NewVersion)
 				if err != nil {
-					logrus.Debugf("skipping golang module %q due to: %s", replace.NewPath, err)
+					log.Debugf("skipping golang module %q due to: %s", replace.NewPath, err)
 					continue
 				}
 
@@ -181,7 +181,7 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 					g.spec.Age,
 				)
 				if err != nil {
-					logrus.Debugf("skipping golang module %q module due to: %s", replace.NewPath, err)
+					log.Debugf("skipping golang module %q module due to: %s", replace.NewPath, err)
 					continue
 				}
 
@@ -199,7 +199,7 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 				// Test if the ignore rule based on path is respected
 				if len(g.spec.Ignore) > 0 {
 					if g.spec.Ignore.isMatchingRules(g.rootDir, relativeFoundFile, goVersion, goModule, goModuleVersion, replaced) {
-						logrus.Debugf("Ignoring module %q from file %q, as matching ignore rule(s)\n", goModule, relativeFoundFile)
+						log.Debugf("Ignoring module %q from file %q, as matching ignore rule(s)\n", goModule, relativeFoundFile)
 						continue
 					}
 				}
@@ -207,7 +207,7 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 				// Test if the only rule based on path is respected
 				if len(g.spec.Only) > 0 {
 					if !g.spec.Only.isMatchingRules(g.rootDir, relativeFoundFile, goVersion, goModule, goModuleVersion, replaced) {
-						logrus.Debugf("Ignoring module %q from %q, as not matching only rule(s)\n", goModule, relativeFoundFile)
+						log.Debugf("Ignoring module %q from %q, as not matching only rule(s)\n", goModule, relativeFoundFile)
 						continue
 					}
 				}
@@ -220,10 +220,10 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 				if replaced {
 					switch {
 					case replace.isLocal():
-						logrus.Debugf("skipping golang module %q security manifest as it's replaced by the local path %q in %q", goModule, replace.NewPath, relativeFoundFile)
+						log.Debugf("skipping golang module %q security manifest as it's replaced by the local path %q in %q", goModule, replace.NewPath, relativeFoundFile)
 						continue
 					case replace.Ambiguous:
-						logrus.Warningf("skipping golang module %q security manifest as its replace directive without version can't be updated while another one with a version exists in %q", goModule, relativeFoundFile)
+						log.Warningf("skipping golang module %q security manifest as its replace directive without version can't be updated while another one with a version exists in %q", goModule, relativeFoundFile)
 						continue
 					}
 
@@ -236,7 +236,7 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 
 				moduleManifest, err := getGolangModuleSecurityManifest(params)
 				if err != nil {
-					logrus.Debugf("skipping golang module %q security manifest due to: %s", params.Module, err)
+					log.Debugf("skipping golang module %q security manifest due to: %s", params.Module, err)
 					continue
 				}
 
@@ -256,14 +256,14 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 		}
 
 		if g.spec.Vulnerability != nil {
-			logrus.Debugf("Ignoring golang version update from file %q, as Go version security updates are not supported", relativeFoundFile)
+			log.Debugf("Ignoring golang version update from file %q, as Go version security updates are not supported", relativeFoundFile)
 			continue
 		}
 
 		// Test if the ignore rule based on path is respected
 		if len(g.spec.Ignore) > 0 {
 			if g.spec.Ignore.isMatchingRules(g.rootDir, relativeFoundFile, goVersion, "", "", false) {
-				logrus.Debugf("Ignoring golang version update from file %q, as matching ignore rule(s)\n", relativeFoundFile)
+				log.Debugf("Ignoring golang version update from file %q, as matching ignore rule(s)\n", relativeFoundFile)
 				continue
 			}
 		}
@@ -271,7 +271,7 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 		// Test if the only rule based on path is respected
 		if len(g.spec.Only) > 0 {
 			if !g.spec.Only.isMatchingRules(g.rootDir, relativeFoundFile, goVersion, "", "", false) {
-				logrus.Debugf("Ignoring golang version update from %q, as not matching only rule(s)\n", relativeFoundFile)
+				log.Debugf("Ignoring golang version update from %q, as not matching only rule(s)\n", relativeFoundFile)
 				continue
 			}
 		}
@@ -279,7 +279,7 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 		goVersionPattern, err := g.versionFilter.GreaterThanPattern(goVersion)
 		golangVersionManifest := []byte{}
 		if err != nil {
-			logrus.Debugln(err)
+			log.Debugln(err)
 		} else {
 			golangVersionManifest, err = getGolangVersionManifest(
 				relativeFoundFile,
@@ -290,15 +290,15 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 				g.actionID,
 				g.spec.Age)
 			if err != nil {
-				logrus.Debugln(err)
-				logrus.Debugln("skipping golang version manifest due to previous error")
+				log.Debugln(err)
+				log.Debugln("skipping golang version manifest due to previous error")
 			}
 		}
 		manifests = append(manifests, golangVersionManifest)
 
 	}
 
-	logrus.Printf("%v manifests identified", len(manifests))
+	log.Printf("%v manifests identified", len(manifests))
 
 	return manifests, nil
 }
@@ -318,7 +318,7 @@ func getGolangVersionManifest(
 	a age.Spec) ([]byte, error) {
 	tmpl, err := parseManifestTemplate(goManifestTemplate)
 	if err != nil {
-		logrus.Debugln(err)
+		log.Debugln(err)
 		return nil, err
 	}
 
@@ -342,7 +342,7 @@ func getGolangVersionManifest(
 
 	manifest := bytes.Buffer{}
 	if err := tmpl.Execute(&manifest, params); err != nil {
-		logrus.Debugln(err)
+		log.Debugln(err)
 		return nil, err
 	}
 	return manifest.Bytes(), nil
@@ -362,7 +362,7 @@ func getGolangModuleManifest(
 
 	tmpl, err := parseManifestTemplate(goModuleManifestTemplate)
 	if err != nil {
-		logrus.Debugln(err)
+		log.Debugln(err)
 		return nil, err
 	}
 
@@ -392,7 +392,7 @@ func getGolangModuleManifest(
 
 	manifest := bytes.Buffer{}
 	if err := tmpl.Execute(&manifest, params); err != nil {
-		logrus.Debugln(err)
+		log.Debugln(err)
 		return nil, err
 	}
 	return manifest.Bytes(), nil
@@ -413,7 +413,7 @@ func getGolangReplaceModuleManifest(filename,
 
 	tmpl, err := parseManifestTemplate(goReplaceModuleManifestTemplate)
 	if err != nil {
-		logrus.Debugln(err)
+		log.Debugln(err)
 		return nil, err
 	}
 
@@ -447,7 +447,7 @@ func getGolangReplaceModuleManifest(filename,
 
 	manifest := bytes.Buffer{}
 	if err := tmpl.Execute(&manifest, params); err != nil {
-		logrus.Debugln(err)
+		log.Debugln(err)
 		return nil, err
 	}
 	return manifest.Bytes(), nil
@@ -477,13 +477,13 @@ type securityManifestParams struct {
 func getGolangModuleSecurityManifest(params securityManifestParams) ([]byte, error) {
 	tmpl, err := parseManifestTemplate(goModuleSecurityManifestTemplate)
 	if err != nil {
-		logrus.Debugln(err)
+		log.Debugln(err)
 		return nil, err
 	}
 
 	manifest := bytes.Buffer{}
 	if err := tmpl.Execute(&manifest, params); err != nil {
-		logrus.Debugln(err)
+		log.Debugln(err)
 		return nil, err
 	}
 	return manifest.Bytes(), nil

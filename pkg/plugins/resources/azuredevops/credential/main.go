@@ -3,7 +3,7 @@ package credential
 import (
 	"os"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 var (
@@ -17,11 +17,11 @@ var (
 func GetCredentialsFromEnv() (username string, token string) {
 	username = os.Getenv(ENVIRONMENT_AZURE_DEVOPS_USERNAME)
 	if username != "" {
-		logrus.Debugf("Azure DevOps username found in environment variable %s", ENVIRONMENT_AZURE_DEVOPS_USERNAME)
+		log.Debugf("Azure DevOps username found in environment variable %s", ENVIRONMENT_AZURE_DEVOPS_USERNAME)
 	}
 	token = os.Getenv(ENVIRONMENT_AZURE_DEVOPS_TOKEN)
 	if token != "" {
-		logrus.Debugf("Azure DevOps token found in environment variable %s", ENVIRONMENT_AZURE_DEVOPS_TOKEN)
+		log.Debugf("Azure DevOps token found in environment variable %s", ENVIRONMENT_AZURE_DEVOPS_TOKEN)
 	}
 	return username, token
 }

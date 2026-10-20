@@ -3,10 +3,9 @@ package updatecli
 import (
 	"fmt"
 	"path"
-	"strings"
 
 	"github.com/go-viper/mapstructure/v2"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/docker"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
@@ -142,14 +141,14 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Updatecli, error) {
 	dir := rootDir
 	if path.IsAbs(s.RootDir) {
 		if scmID != "" {
-			logrus.Warningf("rootdir %q is an absolute path, scmID %q will be ignored", s.RootDir, scmID)
+			log.Warningf("rootdir %q is an absolute path, scmID %q will be ignored", s.RootDir, scmID)
 		}
 		dir = s.RootDir
 	}
 
 	// Fallback to the current process path if no "rootdir" specified.
 	if len(dir) == 0 {
-		logrus.Errorln("no working directory defined")
+		log.Errorln("no working directory defined")
 		return Updatecli{}, err
 	}
 
@@ -179,8 +178,7 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Updatecli, error) {
 // DiscoverManifests search for Updatecli compose file and generate Updatecli manifests.
 func (u Updatecli) DiscoverManifests() ([][]byte, error) {
 
-	logrus.Infof("\n\n%s\n", strings.ToTitle("Updatecli"))
-	logrus.Infof("%s\n", strings.Repeat("=", len("Updatecli")+1))
+	log.Heading("Updatecli")
 
 	return u.discoverUpdatecliPolicyManifests()
 }

@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
 	"github.com/updatecli/updatecli/pkg/core/registry"
@@ -18,7 +18,7 @@ import (
 func (di *DockerImage) Changelog(from, to string) *result.Changelogs {
 	ref, err := di.createRef(di.foundVersion.GetVersion())
 	if err != nil {
-		logrus.Debugf("invalid reference %s: %v", di.spec.Image, err)
+		log.Debugf("invalid reference %s: %v", di.spec.Image, err)
 		return nil
 	}
 
@@ -26,13 +26,13 @@ func (di *DockerImage) Changelog(from, to string) *result.Changelogs {
 		ref.Name(),
 		false)
 	if err != nil {
-		logrus.Debugf("unable to get image %s: %v", di.spec.Image, err)
+		log.Debugf("unable to get image %s: %v", di.spec.Image, err)
 		return nil
 	}
 
 	changelog := getChangelogAnnotation(manifestData)
 	if changelog == "" {
-		logrus.Debugf("no changelog annotation found in image %s", di.spec.Image)
+		log.Debugf("no changelog annotation found in image %s", di.spec.Image)
 		return nil
 	}
 
@@ -42,12 +42,12 @@ func (di *DockerImage) Changelog(from, to string) *result.Changelogs {
 	}
 
 	if err != nil {
-		logrus.Debugf("unable to parse changelog URL: %v", err)
+		log.Debugf("unable to parse changelog URL: %v", err)
 		return nil
 	}
 
 	if !strings.HasSuffix(changelogURL.Path, ".md") {
-		logrus.Debugln("As of today changelog must be a markdown available on HTTP/HTTPS")
+		log.Debugln("As of today changelog must be a markdown available on HTTP/HTTPS")
 		return nil
 	}
 
@@ -62,7 +62,7 @@ func (di *DockerImage) Changelog(from, to string) *result.Changelogs {
 
 	resp, err := httpclient.NewRetryClient().Get(changelogURL.String())
 	if err != nil {
-		logrus.Debugf("retrieving changelog from url: %v", err)
+		log.Debugf("retrieving changelog from url: %v", err)
 		return nil
 	}
 
@@ -72,7 +72,7 @@ func (di *DockerImage) Changelog(from, to string) *result.Changelogs {
 	// Copy data from the response to standard output
 	_, err = io.Copy(buf, resp.Body) // use package "io" and "os"
 	if err != nil {
-		logrus.Debugf("%v", err)
+		log.Debugf("%v", err)
 		return nil
 	}
 
@@ -80,7 +80,7 @@ func (di *DockerImage) Changelog(from, to string) *result.Changelogs {
 
 	sections, err := markdown.ParseMarkdown([]byte(changelog))
 	if err != nil {
-		logrus.Debugf("unable to parse changelog: %v", err)
+		log.Debugf("unable to parse changelog: %v", err)
 		return nil
 	}
 
@@ -88,7 +88,7 @@ func (di *DockerImage) Changelog(from, to string) *result.Changelogs {
 	body := sections.GetSectionAsMarkdown(di.foundVersion.GetVersion())
 
 	if body == "" {
-		logrus.Debugf("no changelog found for image %s", di.spec.Image)
+		log.Debugf("no changelog found for image %s", di.spec.Image)
 		return nil
 	}
 
@@ -125,6 +125,6 @@ func redirectToGitHubRawContent(u *url.URL) {
 	}
 
 	if beforePath != u.Path {
-		logrus.Debugf("Redirecting %s to %s", beforePath, u.Path)
+		log.Debugf("Redirecting %s to %s", beforePath, u.Path)
 	}
 }
