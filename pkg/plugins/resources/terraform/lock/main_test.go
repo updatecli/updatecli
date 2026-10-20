@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/minamijoyo/tfupdate/lock"
+	"github.com/minamijoyo/tfupdate/tfregistry"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
@@ -648,26 +649,13 @@ func TestUpdateAbsoluteFilePath(t *testing.T) {
 	}
 }
 
-// fakeIndex records the platforms requested and only knows the hashes of every
-// published platform when allPlatformsSupported is set, like a registry publishing h1 hashes.
+// fakeIndex records the platforms downloaded to compute their hashes.
 type fakeIndex struct {
-	allPlatformsSupported bool
-	requestedPlatforms    [][]string
+	requestedPlatforms [][]string
 }
 
 func (f *fakeIndex) GetOrCreateProviderVersion(_ context.Context, address string, version string, platforms []string) (*lock.ProviderVersion, error) {
 	f.requestedPlatforms = append(f.requestedPlatforms, platforms)
-
-	if len(platforms) == 0 {
-		if !f.allPlatformsSupported {
-			return nil, errors.New("the registry does not support h1 hashes")
-		}
-		return lock.NewMockProviderVersion(address, version,
-			[]string{"darwin_arm64", "linux_amd64"},
-			map[string]string{"darwin_arm64": "h1:darwin", "linux_amd64": "h1:linux"},
-			map[string]string{"darwin_arm64": "zh:darwin", "linux_amd64": "zh:linux"},
-		), nil
-	}
 
 	return lock.NewMockProviderVersion(address, version,
 		platforms,
@@ -676,56 +664,102 @@ func (f *fakeIndex) GetOrCreateProviderVersion(_ context.Context, address string
 	), nil
 }
 
+// fakeRegistry publishes version 3.2.1 for darwin_arm64 and linux_amd64 only, and
+// publishes h1 hashes in its package metadata when allPlatformsSupported is set, like the OpenTofu registry.
+type fakeRegistry struct {
+	allPlatformsSupported bool
+	requestedPlatforms    []string
+}
+
+func (f *fakeRegistry) ListProviderVersions(_ context.Context, _ *tfregistry.ListProviderVersionsRequest) (*tfregistry.ListProviderVersionsResponse, error) {
+	return &tfregistry.ListProviderVersionsResponse{
+		Versions: []tfregistry.ProviderVersion{
+			{Version: "3.2.0", Platforms: []tfregistry.ProviderPlatform{{OS: "windows", Arch: "386"}}},
+			{Version: "3.2.1", Platforms: []tfregistry.ProviderPlatform{{OS: "darwin", Arch: "arm64"}, {OS: "linux", Arch: "amd64"}}},
+		},
+	}, nil
+}
+
+func (f *fakeRegistry) ProviderPackageMetadata(_ context.Context, req *tfregistry.ProviderPackageMetadataRequest) (*tfregistry.ProviderPackageMetadataResponse, error) {
+	platform := req.OS + "_" + req.Arch
+	f.requestedPlatforms = append(f.requestedPlatforms, platform)
+
+	if platform != "darwin_arm64" && platform != "linux_amd64" {
+		return nil, errors.New("unexpected HTTP Status Code: 404")
+	}
+
+	if !f.allPlatformsSupported {
+		return &tfregistry.ProviderPackageMetadataResponse{}, nil
+	}
+
+	return &tfregistry.ProviderPackageMetadataResponse{
+		Packages: map[string]tfregistry.Package{
+			"darwin_arm64": {Hashes: []string{"h1:darwin", "zh:darwin"}},
+			"linux_amd64":  {Hashes: []string{"h1:linux", "zh:linux"}},
+		},
+	}, nil
+}
+
 func TestGetProviderHashes(t *testing.T) {
 	allPlatformsHashes := []string{"h1:darwin", "h1:linux", "zh:darwin", "zh:linux"}
 	linuxHashes := []string{"h1:linux", "zh:darwin", "zh:linux"}
 
 	testData := []struct {
-		name                       string
-		provider                   string
-		platforms                  []string
-		allPlatformsSupported      bool
-		expectedHashes             []string
-		expectedRequestedPlatforms [][]string
-		wantErr                    bool
+		name                      string
+		provider                  string
+		version                   string
+		platforms                 []string
+		allPlatformsSupported     bool
+		expectedHashes            []string
+		expectedMetadataPlatforms []string
+		expectedDownloadPlatforms [][]string
+		wantErr                   bool
 	}{
 		{
-			name:                       "OpenTofu registry records every published platform",
-			provider:                   "registry.opentofu.org/hashicorp/null",
-			platforms:                  []string{"linux_amd64"},
-			allPlatformsSupported:      true,
-			expectedHashes:             allPlatformsHashes,
-			expectedRequestedPlatforms: [][]string{nil},
+			name:                      "OpenTofu registry records every published platform",
+			provider:                  "registry.opentofu.org/hashicorp/null",
+			platforms:                 []string{"windows_386"},
+			allPlatformsSupported:     true,
+			expectedHashes:            allPlatformsHashes,
+			expectedMetadataPlatforms: []string{"darwin_arm64"},
 		},
 		{
-			name:                       "OpenTofu registry falls back to platforms",
-			provider:                   "registry.opentofu.org/hashicorp/null",
-			platforms:                  []string{"linux_amd64"},
-			allPlatformsSupported:      false,
-			expectedHashes:             linuxHashes,
-			expectedRequestedPlatforms: [][]string{nil, {"linux_amd64"}},
+			name:                      "OpenTofu registry falls back to platforms",
+			provider:                  "registry.opentofu.org/hashicorp/null",
+			platforms:                 []string{"linux_amd64"},
+			allPlatformsSupported:     false,
+			expectedHashes:            linuxHashes,
+			expectedMetadataPlatforms: []string{"darwin_arm64"},
+			expectedDownloadPlatforms: [][]string{{"linux_amd64"}},
 		},
 		{
-			name:                       "Terraform registry only queries platforms",
-			provider:                   "registry.terraform.io/hashicorp/null",
-			platforms:                  []string{"linux_amd64"},
-			allPlatformsSupported:      true,
-			expectedHashes:             linuxHashes,
-			expectedRequestedPlatforms: [][]string{{"linux_amd64"}},
+			name:                      "Terraform registry only queries platforms",
+			provider:                  "registry.terraform.io/hashicorp/null",
+			platforms:                 []string{"linux_amd64"},
+			allPlatformsSupported:     true,
+			expectedHashes:            linuxHashes,
+			expectedDownloadPlatforms: [][]string{{"linux_amd64"}},
 		},
 		{
-			name:                       "No platforms records every published platform",
-			provider:                   "registry.terraform.io/hashicorp/null",
-			allPlatformsSupported:      true,
-			expectedHashes:             allPlatformsHashes,
-			expectedRequestedPlatforms: [][]string{nil},
+			name:                      "No platforms records every published platform",
+			provider:                  "registry.terraform.io/hashicorp/null",
+			allPlatformsSupported:     true,
+			expectedHashes:            allPlatformsHashes,
+			expectedMetadataPlatforms: []string{"darwin_arm64"},
 		},
 		{
-			name:                       "No platforms fails without h1 hashes from the registry",
-			provider:                   "registry.terraform.io/hashicorp/null",
-			allPlatformsSupported:      false,
-			expectedRequestedPlatforms: [][]string{nil},
-			wantErr:                    true,
+			name:                      "No platforms fails without h1 hashes from the registry",
+			provider:                  "registry.terraform.io/hashicorp/null",
+			allPlatformsSupported:     false,
+			expectedMetadataPlatforms: []string{"darwin_arm64"},
+			wantErr:                   true,
+		},
+		{
+			name:                  "No platforms fails for a version the registry does not publish",
+			provider:              "registry.terraform.io/hashicorp/null",
+			version:               "9.9.9",
+			allPlatformsSupported: true,
+			wantErr:               true,
 		},
 	}
 
@@ -738,10 +772,17 @@ func TestGetProviderHashes(t *testing.T) {
 			})
 			require.NoError(t, err)
 
-			index := &fakeIndex{allPlatformsSupported: tt.allPlatformsSupported}
+			index := &fakeIndex{}
 			l.lockIndex = index
+			registry := &fakeRegistry{allPlatformsSupported: tt.allPlatformsSupported}
+			l.registry = registry
 
-			gotHashes, err := l.getProviderHashes("3.2.1")
+			version := tt.version
+			if version == "" {
+				version = "3.2.1"
+			}
+
+			gotHashes, err := l.getProviderHashes(version)
 
 			if tt.wantErr {
 				require.Error(t, err)
@@ -749,7 +790,8 @@ func TestGetProviderHashes(t *testing.T) {
 				require.NoError(t, err)
 			}
 			assert.Equal(t, tt.expectedHashes, gotHashes)
-			assert.Equal(t, tt.expectedRequestedPlatforms, index.requestedPlatforms)
+			assert.Equal(t, tt.expectedMetadataPlatforms, registry.requestedPlatforms)
+			assert.Equal(t, tt.expectedDownloadPlatforms, index.requestedPlatforms)
 		})
 	}
 }
