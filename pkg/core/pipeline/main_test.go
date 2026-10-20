@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/config"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
 )
 
@@ -66,7 +66,7 @@ func TestRun(t *testing.T) {
 		t.Run(p.Config.Spec.Name, func(t *testing.T) {
 			err := p.Run(context.Background())
 			if err != nil {
-				logrus.Errorf("Got error running test: %s", err)
+				log.Errorf("Got error running test: %s", err)
 			}
 			require.NoError(t, err)
 

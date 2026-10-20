@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
@@ -12,7 +12,7 @@ import (
 func (g *Stash) Condition(_ context.Context, source string, scm scm.ScmHandler, pathResolver pathresolver.Resolver) (pass bool, message string, err error) {
 
 	if scm != nil {
-		logrus.Warningf("scm not supported, ignoring")
+		log.Warningf("scm not supported, ignoring")
 	}
 
 	if len(g.spec.Branch) == 0 {

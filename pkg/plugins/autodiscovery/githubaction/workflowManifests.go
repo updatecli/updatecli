@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 
 	"github.com/Masterminds/semver/v3"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 const (
@@ -27,17 +27,17 @@ func (g GitHubAction) discoverManifests() [][]byte {
 	var manifests [][]byte
 
 	for _, foundAction := range g.compositeActionFiles {
-		logrus.Debugf("parsing Composite Action file %q", foundAction)
+		log.Debugf("parsing Composite Action file %q", foundAction)
 
 		relateFoundFile, err := filepath.Rel(g.rootDir, foundAction)
 		if err != nil {
-			logrus.Debugln(err)
+			log.Debugln(err)
 			continue
 		}
 
 		action, err := loadCompositeAction(foundAction)
 		if err != nil {
-			logrus.Debugln(err)
+			log.Debugln(err)
 			continue
 		}
 
@@ -56,9 +56,9 @@ func (g GitHubAction) discoverManifests() [][]byte {
 
 			switch actionKind {
 			case "":
-				logrus.Debugf("GitHub action %q not supported, skipping", step.Uses)
+				log.Debugf("GitHub action %q not supported, skipping", step.Uses)
 			case ACTIONKINDLOCAL:
-				logrus.Debugf("Relative path action %q found, skipping", step.Uses)
+				log.Debugf("Relative path action %q found, skipping", step.Uses)
 				continue
 			case ACTIONKINDDOCKER:
 				s := dockerGHAManifestSpec{
@@ -70,7 +70,7 @@ func (g GitHubAction) discoverManifests() [][]byte {
 
 				manifest, err := g.getDockerManifest(&s)
 				if err != nil {
-					logrus.Errorf("getting GitHub Action manifest: %s", err)
+					log.Errorf("getting GitHub Action manifest: %s", err)
 					continue
 				}
 
@@ -93,7 +93,7 @@ func (g GitHubAction) discoverManifests() [][]byte {
 
 				manifest, err := g.getGitHubActionManifest(&u)
 				if err != nil {
-					logrus.Errorf("getting GitHub Action manifest: %s", err)
+					log.Errorf("getting GitHub Action manifest: %s", err)
 					continue
 				}
 
@@ -105,17 +105,17 @@ func (g GitHubAction) discoverManifests() [][]byte {
 
 	}
 	for _, foundFile := range g.workflowFiles {
-		logrus.Debugf("parsing GitHub Action workflow file %q", foundFile)
+		log.Debugf("parsing GitHub Action workflow file %q", foundFile)
 
 		relateFoundFile, err := filepath.Rel(g.rootDir, foundFile)
 		if err != nil {
-			logrus.Debugln(err)
+			log.Debugln(err)
 			continue
 		}
 
 		data, err := loadGitHubActionWorkflow(foundFile)
 		if err != nil {
-			logrus.Debugln(err)
+			log.Debugln(err)
 			continue
 		}
 
@@ -135,7 +135,7 @@ func (g GitHubAction) discoverManifests() [][]byte {
 
 				manifest, err := g.getDockerManifest(&s)
 				if err != nil {
-					logrus.Errorf("getting GitHub Action manifest: %s", err)
+					log.Errorf("getting GitHub Action manifest: %s", err)
 					continue
 				}
 
@@ -155,9 +155,9 @@ func (g GitHubAction) discoverManifests() [][]byte {
 
 				switch actionKind {
 				case "":
-					logrus.Debugf("GitHub action %q not supported, skipping", step.Uses)
+					log.Debugf("GitHub action %q not supported, skipping", step.Uses)
 				case ACTIONKINDLOCAL:
-					logrus.Debugf("Relative path action %q found, skipping", step.Uses)
+					log.Debugf("Relative path action %q found, skipping", step.Uses)
 					continue
 				case ACTIONKINDDOCKER:
 					s := dockerGHAManifestSpec{
@@ -169,7 +169,7 @@ func (g GitHubAction) discoverManifests() [][]byte {
 
 					manifest, err := g.getDockerManifest(&s)
 					if err != nil {
-						logrus.Errorf("getting GitHub Action manifest: %s", err)
+						log.Errorf("getting GitHub Action manifest: %s", err)
 						continue
 					}
 
@@ -192,7 +192,7 @@ func (g GitHubAction) discoverManifests() [][]byte {
 
 					manifest, err := g.getGitHubActionManifest(&u)
 					if err != nil {
-						logrus.Errorf("getting GitHub Action manifest: %s", err)
+						log.Errorf("getting GitHub Action manifest: %s", err)
 						continue
 					}
 

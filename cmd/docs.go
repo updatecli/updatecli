@@ -9,9 +9,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 // The docs command is a hidden sub-command that generates the documentation for www.updatecli.io
@@ -71,12 +71,12 @@ var (
 
 			for path, hash := range after {
 				if prev, exists := before[path]; !exists || prev != hash {
-					logrus.Infof("Documentation files updated in %q", docsDir)
+					log.Infof("Documentation files updated in %q", docsDir)
 					os.Exit(2)
 				}
 			}
 
-			logrus.Infof("Documentation files already up to date in %q", docsDir)
+			log.Infof("Documentation files already up to date in %q", docsDir)
 			return nil
 		},
 	}

@@ -3,7 +3,7 @@ package registry
 import (
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 
 	"github.com/updatecli/updatecli/pkg/core/result"
 	githubChangelog "github.com/updatecli/updatecli/pkg/plugins/changelog/github/v3"
@@ -32,11 +32,11 @@ func getChangelogFromGitHub(registry, from, to string) *result.Changelogs {
 
 	releases, err := changelog.Search(from, to)
 	if err != nil {
-		logrus.Debugf("ignored error, searching changelogs: %s", err)
+		log.Debugf("ignored error, searching changelogs: %s", err)
 	}
 
 	if len(releases) == 0 {
-		logrus.Debugf("No changelog found")
+		log.Debugf("No changelog found")
 		return nil
 	}
 

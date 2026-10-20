@@ -4,10 +4,9 @@ import (
 	"fmt"
 	"path"
 	"path/filepath"
-	"strings"
 
 	"github.com/go-viper/mapstructure/v2"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/docker"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 
@@ -176,7 +175,7 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Flux, error) {
 	dir := rootDir
 	if path.IsAbs(s.RootDir) {
 		if scmID != "" {
-			logrus.Warningf("rootdir %q is an absolute path, scmID %q will be ignored", s.RootDir, scmID)
+			log.Warningf("rootdir %q is an absolute path, scmID %q will be ignored", s.RootDir, scmID)
 		}
 		dir = s.RootDir
 	}
@@ -184,7 +183,7 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Flux, error) {
 	// If no RootDir have been provided via settings,
 	// then fallback to the current process path.
 	if len(dir) == 0 {
-		logrus.Errorln("no working directory defined")
+		log.Errorln("no working directory defined")
 		return Flux{}, err
 	}
 
@@ -232,8 +231,7 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Flux, error) {
 func (f Flux) DiscoverManifests() ([][]byte, error) {
 	var manifests [][]byte
 
-	logrus.Infof("\n\n%s\n", strings.ToTitle("Flux"))
-	logrus.Infof("%s\n", strings.Repeat("=", len("Flux")+1))
+	log.Heading("Flux")
 
 	searchFromDir := f.rootDir
 	// If the spec.RootDir is an absolute path, then it as already been set

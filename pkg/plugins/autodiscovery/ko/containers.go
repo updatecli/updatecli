@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"text/template"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/dockerimage"
 )
 
@@ -35,18 +35,18 @@ func (k Ko) discoverContainerManifests() ([][]byte, error) {
 	}
 
 	for _, koFile := range koFiles {
-		logrus.Debugf("parsing file %q", koFile)
+		log.Debugf("parsing file %q", koFile)
 
 		relativeFoundKoFile, err := filepath.Rel(k.rootDir, koFile)
 		if err != nil {
 			// Let's try the next chart if one fail
-			logrus.Debugln(err)
+			log.Debugln(err)
 			continue
 		}
 
 		data, err := getKoManifestData(koFile)
 		if err != nil {
-			logrus.Debugln(err)
+			log.Debugln(err)
 			continue
 		}
 
@@ -61,7 +61,7 @@ func (k Ko) discoverContainerManifests() ([][]byte, error) {
 				image,
 				relativeFoundKoFile)
 			if err != nil {
-				logrus.Debugln(err)
+				log.Debugln(err)
 				continue
 			}
 
@@ -76,7 +76,7 @@ func (k Ko) discoverContainerManifests() ([][]byte, error) {
 
 			manifest, err := k.generateContainerManifest("$.defaultBaseImage", data.DefaultBaseImage, relativeFoundKoFile)
 			if err != nil {
-				logrus.Debugln(err)
+				log.Debugln(err)
 				continue
 			}
 
@@ -110,21 +110,21 @@ func (k Ko) generateContainerManifest(targetKey, image, relativeFoundKoFile stri
 
 	if len(k.spec.Ignore) > 0 {
 		if k.spec.Ignore.isMatchingRules(k.rootDir, relativeFoundKoFile, imageName) {
-			logrus.Debugf("Ignoring container %q from %q, as matching ignore rule(s)\n", imageName, relativeFoundKoFile)
+			log.Debugf("Ignoring container %q from %q, as matching ignore rule(s)\n", imageName, relativeFoundKoFile)
 			return nil, nil
 		}
 	}
 
 	if len(k.spec.Only) > 0 {
 		if !k.spec.Only.isMatchingRules(k.rootDir, relativeFoundKoFile, imageName) {
-			logrus.Debugf("Ignoring container %q from %q, as not matching only rule(s)\n", imageName, relativeFoundKoFile)
+			log.Debugf("Ignoring container %q from %q, as not matching only rule(s)\n", imageName, relativeFoundKoFile)
 			return nil, nil
 		}
 	}
 
 	sourceSpec := dockerimage.NewDockerImageSpecFromImage(imageName, imageTag, k.spec.Auths)
 	if sourceSpec == nil && !k.digest {
-		logrus.Infoln("No source spec detected")
+		log.Infoln("No source spec detected")
 		return nil, nil
 	}
 
@@ -154,7 +154,7 @@ func (k Ko) generateContainerManifest(targetKey, image, relativeFoundKoFile stri
 		versionFilterPattern, err = k.versionFilter.GreaterThanPattern(imageTag)
 		versionFilterRegex = k.versionFilter.Regex
 		if err != nil {
-			logrus.Debugf("building version filter pattern: %s", err)
+			log.Debugf("building version filter pattern: %s", err)
 			versionFilterPattern = "*"
 		}
 	}
@@ -176,7 +176,7 @@ func (k Ko) generateContainerManifest(targetKey, image, relativeFoundKoFile stri
 			return nil, err
 		}
 	} else {
-		logrus.Infoln("No source spec detected")
+		log.Infoln("No source spec detected")
 		return nil, nil
 	}
 

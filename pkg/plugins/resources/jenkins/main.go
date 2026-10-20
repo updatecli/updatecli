@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/go-viper/mapstructure/v2"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/mavenmetadata"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
@@ -94,11 +94,11 @@ func New(spec interface{}) (*Jenkins, error) {
 // Validate run some validation on the Jenkins struct
 func (s Spec) Validate() (err error) {
 	if len(s.Release) == 0 && len(s.Version) == 0 {
-		logrus.Debugln("Jenkins release type not defined, default set to stable")
+		log.Debugln("Jenkins release type not defined, default set to stable")
 		s.Release = "stable"
 	} else if len(s.Release) == 0 && len(s.Version) != 0 {
 		s.Release, err = ReleaseType(s.Version)
-		logrus.Debugf("Jenkins release type not defined, guessing based on Version %s", s.Version)
+		log.Debugf("Jenkins release type not defined, guessing based on Version %s", s.Version)
 		if err != nil {
 			return err
 		}

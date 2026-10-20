@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 // FindSubMatch defines a regular expression extracting a capture group from the value.
@@ -65,7 +65,7 @@ func (f *FindSubMatch) Apply(input string) (string, error) {
 
 	// Log if no match is found
 	if len(found) == 0 {
-		logrus.Debugf("No result found after applying regex %q to %q", findSubMatch.Pattern, output)
+		log.Debugf("No result found after applying regex %q to %q", findSubMatch.Pattern, output)
 		return "", nil
 	}
 
@@ -80,7 +80,7 @@ func (f *FindSubMatch) Apply(input string) (string, error) {
 	} else {
 		// Log if there can't be a submatch corresponding to the captureIndex
 		if len(found) <= findSubMatch.CaptureIndex {
-			logrus.Debugf("No capture found at position %v after applying regex %q to %q, full result with CaptureIndex 0 would be %v", findSubMatch.CaptureIndex, findSubMatch.Pattern, output, found)
+			log.Debugf("No capture found at position %v after applying regex %q to %q, full result with CaptureIndex 0 would be %v", findSubMatch.CaptureIndex, findSubMatch.Pattern, output, found)
 			return "", nil
 		}
 
@@ -91,13 +91,13 @@ func (f *FindSubMatch) Apply(input string) (string, error) {
 
 func (f *FindSubMatch) Validate() error {
 	if f.DeprecatedCaptureIndex != 0 {
-		logrus.Warningln("captureIndex is deprecated in favor of captureindex")
+		log.Warningln("captureIndex is deprecated in favor of captureindex")
 
 		switch f.CaptureIndex {
 		case 0:
 			f.CaptureIndex = f.DeprecatedCaptureIndex
 		default:
-			logrus.Warningf("Both captureIndex and captureindex are defined, ignoring the first one")
+			log.Warningf("Both captureIndex and captureindex are defined, ignoring the first one")
 		}
 
 		f.DeprecatedCaptureIndex = 0

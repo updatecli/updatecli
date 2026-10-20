@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 // MatchingRule defines a rule to select container images.
@@ -79,11 +79,11 @@ func (m MatchingRules) isMatchingRule(rootDir, filePath, service, image, arch st
 
 				match, err = filepath.Match(matchingRule.Path, filePath)
 				if err != nil {
-					logrus.Errorf("%s - %q", err, matchingRule.Path)
+					log.Errorf("%s - %q", err, matchingRule.Path)
 				}
 				ruleResults = append(ruleResults, match)
 				if match {
-					logrus.Debugf("file path %q matching rule %q", filePath, matchingRule.Path)
+					log.Debugf("file path %q matching rule %q", filePath, matchingRule.Path)
 				}
 			}
 
@@ -92,7 +92,7 @@ func (m MatchingRules) isMatchingRule(rootDir, filePath, service, image, arch st
 				match := false
 				for _, a := range matchingRule.Archs {
 					if a == arch {
-						logrus.Debugf("arch %q matching rule %q", service, a)
+						log.Debugf("arch %q matching rule %q", service, a)
 						match = true
 						break
 					}
@@ -105,7 +105,7 @@ func (m MatchingRules) isMatchingRule(rootDir, filePath, service, image, arch st
 				match := false
 				for _, ms := range matchingRule.Services {
 					if ms == service {
-						logrus.Debugf("service %q matching rule %q", service, ms)
+						log.Debugf("service %q matching rule %q", service, ms)
 						match = true
 						break
 					}
@@ -117,7 +117,7 @@ func (m MatchingRules) isMatchingRule(rootDir, filePath, service, image, arch st
 				match := false
 				for _, i := range matchingRule.Images {
 					if strings.HasPrefix(image, i) {
-						logrus.Debugf("image %q matching rule %q", image, i)
+						log.Debugf("image %q matching rule %q", image, i)
 						match = true
 						break
 					}

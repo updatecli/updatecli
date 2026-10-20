@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/go-viper/mapstructure/v2"
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
@@ -110,7 +110,7 @@ func (b *Bazelregistry) fetchModuleMetadata(ctx context.Context, module string) 
 	// Build URL by replacing {module} placeholder
 	url := strings.ReplaceAll(b.baseURL, "{module}", module)
 
-	logrus.Debugf("Fetching metadata for module %q from %q", module, redact.URL(url))
+	log.Debugf("Fetching metadata for module %q from %q", module, redact.URL(url))
 
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {

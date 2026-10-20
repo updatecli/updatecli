@@ -3,7 +3,7 @@ package cmd
 import (
 	"os"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 
 	"github.com/spf13/cobra"
 )
@@ -17,24 +17,24 @@ var (
 
 			// TODO: To be removed once not experimental anymore
 			if !experimental {
-				logrus.Warningf("The 'logout' feature requires the flag experimental to work, such as:\n\t`updatecli udash logout --experimental https://app.updatecli.io`")
+				log.Warningf("The 'logout' feature requires the flag experimental to work, such as:\n\t`updatecli udash logout --experimental https://app.updatecli.io`")
 				os.Exit(1)
 			}
 
 			switch len(args) {
 			case 0:
-				logrus.Errorf("missing URL to logout from")
+				log.Errorf("missing URL to logout from")
 				os.Exit(1)
 			case 1:
 				udashEndpointURL = args[0]
 			default:
-				logrus.Errorf("can only logout from one URL at a time")
+				log.Errorf("can only logout from one URL at a time")
 				os.Exit(1)
 			}
 
 			err := run("udash/logout")
 			if err != nil {
-				logrus.Errorf("command failed")
+				log.Errorf("command failed")
 				os.Exit(1)
 			}
 		},

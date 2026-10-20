@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/Masterminds/semver/v3"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
 )
 
@@ -67,12 +67,12 @@ func (m MatchingRules) isMatchingRules(rootDir string, filePath string, module *
 
 				match, err := filepath.Match(rule.Path, filePath)
 				if err != nil {
-					logrus.Errorf("%s - %q", err, rule.Path)
+					log.Errorf("%s - %q", err, rule.Path)
 					continue
 				}
 				ruleResults = append(ruleResults, match)
 				if match {
-					logrus.Debugf("file path %q matching rule %q", filePath, rule.Path)
+					log.Debugf("file path %q matching rule %q", filePath, rule.Path)
 				}
 			}
 
@@ -150,14 +150,14 @@ func (m MatchingRules) isMatchingRules(rootDir string, filePath string, module *
 						v, err := semver.NewVersion(moduleVersion)
 						if err != nil {
 							match = moduleVersion == ruleModuleVersion
-							logrus.Debugf("%q - %s", moduleVersion, err)
+							log.Debugf("%q - %s", moduleVersion, err)
 							break
 						}
 
 						c, err := semver.NewConstraint(ruleModuleVersion)
 						if err != nil {
 							match = moduleVersion == ruleModuleVersion
-							logrus.Debugf("%q %s", err, ruleModuleVersion)
+							log.Debugf("%q %s", err, ruleModuleVersion)
 							break
 						}
 

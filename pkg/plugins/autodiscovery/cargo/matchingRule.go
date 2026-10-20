@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 
 	"github.com/Masterminds/semver/v3"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 // MatchingRule defines a rule to select crates.
@@ -68,12 +68,12 @@ func (m MatchingRules) isMatchingRules(rootDir, filePath, registry, crateName, c
 
 				match, err := filepath.Match(rule.Path, filePath)
 				if err != nil {
-					logrus.Errorf("%s - %q", err, rule.Path)
+					log.Errorf("%s - %q", err, rule.Path)
 					continue
 				}
 				ruleResults = append(ruleResults, match)
 				if match {
-					logrus.Debugf("file path %q matching rule %q", filePath, rule.Path)
+					log.Debugf("file path %q matching rule %q", filePath, rule.Path)
 				}
 			}
 
@@ -114,14 +114,14 @@ func (m MatchingRules) isMatchingRules(rootDir, filePath, registry, crateName, c
 						v, err := semver.NewVersion(crateVersion)
 						if err != nil {
 							match = crateVersion == ruleCrateVersion
-							logrus.Debugf("%q - %s", crateVersion, err)
+							log.Debugf("%q - %s", crateVersion, err)
 							break outCrate
 						}
 
 						c, err := semver.NewConstraint(ruleCrateVersion)
 						if err != nil {
 							match = crateVersion == ruleCrateVersion
-							logrus.Debugf("%q %s", err, ruleCrateVersion)
+							log.Debugf("%q %s", err, ruleCrateVersion)
 							break outCrate
 						}
 

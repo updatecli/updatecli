@@ -9,7 +9,7 @@ import (
 
 	"path"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/dockerfile/simpletextparser/keywords"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/dockerimage"
 )
@@ -84,14 +84,14 @@ func (d Dockerfile) generateManifest(
 		// until a better solution, we don't handle docker image digest
 	*/
 	if digest != "" && tag == "" {
-		logrus.Debugf("docker digest without specified tag is not supported at the moment for %q", image)
+		log.Debugf("docker digest without specified tag is not supported at the moment for %q", image)
 		return nil, nil
 	}
 
 	// Remove globally ignore images
 	if len(globalIgnore) > 0 {
 		if globalIgnore.isMatchingRule(d.rootDir, relativeFoundDockerfile, image, platform) {
-			logrus.Debugf("Ignoring Dockerfile %q from %q, as global matching ignore rule(s)\n",
+			log.Debugf("Ignoring Dockerfile %q from %q, as global matching ignore rule(s)\n",
 				basename,
 				dirname)
 			return nil, nil
@@ -107,7 +107,7 @@ func (d Dockerfile) generateManifest(
 			platform,
 		) {
 
-			logrus.Debugf("Ignoring Dockerfile %q from %q, as matching ignore rule(s)\n",
+			log.Debugf("Ignoring Dockerfile %q from %q, as matching ignore rule(s)\n",
 				basename,
 				dirname)
 			return nil, nil
@@ -122,7 +122,7 @@ func (d Dockerfile) generateManifest(
 			image,
 			platform) {
 
-			logrus.Debugf("Ignoring Dockerfile %q from %q, as not matching only rule(s)\n",
+			log.Debugf("Ignoring Dockerfile %q from %q, as not matching only rule(s)\n",
 				basename,
 				dirname)
 			return nil, nil
@@ -132,7 +132,7 @@ func (d Dockerfile) generateManifest(
 	sourceSpec := dockerimage.NewDockerImageSpecFromImage(image, tag, d.spec.Auths)
 
 	if sourceSpec == nil && !d.digest {
-		logrus.Debugln("no source spec detected")
+		log.Debugln("no source spec detected")
 		return nil, nil
 	}
 
@@ -163,7 +163,7 @@ func (d Dockerfile) generateManifest(
 		versionFilterRegex = d.versionFilter.Regex
 		tagFilter = ""
 		if err != nil {
-			logrus.Debugf("building version filter pattern: %s", err)
+			log.Debugf("building version filter pattern: %s", err)
 			versionFilterPattern = "*"
 		}
 	}
@@ -185,7 +185,7 @@ func (d Dockerfile) generateManifest(
 			return nil, err
 		}
 	} else {
-		logrus.Infoln("No source spec detected")
+		log.Infoln("No source spec detected")
 		return nil, nil
 	}
 
@@ -227,7 +227,7 @@ func (d Dockerfile) generateManifest(
 
 	manifest := bytes.Buffer{}
 	if err := tmpl.Execute(&manifest, params); err != nil {
-		logrus.Debugln(err)
+		log.Debugln(err)
 		return nil, nil
 	}
 	return manifest.Bytes(), nil
@@ -254,11 +254,11 @@ func (d Dockerfile) discoverDockerfileManifests() ([][]byte, error) {
 
 	for _, foundDockerfile := range foundDockerfiles {
 
-		logrus.Debugf("parsing file %q", foundDockerfile)
+		log.Debugf("parsing file %q", foundDockerfile)
 		relativeFoundDockerfile, err := filepath.Rel(d.rootDir, foundDockerfile)
 		if err != nil {
 			// Let try the next one if it fails
-			logrus.Debugln(err)
+			log.Debugln(err)
 			continue
 		}
 
@@ -267,7 +267,7 @@ func (d Dockerfile) discoverDockerfileManifests() ([][]byte, error) {
 
 		instructions, args, err := parseDockerfile(foundDockerfile)
 		if err != nil {
-			logrus.Debugln(err)
+			log.Debugln(err)
 			continue
 		}
 
@@ -280,7 +280,7 @@ func (d Dockerfile) discoverDockerfileManifests() ([][]byte, error) {
 		for _, instruction := range instructions {
 			manifest, err := d.generateManifest(globalIgnore, relativeFoundDockerfile, basename, dirname, instruction, args)
 			if err != nil {
-				logrus.Debugln(err)
+				log.Debugln(err)
 				continue
 			}
 			if manifest != nil {

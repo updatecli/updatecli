@@ -11,7 +11,7 @@ import (
 	terraformRegistryAddress "github.com/hashicorp/terraform-registry-address"
 	"github.com/minamijoyo/tfupdate/lock"
 	"github.com/minamijoyo/tfupdate/tfregistry"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/text"
 	terraformUtils "github.com/updatecli/updatecli/pkg/plugins/resources/terraform"
@@ -175,7 +175,7 @@ func (t *TerraformLock) UpdateAbsoluteFilePath(pathResolver pathresolver.Resolve
 		resolvedPath := pathResolver.Join(f.originalFilePath)
 
 		if resolvedPath != f.filePath {
-			logrus.Debugf("Relative path detected: changing from %q to %q", f.originalFilePath, resolvedPath)
+			log.Debugf("Relative path detected: changing from %q to %q", f.originalFilePath, resolvedPath)
 		}
 
 		f.filePath = resolvedPath

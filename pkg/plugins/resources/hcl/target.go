@@ -6,7 +6,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
@@ -36,7 +36,7 @@ func (h *Hcl) Target(_ context.Context, source string, scm scm.ScmHandler, pathR
 	valueToWrite := source
 	if h.spec.Value != "" {
 		valueToWrite = h.spec.Value
-		logrus.Debug("Using spec.Value instead of source input value.")
+		log.Debug("Using spec.Value instead of source input value.")
 	}
 
 	resultTarget.NewInformation = valueToWrite

@@ -8,7 +8,7 @@ import (
 
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/minamijoyo/hcledit/editor"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/text"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
@@ -148,7 +148,7 @@ func (h *Hcl) UpdateAbsoluteFilePath(pathResolver pathresolver.Resolver) error {
 		resolvedPath := pathResolver.Join(f.originalFilePath)
 
 		if resolvedPath != f.filePath {
-			logrus.Debugf("Relative path detected: changing from %q to %q", f.originalFilePath, resolvedPath)
+			log.Debugf("Relative path detected: changing from %q to %q", f.originalFilePath, resolvedPath)
 		}
 
 		f.filePath = resolvedPath

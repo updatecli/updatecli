@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/dockerfile/simpletextparser/keywords"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/dockerfile/types"
@@ -42,11 +42,11 @@ func (s SimpleTextDockerfileParser) isEffectivelyMatching(originalLine string) b
 
 func (s SimpleTextDockerfileParser) FindInstruction(dockerfileContent []byte, stage string) bool {
 	if found, originalLine := s.hasMatch(dockerfileContent, stage); found {
-		logrus.Infof("%s Line %q found, matching the keyword %q and the matcher %q.", result.SUCCESS, originalLine, s.Keyword, s.Matcher)
+		log.Infof("%s Line %q found, matching the keyword %q and the matcher %q.", result.SUCCESS, originalLine, s.Keyword, s.Matcher)
 		return true
 	}
 
-	logrus.Infof("%s No line found matching the keyword %q and the matcher %q.", result.FAILURE, s.Keyword, s.Matcher)
+	log.Infof("%s No line found matching the keyword %q and the matcher %q.", result.FAILURE, s.Keyword, s.Matcher)
 	return false
 }
 
@@ -104,7 +104,7 @@ func (s SimpleTextDockerfileParser) ReplaceInstructions(dockerfileContent []byte
 			newLine = s.KeywordLogic.ReplaceLine(sourceValue, originalLine, s.Matcher)
 
 			if newLine != originalLine {
-				logrus.Infof("%s The line #%d, matched by the keyword %q and the matcher %q, is changed from %q to %q.",
+				log.Infof("%s The line #%d, matched by the keyword %q and the matcher %q, is changed from %q to %q.",
 					result.ATTENTION,
 					linePosition,
 					s.Keyword,
@@ -114,7 +114,7 @@ func (s SimpleTextDockerfileParser) ReplaceInstructions(dockerfileContent []byte
 				)
 				changedLines[linePosition] = types.LineDiff{Original: originalLine, New: newLine}
 			} else {
-				logrus.Infof("%s The line #%d, matched by the keyword %q and the matcher %q, is correctly set to %q.",
+				log.Infof("%s The line #%d, matched by the keyword %q and the matcher %q, is correctly set to %q.",
 					result.SUCCESS,
 					linePosition,
 					s.Keyword,
@@ -262,7 +262,7 @@ func NewSimpleTextDockerfileParser(input map[string]string) (SimpleTextDockerfil
 	}
 
 	if len(input) > 0 {
-		logrus.Warnf("Unused directives found for instruction: %v.", input)
+		log.Warnf("Unused directives found for instruction: %v.", input)
 	}
 
 	return newParser, nil

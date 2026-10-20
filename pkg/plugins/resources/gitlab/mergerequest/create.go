@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/reports"
 
 	utils "github.com/updatecli/updatecli/pkg/plugins/utils/action"
@@ -47,12 +47,12 @@ func (g *Gitlab) CreateAction(ctx context.Context, report *reports.Action, reset
 
 	// If a mergerequest already exist, we update the report with the existing mergerequest
 	if existingMR != nil {
-		logrus.Debugln("GitLab mergerequest already exist, updating it")
+		log.Debugln("GitLab mergerequest already exist, updating it")
 
 		mergedDescription := reports.MergeFromString(existingMR.Description, report.ToActionsString())
 		body, err = utils.GeneratePullRequestBody("", mergedDescription)
 		if err != nil {
-			logrus.Warningf("something went wrong while generating GitLab body: %s", err)
+			log.Warningf("something went wrong while generating GitLab body: %s", err)
 			return fmt.Errorf("generate GitLab body: %s", err.Error())
 		}
 
@@ -79,7 +79,7 @@ func (g *Gitlab) CreateAction(ctx context.Context, report *reports.Action, reset
 		)
 
 		if err != nil {
-			logrus.Warningf("something went wrong updating gitlab merge request %s/%d: %s",
+			log.Warningf("something went wrong updating gitlab merge request %s/%d: %s",
 				g.getPID(), existingMR.IID, err.Error())
 			return fmt.Errorf("update GitLab merge request: %s", err.Error())
 		}
@@ -113,7 +113,7 @@ func (g *Gitlab) CreateAction(ctx context.Context, report *reports.Action, reset
 
 	body, err = utils.GeneratePullRequestBody("", report.ToActionsString())
 	if err != nil {
-		logrus.Warningf("something went wrong while generating GitLab body: %s", err)
+		log.Warningf("something went wrong while generating GitLab body: %s", err)
 		return fmt.Errorf("generate GitLab body: %s", err.Error())
 	}
 
@@ -153,7 +153,7 @@ func (g *Gitlab) CreateAction(ctx context.Context, report *reports.Action, reset
 		AllowCollaboration: g.spec.AllowCollaboration,
 	}
 
-	logrus.Debugf("Title:\t%q\nBody:\t%v\nSource branch:\t%q\nTarget branch:\t%q\n",
+	log.Debugf("Title:\t%q\nBody:\t%v\nSource branch:\t%q\nTarget branch:\t%q\n",
 		title,
 		body,
 		g.SourceBranch,
@@ -167,7 +167,7 @@ func (g *Gitlab) CreateAction(ctx context.Context, report *reports.Action, reset
 
 	if err != nil {
 		if resp != nil {
-			logrus.Debugf("HTTP Response:\n\tReturn code: %d\n\n", resp.StatusCode)
+			log.Debugf("HTTP Response:\n\tReturn code: %d\n\n", resp.StatusCode)
 		}
 
 		return fmt.Errorf("create GitLab mergerequest: %v", err)
@@ -210,7 +210,7 @@ func (g *Gitlab) CreateAction(ctx context.Context, report *reports.Action, reset
 		}
 	}
 
-	logrus.Infof("GitLab mergerequest successfully opened on %q", mr.WebURL)
+	log.Infof("GitLab mergerequest successfully opened on %q", mr.WebURL)
 
 	return nil
 }

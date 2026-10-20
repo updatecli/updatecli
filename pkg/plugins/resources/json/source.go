@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
@@ -37,7 +37,7 @@ func (j *Json) Source(_ context.Context, pathResolver pathresolver.Resolver, res
 	query := ""
 	switch j.engine {
 	case ENGINEDASEL_V1:
-		logrus.Debugf("Using engine %q", j.engine)
+		log.Debugf("Using engine %q", j.engine)
 		switch len(j.spec.Query) > 0 {
 		case true:
 			query = j.spec.Query
@@ -74,7 +74,7 @@ func (j *Json) Source(_ context.Context, pathResolver pathresolver.Resolver, res
 			sourceOutput = queryResult.String()
 		}
 	case ENGINEDASEL_V2:
-		logrus.Debugf("Using engine %q", j.engine)
+		log.Debugf("Using engine %q", j.engine)
 		queryResults, err := content.QueryV2(j.spec.Key)
 
 		if err != nil {
@@ -95,7 +95,7 @@ func (j *Json) Source(_ context.Context, pathResolver pathresolver.Resolver, res
 		sourceOutput = j.foundVersion.GetVersion()
 
 	case ENGINEDASEL_V3:
-		logrus.Debugf("Using engine %q", j.engine)
+		log.Debugf("Using engine %q", j.engine)
 		queryResults, err := content.QueryV3(j.spec.Key)
 
 		if err != nil {

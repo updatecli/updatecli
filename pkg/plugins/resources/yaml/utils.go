@@ -6,7 +6,7 @@ import (
 	goyaml "github.com/goccy/go-yaml"
 	"github.com/goccy/go-yaml/ast"
 	"github.com/goccy/go-yaml/token"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 /*
@@ -46,7 +46,7 @@ func sanitizeYamlPathKey(key string) string {
 	}
 
 	if sanitizedKey != key {
-		logrus.Warningf("current yaml key is %q and should be updated to %q", key, sanitizedKey)
+		log.Warningf("current yaml key is %q and should be updated to %q", key, sanitizedKey)
 	}
 
 	return sanitizedKey

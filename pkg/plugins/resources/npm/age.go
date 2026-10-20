@@ -5,7 +5,7 @@ import (
 	"time"
 
 	sv "github.com/Masterminds/semver/v3"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 )
 
@@ -23,23 +23,23 @@ func filterVersionsByAge(versions []string, publishDates map[string]string, rele
 	for _, v := range versions {
 		rawDate, found := publishDates[v]
 		if !found {
-			logrus.Debugf("ignoring version %q because the registry doesn't report any release date for it\n", v)
+			log.Debugf("ignoring version %q because the registry doesn't report any release date for it\n", v)
 			continue
 		}
 
 		releaseDate, err := time.Parse(time.RFC3339, rawDate)
 		if err != nil {
-			logrus.Debugf("ignoring version %q due to invalid release date %q: %q\n", v, rawDate, err)
+			log.Debugf("ignoring version %q due to invalid release date %q: %q\n", v, rawDate, err)
 			continue
 		}
 
 		if releaseAge.Minimum != "" && releaseAge.IsOlderThan(releaseDate, nil) {
-			logrus.Debugf("ignoring version %q because its age is below %q (released on %s)\n", v, releaseAge.Minimum, releaseDate)
+			log.Debugf("ignoring version %q because its age is below %q (released on %s)\n", v, releaseAge.Minimum, releaseDate)
 			continue
 		}
 
 		if releaseAge.Maximum != "" && releaseAge.IsNewerThan(releaseDate, nil) {
-			logrus.Debugf("ignoring version %q because its age is above %q (released on %s)\n", v, releaseAge.Maximum, releaseDate)
+			log.Debugf("ignoring version %q because its age is above %q (released on %s)\n", v, releaseAge.Maximum, releaseDate)
 			continue
 		}
 
@@ -65,20 +65,20 @@ func latestVersionMatchingAge(distTagLatest string, orderedVersions, matchingVer
 		return distTagLatest
 	}
 
-	logrus.Debugf("dist-tag latest %q doesn't match the age filter, looking for the most recently published version that does\n", distTagLatest)
+	log.Debugf("dist-tag latest %q doesn't match the age filter, looking for the most recently published version that does\n", distTagLatest)
 
 	if v := lastPublishedVersion(orderedVersions, matchingVersions, true); v != "" {
 		return v
 	}
 
 	if v := lastPublishedVersion(orderedVersions, matchingVersions, false); v != "" {
-		logrus.Debugf("only prereleases match the age filter for that package\n")
+		log.Debugf("only prereleases match the age filter for that package\n")
 		return v
 	}
 
 	// The registry didn't report the publication order, we can't tell which version
 	// is the most recent one so we don't return any.
-	logrus.Debugf("no publication order reported by the registry, ignoring the %d version(s) matching the age filter\n", len(matchingVersions))
+	log.Debugf("no publication order reported by the registry, ignoring the %d version(s) matching the age filter\n", len(matchingVersions))
 
 	return ""
 }
@@ -92,7 +92,7 @@ func lastPublishedVersion(orderedVersions, matchingVersions []string, ignorePrer
 		}
 
 		if ignorePrerelease && isPrerelease(orderedVersions[i]) {
-			logrus.Debugf("ignoring prerelease %q\n", orderedVersions[i])
+			log.Debugf("ignoring prerelease %q\n", orderedVersions[i])
 			continue
 		}
 

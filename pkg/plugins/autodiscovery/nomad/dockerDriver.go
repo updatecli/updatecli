@@ -8,7 +8,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/dockerimage"
 )
 
@@ -46,10 +46,10 @@ func (n Nomad) discoverDockerDriverManifests() ([][]byte, error) {
 
 	for _, foundNomadFile := range foundNomadFiles {
 		relativeNomadFile, err := filepath.Rel(n.rootDir, foundNomadFile)
-		logrus.Debugf("parsing file %q", foundNomadFile)
+		log.Debugf("parsing file %q", foundNomadFile)
 		if err != nil {
 			// Let's try the next one if it fails
-			logrus.Debugln(err)
+			log.Debugln(err)
 			continue
 		}
 
@@ -58,7 +58,7 @@ func (n Nomad) discoverDockerDriverManifests() ([][]byte, error) {
 
 		nomadDockerSpecs, err := getNomadDockerSpecFromFile(foundNomadFile)
 		if err != nil {
-			logrus.Debugf("loading potential Nomad job spec from %q: %s", foundNomadFile, err)
+			log.Debugf("loading potential Nomad job spec from %q: %s", foundNomadFile, err)
 			continue
 		}
 
@@ -87,7 +87,7 @@ func (n Nomad) discoverDockerDriverManifests() ([][]byte, error) {
 				until a better solution, we don't handle docker image digests.
 			*/
 			if imageDigest != "" && imageTag == "" {
-				logrus.Debugf("docker digest without specified tag is not supported at the moment for %q", nomadDockerSpec.Value)
+				log.Debugf("docker digest without specified tag is not supported at the moment for %q", nomadDockerSpec.Value)
 				continue
 			}
 
@@ -100,7 +100,7 @@ func (n Nomad) discoverDockerDriverManifests() ([][]byte, error) {
 					nomadDockerSpec.Value,
 				) {
 
-					logrus.Debugf("Ignoring Nomad task %q from file %q from %q, as not matching ignore rule(s)\n",
+					log.Debugf("Ignoring Nomad task %q from file %q from %q, as not matching ignore rule(s)\n",
 						nomadDockerSpec.TaskName,
 						basename,
 						dirname)
@@ -116,7 +116,7 @@ func (n Nomad) discoverDockerDriverManifests() ([][]byte, error) {
 					nomadDockerSpec.JobName,
 					nomadDockerSpec.Value) {
 
-					logrus.Debugf("Ignoring Nomad task %q from %q from %q, as not matching only rule(s)\n",
+					log.Debugf("Ignoring Nomad task %q from %q from %q, as not matching only rule(s)\n",
 						nomadDockerSpec.TaskName,
 						basename,
 						dirname)
@@ -153,7 +153,7 @@ func (n Nomad) discoverDockerDriverManifests() ([][]byte, error) {
 				versionFilterRegex = n.versionFilter.Regex
 				tagFilter = ""
 				if err != nil {
-					logrus.Debugf("building version filter pattern: %s", err)
+					log.Debugf("building version filter pattern: %s", err)
 					sourceSpec.VersionFilter.Pattern = "*"
 				}
 			}
@@ -175,7 +175,7 @@ func (n Nomad) discoverDockerDriverManifests() ([][]byte, error) {
 					return nil, err
 				}
 			} else {
-				logrus.Infof("No source spec detected")
+				log.Infof("No source spec detected")
 				return nil, nil
 			}
 
@@ -222,7 +222,7 @@ func (n Nomad) discoverDockerDriverManifests() ([][]byte, error) {
 
 			manifest := bytes.Buffer{}
 			if err := tmpl.Execute(&manifest, params); err != nil {
-				logrus.Debugln(err)
+				log.Debugln(err)
 				continue
 			}
 

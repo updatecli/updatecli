@@ -7,7 +7,7 @@ import (
 
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
@@ -21,7 +21,7 @@ func (c *Chart) OCISource(resultSource *result.Source) error {
 		return fmt.Errorf("invalid OCI Helm chart %s: %w", refName, err)
 	}
 
-	logrus.Debugf("Searching versions for Helm chart %q", repo)
+	log.Debugf("Searching versions for Helm chart %q", repo)
 
 	versions, err := remote.List(repo, c.options...)
 	if err != nil {

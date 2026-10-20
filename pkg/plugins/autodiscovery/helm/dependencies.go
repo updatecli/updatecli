@@ -9,7 +9,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 var (
@@ -50,12 +50,12 @@ func (h Helm) discoverHelmDependenciesManifests() ([][]byte, error) {
 	}
 
 	for _, foundChartFile := range foundChartFiles {
-		logrus.Debugf("parsing file %q", foundChartFile)
+		log.Debugf("parsing file %q", foundChartFile)
 
 		relativeFoundChartFile, err := filepath.Rel(h.rootDir, foundChartFile)
 		if err != nil {
 			// Jump to the next Helm chart if current failed
-			logrus.Debugln(err)
+			log.Debugln(err)
 			continue
 		}
 
@@ -65,7 +65,7 @@ func (h Helm) discoverHelmDependenciesManifests() ([][]byte, error) {
 		// Retrieve chart dependencies for each chart
 		dependencies, err := getChartMetadata(foundChartFile)
 		if err != nil {
-			logrus.Debugln(err)
+			log.Debugln(err)
 			continue
 		}
 
@@ -85,7 +85,7 @@ func (h Helm) discoverHelmDependenciesManifests() ([][]byte, error) {
 			sourceVersionFilterRegex := "*"
 
 			if strings.HasPrefix(dependency.Repository, "file://") || dependency.Repository == "" {
-				logrus.Debugf("Ignoring dependency %q for chart %q as it is a local dependency\n", chartName, dependency.Name)
+				log.Debugf("Ignoring dependency %q for chart %q as it is a local dependency\n", chartName, dependency.Name)
 				continue
 			}
 
@@ -94,7 +94,7 @@ func (h Helm) discoverHelmDependenciesManifests() ([][]byte, error) {
 				sourceVersionFilterPattern, err = h.versionFilter.GreaterThanPattern(dependency.Version)
 				sourceVersionFilterRegex = h.versionFilter.Regex
 				if err != nil {
-					logrus.Debugf("building version filter pattern: %s", err)
+					log.Debugf("building version filter pattern: %s", err)
 					sourceVersionFilterPattern = "*"
 				}
 			}
@@ -102,7 +102,7 @@ func (h Helm) discoverHelmDependenciesManifests() ([][]byte, error) {
 			// Test if the ignore rule based on path is respected
 			if len(h.spec.Ignore) > 0 {
 				if h.spec.Ignore.isMatchingRules(h.rootDir, chartRelativeMetadataPath, deps.Dependencies[i].Name, deps.Dependencies[i].Version, "", "") {
-					logrus.Debugf("Ignoring Dependency version update from file %q, as matching ignore rule(s)\n", relativeFoundChartFile)
+					log.Debugf("Ignoring Dependency version update from file %q, as matching ignore rule(s)\n", relativeFoundChartFile)
 					continue
 				}
 			}
@@ -110,7 +110,7 @@ func (h Helm) discoverHelmDependenciesManifests() ([][]byte, error) {
 			// Test if the only rule based on path is respected
 			if len(h.spec.Only) > 0 {
 				if !h.spec.Only.isMatchingRules(h.rootDir, chartRelativeMetadataPath, deps.Dependencies[i].Name, deps.Dependencies[i].Version, "", "") {
-					logrus.Debugf("Ignoring Dependency version update from %q, as not matching only rule(s)\n", relativeFoundChartFile)
+					log.Debugf("Ignoring Dependency version update from %q, as not matching only rule(s)\n", relativeFoundChartFile)
 					continue
 				}
 			}
@@ -125,15 +125,15 @@ func (h Helm) discoverHelmDependenciesManifests() ([][]byte, error) {
 					username = h.spec.Auths[repoURL.Host].Username
 					password = h.spec.Auths[repoURL.Host].Password
 					token = h.spec.Auths[repoURL.Host].Token
-					logrus.Debugf("found credentials for repository %q", dependency.Repository)
+					log.Debugf("found credentials for repository %q", dependency.Repository)
 				}
 			default:
-				logrus.Debugf("Ignoring auth configuration due to invalid Helm repository URL: %s", err)
+				log.Debugf("Ignoring auth configuration due to invalid Helm repository URL: %s", err)
 			}
 
 			tmpl, err := template.New("manifest").Parse(dependencyManifest)
 			if err != nil {
-				logrus.Debugln(err)
+				log.Debugln(err)
 				continue
 			}
 
@@ -192,7 +192,7 @@ func (h Helm) discoverHelmDependenciesManifests() ([][]byte, error) {
 
 			manifest := bytes.Buffer{}
 			if err := tmpl.Execute(&manifest, params); err != nil {
-				logrus.Debugln(err)
+				log.Debugln(err)
 				continue
 			}
 

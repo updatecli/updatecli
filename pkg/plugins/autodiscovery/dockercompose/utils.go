@@ -1,14 +1,14 @@
 package dockercompose
 
 import (
-	"fmt"
 	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"sort"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
+
 	goyaml "go.yaml.in/yaml/v3"
 )
 
@@ -16,11 +16,11 @@ import (
 func searchDockerComposeFiles(rootDir string, filePatterns []string) ([]string, error) {
 	dockerComposeFiles := []string{}
 
-	logrus.Debugf("Looking for Docker compose file(s) in %q", rootDir)
+	log.Debugf("Looking for Docker compose file(s) in %q", rootDir)
 
 	err := filepath.WalkDir(rootDir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
-			fmt.Printf("prevent panic by handling failure accessing a path %q: %v\n", path, err)
+			log.Warningf("prevent panic by handling failure accessing a path %q: %v\n", path, err)
 			return err
 		}
 
@@ -28,7 +28,7 @@ func searchDockerComposeFiles(rootDir string, filePatterns []string) ([]string, 
 			for _, f := range filePatterns {
 				match, err := filepath.Match(f, d.Name())
 				if err != nil {
-					logrus.Errorln(err)
+					log.Errorln(err)
 					continue
 				}
 				if match {
@@ -43,7 +43,7 @@ func searchDockerComposeFiles(rootDir string, filePatterns []string) ([]string, 
 		return nil, err
 	}
 
-	logrus.Debugf("%d potential Docker compose file(s) found", len(dockerComposeFiles))
+	log.Debugf("%d potential Docker compose file(s) found", len(dockerComposeFiles))
 
 	return dockerComposeFiles, nil
 }
@@ -86,7 +86,7 @@ func getDockerComposeSpecFromFile(filename string) (dockercomposeServicesList, e
 	sort.Strings(services)
 
 	for _, svcName := range services {
-		logrus.Debugf("Found service definition: %v for the docker compose service %q\n", spec.Services[svcName], svcName)
+		log.Debugf("Found service definition: %v for the docker compose service %q\n", spec.Services[svcName], svcName)
 		result = append(result, dockerComposeService{
 			Name: svcName,
 			Spec: spec.Services[svcName],

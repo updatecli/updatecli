@@ -14,7 +14,7 @@ import (
 
 	"github.com/go-git/go-git/v5"
 	jschema "github.com/invopop/jsonschema"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 const (
@@ -61,7 +61,7 @@ func getCommentMap() map[string]string {
 
 	commentMap, err := GetPackageComments(commentDir)
 	if err != nil {
-		logrus.Debugf("retrieve code comments: %s", err.Error())
+		log.Debugf("retrieve code comments: %s", err.Error())
 		return nil
 	}
 
@@ -161,7 +161,7 @@ func (s *Schema) Save() error {
 func (s *Schema) String() string {
 	indentedJsonSchema, err := json.MarshalIndent(s.JsonSchema, "", "    ")
 	if err != nil {
-		logrus.Errorf("marshal indent the jsonschema: %s", err.Error())
+		log.Errorf("marshal indent the jsonschema: %s", err.Error())
 	}
 
 	return string(indentedJsonSchema)
@@ -214,7 +214,7 @@ func GetPackageComments(rootPackagePath string) (map[string]string, error) {
 func CloneCommentDirectory() error {
 
 	// Clone the given repository to the given directory
-	logrus.Debugf("git clone %s %s --recursive", commentURL, commentDir)
+	log.Debugf("git clone %s %s --recursive", commentURL, commentDir)
 
 	_, err := git.PlainClone(commentDir, false, &git.CloneOptions{
 		URL:               commentURL,

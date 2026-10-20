@@ -3,7 +3,7 @@ package stash
 import (
 	"os"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 func (s *Stash) setDirectory() {
@@ -12,7 +12,7 @@ func (s *Stash) setDirectory() {
 
 		err := os.MkdirAll(s.Spec.Directory, 0755)
 		if err != nil {
-			logrus.Errorf("err - %s", err)
+			log.Errorf("err - %s", err)
 		}
 	}
 }

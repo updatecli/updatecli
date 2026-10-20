@@ -6,8 +6,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/sirupsen/logrus"
 	"github.com/skratchdot/open-golang/open"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"golang.org/x/term"
 )
 
@@ -26,7 +26,7 @@ func Login(udashEndpoint, udashAPIEndpoint, token string) error {
 
 	setParam := func(flagParam *string, envParam, flagParamName, envParamName string) {
 		if *flagParam != "" && envParam != "" {
-			logrus.Debugf("%s provided via flag and environment variable %q, prioritizing flag", flagParamName, envParamName)
+			log.Debugf("%s provided via flag and environment variable %q, prioritizing flag", flagParamName, envParamName)
 			return
 		} else if *flagParam == "" && envParam != "" {
 			*flagParam = envParam
@@ -66,7 +66,7 @@ func Login(udashEndpoint, udashAPIEndpoint, token string) error {
 				return fmt.Errorf("no token provided")
 			}
 		} else {
-			logrus.Debugf("%s does not require authentication, storing the endpoint only", udashEndpoint)
+			log.Debugf("%s does not require authentication, storing the endpoint only", udashEndpoint)
 		}
 	}
 
@@ -86,11 +86,11 @@ func Login(udashEndpoint, udashAPIEndpoint, token string) error {
 
 	switch {
 	case identity.Name != "":
-		logrus.Printf("Successfully logged in to %s as %s.", udashEndpoint, identity.Name)
+		log.Printf("Successfully logged in to %s as %s.", udashEndpoint, identity.Name)
 	case identity.Subject != "":
-		logrus.Printf("Successfully logged in to %s as %s.", udashEndpoint, identity.Subject)
+		log.Printf("Successfully logged in to %s as %s.", udashEndpoint, identity.Subject)
 	default:
-		logrus.Printf("Successfully logged in to %s.", udashEndpoint)
+		log.Printf("Successfully logged in to %s.", udashEndpoint)
 	}
 
 	return nil
@@ -110,15 +110,16 @@ func readToken(udashEndpoint string) (string, error) {
 
 	tokenPageURL := strings.TrimSuffix(udashEndpoint, "/") + TokenPagePath
 
-	logrus.Printf("Create an API token at %s", tokenPageURL)
+	log.Printf("Create an API token at %s", tokenPageURL)
 	if err := open.Start(tokenPageURL); err != nil {
 		// Not fatal: the URL was printed above, the user can open it themselves.
-		logrus.Debugf("can't open browser to URL %s: %s", tokenPageURL, err)
+		log.Debugf("can't open browser to URL %s: %s", tokenPageURL, err)
 	}
 
-	fmt.Print("Paste your Udash API token: ")
+	// Interactive prompt, it must reach the terminal and never a report
+	fmt.Print("Paste your Udash API token: ") //nolint:forbidigo
 	data, err := term.ReadPassword(int(os.Stdin.Fd()))
-	fmt.Println()
+	fmt.Println() //nolint:forbidigo
 	if err != nil {
 		return "", fmt.Errorf("reading token: %w", err)
 	}

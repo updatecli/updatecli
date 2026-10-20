@@ -8,7 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
+
 	"github.com/updatecli/updatecli/pkg/core/compose"
 	goyaml "go.yaml.in/yaml/v3"
 )
@@ -17,19 +18,19 @@ import (
 func searchUpdatecliComposeFiles(rootDir string, files []string) ([]string, error) {
 	composeFiles := []string{}
 
-	logrus.Debugf("Looking for Updatecli Compose manifest(s) in %q", rootDir)
+	log.Debugf("Looking for Updatecli Compose manifest(s) in %q", rootDir)
 
 	// To do switch to WalkDir which is more efficient, introduced in 1.16
 	err := filepath.Walk(rootDir, func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
-			fmt.Printf("prevent panic by handling failure accessing a path %q: %v\n", path, err)
+			log.Warningf("prevent panic by handling failure accessing a path %q: %v\n", path, err)
 			return err
 		}
 
 		for _, f := range files {
 			match, err := filepath.Match(f, info.Name())
 			if err != nil {
-				logrus.Errorln(err)
+				log.Errorln(err)
 				continue
 			}
 			if match {
@@ -43,7 +44,7 @@ func searchUpdatecliComposeFiles(rootDir string, files []string) ([]string, erro
 		return nil, err
 	}
 
-	logrus.Debugf("%d potential Updatecli manifest(s) found", len(composeFiles))
+	log.Debugf("%d potential Updatecli manifest(s) found", len(composeFiles))
 
 	return composeFiles, nil
 }
@@ -78,7 +79,7 @@ func getComposeFileMetadata(filename string) (*compose.Spec, error) {
 	}
 
 	for _, value := range composeFile.Policies {
-		logrus.Debugf("Name: %q\n", value.Policy)
+		log.Debugf("Name: %q\n", value.Policy)
 	}
 
 	return &composeFile, nil

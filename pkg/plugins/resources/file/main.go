@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/go-viper/mapstructure/v2"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/text"
 	"github.com/updatecli/updatecli/pkg/plugins/utils"
@@ -315,7 +315,7 @@ func (f *File) UpdateAbsoluteFilePath(pathResolver pathresolver.Resolver) error 
 		}
 
 		if resolvedPath != file.path {
-			logrus.Debugf("Relative path detected: changing from %q to %q", file.originalPath, resolvedPath)
+			log.Debugf("Relative path detected: changing from %q to %q", file.originalPath, resolvedPath)
 		}
 
 		file.path = resolvedPath
@@ -414,7 +414,7 @@ func (f *File) Read() error {
 		} else {
 			if f.spec.ForceCreate {
 				// f.files[filePath] is already set to "", no need for more except logging
-				logrus.Infof("Creating a new file at %q", file.originalPath)
+				log.Infof("Creating a new file at %q", file.originalPath)
 			} else {
 				if f.spec.Line > 0 {
 					return fmt.Errorf("%s The specified line %d of the file %q does not exist", result.FAILURE, f.spec.Line, file.originalPath)

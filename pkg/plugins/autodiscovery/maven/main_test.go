@@ -1,11 +1,30 @@
 package maven
 
 import (
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// TestMain isolates HOME/MAVEN_HOME/M2_HOME for the whole package so that
+// getSettingsXMLPath never picks up a developer's real ~/.m2/settings.xml,
+// which would otherwise leak real mirror credentials into test assertions.
+func TestMain(m *testing.M) {
+	tmpHome, err := os.MkdirTemp("", "maven-test-home")
+	if err != nil {
+		panic(err)
+	}
+
+	os.Setenv("HOME", tmpHome)
+	os.Unsetenv("MAVEN_HOME")
+	os.Unsetenv("M2_HOME")
+
+	code := m.Run()
+	os.RemoveAll(tmpHome)
+	os.Exit(code)
+}
 
 func TestDiscoverManifests(t *testing.T) {
 	testdata := []struct {

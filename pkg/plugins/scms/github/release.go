@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/shurcooL/githubv4"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github/client"
 )
 
@@ -119,13 +119,13 @@ func (g *Github) SearchReleases(ctx context.Context, releaseType ReleaseType, re
 
 				rateLimit, err := queryRateLimit(g.client, ctx)
 				if err != nil {
-					logrus.Errorf("Error querying GitHub API rate limit: %s", err)
+					log.Errorf("Error querying GitHub API rate limit: %s", err)
 				}
 
-				logrus.Debugln(rateLimit)
+				log.Debugln(rateLimit)
 
 				if retry < client.MaxRetry {
-					logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
+					log.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
 					rateLimit.Pause()
 					return g.SearchReleases(ctx, releaseType, retry+1)
 				}
@@ -134,7 +134,7 @@ func (g *Github) SearchReleases(ctx context.Context, releaseType ReleaseType, re
 			return nil, fmt.Errorf("querying GitHub API: %w", err)
 		}
 
-		logrus.Debugln(query.RateLimit)
+		log.Debugln(query.RateLimit)
 
 		for i := len(query.Repository.Releases.Edges) - 1; i >= 0; i-- {
 			node := query.Repository.Releases.Edges[i]
@@ -172,7 +172,7 @@ func (g *Github) SearchReleases(ctx context.Context, releaseType ReleaseType, re
 		variables[keyBefore] = githubv4.NewString(githubv4.String(query.Repository.Releases.PageInfo.StartCursor))
 	}
 
-	logrus.Debugf("%d releases found", len(releases))
+	log.Debugf("%d releases found", len(releases))
 	return releases, nil
 }
 
@@ -182,7 +182,7 @@ func (g *Github) SearchReleases(ctx context.Context, releaseType ReleaseType, re
 func (g *Github) SearchReleasesByTagName(ctx context.Context, releaseType ReleaseType) (releases []string, err error) {
 	releaseNodes, err := g.SearchReleases(ctx, releaseType, 0)
 	if err != nil {
-		logrus.Errorf("\t%s", err)
+		log.Errorf("\t%s", err)
 		return releases, err
 	}
 
@@ -198,7 +198,7 @@ func (g *Github) SearchReleasesByTagName(ctx context.Context, releaseType Releas
 func (g *Github) SearchReleasesByTagHash(ctx context.Context, releaseType ReleaseType) (releases []string, err error) {
 	releaseNodes, err := g.SearchReleases(ctx, releaseType, 0)
 	if err != nil {
-		logrus.Errorf("\t%s", err)
+		log.Errorf("\t%s", err)
 		return releases, err
 	}
 
@@ -214,7 +214,7 @@ func (g *Github) SearchReleasesByTagHash(ctx context.Context, releaseType Releas
 func (g *Github) SearchReleasesByTitle(ctx context.Context, releaseType ReleaseType) (releases []string, err error) {
 	releaseNodes, err := g.SearchReleases(ctx, releaseType, 0)
 	if err != nil {
-		logrus.Errorf("\t%s", err)
+		log.Errorf("\t%s", err)
 		return releases, err
 	}
 

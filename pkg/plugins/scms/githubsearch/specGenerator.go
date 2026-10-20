@@ -7,7 +7,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github"
 )
 
@@ -53,7 +53,7 @@ func (g GitHubSearch) ScmsGenerator(ctx context.Context) (results []github.Spec,
 	}
 
 	for _, repo := range repositories {
-		logrus.Debugf("Processing GitHub repository: %s", repo)
+		log.Debugf("Processing GitHub repository: %s", repo)
 
 		repositoryParts := strings.Split(repo, "/")
 		if len(repositoryParts) != 2 {

@@ -9,7 +9,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 const pyprojectFile = "pyproject.toml"
@@ -46,7 +46,7 @@ func findPyprojectFiles(rootDir string) ([]string, error) {
 
 	err := filepath.WalkDir(rootDir, func(path string, di fs.DirEntry, err error) error {
 		if err != nil {
-			logrus.Errorf("accessing path %q: %v", path, err)
+			log.Errorf("accessing path %q: %v", path, err)
 			return err
 		}
 
@@ -68,9 +68,9 @@ func findPyprojectFiles(rootDir string) ([]string, error) {
 		return nil, err
 	}
 
-	logrus.Debugf("%d pyproject.toml file(s) found", len(found))
+	log.Debugf("%d pyproject.toml file(s) found", len(found))
 	for _, f := range found {
-		logrus.Debugf("    * %q", f)
+		log.Debugf("    * %q", f)
 	}
 
 	return found, nil
@@ -108,7 +108,7 @@ func detectLockFileSupport(dir string, uvAvailable bool) (lockFileSupport, bool)
 		if uvAvailable {
 			support.uv = true
 		} else {
-			logrus.Warning("skipping, uv.lock detected but Updatecli couldn't detect the uv command to update it in case of a pyproject.toml update")
+			log.Warning("skipping, uv.lock detected but Updatecli couldn't detect the uv command to update it in case of a pyproject.toml update")
 			return support, true
 		}
 	}

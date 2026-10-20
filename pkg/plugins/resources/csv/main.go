@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/go-viper/mapstructure/v2"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/text"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/dasel"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
@@ -65,9 +65,9 @@ func New(spec interface{}) (*CSV, error) {
 	// Deprecate message to remove in a future updatecli version
 	// cfr https://github.com/updatecli/updatecli/pull/944
 	if newSpec.Multiple {
-		logrus.Warningln("the setting 'multiple' is now deprecated. you should use the parameter \"query\" which allows you to specify an advanced query.")
+		log.Warningln("the setting 'multiple' is now deprecated. you should use the parameter \"query\" which allows you to specify an advanced query.")
 		if len(newSpec.Key) > 0 && len(newSpec.Query) == 0 {
-			logrus.Printf("Instead of using the parameter key %q combined with multiple, we converted your setting to use the parameter query %q", newSpec.Key, newSpec.Query)
+			log.Printf("Instead of using the parameter key %q combined with multiple, we converted your setting to use the parameter query %q", newSpec.Key, newSpec.Query)
 			newSpec.Query = newSpec.Key
 			newSpec.Key = ""
 			newSpec.Multiple = false
@@ -87,14 +87,14 @@ func New(spec interface{}) (*CSV, error) {
 	}
 
 	if engine == ENGINEDASEL_V1 {
-		logrus.Warningf("Engine %q is deprecated and will be removed in a future updatecli version. Please use %q instead.",
+		log.Warningf("Engine %q is deprecated and will be removed in a future updatecli version. Please use %q instead.",
 			ENGINEDASEL_V1,
 			ENGINEDASEL_V3,
 		)
 	}
 
 	if engine == ENGINEDASEL_V2 {
-		logrus.Warningf("Engine %q is deprecated and will be removed in a future updatecli version. Please use %q instead.",
+		log.Warningf("Engine %q is deprecated and will be removed in a future updatecli version. Please use %q instead.",
 			ENGINEDASEL_V2,
 			ENGINEDASEL_V3,
 		)

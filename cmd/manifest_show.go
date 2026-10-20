@@ -3,7 +3,7 @@ package cmd
 import (
 	"os"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 
 	"github.com/spf13/cobra"
 
@@ -27,7 +27,7 @@ var (
 			policyReferences = args
 			err := getPolicyFilesFromRegistry()
 			if err != nil {
-				logrus.Errorf("command failed: %s", err)
+				log.Errorf("command failed: %s", err)
 				os.Exit(1)
 			}
 
@@ -45,7 +45,7 @@ var (
 				e.Options.DisplayFlavor = "graph"
 				err := pipeline.ValidateGraphFlavor(manifestShowGraphFlavor)
 				if err != nil {
-					logrus.Errorf("Invalid graph flavor: %s", err)
+					log.Errorf("Invalid graph flavor: %s", err)
 					os.Exit(1)
 				}
 				e.Options.GraphFlavor = manifestShowGraphFlavor
@@ -57,7 +57,7 @@ var (
 			e.Options.ManifestOptions.RelativePaths = config.RelativePathBase(relativePaths)
 			err = run("manifest/show")
 			if err != nil {
-				logrus.Errorf("command failed: %s", err)
+				log.Errorf("command failed: %s", err)
 				os.Exit(1)
 			}
 		},

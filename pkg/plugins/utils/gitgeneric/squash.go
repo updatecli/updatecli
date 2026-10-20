@@ -8,7 +8,7 @@ import (
 	git "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git/sign"
 )
 
@@ -102,7 +102,7 @@ func (g GoGit) SquashCommit(repoDir, baseBranch, featureBranch string, options S
 		}
 
 		finalMessage = buildCommitMessage(options.Message, originalCommits, options.Format)
-		logrus.Debugf("Collected %d original commits for inclusion in message\n", len(originalCommits))
+		log.Debugf("Collected %d original commits for inclusion in message\n", len(originalCommits))
 	} else {
 		finalMessage = options.Message
 	}
@@ -130,7 +130,7 @@ func (g GoGit) SquashCommit(repoDir, baseBranch, featureBranch string, options S
 			return fmt.Errorf("validating GPG key: %w", err)
 		}
 
-		logrus.Debugf("Signing squashed commit with provided key\n")
+		log.Debugf("Signing squashed commit with provided key\n")
 
 		// Get the signing key using your existing function
 		signer, err := sign.GetCommitSignKey(options.SigninKey, options.SigninPassphrase)
@@ -146,9 +146,9 @@ func (g GoGit) SquashCommit(repoDir, baseBranch, featureBranch string, options S
 
 		// Use the signed commit
 		newCommit = signedCommit
-		logrus.Debugf("Commit successfully signed")
+		log.Debugf("Commit successfully signed")
 	} else {
-		logrus.Debugln("No signing key provided, creating unsigned squashed commit")
+		log.Debugln("No signing key provided, creating unsigned squashed commit")
 	}
 
 	// Store the commit object in the repository
@@ -287,7 +287,7 @@ func buildCommitMessage(squashMsg string, commits []CommitInfo, format string) s
 		// Do not include original commit info
 
 	default:
-		logrus.Errorf("unknown commit message format %q", format)
+		log.Errorf("unknown commit message format %q", format)
 	}
 
 	return builder.String()

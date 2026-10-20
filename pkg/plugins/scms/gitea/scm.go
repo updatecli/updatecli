@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/gitgeneric"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
 )
@@ -30,7 +30,7 @@ func (g *Gitea) CleanWorkingBranch() (bool, error) {
 	_, workingBranch, targetBranch := g.GetBranches()
 
 	if workingBranch == targetBranch {
-		logrus.Infof("Skipping cleaning working branch %q on %q (same as target branch)\n", workingBranch, redact.URL(g.GetURL()))
+		log.Infof("Skipping cleaning working branch %q on %q (same as target branch)\n", workingBranch, redact.URL(g.GetURL()))
 		return false, nil
 	}
 
@@ -88,7 +88,7 @@ func (g *Gitea) Clone() (string, error) {
 		g.Spec.SingleBranch != nil && *g.Spec.SingleBranch,
 	)
 	if err != nil {
-		logrus.Errorf("failed cloning Gitea repository %q", redact.URL(g.GetURL()))
+		log.Errorf("failed cloning Gitea repository %q", redact.URL(g.GetURL()))
 		return "", err
 	}
 

@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/shurcooL/githubv4"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github/client"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github/token"
 	"github.com/updatecli/updatecli/pkg/plugins/utils"
@@ -37,7 +37,7 @@ func (g *Github) CleanWorkingBranch() (bool, error) {
 	_, workingBranch, targetBranch := g.GetBranches()
 
 	if workingBranch == targetBranch {
-		logrus.Infof("Skipping cleaning working branch %q on %q (same as target branch)\n", workingBranch, redact.URL(g.GetURL()))
+		log.Infof("Skipping cleaning working branch %q on %q (same as target branch)\n", workingBranch, redact.URL(g.GetURL()))
 		return false, nil
 	}
 
@@ -64,7 +64,7 @@ func (g *Github) CleanWorkingBranch() (bool, error) {
 func (g *Github) GetURL() string {
 	URL, err := url.JoinPath(g.URL, g.Spec.Owner, g.Spec.Repository+".git")
 	if err != nil {
-		logrus.Errorln(err)
+		log.Errorln(err)
 		return ""
 	}
 
@@ -105,7 +105,7 @@ func (g *Github) Clone() (string, error) {
 		g.Spec.SingleBranch != nil && *g.Spec.SingleBranch,
 	)
 	if err != nil {
-		logrus.Errorf("failed cloning GitHub repository %q", redact.URL(g.GetURL()))
+		log.Errorf("failed cloning GitHub repository %q", redact.URL(g.GetURL()))
 		return "", err
 	}
 
@@ -124,7 +124,7 @@ func (g *Github) Commit(ctx context.Context, message string) error {
 
 	if g.commitUsingApi {
 
-		logrus.Debugf("Creating commit using GitHub API")
+		log.Debugf("Creating commit using GitHub API")
 		_, workingBranch, _ := g.GetBranches()
 
 		commitHashPrePull, err := g.nativeGitHandler.GetLatestCommitHash(workingDir)
@@ -174,10 +174,10 @@ func (g *Github) Commit(ctx context.Context, message string) error {
 				break
 			}
 
-			logrus.Debugf("Latest local commit %q should have been %q", commitHashPrePull, commitHasPostApiQuery)
-			logrus.Debugf("Waiting for GitHub to make the commit %q available", commitHasPostApiQuery)
+			log.Debugf("Latest local commit %q should have been %q", commitHashPrePull, commitHasPostApiQuery)
+			log.Debugf("Waiting for GitHub to make the commit %q available", commitHasPostApiQuery)
 
-			logrus.Debugf("Commit not found yet, retrying to pull it")
+			log.Debugf("Commit not found yet, retrying to pull it")
 
 			accessToken, err := token.GetAccessToken(g.token)
 			if err != nil {
@@ -201,19 +201,19 @@ func (g *Github) Commit(ctx context.Context, message string) error {
 				return err
 			}
 
-			logrus.Debugf("Latest commit after creating a new one: %q", commitHasPostApiQuery)
+			log.Debugf("Latest commit after creating a new one: %q", commitHasPostApiQuery)
 
 			if counter == maxRetry-1 {
-				logrus.Debugf("Giving up trying to pull the newly created commit")
+				log.Debugf("Giving up trying to pull the newly created commit")
 			}
 		}
 
 		if g.Spec.CommitMessage.IsSquash() {
-			logrus.Warningf("Squash commit is not supported when using GitHub API to create the commit. Ignoring the squash option.")
+			log.Warningf("Squash commit is not supported when using GitHub API to create the commit. Ignoring the squash option.")
 		}
 
 	} else {
-		logrus.Debugf("Creating commit using native git")
+		log.Debugf("Creating commit using native git")
 
 		if err = g.nativeGitHandler.Commit(
 			g.Spec.User,
@@ -272,7 +272,7 @@ func (g *Github) CreateCommit(ctx context.Context, workingDir string, commitMess
 		// Ensure that locally reset branch is pushed to remote branch
 		// before continuing with commit creation as that will otherwise
 		// be lost.
-		logrus.Debugf("local branch %q was reset, pushing to remote to ensure correct state", workingBranch)
+		log.Debugf("local branch %q was reset, pushing to remote to ensure correct state", workingBranch)
 		if _, err = g.Push(); err != nil {
 			return "", fmt.Errorf("failed to push branch %q before creating commit: %w", workingBranch, err)
 		}
@@ -291,7 +291,7 @@ func (g *Github) CreateCommit(ctx context.Context, workingDir string, commitMess
 		}
 
 		headOid = sourceBranchRepoRef.HeadOid
-		logrus.Debugf("Branch %s does not exist, creating it from commit %q", workingBranch, headOid)
+		log.Debugf("Branch %s does not exist, creating it from commit %q", workingBranch, headOid)
 		if err := g.createBranch(ctx, workingBranch, repoRef.ID, headOid, 0); err != nil {
 			return "", fmt.Errorf("creating branch %q from commit %q: %w", workingBranch, headOid, err)
 		}
@@ -313,11 +313,11 @@ func (g *Github) CreateCommit(ctx context.Context, workingDir string, commitMess
 	}
 
 	rateLimit, err := queryRateLimit(g.client, ctx)
-	logrus.Debugln(rateLimit)
+	log.Debugln(rateLimit)
 	if err != nil {
 		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
 			if retry < client.MaxRetry {
-				logrus.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
+				log.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
 				rateLimit.Pause()
 				return g.CreateCommit(ctx, workingDir, commitMessage, retry+1)
 			}
@@ -339,7 +339,7 @@ func (g *Github) CreateCommit(ctx context.Context, workingDir string, commitMess
 		return "", fmt.Errorf("creating commit on branch %q: %w", workingBranch, err)
 	}
 
-	logrus.Debugf("commit created: %s", m.CreateCommitOnBranch.Commit.URL)
+	log.Debugf("commit created: %s", m.CreateCommitOnBranch.Commit.URL)
 
 	return m.CreateCommitOnBranch.Commit.OID, nil
 }
@@ -437,7 +437,7 @@ func (g *Github) Push() (bool, error) {
 	// If the commit is done using the GitHub API, we don't need to push
 	// the commit as it is done in the same operation.
 	if g.commitUsingApi {
-		logrus.Debugf("commit done using GitHub API, normally nothing need to be push but we may have left over.")
+		log.Debugf("commit done using GitHub API, normally nothing need to be push but we may have left over.")
 	}
 
 	accessToken, err := token.GetAccessToken(g.token)

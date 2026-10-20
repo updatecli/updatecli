@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"text/template"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 var (
@@ -80,19 +80,19 @@ func (f ArgoCD) discoverArgoCDManifests() ([][]byte, error) {
 	}
 
 	for _, foundFile := range foundFiles {
-		logrus.Debugf("parsing file %q", foundFile)
+		log.Debugf("parsing file %q", foundFile)
 
 		relativeFilepath, err := filepath.Rel(f.rootDir, foundFile)
 		if err != nil {
 			// Let's try the next chart if one fail
-			logrus.Debugln(err)
+			log.Debugln(err)
 			continue
 		}
 
 		// Retrieve chart dependencies for each chart
 		d, err := readManifest(foundFile)
 		if err != nil {
-			logrus.Debugln(err)
+			log.Debugln(err)
 			continue
 		}
 
@@ -106,7 +106,7 @@ func (f ArgoCD) discoverArgoCDManifests() ([][]byte, error) {
 					documentIndex,
 				)
 				if err != nil {
-					logrus.Errorf("error discovering application source: %s", err)
+					log.Errorf("error discovering application source: %s", err)
 					continue
 				}
 
@@ -123,7 +123,7 @@ func (f ArgoCD) discoverArgoCDManifests() ([][]byte, error) {
 					documentIndex,
 				)
 				if err != nil {
-					logrus.Errorf("error discovering application source: %s", err)
+					log.Errorf("error discovering application source: %s", err)
 					continue
 				}
 
@@ -144,7 +144,7 @@ func (f ArgoCD) discoverArgoCDManifests() ([][]byte, error) {
 					documentIndex,
 				)
 				if err != nil {
-					logrus.Errorf("error discovering application source: %s", err)
+					log.Errorf("error discovering application source: %s", err)
 					continue
 				}
 
@@ -165,7 +165,7 @@ func (f ArgoCD) discoverArgoCDManifests() ([][]byte, error) {
 					documentIndex,
 				)
 				if err != nil {
-					logrus.Errorf("error discovering application source: %s", err)
+					log.Errorf("error discovering application source: %s", err)
 					continue
 				}
 
@@ -190,14 +190,14 @@ func (f ArgoCD) generateManifestBySource(data ApplicationSourceSpec, file string
 
 	if len(f.spec.Ignore) > 0 {
 		if f.spec.Ignore.isMatchingRules(f.rootDir, file, data.RepoURL, data.Chart, data.TargetRevision) {
-			logrus.Debugf("Ignoring Helm chart %q from %q, as matching ignore rule(s)\n", data.Chart, file)
+			log.Debugf("Ignoring Helm chart %q from %q, as matching ignore rule(s)\n", data.Chart, file)
 			return nil, nil
 		}
 	}
 
 	if len(f.spec.Only) > 0 {
 		if !f.spec.Only.isMatchingRules(f.rootDir, file, data.RepoURL, data.Chart, data.TargetRevision) {
-			logrus.Debugf("Ignoring Helm chart %q from %q, as not matching only rule(s)\n", data.Chart, file)
+			log.Debugf("Ignoring Helm chart %q from %q, as not matching only rule(s)\n", data.Chart, file)
 			return nil, nil
 		}
 	}
@@ -211,7 +211,7 @@ func (f ArgoCD) generateManifestBySource(data ApplicationSourceSpec, file string
 		sourceVersionFilterPattern, err = f.versionFilter.GreaterThanPattern(data.TargetRevision)
 		sourceVersionFilterRegex = f.versionFilter.Regex
 		if err != nil {
-			logrus.Debugf("building version filter pattern: %s", err)
+			log.Debugf("building version filter pattern: %s", err)
 			sourceVersionFilterPattern = "*"
 		}
 	}
@@ -226,21 +226,21 @@ func (f ArgoCD) generateManifestBySource(data ApplicationSourceSpec, file string
 			username = f.spec.Auths[repoURL.Host].Username
 			password = f.spec.Auths[repoURL.Host].Password
 			token = f.spec.Auths[repoURL.Host].Token
-			logrus.Debugf("found credentials for repository %q", data.RepoURL)
+			log.Debugf("found credentials for repository %q", data.RepoURL)
 		}
 	default:
-		logrus.Debugf("Ignoring auth configuration due to invalid Helm repository URL: %s", err)
+		log.Debugf("Ignoring auth configuration due to invalid Helm repository URL: %s", err)
 	}
 
 	sourceChartRepository, err := determineChartRepository(data.RepoURL)
 	if err != nil {
-		logrus.Debugf("invalid URL: %s", err)
+		log.Debugf("invalid URL: %s", err)
 		return nil, nil
 	}
 
 	tmpl, err := template.New("manifest").Parse(manifestTemplate)
 	if err != nil {
-		logrus.Debugln(err)
+		log.Debugln(err)
 		return nil, nil
 	}
 

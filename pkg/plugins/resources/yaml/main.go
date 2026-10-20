@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/go-viper/mapstructure/v2"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/text"
 	"github.com/updatecli/updatecli/pkg/plugins/utils"
@@ -457,7 +457,7 @@ func (y *Yaml) UpdateAbsoluteFilePath(pathResolver pathresolver.Resolver) error 
 		}
 
 		if resolvedPath != file.filePath {
-			logrus.Debugf("Relative path detected: changing from %q to %q", file.originalFilePath, resolvedPath)
+			log.Debugf("Relative path detected: changing from %q to %q", file.originalFilePath, resolvedPath)
 		}
 
 		file.filePath = resolvedPath

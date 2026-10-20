@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/go-viper/mapstructure/v2"
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
 )
@@ -52,7 +52,7 @@ func New(spec interface{}) (*Http, error) {
 	// Do not follow redirect as per https://pkg.go.dev/net/http when we want to get a header from original request
 	httpClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
 		if newSpec.ReturnResponseHeader != "" || newSpec.Request.NoFollowRedirects || newSpec.ResponseAsserts.StatusCode > 0 || len(newSpec.ResponseAsserts.Headers) > 0 {
-			logrus.Debugf("spec.returnresponseheader defined: HTTP client won't follow redirects")
+			log.Debugf("spec.returnresponseheader defined: HTTP client won't follow redirects")
 			return http.ErrUseLastResponse
 		}
 
@@ -102,13 +102,13 @@ func (h *Http) Changelog(from, to string) *result.Changelogs {
 }
 
 func (h *Http) performHttpRequest() (*http.Response, error) {
-	logrus.Debugf("[http] Request to execute: %s %s", h.httpReq.Method, redact.URL(h.httpReq.URL.String()))
+	log.Debugf("[http] Request to execute: %s %s", h.httpReq.Method, redact.URL(h.httpReq.URL.String()))
 	httpRes, err := h.httpClient.Do(h.httpReq)
 	if err != nil {
 		return nil, err
 	}
 
-	logrus.Debugf("[http] Response received: %s", httpRes.Status)
+	log.Debugf("[http] Response received: %s", httpRes.Status)
 
 	return httpRes, nil
 }

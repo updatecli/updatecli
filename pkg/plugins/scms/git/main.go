@@ -7,7 +7,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 
 	"github.com/updatecli/updatecli/pkg/core/tmp"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git/commit"
@@ -211,7 +211,7 @@ Updatecli may be pushing unwanted changes to the branch %q.
 If you know what you are doing, please set the workingBranch option to false in your configuration file to ignore this error message.
 `, s.Branch)
 
-			logrus.Errorln(errorMsg)
+			log.Errorln(errorMsg)
 			return nil, errors.New("unclear configuration, better safe than sorry")
 		}
 	default:
@@ -313,7 +313,7 @@ func newDirectory(URL string) (string, error) {
 
 		err = os.MkdirAll(directory, 0755)
 		if err != nil {
-			logrus.Errorf("err - %s", err)
+			log.Errorf("err - %s", err)
 			return "", err
 		}
 	}

@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"github.com/shurcooL/githubv4"
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github/app"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/github/token"
 	"golang.org/x/oauth2"
@@ -48,7 +48,7 @@ func New(configUsername, configToken string, configApp *app.Spec, configURL stri
 	// We first try to get a token source from the environment variable
 	username, tokenSource, err := token.GetTokenSourceFromEnv()
 	if err != nil {
-		logrus.Debugf("no GitHub token found in environment variables: %s", err)
+		log.Debugf("no GitHub token found in environment variables: %s", err)
 	}
 
 	// If no token source could be found in the environment variable
@@ -70,11 +70,11 @@ func New(configUsername, configToken string, configApp *app.Spec, configURL stri
 	// read-only operations on public repositories, but API operations
 	// requiring authentication will fail.
 	if tokenSource == nil {
-		logrus.Debugf(`GitHub token is not set, API operations requiring authentication will fail.
+		log.Debugf(`GitHub token is not set, API operations requiring authentication will fail.
 	Please refer to the documentation for more information:
 	->  https://www.updatecli.io/docs/plugins/scm/github/
 `)
-		httpClient := httpclient.NewRetryClient()
+		httpClient := httpclient.NewUncachedRetryClient()
 
 		var newClient Client
 
@@ -100,7 +100,7 @@ func New(configUsername, configToken string, configApp *app.Spec, configURL stri
 	clientContext := context.WithValue(
 		context.Background(),
 		oauth2.HTTPClient,
-		httpclient.NewRetryClient())
+		httpclient.NewUncachedRetryClient())
 
 	httpClient := oauth2.NewClient(clientContext, tokenSource)
 

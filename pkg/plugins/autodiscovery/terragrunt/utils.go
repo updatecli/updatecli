@@ -8,11 +8,12 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/updatecli/updatecli/pkg/core/log"
+
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclparse"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 	terraformRegistryAddress "github.com/hashicorp/terraform-registry-address"
-	"github.com/sirupsen/logrus"
 	terraformAutoDiscovery "github.com/updatecli/updatecli/pkg/plugins/autodiscovery/terraform"
 	terraformUtils "github.com/updatecli/updatecli/pkg/plugins/resources/terraform"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
@@ -29,11 +30,11 @@ const (
 func searchTerragruntFiles(rootDir string) ([]string, error) {
 	foundFiles := []string{}
 
-	logrus.Debugf("Looking for Terragrunt modules in %q", rootDir)
+	log.Debugf("Looking for Terragrunt modules in %q", rootDir)
 
 	err := filepath.WalkDir(rootDir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
-			fmt.Printf("prevent panic by handling failure accessing a path %q: %v\n", path, err)
+			log.Warningf("prevent panic by handling failure accessing a path %q: %v\n", path, err)
 			return err
 		}
 
@@ -156,12 +157,12 @@ func parseSourceUrl(evaluatedSource string, rawSource string, allowNoVersion boo
 		}
 		u, err := url.Parse(evaluatedSource)
 		if err != nil {
-			fmt.Printf("prevent panic by handling failure parsing url %q: %v\n", redact.URL(evaluatedSource), err)
+			log.Warningf("prevent panic by handling failure parsing url %q: %v\n", redact.URL(evaluatedSource), err)
 			return source, err
 		}
 		params, err := url.ParseQuery(u.RawQuery)
 		if err != nil {
-			fmt.Printf("prevent panic by handling failure parsing query %q: %v\n", u.RawQuery, err)
+			log.Warningf("prevent panic by handling failure parsing query %q: %v\n", u.RawQuery, err)
 			return source, err
 		}
 		var param string
@@ -220,14 +221,14 @@ func getModuleFromUrl(evaluatedSource string, rawSource string, allowNoVersion b
 	case SourceTypeRegistry:
 		registryModule, err := terraformRegistryAddress.ParseModuleSource(source.baseUrl)
 		if err != nil {
-			fmt.Printf("prevent panic by handling failure parsing url %q: %v\n", redact.URL(source.baseUrl), err)
+			log.Warningf("prevent panic by handling failure parsing url %q: %v\n", redact.URL(source.baseUrl), err)
 			return nil, err
 		}
 		module.registryModule = &registryModule
 	case SourceTypeGit:
 		//
 	default:
-		logrus.Errorf("Unsupported source type %q", source.sourceType)
+		log.Errorf("Unsupported source type %q", source.sourceType)
 	}
 
 	return module, nil
@@ -267,7 +268,7 @@ func evaluateHcl(rawSource string, hclContent []byte, hclFileName string) (strin
 		for attrName, attr := range blockContent {
 			attrValue, diags := attr.Expr.Value(&hcl.EvalContext{})
 			if diags.HasErrors() {
-				logrus.Debugf("Skipping attribute %s: %v", attrName, diags.Error())
+				log.Debugf("Skipping attribute %s: %v", attrName, diags.Error())
 				continue
 			}
 			localsValue[attrName] = attrValue

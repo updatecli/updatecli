@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/drone/go-scm/scm"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
@@ -42,12 +42,12 @@ func (b *Bitbucket) isPullRequestExist() (exists bool, details pullRequestDetail
 			optsSearch,
 		)
 		if err != nil {
-			logrus.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
+			log.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
 			return false, pullRequestDetails{}, err
 		}
 
 		if resp.Status > 400 {
-			logrus.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
+			log.Debugf("RC: %d\nBody:\n%s", resp.Status, resp.Body)
 		}
 
 		for _, p := range pullrequests {
@@ -56,7 +56,7 @@ func (b *Bitbucket) isPullRequestExist() (exists bool, details pullRequestDetail
 				!p.Closed &&
 				!p.Merged {
 
-				logrus.Infof("%s Bitbucket pullrequest detected at:\n\t%s",
+				log.Infof("%s Bitbucket pullrequest detected at:\n\t%s",
 					result.SUCCESS,
 					p.Link)
 
@@ -115,7 +115,7 @@ func (s *Bitbucket) isRemoteBranchesExist() (bool, error) {
 
 	if _, _, err := s.client.Git.FindBranch(ctx, repo, sourceBranch); err != nil {
 		if err.Error() == scm.ErrNotFound.Error() {
-			logrus.Warningf("Branch %q not found on remote repository %s", sourceBranch, repo)
+			log.Warningf("Branch %q not found on remote repository %s", sourceBranch, repo)
 			return false, nil
 		}
 		return false, err
@@ -123,7 +123,7 @@ func (s *Bitbucket) isRemoteBranchesExist() (bool, error) {
 
 	if _, _, err := s.client.Git.FindBranch(ctx, repo, targetBranch); err != nil {
 		if err.Error() == scm.ErrNotFound.Error() {
-			logrus.Warningf("Branch %q not found on remote repository %s", targetBranch, repo)
+			log.Warningf("Branch %q not found on remote repository %s", targetBranch, repo)
 			return false, nil
 		}
 		return false, err

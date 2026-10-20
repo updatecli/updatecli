@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
@@ -17,12 +17,12 @@ func (m *Maven) Source(_ context.Context, pathResolver pathresolver.Resolver, re
 		// metadataURL contains the URL without username/password
 		metadataURL, err := trimUsernamePasswordFromURL(metadataHandler.GetMetadataURL())
 		if err != nil {
-			logrus.Errorf("Trying to parse Maven metadata url: %s", err)
+			log.Errorf("Trying to parse Maven metadata url: %s", err)
 		}
 
 		latestVersion, err := metadataHandler.GetLatestVersion()
 		if err != nil {
-			logrus.Warnf("getting latest version: %v", err)
+			log.Warnf("getting latest version: %v", err)
 		}
 
 		if latestVersion != "" {

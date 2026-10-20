@@ -6,7 +6,7 @@ import (
 	"regexp"
 
 	"github.com/Masterminds/semver/v3"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 // MatchingRule defines a rule to select Go modules or Go versions.
@@ -108,12 +108,12 @@ func (m MatchingRules) isMatchingRules(rootDir, filePath, goVersion, moduleName,
 				match, err := filepath.Match(rule.Path, filePath)
 
 				if err != nil {
-					logrus.Errorf("%s - %q", err, rule.Path)
+					log.Errorf("%s - %q", err, rule.Path)
 					continue
 				}
 				ruleResults = append(ruleResults, match)
 				if match {
-					logrus.Debugf("file path %q matching rule %q", filePath, rule.Path)
+					log.Debugf("file path %q matching rule %q", filePath, rule.Path)
 				}
 			}
 
@@ -135,7 +135,7 @@ func (m MatchingRules) isMatchingRules(rootDir, filePath, goVersion, moduleName,
 
 						moduleMatch, err := regexp.MatchString(ruleModuleName, moduleName)
 						if err != nil {
-							logrus.Debugf("%q - %s", ruleModuleName, err)
+							log.Debugf("%q - %s", ruleModuleName, err)
 							break outModule
 						}
 
@@ -148,14 +148,14 @@ func (m MatchingRules) isMatchingRules(rootDir, filePath, goVersion, moduleName,
 							v, err := semver.NewVersion(moduleVersion)
 							if err != nil {
 								match = moduleVersion == ruleModuleVersion
-								logrus.Debugf("%q - %s", moduleVersion, err)
+								log.Debugf("%q - %s", moduleVersion, err)
 								break outModule
 							}
 
 							c, err := semver.NewConstraint(ruleModuleVersion)
 							if err != nil {
 								match = moduleVersion == ruleModuleVersion
-								logrus.Debugf("%q %s", err, ruleModuleVersion)
+								log.Debugf("%q %s", err, ruleModuleVersion)
 								break outModule
 							}
 
@@ -180,14 +180,14 @@ func (m MatchingRules) isMatchingRules(rootDir, filePath, goVersion, moduleName,
 
 				v, err := semver.NewVersion(goVersion)
 				if err != nil {
-					logrus.Errorln(err)
+					log.Errorln(err)
 					ruleResults = append(ruleResults, false)
 					goto goVersionDone
 				}
 
 				c, err := semver.NewConstraint(rule.GoVersion)
 				if err != nil {
-					logrus.Errorln(err)
+					log.Errorln(err)
 					ruleResults = append(ruleResults, false)
 					goto goVersionDone
 				}

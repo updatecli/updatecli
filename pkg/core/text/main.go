@@ -13,8 +13,8 @@ import (
 	"github.com/hexops/gotextdiff"
 	"github.com/hexops/gotextdiff/myers"
 	"github.com/hexops/gotextdiff/span"
-	"github.com/sirupsen/logrus"
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
 )
 
@@ -41,9 +41,9 @@ func (t *Text) readFromURL(url string, line int) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	logrus.Debugf("HTTP GET to %q got a response with code %d", redact.URL(url), resp.StatusCode)
+	log.Debugf("HTTP GET to %q got a response with code %d", redact.URL(url), resp.StatusCode)
 	if resp.StatusCode > 399 {
-		logrus.Debugf("HTTP return code %d for URL %q", resp.StatusCode, redact.URL(url))
+		log.Debugf("HTTP return code %d for URL %q", resp.StatusCode, redact.URL(url))
 		return "", fmt.Errorf("URL %q not found or in error", redact.URL(url))
 	}
 
@@ -51,12 +51,12 @@ func (t *Text) readFromURL(url string, line int) (string, error) {
 
 	// Only retrieve the specified line in memory if specified
 	if line > 0 {
-		logrus.Debugf("Reading line %d of the content returned from url %q", line, redact.URL(url))
+		log.Debugf("Reading line %d of the content returned from url %q", line, redact.URL(url))
 		return getLine(bufio.NewReader(resp.Body), line), nil
 	}
 
 	// Otherwise retrieve the whole file content. Can be heavy.
-	logrus.Debugf("Reading content returned from the url %q", redact.URL(url))
+	log.Debugf("Reading content returned from the url %q", redact.URL(url))
 	bodyContent, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
@@ -110,7 +110,7 @@ func getLine(reader io.Reader, line int) string {
 // "https://", or file url "file://" or filepath (default)
 func (t *Text) ReadAll(location string) (string, error) {
 	if IsURL(location) {
-		logrus.Debugf("URL detected for location %q", redact.URL(location))
+		log.Debugf("URL detected for location %q", redact.URL(location))
 		content, err := t.readFromURL(location, 0)
 		if err != nil {
 			return "", err
@@ -273,7 +273,7 @@ func (t *Text) WriteLineToFile(lineContent, location string, lineNumber int) (er
 
 func (t *Text) FileExists(location string) bool {
 	if IsURL(location) {
-		logrus.Debugf("URL detected for file %q", location)
+		log.Debugf("URL detected for file %q", location)
 		// Try to only get the first line of the remote URL
 		_, err := t.readFromURL(location, 1)
 

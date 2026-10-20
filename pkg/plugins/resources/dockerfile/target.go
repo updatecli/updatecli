@@ -6,7 +6,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
@@ -28,7 +28,7 @@ func (d *Dockerfile) Target(_ context.Context, source string, scm scm.ScmHandler
 		file := pathResolver.Join(relativeFile)
 
 		if file != relativeFile {
-			logrus.Debugf("Relative path detected: changing from %q to %q", relativeFile, file)
+			log.Debugf("Relative path detected: changing from %q to %q", relativeFile, file)
 		}
 
 		dockerfileContent, err := d.contentRetriever.ReadAll(file)
@@ -36,7 +36,7 @@ func (d *Dockerfile) Target(_ context.Context, source string, scm scm.ScmHandler
 			return err
 		}
 
-		logrus.Debugf("\n🐋 On (Docker)file %q:\n\n", relativeFile)
+		log.Debugf("\n🐋 On (Docker)file %q:\n\n", relativeFile)
 
 		newDockerfileContent, changedLines, err := d.parser.ReplaceInstructions([]byte(dockerfileContent), source, d.spec.Stage)
 		if err != nil {
@@ -44,7 +44,7 @@ func (d *Dockerfile) Target(_ context.Context, source string, scm scm.ScmHandler
 		}
 
 		if len(changedLines) == 0 {
-			logrus.Debugf("no change detected %q, nothing else to do", relativeFile)
+			log.Debugf("no change detected %q, nothing else to do", relativeFile)
 			//changeDescriptions = append(changeDescriptions, fmt.Sprintf("no changes needed for file %q", file))
 		} else {
 			resultTarget.Changed = true

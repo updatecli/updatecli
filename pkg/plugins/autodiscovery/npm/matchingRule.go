@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 
 	"github.com/Masterminds/semver/v3"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 // MatchingRule defines a rule to select npm packages.
@@ -67,12 +67,12 @@ func (m MatchingRules) isMatchingRules(rootDir, filePath, packageName, packageVe
 
 				match, err := filepath.Match(rule.Path, filePath)
 				if err != nil {
-					logrus.Errorf("%s - %q", err, rule.Path)
+					log.Errorf("%s - %q", err, rule.Path)
 					continue
 				}
 				ruleResults = append(ruleResults, match)
 				if match {
-					logrus.Debugf("file path %q matching rule %q", filePath, rule.Path)
+					log.Debugf("file path %q matching rule %q", filePath, rule.Path)
 				}
 			}
 
@@ -95,14 +95,14 @@ func (m MatchingRules) isMatchingRules(rootDir, filePath, packageName, packageVe
 						v, err := semver.NewVersion(packageVersion)
 						if err != nil {
 							match = packageVersion == rulePackageVersion
-							logrus.Debugf("%q - %s", packageVersion, err)
+							log.Debugf("%q - %s", packageVersion, err)
 							break outPackage
 						}
 
 						c, err := semver.NewConstraint(rulePackageVersion)
 						if err != nil {
 							match = packageVersion == rulePackageVersion
-							logrus.Debugf("%q %s", err, rulePackageVersion)
+							log.Debugf("%q %s", err, rulePackageVersion)
 							break outPackage
 						}
 

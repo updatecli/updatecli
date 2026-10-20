@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
@@ -16,12 +16,12 @@ func (cp *CargoPackage) Condition(ctx context.Context, source string, scm scm.Sc
 	if scm != nil {
 		path := scm.GetDirectory()
 		if cp.spec.Registry.RootDir != "" {
-			logrus.Warningf("Registry.RootDir is defined and set to %q but is overridden by the scm definition %q",
+			log.Warningf("Registry.RootDir is defined and set to %q but is overridden by the scm definition %q",
 				cp.spec.Registry.RootDir,
 				path)
 		}
 		if cp.spec.Registry.URL != "" {
-			logrus.Warningf("Registry.URL is defined and set to %q but is overridden by the scm definition %q",
+			log.Warningf("Registry.URL is defined and set to %q but is overridden by the scm definition %q",
 				cp.spec.Registry.URL,
 				path)
 		}

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
@@ -13,7 +13,7 @@ import (
 func (g *Gitea) Condition(ctx context.Context, source string, scm scm.ScmHandler, pathResolver pathresolver.Resolver) (pass bool, message string, err error) {
 
 	if scm != nil {
-		logrus.Warningf("Condition not supported for the plugin Gitea Release")
+		log.Warningf("Condition not supported for the plugin Gitea Release")
 	}
 
 	// A condition checks whether a specific release exists, so the age filter,

@@ -5,9 +5,9 @@ import (
 	"testing"
 
 	"github.com/heimdalr/dag"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/config"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/source"
@@ -857,7 +857,7 @@ func TestSortedResourcesKeys(t *testing.T) {
 			for k, v := range data.Sources {
 				err := v.Validate()
 				if err != nil {
-					logrus.Errorf("Failed to validate source config %s", err)
+					log.Errorf("Failed to validate source config %s", err)
 				}
 				sources[k] = source.Source{
 					Config: v,
@@ -867,7 +867,7 @@ func TestSortedResourcesKeys(t *testing.T) {
 			for k, v := range data.Conditions {
 				err := v.Validate()
 				if err != nil {
-					logrus.Errorf("Failed to validate source config %s", err)
+					log.Errorf("Failed to validate source config %s", err)
 				}
 				conditions[k] = condition.Condition{
 					Config: v,
@@ -877,7 +877,7 @@ func TestSortedResourcesKeys(t *testing.T) {
 			for k, v := range data.Targets {
 				err := v.Validate()
 				if err != nil {
-					logrus.Errorf("Failed to validate source config %s", err)
+					log.Errorf("Failed to validate source config %s", err)
 				}
 				targets[k] = target.Target{
 					Config: v,

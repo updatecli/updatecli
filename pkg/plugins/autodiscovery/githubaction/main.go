@@ -4,10 +4,9 @@ import (
 	"fmt"
 	"path"
 	"path/filepath"
-	"strings"
 
 	"github.com/go-viper/mapstructure/v2"
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/docker"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
@@ -265,7 +264,7 @@ func New(spec interface{}, rootDir, scmID, actionID string) (GitHubAction, error
 	dir := rootDir
 	if path.IsAbs(s.RootDir) {
 		if scmID != "" {
-			logrus.Warningf("rootdir %q is an absolute path, scmID %q will be ignored", s.RootDir, scmID)
+			log.Warningf("rootdir %q is an absolute path, scmID %q will be ignored", s.RootDir, scmID)
 		}
 		dir = s.RootDir
 	}
@@ -273,7 +272,7 @@ func New(spec interface{}, rootDir, scmID, actionID string) (GitHubAction, error
 	// If no RootDir have been provided via settings,
 	// then fallback to the current process path.
 	if len(dir) == 0 {
-		logrus.Warningln("no working directory defined")
+		log.Warningln("no working directory defined")
 		dir, err = filepath.Abs(".")
 		if err != nil {
 			return GitHubAction{}, err
@@ -315,8 +314,7 @@ func New(spec interface{}, rootDir, scmID, actionID string) (GitHubAction, error
 }
 
 func (g GitHubAction) DiscoverManifests() ([][]byte, error) {
-	logrus.Infof("\n\n%s\n", strings.ToTitle("GitHub Action"))
-	logrus.Infof("%s\n", strings.Repeat("=", len("GitHub Action")+1))
+	log.Heading("GitHub Action")
 
 	searchFromDir := g.rootDir
 	// If the spec.RootDir is an absolute path, then it as already been set

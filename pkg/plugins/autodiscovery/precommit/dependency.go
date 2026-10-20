@@ -9,7 +9,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/sirupsen/logrus"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/yaml"
 )
 
@@ -44,23 +44,23 @@ func (p Precommit) discoverDependencyManifests() ([][]byte, error) {
 
 	for _, foundFile := range foundFiles {
 
-		logrus.Debugf("parsing file %q", foundFile)
+		log.Debugf("parsing file %q", foundFile)
 
 		relativeFoundFile, err := filepath.Rel(p.rootDir, foundFile)
 		if err != nil {
 			// Let's try the next pom.xml if one fail
-			logrus.Debugln(err)
+			log.Debugln(err)
 			continue
 		}
 
 		data, err := loadPrecommitData(foundFile)
 
 		if err != nil {
-			logrus.Debugln(err)
+			log.Debugln(err)
 			continue
 		}
 		if len(data.Repos) == 0 {
-			logrus.Errorf("no precommit hook repo found in %q\n", foundFile)
+			log.Errorf("no precommit hook repo found in %q\n", foundFile)
 			continue
 		}
 
@@ -68,14 +68,14 @@ func (p Precommit) discoverDependencyManifests() ([][]byte, error) {
 
 			if len(p.spec.Ignore) > 0 {
 				if p.spec.Ignore.isMatchingRules(p.rootDir, relativeFoundFile, repo.Repo, repo.Rev) {
-					logrus.Debugf("Ignoring Hook Repo %q from %q, as matching ignore rule(s)\n", repo.Repo, relativeFoundFile)
+					log.Debugf("Ignoring Hook Repo %q from %q, as matching ignore rule(s)\n", repo.Repo, relativeFoundFile)
 					continue
 				}
 			}
 
 			if len(p.spec.Only) > 0 {
 				if !p.spec.Only.isMatchingRules(p.rootDir, relativeFoundFile, repo.Repo, repo.Rev) {
-					logrus.Debugf("Ignoring NPM package %q from %q, as not matching only rule(s)\n", repo.Repo, relativeFoundFile)
+					log.Debugf("Ignoring NPM package %q from %q, as not matching only rule(s)\n", repo.Repo, relativeFoundFile)
 					continue
 				}
 			}
@@ -85,21 +85,21 @@ func (p Precommit) discoverDependencyManifests() ([][]byte, error) {
 			if err != nil {
 				commentVersion := extractVersionFromComment(repo.RevComment)
 				if commentVersion == "" {
-					logrus.Debugf("skipping file %q due to: %s", relativeFoundFile, err)
+					log.Debugf("skipping file %q due to: %s", relativeFoundFile, err)
 					continue
 				}
 
-				logrus.Debugf("using version %q detected from rev comment in %q", commentVersion, relativeFoundFile)
+				log.Debugf("using version %q detected from rev comment in %q", commentVersion, relativeFoundFile)
 				versionPattern, err = p.versionFilter.GreaterThanPattern(commentVersion)
 				if err != nil {
-					logrus.Debugf("skipping file %q due to: %s", relativeFoundFile, err)
+					log.Debugf("skipping file %q due to: %s", relativeFoundFile, err)
 					continue
 				}
 			}
 
 			tmpl, err := template.New("manifest").Parse(manifestTemplate)
 			if err != nil {
-				logrus.Debugln(err)
+				log.Debugln(err)
 				continue
 			}
 
@@ -147,7 +147,7 @@ func (p Precommit) discoverDependencyManifests() ([][]byte, error) {
 
 			manifest := bytes.Buffer{}
 			if err := tmpl.Execute(&manifest, params); err != nil {
-				logrus.Errorln(err)
+				log.Errorln(err)
 				continue
 			}
 
@@ -155,7 +155,7 @@ func (p Precommit) discoverDependencyManifests() ([][]byte, error) {
 		}
 	}
 
-	logrus.Printf("%v manifests identified", len(manifests))
+	log.Printf("%v manifests identified", len(manifests))
 
 	return manifests, nil
 }
