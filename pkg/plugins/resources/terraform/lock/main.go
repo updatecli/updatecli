@@ -3,6 +3,7 @@ package lock
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/go-viper/mapstructure/v2"
@@ -11,6 +12,7 @@ import (
 	terraformRegistryAddress "github.com/hashicorp/terraform-registry-address"
 	"github.com/minamijoyo/tfupdate/lock"
 	"github.com/minamijoyo/tfupdate/tfregistry"
+	"github.com/updatecli/updatecli/pkg/core/httpclient"
 	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/text"
@@ -22,8 +24,9 @@ import (
 type TerraformLock struct {
 	spec             Spec
 	contentRetriever text.TextRetriever
-	files            map[string]file // map of file paths to file contents
-	lockIndex        lock.Index      // index is a cached index for updating dependency lock files.
+	files            map[string]file          // map of file paths to file contents
+	lockIndex        lock.Index               // index is a cached index for updating dependency lock files.
+	registry         tfregistry.ProviderV1API // registry retrieves the hashes of every platform published for a provider version.
 	provider         terraformRegistryAddress.Provider
 }
 
@@ -76,14 +79,20 @@ func New(spec interface{}) (*TerraformLock, error) {
 
 	newResource.provider = provider
 
-	lockIndex, err := lock.NewIndexFromConfig(tfregistry.Config{
-		BaseURL: fmt.Sprintf("https://%s/", provider.Hostname),
-	})
+	registryConfig := tfregistry.Config{
+		BaseURL:    fmt.Sprintf("https://%s/", provider.Hostname),
+		HTTPClient: httpclient.NewRetryClient(),
+	}
+
+	newResource.lockIndex, err = lock.NewIndexFromConfig(registryConfig)
 	if err != nil {
 		return nil, err
 	}
 
-	newResource.lockIndex = lockIndex
+	newResource.registry, err = tfregistry.NewClient(registryConfig)
+	if err != nil {
+		return nil, err
+	}
 
 	return newResource, nil
 }
@@ -190,7 +199,37 @@ func (t *TerraformLock) Changelog(from, to string) *result.Changelogs {
 	return nil
 }
 
+// openTofuRegistryHostname is the public OpenTofu registry, which publishes
+// both the h1 and zh hashes of every platform in its provider package metadata.
+const openTofuRegistryHostname = "registry.opentofu.org"
+
 func (t *TerraformLock) getProviderHashes(version string) ([]string, error) {
+	// Without platforms, record the h1 and zh hashes of every platform published
+	// in the registry metadata, which is what "tofu init" writes for the OpenTofu registry.
+	// It fails if the registry does not publish h1 hashes, such as the Terraform registry.
+	if len(t.spec.Platforms) == 0 || t.provider.Hostname == openTofuRegistryHostname {
+		hashes, err := t.getAllPlatformsHashes(context.Background(), version)
+		if err == nil {
+			return hashes, nil
+		}
+
+		if len(t.spec.Platforms) == 0 {
+			return nil, fmt.Errorf("%s failed to query provider locks for provider: %q, version: %q, for all platforms: %s",
+				result.FAILURE,
+				t.spec.Provider,
+				version,
+				err.Error(),
+			)
+		}
+
+		log.Warningf("failed to query provider locks for provider %q, version %q, for all platforms, falling back to platforms %q: %s",
+			t.spec.Provider,
+			version,
+			t.spec.Platforms,
+			err.Error(),
+		)
+	}
+
 	pv, err := t.lockIndex.GetOrCreateProviderVersion(context.Background(), t.provider.ForDisplay(), version, t.spec.Platforms)
 	if err != nil {
 		return nil, fmt.Errorf("%s failed to query provider locks for provider: %q, version: %q, platforms: %q: %s",
@@ -203,6 +242,61 @@ func (t *TerraformLock) getProviderHashes(version string) ([]string, error) {
 	}
 
 	return pv.AllHashes(), nil
+}
+
+// getAllPlatformsHashes returns the h1 and zh hashes of every platform published for a provider version.
+// The package metadata of any platform lists the hashes of all of them, so it requests a platform
+// published for this version rather than the runner's own, which the provider may not publish.
+func (t *TerraformLock) getAllPlatformsHashes(ctx context.Context, version string) ([]string, error) {
+	versions, err := t.registry.ListProviderVersions(ctx, &tfregistry.ListProviderVersionsRequest{
+		Namespace: t.provider.Namespace,
+		Type:      t.provider.Type,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var platform *tfregistry.ProviderPlatform
+	for _, v := range versions.Versions {
+		if v.Version == version && len(v.Platforms) > 0 {
+			platform = &v.Platforms[0]
+			break
+		}
+	}
+
+	if platform == nil {
+		return nil, fmt.Errorf("the registry publishes no platform for version %q", version)
+	}
+
+	metadata, err := t.registry.ProviderPackageMetadata(ctx, &tfregistry.ProviderPackageMetadataRequest{
+		Namespace: t.provider.Namespace,
+		Type:      t.provider.Type,
+		Version:   version,
+		OS:        platform.OS,
+		Arch:      platform.Arch,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var hashes []string
+	hasH1 := false
+	for _, pkg := range metadata.Packages {
+		for _, hash := range pkg.Hashes {
+			if strings.HasPrefix(hash, "h1:") {
+				hasH1 = true
+			}
+			hashes = append(hashes, hash)
+		}
+	}
+
+	if !hasH1 {
+		return nil, fmt.Errorf("the registry does not publish h1 hashes for version %q", version)
+	}
+
+	slices.Sort(hashes)
+
+	return slices.Compact(hashes), nil
 }
 
 // ReportConfig returns a new configuration object with only the necessary fields
