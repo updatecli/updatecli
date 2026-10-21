@@ -33,8 +33,9 @@ func New(s Spec) (Client, error) {
 		until the time given by the Retry-After or Ratelimit-Reset header.
 
 		Retries are handled by the updatecli HTTP client alone, so the GitLab client
-		ones are disabled to avoid stacking both. The client also writes (merge
-		requests, branches, tags, releases), so it bypasses the HTTP cache.
+		ones are disabled to avoid stacking both. It doesn't retry a write that may
+		have reached the server, so a merge request, branch, tag or release isn't
+		created twice. The client also writes, so it bypasses the HTTP cache.
 	*/
 	client, err = gitlab.NewClient(
 		s.Token,

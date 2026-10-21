@@ -74,7 +74,7 @@ func New(configUsername, configToken string, configApp *app.Spec, configURL stri
 	Please refer to the documentation for more information:
 	->  https://www.updatecli.io/docs/plugins/scm/github/
 `)
-		httpClient := httpclient.NewUncachedRetryClient()
+		httpClient := httpclient.NewUncachedGraphQLClient()
 
 		var newClient Client
 
@@ -100,7 +100,7 @@ func New(configUsername, configToken string, configApp *app.Spec, configURL stri
 	clientContext := context.WithValue(
 		context.Background(),
 		oauth2.HTTPClient,
-		httpclient.NewUncachedRetryClient())
+		httpclient.NewUncachedGraphQLClient())
 
 	httpClient := oauth2.NewClient(clientContext, tokenSource)
 
