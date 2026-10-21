@@ -24,7 +24,9 @@ func (t *graphQLTransport) RoundTrip(req *http.Request) (*http.Response, error) 
 // mutation. It reads a copy of the body, so req is left untouched. Only a
 // document that starts with a query operation counts, as githubv4 writes it:
 // anything else, such as a leading comment or fragment, is treated as a
-// mutation, which is never retried.
+// mutation, which is never retried. A request that names an operation is
+// treated as a mutation too, as the named operation may be a mutation later
+// in a document that starts with a query.
 func isGraphQLQuery(req *http.Request) bool {
 	if req.GetBody == nil {
 		return false
@@ -37,9 +39,14 @@ func isGraphQLQuery(req *http.Request) bool {
 	defer body.Close()
 
 	var payload struct {
-		Query string `json:"query"`
+		Query         string `json:"query"`
+		OperationName string `json:"operationName"`
 	}
 	if err := json.NewDecoder(body).Decode(&payload); err != nil {
+		return false
+	}
+
+	if payload.OperationName != "" {
 		return false
 	}
 

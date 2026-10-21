@@ -21,6 +21,8 @@ func TestGraphQLTransport_MarksQueriesOnly(t *testing.T) {
 		{name: "mutation", body: `{"query":"mutation($input:CreatePullRequestInput!){createPullRequest(input:$input){clientMutationId}}"}`, want: false},
 		{name: "mutation after a comment", body: `{"query":"# create PR\nmutation{createPullRequest(input:{}){clientMutationId}}"}`, want: false},
 		{name: "mutation after a fragment", body: `{"query":"fragment F on PullRequest{id} mutation{createPullRequest(input:{}){pullRequest{...F}}}"}`, want: false},
+		{name: "mutation selected by operationName", body: `{"query":"query Q{viewer{login}} mutation M{createPullRequest(input:{}){clientMutationId}}","operationName":"M"}`, want: false},
+		{name: "query selected by operationName", body: `{"query":"query Q{viewer{login}}","operationName":"Q"}`, want: false},
 		{name: "not JSON", body: `not json`, want: false},
 		{name: "empty query", body: `{}`, want: false},
 	}
