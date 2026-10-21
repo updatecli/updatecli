@@ -40,11 +40,18 @@ linters:
     exhaustive:
       default-signifies-exhaustive: false
     forbidigo:
+      analyze-types: true
       forbid:
         - pattern: ^fmt\.Print(f|ln)?$
           msg: use pkg/core/log so the output reaches pipeline reports
         - pattern: ^os\.Std(out|err)$
           msg: use pkg/core/log (or log.Progress for transient output) so the output reaches pipeline reports
+        # Banning http.Client or http.Transport here would also flag the type the
+        # httpclient constructors return and the Client.Transport field, so
+        # pkg/core/httpclient/lint_test.go catches literals of both instead.
+        - pattern: ^http\.(DefaultClient|DefaultTransport|Get|Head|Post|PostForm)$
+          pkg: ^net/http$
+          msg: use pkg/core/httpclient so requests get the shared proxy, retry, throttling and caching behaviour
     funlen:
       lines: 200
       statements: 150
@@ -111,14 +118,26 @@ linters:
       - linters:
           - testpackage
         path: _expansion_test\.go
-      # Commands write their own output to the terminal, the log package owns
-      # the terminal, and tests print what they like.
+      # The exclusions below match the forbidden identifier in the report, not
+      # the rule message, so rewording a message does not change what they skip.
+      # Commands write their own output to the terminal and the log package owns
+      # the terminal.
       - linters:
           - forbidigo
-        path: (^cmd/|^pkg/core/log/|_test\.go$|^main\.go$)
+        path: (^cmd/|^pkg/core/log/|^main\.go$)
+        text: "use of `[^`]+\\.(Print(f|ln)?|Std(out|err))`"
+      # The httpclient package builds the shared client from net/http.
+      - linters:
+          - forbidigo
+        path: ^pkg/core/httpclient/
+        text: "use of `[^`]+\\.(DefaultClient|DefaultTransport|Get|Head|Post|PostForm)`"
+      # Tests print what they like and talk to httptest servers with a bare client.
+      - linters:
+          - forbidigo
+        path: _test\.go$
       - linters:
           - gocritic
-        text: 'unnecessaryDefer:'
+        text: "unnecessaryDefer:"
     paths:
       - test/testdata_etc
       - internal/cache

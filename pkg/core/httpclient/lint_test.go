@@ -1,30 +1,26 @@
 package httpclient_test
 
 import (
-	"bufio"
 	"fmt"
+	"go/ast"
+	"go/parser"
+	"go/token"
 	"os"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"testing"
 )
 
-// forbiddenPatterns lists HTTP usage patterns that bypass the unified client.
-// All production code must go through pkg/core/httpclient instead.
-var forbiddenPatterns = []string{
-	"&http.Client{",
-	"http.DefaultClient",
-	"http.DefaultTransport",
-	"http.Get(",
-	"http.Post(",
-	"http.Head(",
-	"http.PostForm(",
-}
-
-// TestNoDirectHTTPClientUsage scans all Go source files in the repository and
-// fails if any production code constructs or uses an HTTP client directly instead
-// of going through the unified httpclient package.
+// TestNoDirectHTTPClientUsage fails if production code builds its own
+// net/http Client or Transport instead of going through the unified httpclient
+// package.
+//
+// The forbidigo rule in .golangci.yml bans the net/http helpers. It cannot ban
+// building a Client or Transport without also banning the Client type, which
+// the httpclient constructors return, and the Client.Transport field, so this
+// test covers literals and new() calls of both types only.
 func TestNoDirectHTTPClientUsage(t *testing.T) {
 	_, currentFile, _, ok := runtime.Caller(0)
 	if !ok {
@@ -32,103 +28,107 @@ func TestNoDirectHTTPClientUsage(t *testing.T) {
 	}
 
 	// This file lives at pkg/core/httpclient/lint_test.go, so repo root is three levels up.
-	repoRoot := filepath.Join(filepath.Dir(currentFile), "..", "..", "..")
-	repoRoot, err := filepath.Abs(repoRoot)
+	repoRoot, err := filepath.Abs(filepath.Join(filepath.Dir(currentFile), "..", "..", ".."))
 	if err != nil {
 		t.Fatalf("resolving repo root: %v", err)
 	}
 
-	var violations []string
-
-	err = filepath.Walk(repoRoot, func(path string, info os.FileInfo, err error) error {
+	err = filepath.WalkDir(repoRoot, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
 
-		if info.IsDir() {
-			if shouldSkipDir(info.Name()) {
+		if d.IsDir() {
+			if shouldSkipDir(d.Name()) {
 				return filepath.SkipDir
 			}
 			return nil
 		}
 
-		if !strings.HasSuffix(path, ".go") {
+		// Test files talk to httptest servers with a bare client.
+		if !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
 			return nil
 		}
 
-		// Skip test files — httptest servers legitimately use bare http.Client.
-		if strings.HasSuffix(path, "_test.go") {
+		rel, err := filepath.Rel(repoRoot, path)
+		if err != nil {
+			return err
+		}
+
+		// The httpclient package must build the unified client itself.
+		if strings.HasPrefix(rel, filepath.Join("pkg", "core", "httpclient")+string(filepath.Separator)) {
 			return nil
 		}
 
-		// Skip the httpclient package itself; it must define the unified client.
-		rel, relErr := filepath.Rel(repoRoot, path)
-		if relErr == nil && strings.HasPrefix(rel, filepath.Join("pkg", "core", "httpclient")) {
-			return nil
+		for _, v := range scanFile(t, path, rel) {
+			t.Error(v)
 		}
-
-		fileViolations, scanErr := scanFile(path, repoRoot)
-		if scanErr != nil {
-			// Non-fatal: log the error but continue scanning.
-			t.Logf("warning: could not scan %s: %v", rel, scanErr)
-			return nil
-		}
-		violations = append(violations, fileViolations...)
 		return nil
 	})
 	if err != nil {
 		t.Fatalf("walking repository: %v", err)
 	}
-
-	for _, v := range violations {
-		t.Errorf("%s", v)
-	}
 }
 
-// scanFile reads path line by line and returns a violation string for each line
-// that contains a forbidden pattern and is not a comment.
-func scanFile(path, repoRoot string) ([]string, error) {
-	f, err := os.Open(path)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
+// scanFile returns a violation for each http.Client or http.Transport literal
+// or new() call in path, whatever name net/http is imported under.
+func scanFile(t *testing.T, path, rel string) []string {
+	t.Helper()
 
-	rel, err := filepath.Rel(repoRoot, path)
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, path, nil, parser.SkipObjectResolution)
 	if err != nil {
-		rel = path
+		t.Logf("warning: could not parse %s: %v", rel, err)
+		return nil
+	}
+
+	pkgName := netHTTPName(file)
+	if pkgName == "" {
+		return nil
+	}
+
+	isForbidden := func(expr ast.Expr) bool {
+		sel, ok := expr.(*ast.SelectorExpr)
+		if !ok || (sel.Sel.Name != "Client" && sel.Sel.Name != "Transport") {
+			return false
+		}
+		id, ok := sel.X.(*ast.Ident)
+		return ok && id.Name == pkgName
 	}
 
 	var violations []string
-	scanner := bufio.NewScanner(f)
-	lineNum := 0
+	ast.Inspect(file, func(n ast.Node) bool {
+		var found bool
+		switch n := n.(type) {
+		case *ast.CompositeLit:
+			found = isForbidden(n.Type)
+		case *ast.CallExpr:
+			id, ok := n.Fun.(*ast.Ident)
+			found = ok && id.Name == "new" && len(n.Args) == 1 && isForbidden(n.Args[0])
+		}
+		if found {
+			violations = append(violations,
+				fmt.Sprintf("%s:%d: building an http.Client or http.Transport directly, use pkg/core/httpclient instead", rel, fset.Position(n.Pos()).Line))
+		}
+		return true
+	})
 
-	for scanner.Scan() {
-		lineNum++
-		line := scanner.Text()
-		trimmed := strings.TrimSpace(line)
+	return violations
+}
 
-		if strings.HasPrefix(trimmed, "//") {
+// netHTTPName returns the name net/http is imported under in file, or "" if
+// file does not import it.
+func netHTTPName(file *ast.File) string {
+	for _, imp := range file.Imports {
+		if p, err := strconv.Unquote(imp.Path.Value); err != nil || p != "net/http" {
 			continue
 		}
-
-		// Strip trailing inline comments to avoid false positives.
-		code := line
-		if idx := strings.Index(code, " //"); idx >= 0 {
-			code = code[:idx]
+		if imp.Name != nil {
+			return imp.Name.Name
 		}
-
-		for _, pattern := range forbiddenPatterns {
-			if strings.Contains(code, pattern) {
-				violations = append(violations, fmt.Sprintf(
-					"%s:%d: forbidden HTTP pattern %q — use pkg/core/httpclient instead: %s",
-					rel, lineNum, pattern, trimmed,
-				))
-			}
-		}
+		return "http"
 	}
-
-	return violations, scanner.Err()
+	return ""
 }
 
 // shouldSkipDir returns true for directories that must never be scanned.
