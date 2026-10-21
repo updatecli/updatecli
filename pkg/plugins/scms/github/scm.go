@@ -4,8 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/fs"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/shurcooL/githubv4"
@@ -263,7 +265,7 @@ func (g *Github) CreateCommit(ctx context.Context, workingDir string, commitMess
 		return "", err
 	}
 
-	additions, err := processChangedFiles(workingDir, files)
+	additions, deletions, err := processChangedFiles(workingDir, files)
 	if err != nil {
 		return "", err
 	}
@@ -298,6 +300,14 @@ func (g *Github) CreateCommit(ctx context.Context, workingDir string, commitMess
 	}
 
 	repositoryName := fmt.Sprintf("%s/%s", g.Spec.Owner, g.Spec.Repository)
+
+	fileChanges := &githubv4.FileChanges{Additions: &additions}
+	if len(deletions) > 0 {
+		fileChanges.Deletions = &deletions
+	}
+
+	log.Debugf("creating commit with %d addition(s) and %d deletion(s)", len(additions), len(deletions))
+
 	input := githubv4.CreateCommitOnBranchInput{
 		Branch: githubv4.CommittableBranch{
 			RepositoryNameWithOwner: githubv4.NewString(githubv4.String(repositoryName)),
@@ -307,9 +317,7 @@ func (g *Github) CreateCommit(ctx context.Context, workingDir string, commitMess
 		Message: githubv4.CommitMessage{
 			Headline: githubv4.String(commitMessage),
 		},
-		FileChanges: &githubv4.FileChanges{
-			Additions: &additions,
-		},
+		FileChanges: fileChanges,
 	}
 
 	rateLimit, err := queryRateLimit(g.client, ctx)
@@ -345,20 +353,33 @@ func (g *Github) CreateCommit(ctx context.Context, workingDir string, commitMess
 }
 
 // processChangedFiles reads the content of the files and prepare them to be
-func processChangedFiles(workingDir string, files []string) ([]githubv4.FileAddition, error) {
+// sent to the GitHub API. A file that no longer exists on disk is treated as
+// a deletion; any other stat error (for example a permission error) aborts
+// the operation instead of being silently treated as a deletion.
+func processChangedFiles(workingDir string, files []string) ([]githubv4.FileAddition, []githubv4.FileDeletion, error) {
 	additions := make([]githubv4.FileAddition, 0, len(files))
+	deletions := make([]githubv4.FileDeletion, 0)
 	for _, f := range files {
-		fullPath := fmt.Sprintf("%s/%s", workingDir, f)
-		enc, err := utils.Base64EncodeFile(fullPath)
-		if err != nil {
-			return additions, err
+		fullPath := filepath.Join(workingDir, f)
+		_, err := os.Stat(fullPath)
+		switch {
+		case err == nil:
+			enc, err := utils.Base64EncodeFile(fullPath)
+			if err != nil {
+				return nil, nil, fmt.Errorf("encoding file %q: %w", f, err)
+			}
+			additions = append(additions, githubv4.FileAddition{
+				Path:     githubv4.String(f),
+				Contents: githubv4.Base64String(enc),
+			})
+		case errors.Is(err, fs.ErrNotExist):
+			log.Debugf("file %q was deleted, adding it to the commit deletions", f)
+			deletions = append(deletions, githubv4.FileDeletion{Path: githubv4.String(f)})
+		default:
+			return nil, nil, fmt.Errorf("checking file %q: %w", f, err)
 		}
-		additions = append(additions, githubv4.FileAddition{
-			Path:     githubv4.String(f),
-			Contents: githubv4.Base64String(enc),
-		})
 	}
-	return additions, nil
+	return additions, deletions, nil
 }
 
 // GetLatestCommitHash returns the latest commit hash of the specified branch

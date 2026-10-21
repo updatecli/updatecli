@@ -2,9 +2,11 @@ package github
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"testing"
 
@@ -62,36 +64,60 @@ func TestCommit(t *testing.T) {
 	}
 }
 
+func base64Content(content string) githubv4.Base64String {
+	return githubv4.Base64String(base64.StdEncoding.EncodeToString([]byte(content)))
+}
+
 func TestProcessChangedFiles(t *testing.T) {
 	tests := []struct {
-		name    string
-		create  bool
-		files   []string
-		want    []githubv4.FileAddition
-		wantErr bool
+		name          string
+		createFiles   []string
+		files         []string
+		want          []githubv4.FileAddition
+		wantDeletions []githubv4.FileDeletion
+		wantErr       bool
 	}{
 		{
-			name:   "Case with valid files",
-			create: true,
-			files:  []string{"file1.txt", "file2.txt"},
+			name:        "valid files",
+			createFiles: []string{"file1.txt", "file2.txt"},
+			files:       []string{"file1.txt", "file2.txt"},
 			want: []githubv4.FileAddition{
 				{
 					Path:     githubv4.String("file1.txt"),
-					Contents: githubv4.Base64String("dGVzdCBjb250ZW50MA=="), // no-spell-check-line
+					Contents: base64Content("test content0"),
 				},
 				{
 					Path:     githubv4.String("file2.txt"),
-					Contents: githubv4.Base64String("dGVzdCBjb250ZW50MQ=="), // no-spell-check-line
+					Contents: base64Content("test content1"),
 				},
 			},
-			wantErr: false,
+			wantDeletions: []githubv4.FileDeletion{},
 		},
 		{
-			name:    "Case with error encoding file",
-			create:  false,
-			files:   []string{"file1.txt"},
-			want:    []githubv4.FileAddition{},
-			wantErr: true,
+			name:          "missing file is a deletion",
+			createFiles:   nil,
+			files:         []string{"file1.txt"},
+			want:          []githubv4.FileAddition{},
+			wantDeletions: []githubv4.FileDeletion{{Path: githubv4.String("file1.txt")}},
+		},
+		{
+			name:        "mixed additions and deletions",
+			createFiles: []string{"kept.txt"},
+			files:       []string{"kept.txt", "removed.txt"},
+			want: []githubv4.FileAddition{
+				{
+					Path:     githubv4.String("kept.txt"),
+					Contents: base64Content("test content0"),
+				},
+			},
+			wantDeletions: []githubv4.FileDeletion{{Path: githubv4.String("removed.txt")}},
+		},
+		{
+			name:          "deleted file in a subdirectory",
+			createFiles:   nil,
+			files:         []string{"charts/sub/old.tgz"},
+			want:          []githubv4.FileAddition{},
+			wantDeletions: []githubv4.FileDeletion{{Path: githubv4.String("charts/sub/old.tgz")}},
 		},
 	}
 
@@ -102,23 +128,46 @@ func TestProcessChangedFiles(t *testing.T) {
 
 			defer os.RemoveAll(tempDir)
 
-			if tt.create {
-				for i, file := range tt.files {
-					tempFile, err := os.Create(filepath.Join(tempDir, filepath.Base(file)))
-					require.NoError(t, err)
-					defer os.Remove(tempFile.Name())
-					_, err = tempFile.WriteString("test content" + strconv.Itoa(i))
-					require.NoError(t, err)
-				}
+			for i, file := range tt.createFiles {
+				fullPath := filepath.Join(tempDir, file)
+				require.NoError(t, os.MkdirAll(filepath.Dir(fullPath), 0o755))
+
+				tempFile, err := os.Create(fullPath)
+				require.NoError(t, err)
+				defer os.Remove(tempFile.Name())
+				_, err = tempFile.WriteString("test content" + strconv.Itoa(i))
+				require.NoError(t, err)
+				require.NoError(t, tempFile.Close())
 			}
 
-			got, err := processChangedFiles(tempDir, tt.files)
+			gotAdditions, gotDeletions, err := processChangedFiles(tempDir, tt.files)
 
 			if tt.wantErr {
-				assert.Error(t, err)
+				require.Error(t, err)
+				return
 			}
 
-			assert.Equal(t, tt.want, got)
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, gotAdditions)
+			assert.Equal(t, tt.wantDeletions, gotDeletions)
 		})
 	}
+}
+
+func TestProcessChangedFilesUnreadableFile(t *testing.T) {
+	if runtime.GOOS == "windows" || os.Geteuid() == 0 {
+		t.Skip("file permissions are not enforced on Windows or when running as root")
+	}
+
+	tempDir, err := os.MkdirTemp("", "")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempDir)
+
+	fullPath := filepath.Join(tempDir, "unreadable.txt")
+	require.NoError(t, os.WriteFile(fullPath, []byte("test content"), 0o600))
+	require.NoError(t, os.Chmod(fullPath, 0o000))
+	defer os.Chmod(fullPath, 0o600) //nolint:errcheck
+
+	_, _, err = processChangedFiles(tempDir, []string{"unreadable.txt"})
+	require.Error(t, err)
 }
