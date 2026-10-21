@@ -2,6 +2,7 @@ package httpclient
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strconv"
 	"strings"
@@ -17,6 +18,71 @@ type roundTripFunc func(*http.Request) (*http.Response, error)
 
 func (f roundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
 	return f(req)
+}
+
+func TestShouldRetry(t *testing.T) {
+	errReset := errors.New("connection reset by peer")
+
+	tests := []struct {
+		name   string
+		method string
+		err    error
+		marked bool
+		status int
+		want   bool
+	}{
+		{name: "GET transport error", method: http.MethodGet, err: errReset, want: true},
+		{name: "HEAD transport error", method: http.MethodHead, err: errReset, want: true},
+		{name: "POST transport error", method: http.MethodPost, err: errReset, want: false},
+		{name: "PUT transport error", method: http.MethodPut, err: errReset, want: false},
+		{name: "GET 502", method: http.MethodGet, status: http.StatusBadGateway, want: true},
+		{name: "GET 504", method: http.MethodGet, status: http.StatusGatewayTimeout, want: true},
+		{name: "POST 502", method: http.MethodPost, status: http.StatusBadGateway, want: false},
+		{name: "POST 504", method: http.MethodPost, status: http.StatusGatewayTimeout, want: false},
+		{name: "POST 429", method: http.MethodPost, status: http.StatusTooManyRequests, want: true},
+		{name: "POST 503", method: http.MethodPost, status: http.StatusServiceUnavailable, want: false},
+		{name: "GET 503", method: http.MethodGet, status: http.StatusServiceUnavailable, want: true},
+		{name: "marked POST transport error", method: http.MethodPost, marked: true, err: errReset, want: true},
+		{name: "marked POST 502", method: http.MethodPost, marked: true, status: http.StatusBadGateway, want: true},
+		{name: "GET 500", method: http.MethodGet, status: http.StatusInternalServerError, want: false},
+		{name: "GET 200", method: http.MethodGet, status: http.StatusOK, want: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req, err := http.NewRequest(tt.method, "http://example.invalid", nil)
+			require.NoError(t, err)
+			if tt.marked {
+				req = Idempotent(req)
+			}
+
+			var resp *http.Response
+			if tt.err == nil {
+				resp = &http.Response{StatusCode: tt.status}
+			}
+
+			assert.Equal(t, tt.want, shouldRetry(req, tt.err, resp))
+		})
+	}
+}
+
+func TestRetryTransport_DoesNotResendWriteAfterTransportError(t *testing.T) {
+	// Arrange — a transport whose connection always drops before the response.
+	calls := 0
+	transport := &retryTransport{transport: roundTripFunc(func(*http.Request) (*http.Response, error) {
+		calls++
+		return nil, errors.New("connection reset by peer")
+	})}
+
+	req, err := http.NewRequest(http.MethodPost, "http://example.invalid", strings.NewReader("{}"))
+	require.NoError(t, err)
+
+	// Act
+	_, err = transport.RoundTrip(req)
+
+	// Assert — the write is sent once, as it may already have reached the server.
+	require.Error(t, err)
+	assert.Equal(t, 1, calls)
 }
 
 func TestRetryDelay(t *testing.T) {

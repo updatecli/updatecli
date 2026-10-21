@@ -92,20 +92,47 @@ func sleep(ctx context.Context, d time.Duration) bool {
 	}
 }
 
-func shouldRetry(err error, resp *http.Response) bool {
-	if err != nil {
+type idempotentKey struct{}
+
+// Idempotent marks req as safe to send more than once, so the retry client
+// retries it like a GET. Use it for a read sent with another method, such as
+// a query sent as POST.
+func Idempotent(req *http.Request) *http.Request {
+	return req.WithContext(context.WithValue(req.Context(), idempotentKey{}, true))
+}
+
+// isIdempotent reports whether sending req twice is harmless: either its
+// method has no side effect on the server, or the caller marked it with Idempotent.
+func isIdempotent(req *http.Request) bool {
+	switch req.Method {
+	case "", http.MethodGet, http.MethodHead, http.MethodOptions, http.MethodTrace:
 		return true
+	}
+	marked, _ := req.Context().Value(idempotentKey{}).(bool)
+	return marked
+}
+
+// shouldRetry reports whether a request may be sent again.
+// A transport error, a 502, a 503 or a 504 may come after the server already
+// processed the request, as a proxy in front of it can answer any of them, so
+// only idempotent requests are retried then. A 429 means the request was
+// refused, so any request is retried.
+func shouldRetry(req *http.Request, err error, resp *http.Response) bool {
+	idempotent := isIdempotent(req)
+
+	if err != nil {
+		return idempotent
 	}
 
 	if resp == nil {
 		return false
 	}
 
-	if resp.StatusCode == http.StatusBadGateway ||
-		resp.StatusCode == http.StatusServiceUnavailable ||
-		resp.StatusCode == http.StatusGatewayTimeout ||
-		resp.StatusCode == http.StatusTooManyRequests {
+	switch resp.StatusCode {
+	case http.StatusTooManyRequests:
 		return true
+	case http.StatusBadGateway, http.StatusServiceUnavailable, http.StatusGatewayTimeout:
+		return idempotent
 	}
 
 	return false
@@ -148,7 +175,7 @@ func (t *retryTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	// Retry logic
 	retries := 0
 	var waited time.Duration
-	for shouldRetry(err, resp) && retries < RetryCount {
+	for shouldRetry(req, err, resp) && retries < RetryCount {
 		delay := retryDelay(retries, resp, time.Now())
 		if waited+delay > MaxRetryWait {
 			break
