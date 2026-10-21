@@ -29,7 +29,8 @@ func New(s Spec) (Client, error) {
 		unauthenticated calls with throttles that don't follow that unit, such as
 		unauthenticated_traffic_per_ip reporting a limit of 1, which throttles the
 		client to one request every ninety seconds. Rate limiting is left to the
-		server instead, as the updatecli HTTP client retries 429 responses with backoff.
+		server instead, as the updatecli HTTP client retries 429 responses, waiting
+		until the time given by the Retry-After or Ratelimit-Reset header.
 
 		Retries are handled by the updatecli HTTP client alone, so the GitLab client
 		ones are disabled to avoid stacking both. The client also writes (merge
