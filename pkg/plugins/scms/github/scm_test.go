@@ -119,6 +119,13 @@ func TestProcessChangedFiles(t *testing.T) {
 			want:          []githubv4.FileAddition{},
 			wantDeletions: []githubv4.FileDeletion{{Path: githubv4.String("charts/sub/old.tgz")}},
 		},
+		{
+			name:          "deleted file under a path replaced by a regular file",
+			createFiles:   []string{"charts"},
+			files:         []string{"charts/sub/old.tgz"},
+			want:          []githubv4.FileAddition{},
+			wantDeletions: []githubv4.FileDeletion{{Path: githubv4.String("charts/sub/old.tgz")}},
+		},
 	}
 
 	for _, tt := range tests {
@@ -169,5 +176,40 @@ func TestProcessChangedFilesUnreadableFile(t *testing.T) {
 	defer os.Chmod(fullPath, 0o600) //nolint:errcheck
 
 	_, _, err = processChangedFiles(tempDir, []string{"unreadable.txt"})
+	require.Error(t, err)
+}
+
+func TestProcessChangedFilesDanglingSymlink(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("symlink creation needs elevated privileges on Windows")
+	}
+
+	tempDir, err := os.MkdirTemp("", "")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempDir)
+
+	linkPath := filepath.Join(tempDir, "link")
+	require.NoError(t, os.Symlink(filepath.Join(tempDir, "missing-target"), linkPath))
+
+	_, _, err = processChangedFiles(tempDir, []string{"link"})
+	require.Error(t, err)
+}
+
+func TestProcessChangedFilesSymlink(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("symlink creation needs elevated privileges on Windows")
+	}
+
+	tempDir, err := os.MkdirTemp("", "")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempDir)
+
+	targetPath := filepath.Join(tempDir, "target.txt")
+	require.NoError(t, os.WriteFile(targetPath, []byte("test content"), 0o600))
+
+	linkPath := filepath.Join(tempDir, "link")
+	require.NoError(t, os.Symlink(targetPath, linkPath))
+
+	_, _, err = processChangedFiles(tempDir, []string{"link"})
 	require.Error(t, err)
 }

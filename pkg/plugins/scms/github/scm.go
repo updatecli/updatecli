@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"syscall"
 
 	"github.com/shurcooL/githubv4"
 	"github.com/updatecli/updatecli/pkg/core/log"
@@ -353,16 +354,21 @@ func (g *Github) CreateCommit(ctx context.Context, workingDir string, commitMess
 }
 
 // processChangedFiles reads the content of the files and prepare them to be
-// sent to the GitHub API. A file that no longer exists on disk is treated as
-// a deletion; any other stat error (for example a permission error) aborts
-// the operation instead of being silently treated as a deletion.
+// sent to the GitHub API. A file that no longer exists on disk, or whose
+// parent directory was replaced by a regular file, is treated as a deletion.
+// A symlink is rejected: FileAddition has no file mode, so the GitHub API
+// cannot represent a symlink, only a regular file. Any other stat error (for
+// example a permission error) aborts the operation instead of being silently
+// treated as a deletion.
 func processChangedFiles(workingDir string, files []string) ([]githubv4.FileAddition, []githubv4.FileDeletion, error) {
 	additions := make([]githubv4.FileAddition, 0, len(files))
 	deletions := make([]githubv4.FileDeletion, 0)
 	for _, f := range files {
 		fullPath := filepath.Join(workingDir, f)
-		_, err := os.Stat(fullPath)
+		info, err := os.Lstat(fullPath)
 		switch {
+		case err == nil && info.Mode()&os.ModeSymlink != 0:
+			return nil, nil, fmt.Errorf("file %q is a symlink: the GitHub API cannot commit a symlink, set commitUsingApi to false", f)
 		case err == nil:
 			enc, err := utils.Base64EncodeFile(fullPath)
 			if err != nil {
@@ -372,7 +378,7 @@ func processChangedFiles(workingDir string, files []string) ([]githubv4.FileAddi
 				Path:     githubv4.String(f),
 				Contents: githubv4.Base64String(enc),
 			})
-		case errors.Is(err, fs.ErrNotExist):
+		case errors.Is(err, fs.ErrNotExist), errors.Is(err, syscall.ENOTDIR):
 			log.Debugf("file %q was deleted, adding it to the commit deletions", f)
 			deletions = append(deletions, githubv4.FileDeletion{Path: githubv4.String(f)})
 		default:
