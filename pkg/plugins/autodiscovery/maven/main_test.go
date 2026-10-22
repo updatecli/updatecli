@@ -6,6 +6,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
 // TestMain isolates HOME/MAVEN_HOME/M2_HOME for the whole package so that
@@ -265,4 +267,18 @@ targets:
 		})
 	}
 
+}
+
+func TestDiscoverManifestsWithoutRepository(t *testing.T) {
+	// Without repositories in the pom.xml or settings.xml, the source uses Maven Central
+	// and must still apply the version filter
+	maven, err := New(Spec{VersionFilter: version.Filter{Kind: "semver", Pattern: "minor"}}, "testdata/norepository", "", "")
+	require.NoError(t, err)
+
+	manifests, err := maven.DiscoverManifests()
+	require.NoError(t, err)
+	require.Len(t, manifests, 1)
+
+	assert.NotContains(t, string(manifests[0]), "repositories:")
+	assert.Contains(t, string(manifests[0]), "      versionfilter:\n        kind: 'semver'\n")
 }
