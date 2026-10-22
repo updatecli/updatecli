@@ -20,13 +20,13 @@ sources:
   {{- range $repo := .SourceRepositories }}
         - '{{ $repo }}'
   {{- end }}
+  {{- end }}
       versionfilter:
         kind: '{{ .SourceVersionFilterKind }}'
         pattern: '{{ .SourceVersionFilterPattern }}'
 {{- if or (eq .SourceVersionFilterKind "regex/semver") (eq .SourceVersionFilterKind "regex/time") }}
         regex: '{{ .SourceVersionFilterRegex }}'
 {{- end }}
-  {{- end }}
 conditions:
   {{ .ConditionArtifactID }}:
     name: '{{ .ConditionArtifactIDName }}'
