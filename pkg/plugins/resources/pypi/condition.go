@@ -7,6 +7,7 @@ import (
 
 	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
@@ -25,7 +26,11 @@ func (p *Pypi) Condition(ctx context.Context, source string, scmHandler scm.ScmH
 	}
 
 	_, versions, err := p.getVersions(ctx)
-	if err != nil {
+	/*
+		A cooldown still running means no published version is usable yet, which the loop
+		below already reports as an unmet condition, so it isn't surfaced as an error.
+	*/
+	if err != nil && !errors.Is(err, age.ErrNoVersionMatchingAge) {
 		return false, "", err
 	}
 
@@ -33,6 +38,10 @@ func (p *Pypi) Condition(ctx context.Context, source string, scmHandler scm.ScmH
 		if v == versionToCheck || p.originalVersion(v) == versionToCheck {
 			return true, fmt.Sprintf("version %q exists for PyPI package %q", versionToCheck, p.spec.Name), nil
 		}
+	}
+
+	if !p.spec.Age.IsZero() {
+		return false, fmt.Sprintf("version %q does not exist or does not match the age filter for PyPI package %q", versionToCheck, p.spec.Name), nil
 	}
 
 	return false, fmt.Sprintf("version %q does not exist for PyPI package %q", versionToCheck, p.spec.Name), nil
