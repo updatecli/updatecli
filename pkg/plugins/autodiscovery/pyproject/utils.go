@@ -14,6 +14,9 @@ import (
 
 const pyprojectFile = "pyproject.toml"
 
+// dependencyGroupNameRegex matches the dependency group names PEP 735 allows.
+var dependencyGroupNameRegex = regexp.MustCompile(`(?i)^([A-Z0-9]|[A-Z0-9][A-Z0-9._-]*[A-Z0-9])$`)
+
 // skipDirs lists directories that should never be walked for pyproject.toml files.
 var skipDirs = map[string]bool{
 	".venv":        true,

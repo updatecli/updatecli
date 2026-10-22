@@ -20,6 +20,55 @@ type pyprojectTOML struct {
 		Dependencies         []string            `toml:"dependencies"`
 		OptionalDependencies map[string][]string `toml:"optional-dependencies"`
 	} `toml:"project"`
+	// DependencyGroups holds PEP 735 groups. Entries are either PEP 508 strings
+	// or {include-group = "..."} tables. Values are decoded loosely, so a malformed group
+	// is skipped on its own instead of making the whole pyproject.toml unreadable.
+	DependencyGroups map[string]interface{} `toml:"dependency-groups"`
+}
+
+// dependencyGroupEntries returns the entries of a PEP 735 dependency group, and false when its
+// value isn't an array. An array only made of tables, such as include-group entries written
+// with the [[dependency-groups.<name>]] syntax, decodes to a different type than a mixed one.
+func dependencyGroupEntries(group interface{}) ([]interface{}, bool) {
+	switch g := group.(type) {
+	case []interface{}:
+		return g, true
+	case []map[string]interface{}:
+		entries := make([]interface{}, 0, len(g))
+		for _, table := range g {
+			entries = append(entries, table)
+		}
+		return entries, true
+	default:
+		return nil, false
+	}
+}
+
+// dependencyGroupRequirements returns the PEP 508 strings of a PEP 735 dependency group.
+// include-group tables are skipped: the included group is processed on its own,
+// so following them would only generate duplicate manifests.
+// A group whose value isn't an array, which PEP 735 requires, is skipped.
+func dependencyGroupRequirements(group interface{}) []string {
+	entries, ok := dependencyGroupEntries(group)
+	if !ok {
+		log.Warningf("skipping dependency group with unsupported value %v, PEP 735 expects an array", group)
+		return nil
+	}
+
+	var requirements []string
+	for _, entry := range entries {
+		switch e := entry.(type) {
+		case string:
+			requirements = append(requirements, e)
+		case map[string]interface{}:
+			if _, ok := e["include-group"]; !ok {
+				log.Debugf("skipping unsupported dependency group entry %v", e)
+			}
+		default:
+			log.Debugf("skipping unsupported dependency group entry %v", e)
+		}
+	}
+	return requirements
 }
 
 // loadPyprojectData reads and unmarshals a pyproject.toml file.
@@ -96,6 +145,27 @@ func (p Pyproject) discoverDependencyManifests() ([][]byte, error) {
 			sort.Strings(groupDeps)
 
 			manifests = append(manifests, p.processDependencies(groupDeps, group, relativeFile, lockSupport, projectName, workdir)...)
+		}
+
+		// Process each [dependency-groups] group (PEP 735) in deterministic order.
+		// The "group:" prefix keeps them apart from optional-dependency groups of the same name.
+		depGroups := make([]string, 0, len(data.DependencyGroups))
+		for g := range data.DependencyGroups {
+			depGroups = append(depGroups, g)
+		}
+		sort.Strings(depGroups)
+
+		for _, group := range depGroups {
+			// The name ends up in the generated manifest, which a quote would break.
+			if !dependencyGroupNameRegex.MatchString(group) {
+				log.Warningf("skipping dependency group %q from %q, PEP 735 only allows letters, digits, \".\", \"_\" and \"-\" in group names", group, relativeFile)
+				continue
+			}
+
+			groupDeps := dependencyGroupRequirements(data.DependencyGroups[group])
+			sort.Strings(groupDeps)
+
+			manifests = append(manifests, p.processDependencies(groupDeps, "group:"+group, relativeFile, lockSupport, projectName, workdir)...)
 		}
 	}
 
