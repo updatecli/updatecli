@@ -14,6 +14,9 @@ import (
 
 const pyprojectFile = "pyproject.toml"
 
+// dependencyGroupNameRegex matches the dependency group names PEP 735 allows.
+var dependencyGroupNameRegex = regexp.MustCompile(`(?i)^([A-Z0-9]|[A-Z0-9][A-Z0-9._-]*[A-Z0-9])$`)
+
 // skipDirs lists directories that should never be walked for pyproject.toml files.
 var skipDirs = map[string]bool{
 	".venv":        true,
@@ -159,4 +162,13 @@ func parsePEP508(dep string) (pythonDependency, error) {
 		Constraint: constraint,
 		Version:    version,
 	}, nil
+}
+
+// pep503Separators matches the runs of characters PEP 503 normalizes package names on.
+var pep503Separators = regexp.MustCompile(`[-_.]+`)
+
+// normalizeName returns the PEP 503 normalized form of a Python package name, which is
+// how uv.lock records it. PEP 735 normalizes dependency group names the same way.
+func normalizeName(name string) string {
+	return strings.ToLower(pep503Separators.ReplaceAllString(name, "-"))
 }

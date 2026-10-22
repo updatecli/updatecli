@@ -27,6 +27,26 @@ type MatchingRule struct {
 	//   * when the version or the specifier cannot be parsed, the value must equal the version.
 	//
 	Packages map[string]string `yaml:",omitempty"`
+	// "dependencygroups" defines the PEP 735 "[dependency-groups]" names to match, such as "dev".
+	//
+	// remark:
+	//   * each value is a pattern following the Go filepath.Match syntax, so "*" matches any group.
+	//   * names are compared once normalized as PEP 735 requires, ignoring case and treating
+	//     runs of "-", "_" and "." alike, so "dev-tools" matches a group declared as "Dev_Tools".
+	//   * patterns are normalized the same way, including inside brackets, so "[_.]" means "[-]".
+	//   * a group including another one through {include-group = "..."} contains its dependencies
+	//     too, as PEP 735 defines, so "dev" matches the dependencies "dev" includes from "test".
+	//   * dependencies from "[project.dependencies]" and "[project.optional-dependencies]"
+	//     belong to no dependency group, so they never match this field.
+	//
+	// example:
+	//   ```
+	//   only:
+	//     - dependencygroups:
+	//         - dev
+	//   ```
+	//
+	DependencyGroups []string `yaml:",omitempty"`
 }
 
 // MatchingRules defines a list of rules.
@@ -36,16 +56,23 @@ type MatchingRules []MatchingRule
 // Validate checks that every rule has at least one non-empty field.
 func (m MatchingRules) Validate() error {
 	for i, rule := range m {
-		if rule.Path == "" && len(rule.Packages) == 0 {
-			return fmt.Errorf("rule %d has no valid fields (path or packages must be specified)", i+1)
+		if rule.Path == "" && len(rule.Packages) == 0 && len(rule.DependencyGroups) == 0 {
+			return fmt.Errorf("rule %d has no valid fields (path, packages or dependencygroups must be specified)", i+1)
+		}
+		for _, group := range rule.DependencyGroups {
+			// Patterns are matched once normalized, so the normalized form is the one to check.
+			if _, err := filepath.Match(normalizeName(group), ""); err != nil {
+				return fmt.Errorf("rule %d has an invalid dependencygroups pattern %q: %w", i+1, group, err)
+			}
 		}
 	}
 	return nil
 }
 
 // isMatchingRules reports whether the given file/package pair matches any rule in the list.
+// dependencyGroups holds the PEP 735 groups the package belongs to, empty when it belongs to none.
 // Multiple conditions within one rule are AND-ed; multiple rules are OR-ed.
-func (m MatchingRules) isMatchingRules(rootDir, filePath, packageName, packageVersion string) bool {
+func (m MatchingRules) isMatchingRules(rootDir, filePath, packageName, packageVersion string, dependencyGroups []string) bool {
 	if len(m) == 0 {
 		return false
 	}
@@ -97,6 +124,21 @@ func (m MatchingRules) isMatchingRules(rootDir, filePath, packageName, packageVe
 
 					match = specifiers.Check(v)
 					break outPackage
+				}
+			}
+			ruleResults = append(ruleResults, match)
+		}
+
+		if len(rule.DependencyGroups) > 0 {
+			match := false
+		outGroup:
+			for _, dependencyGroup := range dependencyGroups {
+				for _, pattern := range rule.DependencyGroups {
+					// Patterns were checked by Validate, so the error can be ignored.
+					if ok, _ := filepath.Match(normalizeName(pattern), normalizeName(dependencyGroup)); ok {
+						match = true
+						break outGroup
+					}
 				}
 			}
 			ruleResults = append(ruleResults, match)
