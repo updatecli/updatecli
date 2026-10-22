@@ -93,6 +93,12 @@ func (m Maven) discoverDependencyManifests(kind string) ([][]byte, error) {
 				continue
 			}
 
+			// No current version can be checked against the OSV database
+			if m.spec.Vulnerability != nil && isVersionRange(dependency.Version) {
+				log.Printf("Skipping dependency %q in %q as it relies on the version range %q", dependency.ArtifactID, relativePomFile, dependency.Version)
+				continue
+			}
+
 			// No need to update Version if it's not specified
 			if len(dependencies[i].Version) == 0 {
 				continue
