@@ -4,8 +4,9 @@
 // dependency declared in [project.dependencies], [project.optional-dependencies], and
 // [dependency-groups] (PEP 735). In dependency groups, {include-group = "..."} entries don't
 // generate manifests since the included group is processed on its own, but "dependencygroups"
-// rules consider the dependencies of an included group part of the including one too. Other tables, such as
-// [tool.poetry], [tool.uv] dev-dependencies, and [build-system], are not read.
+// rules consider the dependencies of an included group part of the including one too.
+// Other tables, such as [tool.poetry], [tool.uv] dev-dependencies, and [build-system], are
+// not read.
 //
 // The package manager is detected from the lock file sitting next to each pyproject.toml.
 // Only uv is supported today, through uv.lock:
@@ -14,7 +15,8 @@
 //     `uv lock --upgrade-package` are generated. Only uv.lock is rewritten; the constraints
 //     declared in pyproject.toml are left untouched.
 //   - uv.lock present but the uv command missing: the whole pyproject.toml is skipped, since
-//     Updatecli cannot re-lock what it would bump.
+//     Updatecli cannot re-lock what it would bump. With "vulnerability", uv.lock is still read
+//     and the manifests only report the vulnerable packages.
 //   - no lock file: only the pypi source is generated, so the latest version is reported but
 //     nothing is modified.
 //
@@ -119,15 +121,12 @@ type Spec struct {
 	// remark:
 	//   * it accepts a duration string, such as "24h", "7d", "3w" or "1y".
 	//   * it is propagated to the generated pypi sources.
-	//   * the default keeps Updatecli from suggesting a package version published less than seven days ago.
+	//   * the default keeps Updatecli from suggesting a package version published less than
+	//     seven days ago. An empty "age: {}" disables it.
 	//   * the default doesn't apply with "indexurl", as private registries may not report the
-	//     upload times an age filter needs. Set "age" explicitly to filter on such a registry.
-	//   * security fixes don't wait for it: a separate manifest using "vulnerability", which ignores
-	//     the default, proposes a fixed version as soon as it is known.
-	//   * an empty "age: {}" disables the default.
-	//   * it cannot be combined with "vulnerability".
-	//   * private registries that report no upload time leave the age filter nothing to work with,
-	//     so the generated sources fail. Use "age: {}" with such registries.
+	//     upload times an age filter needs. On a registry reporting none, an explicit "age"
+	//     makes the generated sources fail.
+	//   * security fixes don't wait for it, see "vulnerability".
 	//
 	Age *age.Spec `yaml:",omitempty"`
 	// "vulnerability" switches the autodiscovery to security updates, based on the OSV database (https://osv.dev).
@@ -138,10 +137,10 @@ type Spec struct {
 	// remark:
 	//   * only security updates are generated, routine updates require a separate manifest.
 	//   * it cannot be combined with:
-	//     * "age", as a fixed version is suggested as soon as it is known.
+	//     * "age", as a fixed version is suggested as soon as it is known. The default age
+	//       doesn't apply either.
 	//     * "versionfilter", as the version is the lowest one without known vulnerabilities.
 	//     * "indexurl", as the OSV database only covers packages published on pypi.org.
-	//   * the default minimum release age does not apply, a fixed version is suggested as soon as it is known.
 	//   * the current version is the version resolved in the uv.lock next to the pyproject.toml or,
 	//     without one, the version pinned with "==" in pyproject.toml.
 	//     Packages without an identifiable current version are ignored, as are packages uv.lock
@@ -173,11 +172,10 @@ type Spec struct {
 	// remark:
 	//   * it requires "vulnerability".
 	//   * the OSV database only covers packages published on pypi.org. A package uv.lock resolves
-	//     from another registry, such as a private index, may only share its name with a public
-	//     package, so it is skipped and reported unless its registry is listed here.
+	//     from another registry is skipped and reported unless its registry is listed here.
+	//   * only list registries serving pypi.org packages: a private package may only share its
+	//     name with a public one, and would get its advisories.
 	//   * each value is the registry URL as written in uv.lock, a trailing "/" is ignored.
-	//   * only list registries serving pypi.org packages: a private package listed through one
-	//     would get the advisories of the public package of the same name.
 	//
 	// example:
 	//   ```
