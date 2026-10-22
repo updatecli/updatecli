@@ -207,6 +207,24 @@ func TestSourceAge(t *testing.T) {
 			expectedStatus: result.SUCCESS,
 		},
 		{
+			// Both normalize to "1.0.0" for semver, the base release is always the one returned.
+			name: "releases normalizing alike always give the base release",
+			spec: Spec{
+				Name:          "testpkg",
+				Age:           age.Spec{Minimum: "7d"},
+				VersionFilter: version.Filter{Kind: "semver", Pattern: "*"},
+			},
+			mockedBody: fmt.Sprintf(`{
+  "info": {"name": "testpkg", "version": "1.0.0.post1", "project_urls": {}},
+  "releases": {
+    "1.0.0": [{"yanked": false, "upload_time_iso_8601": %q}],
+    "1.0.0.post1": [{"yanked": false, "upload_time_iso_8601": %q}]
+  }
+}`, daysAgo(60), daysAgo(30)),
+			expectedResult: "1.0.0",
+			expectedStatus: result.SUCCESS,
+		},
+		{
 			// Never ending, so it isn't a cooldown to skip.
 			name:          "a registry reporting no upload time at all fails",
 			spec:          Spec{Name: "requests", Age: age.Spec{Minimum: "7d"}},
