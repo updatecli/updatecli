@@ -5,6 +5,7 @@ import (
 	"text/template"
 
 	"github.com/updatecli/updatecli/pkg/core/log"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 )
 
 var (
@@ -34,6 +35,7 @@ sources:
 {{- if or (eq .SourceVersionFilterKind "regex/semver") (eq .SourceVersionFilterKind "regex/time") }}
         regex: '{{ .SourceVersionFilterRegex }}'
 {{- end }}
+{{- template "age" .SourceAge }}
 conditions:
   {{ .ConditionArtifactID }}:
     name: '{{ .ConditionArtifactIDName }}'
@@ -73,7 +75,7 @@ targets:
 
 // routineManifestTmpl generates the manifests bumping a dependency to its latest version.
 // The manifest template is a constant, so it is parsed once rather than for every dependency.
-var routineManifestTmpl = template.Must(template.New("manifest").Parse(manifestTemplate))
+var routineManifestTmpl = template.Must(template.New("manifest").Parse(age.ManifestTemplate + manifestTemplate))
 
 // manifestTemplateParams holds the values injected into manifestTemplate.
 type manifestTemplateParams struct {
@@ -97,6 +99,7 @@ type manifestTemplateParams struct {
 	SourceVersionFilterKind    string
 	SourceVersionFilterPattern string
 	SourceVersionFilterRegex   string
+	SourceAge                  age.Spec
 	TargetID                   string
 	TargetName                 string
 	TargetXMLPath              string
@@ -109,6 +112,7 @@ func (m Maven) renderManifest(params manifestTemplateParams, currentVersion stri
 	params.SourceVersionFilterKind = m.versionFilter.Kind
 	params.SourceVersionFilterPattern = m.versionFilter.Pattern
 	params.SourceVersionFilterRegex = m.versionFilter.Regex
+	params.SourceAge = m.releaseAge
 
 	// A user defined version filter only accepts versions greater than the current one
 	if !m.spec.VersionFilter.IsZero() {

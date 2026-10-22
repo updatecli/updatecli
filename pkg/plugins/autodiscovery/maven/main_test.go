@@ -50,6 +50,8 @@ sources:
       versionfilter:
         kind: 'latest'
         pattern: 'latest'
+      age:
+        minimum: '7d'
 conditions:
   artifactid:
     name: 'Ensure dependency artifactId "commons-lang3" is specified'
@@ -94,6 +96,8 @@ sources:
       versionfilter:
         kind: 'latest'
         pattern: 'latest'
+      age:
+        minimum: '7d'
 conditions:
   artifactid:
     name: 'Ensure dependency artifactId "commons-lang3" is specified'
@@ -138,6 +142,8 @@ sources:
       versionfilter:
         kind: 'latest'
         pattern: 'latest'
+      age:
+        minimum: '7d'
 conditions:
   artifactid:
     name: 'Ensure dependency artifactId "jsch" is specified'
@@ -177,6 +183,8 @@ sources:
       versionfilter:
         kind: 'latest'
         pattern: 'latest'
+      age:
+        minimum: '7d'
 conditions:
   artifactid:
     name: 'Ensure dependencyManagement artifactId "bom-2.346.x" is specified'
@@ -216,6 +224,8 @@ sources:
       versionfilter:
         kind: 'latest'
         pattern: 'latest'
+      age:
+        minimum: '7d'
 conditions:
   artifactid:
     name: 'Ensure parent artifactId "plugin" is specified'
@@ -281,4 +291,56 @@ func TestDiscoverManifestsWithoutRepository(t *testing.T) {
 
 	assert.NotContains(t, string(manifests[0]), "repositories:")
 	assert.Contains(t, string(manifests[0]), "      versionfilter:\n        kind: 'semver'\n")
+}
+
+func TestDiscoverManifestsAge(t *testing.T) {
+	tests := []struct {
+		name    string
+		spec    map[string]interface{}
+		want    string
+		wantErr bool
+	}{
+		{
+			name: "default minimum age",
+			spec: map[string]interface{}{},
+			want: "      age:\n        minimum: '7d'\n",
+		},
+		{
+			name: "explicit age",
+			spec: map[string]interface{}{"age": map[string]interface{}{"minimum": "3d", "maximum": "1y"}},
+			want: "      age:\n        minimum: '3d'\n        maximum: '1y'\n",
+		},
+		{
+			name: "empty age disables the default",
+			spec: map[string]interface{}{"age": map[string]interface{}{}},
+		},
+		{
+			name:    "invalid age",
+			spec:    map[string]interface{}{"age": map[string]interface{}{"minimum": "soon"}},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			maven, err := New(tt.spec, "testdata/externalhttp", "", "")
+			if tt.wantErr {
+				require.ErrorContains(t, err, "wrong age spec")
+				return
+			}
+			require.NoError(t, err)
+
+			manifests, err := maven.DiscoverManifests()
+			require.NoError(t, err)
+			require.NotEmpty(t, manifests)
+
+			for _, manifest := range manifests {
+				if tt.want == "" {
+					assert.NotContains(t, string(manifest), "age:")
+					continue
+				}
+				assert.Contains(t, string(manifest), tt.want)
+			}
+		})
+	}
 }

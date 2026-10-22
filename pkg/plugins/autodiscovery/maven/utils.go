@@ -11,6 +11,10 @@ import (
 	"github.com/beevik/etree"
 )
 
+// defaultMinimumReleaseAge defines how long a release must have been published before
+// the generated manifests suggest it, unless "age" is set.
+const defaultMinimumReleaseAge = "7d"
+
 // searchPomFiles will look, recursively, for every files named Chart.yaml from a root directory.
 func searchPomFiles(rootDir string, files []string) ([]string, error) {
 
