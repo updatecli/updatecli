@@ -670,6 +670,70 @@ targets:
 `,
 			},
 		},
+		{
+			name:        "Scenario 14 -- only rule on the dev dependency group, which includes the test group",
+			rootDir:     "testdata/dependency_groups",
+			uvAvailable: true,
+			spec: Spec{
+				Only: MatchingRules{
+					{DependencyGroups: []string{"dev"}},
+				},
+			},
+			expectedPipelines: []string{
+				`name: 'deps(pypi): bump "ruff" [group:dev] for "groups-project" project'
+sources:
+  ruff:
+    name: 'Get latest "ruff" package version'
+    kind: 'pypi'
+    spec:
+      name: 'ruff'
+      versionfilter:
+        kind: 'pep440'
+        pattern: '>=0.4'
+targets:
+  ruff:
+    name: 'deps(pypi): bump "ruff" to {{ source "ruff" }}'
+    kind: 'shell'
+    spec:
+      command: 'uv lock --upgrade-package ruff=={{ source "ruff" }}'
+      changedif:
+        kind: file/checksum
+        spec:
+          files:
+            - "uv.lock"
+      environments:
+        - name: PATH
+      workdir: '.'
+    disablesourceinput: true
+`,
+				`name: 'deps(pypi): bump "pytest" [group:test] for "groups-project" project'
+sources:
+  pytest:
+    name: 'Get latest "pytest" package version'
+    kind: 'pypi'
+    spec:
+      name: 'pytest'
+      versionfilter:
+        kind: 'pep440'
+        pattern: '>=8.0'
+targets:
+  pytest:
+    name: 'deps(pypi): bump "pytest" to {{ source "pytest" }}'
+    kind: 'shell'
+    spec:
+      command: 'uv lock --upgrade-package pytest=={{ source "pytest" }}'
+      changedif:
+        kind: file/checksum
+        spec:
+          files:
+            - "uv.lock"
+      environments:
+        - name: PATH
+      workdir: '.'
+    disablesourceinput: true
+`,
+			},
+		},
 	}
 
 	for _, tt := range testdata {

@@ -21,3 +21,26 @@ func TestDiscoverManifestsMalformedDependencyGroup(t *testing.T) {
 	assert.Contains(t, string(manifests[0]), `bump "requests" for "malformed-groups-project" project`)
 	assert.Contains(t, string(manifests[1]), `bump "pytest" [group:dev] for "malformed-groups-project" project`)
 }
+
+func TestDependencyGroupMemberships(t *testing.T) {
+	groups := map[string]interface{}{
+		"Test_Group": []interface{}{"pytest>=8.0"},
+		"lint":       []interface{}{"ruff>=0.4"},
+		// Included name written differently than declared, compared normalized
+		"dev": []interface{}{map[string]interface{}{"include-group": "test-group"}, "mypy"},
+		// Array of tables syntax, including dev which includes Test_Group
+		"all": []map[string]interface{}{{"include-group": "dev"}, {"include-group": "lint"}},
+		// Cycle, forbidden by PEP 735, must not loop
+		"a": []interface{}{map[string]interface{}{"include-group": "b"}},
+		"b": []interface{}{map[string]interface{}{"include-group": "a"}},
+	}
+
+	memberships := dependencyGroupMemberships(groups)
+
+	assert.Equal(t, []string{"Test_Group", "all", "dev"}, memberships["Test_Group"])
+	assert.Equal(t, []string{"all", "lint"}, memberships["lint"])
+	assert.Equal(t, []string{"all", "dev"}, memberships["dev"])
+	assert.Equal(t, []string{"all"}, memberships["all"])
+	assert.Equal(t, []string{"a", "b"}, memberships["a"])
+	assert.Equal(t, []string{"a", "b"}, memberships["b"])
+}

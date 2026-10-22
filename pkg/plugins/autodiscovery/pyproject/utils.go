@@ -163,3 +163,12 @@ func parsePEP508(dep string) (pythonDependency, error) {
 		Version:    version,
 	}, nil
 }
+
+// pep503Separators matches the runs of characters PEP 503 normalizes package names on.
+var pep503Separators = regexp.MustCompile(`[-_.]+`)
+
+// normalizeName returns the PEP 503 normalized form of a Python package name, which is
+// how uv.lock records it. PEP 735 normalizes dependency group names the same way.
+func normalizeName(name string) string {
+	return strings.ToLower(pep503Separators.ReplaceAllString(name, "-"))
+}
