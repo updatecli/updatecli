@@ -124,6 +124,21 @@ func TestCondition(t *testing.T) {
 			// versions are normalized to semver but condition should match the original PEP 440 form
 			expectedPass: true,
 		},
+		{
+			// The latest release is yanked, which only matters to the source.
+			name: "Condition passes when the latest release is yanked",
+			spec: Spec{
+				Name:    "requests",
+				Version: "2.30.0",
+				URL:     "https://pypi.example.com",
+				Token:   "validtoken",
+			},
+			mockedBody:           yankedLatestPackageData,
+			mockedURL:            "https://pypi.example.com/",
+			mockedToken:          "validtoken",
+			mockedHTTPStatusCode: 200,
+			expectedPass:         true,
+		},
 	}
 
 	for _, tt := range tests {

@@ -364,11 +364,11 @@ func (p *Pypi) originalVersion(normalized string) string {
 	return normalized
 }
 
-// getVersions returns the version matching the filter and all available versions.
-func (p *Pypi) getVersions(ctx context.Context) (string, []string, error) {
+// getVersions returns the version matching the filter.
+func (p *Pypi) getVersions(ctx context.Context) (string, error) {
 	versions, coolingDown, err := p.availableVersions(ctx)
 	if err != nil {
-		return "", nil, err
+		return "", err
 	}
 
 	/*
@@ -377,12 +377,11 @@ func (p *Pypi) getVersions(ctx context.Context) (string, []string, error) {
 		expected to skip rather than to fail.
 	*/
 	if len(versions) == 0 && len(coolingDown) > 0 {
-		return "", versions, fmt.Errorf("%w for the PyPI package %q", age.ErrNoVersionMatchingAge, p.spec.Name)
+		return "", fmt.Errorf("%w for the PyPI package %q", age.ErrNoVersionMatchingAge, p.spec.Name)
 	}
 
 	if p.versionFilter.Kind == version.LATESTVERSIONKIND {
-		found, err := p.latestVersion()
-		return found, versions, err
+		return p.latestVersion()
 	}
 
 	p.foundVersion, err = p.versionFilter.Search(versions)
@@ -394,17 +393,17 @@ func (p *Pypi) getVersions(ctx context.Context) (string, []string, error) {
 		*/
 		if len(coolingDown) > 0 {
 			if _, errAll := p.versionFilter.Search(slices.Concat(versions, coolingDown)); errAll == nil {
-				return "", versions, fmt.Errorf("%w for the PyPI package %q", age.ErrNoVersionMatchingAge, p.spec.Name)
+				return "", fmt.Errorf("%w for the PyPI package %q", age.ErrNoVersionMatchingAge, p.spec.Name)
 			}
 		}
-		return "", nil, err
+		return "", err
 	}
 
 	found := p.foundVersion.GetVersion()
 	if p.versionFilter.Kind != version.PEP440VERSIONKIND {
 		found = p.originalVersion(found)
 	}
-	return found, versions, nil
+	return found, nil
 }
 
 // latestVersion returns the latest release reported by the registry or, when the age filter

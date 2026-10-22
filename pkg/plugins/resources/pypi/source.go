@@ -12,7 +12,7 @@ import (
 
 // Source returns the latest matching PyPI package version.
 func (p *Pypi) Source(ctx context.Context, pathResolver pathresolver.Resolver, resultSource *result.Source) error {
-	ver, _, err := p.getVersions(ctx)
+	ver, err := p.getVersions(ctx)
 	if err != nil {
 		/*
 			Every published version is still cooling down, which is an expected state of
