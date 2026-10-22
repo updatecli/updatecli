@@ -1,6 +1,8 @@
 package pyproject
 
 import (
+	"text/template"
+
 	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/vulnerability"
 )
@@ -89,6 +91,14 @@ conditions:
 {{- template "vulnerability" .Vulnerability }}
 {{- template "uvtarget" . }}
 `
+
+// The manifest templates are constants, so they are parsed once rather than for every dependency group.
+var (
+	// routineManifestTmpl generates the manifests bumping a dependency to its latest version.
+	routineManifestTmpl = template.Must(template.New("manifest").Parse(age.ManifestTemplate + uvTargetTemplate + manifestTemplate))
+	// securityManifestTmpl generates the manifests updating a dependency with known vulnerabilities.
+	securityManifestTmpl = template.Must(template.New("manifest").Parse(vulnerability.ManifestTemplate + uvTargetTemplate + securityManifestTemplate))
+)
 
 // manifestTemplateParams holds the values injected into manifestTemplate.
 type manifestTemplateParams struct {

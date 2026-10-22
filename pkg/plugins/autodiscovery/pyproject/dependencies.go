@@ -7,14 +7,11 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
-	"text/template"
 
 	"github.com/BurntSushi/toml"
 	"github.com/updatecli/updatecli/pkg/core/log"
-	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pep503"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
-	"github.com/updatecli/updatecli/pkg/plugins/utils/vulnerability"
 )
 
 // pyprojectTOML mirrors the subset of pyproject.toml we care about.
@@ -452,15 +449,9 @@ func (p Pyproject) processDependencies(
 		group = "group:" + dependencyGroup
 	}
 
-	manifestTmpl := manifestTemplate
+	tmpl := routineManifestTmpl
 	if scan != nil {
-		manifestTmpl = securityManifestTemplate
-	}
-
-	tmpl, err := template.New("manifest").Parse(age.ManifestTemplate + vulnerability.ManifestTemplate + uvTargetTemplate + manifestTmpl)
-	if err != nil {
-		log.Errorln(err)
-		return manifests
+		tmpl = securityManifestTmpl
 	}
 
 	for _, depStr := range deps {
