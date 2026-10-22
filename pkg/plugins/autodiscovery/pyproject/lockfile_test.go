@@ -7,13 +7,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestNormalizeName(t *testing.T) {
-	assert.Equal(t, "jinja2", normalizeName("Jinja2"))
-	assert.Equal(t, "zope-interface", normalizeName("zope.interface"))
-	assert.Equal(t, "my-package", normalizeName("My__Package"))
-	assert.Equal(t, "a-b", normalizeName("a-._b"))
-}
-
 func TestExactPinnedVersion(t *testing.T) {
 	testdata := map[string]string{
 		"==1.2.3":       "1.2.3",

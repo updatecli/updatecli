@@ -12,6 +12,7 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pep503"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/vulnerability"
 )
@@ -54,7 +55,7 @@ func dependencyGroupEntries(group interface{}) ([]interface{}, bool) {
 func dependencyGroupMemberships(groups map[string]interface{}) map[string][]string {
 	declared := map[string]string{}
 	for name := range groups {
-		declared[normalizeName(name)] = name
+		declared[pep503.NormalizeName(name)] = name
 	}
 
 	// includedBy maps a normalized group name to the normalized names of the groups including it.
@@ -73,15 +74,15 @@ func dependencyGroupMemberships(groups map[string]interface{}) map[string][]stri
 			if !ok {
 				continue
 			}
-			child := normalizeName(included)
-			includedBy[child] = append(includedBy[child], normalizeName(name))
+			child := pep503.NormalizeName(included)
+			includedBy[child] = append(includedBy[child], pep503.NormalizeName(name))
 		}
 	}
 
 	memberships := map[string][]string{}
 	for name := range groups {
 		seen := map[string]bool{}
-		queue := []string{normalizeName(name)}
+		queue := []string{pep503.NormalizeName(name)}
 		for len(queue) > 0 {
 			current := queue[0]
 			queue = queue[1:]
@@ -203,7 +204,7 @@ func newVulnerabilityScan(dir string, hasUvLock bool, trustedRegistries map[stri
 // resolves when there are several of them. It doesn't record nor report anything, so that
 // only and ignore rules can be evaluated against the version before it is accounted for.
 func (s *vulnerabilityScan) currentVersion(dep pythonDependency) (version string, forkedVersions []string) {
-	name := normalizeName(dep.Name)
+	name := pep503.NormalizeName(dep.Name)
 	if _, untrusted := s.untrustedRegistry[name]; untrusted || s.notFromRegistry[name] {
 		// Not a PyPI release, even when pinned with "==" in pyproject.toml.
 		return "", nil
@@ -225,7 +226,7 @@ func (s *vulnerabilityScan) currentVersion(dep pythonDependency) (version string
 // markUnresolved records a dependency dropped for lack of a current version.
 // A package uv.lock resolves at several versions gets its own warning, once.
 func (s *vulnerabilityScan) markUnresolved(dep pythonDependency, relativeFile string, forkedVersions []string) {
-	name := normalizeName(dep.Name)
+	name := pep503.NormalizeName(dep.Name)
 
 	if s.notFromRegistry[name] {
 		log.Debugf("ignoring %q from %q, as uv.lock doesn't resolve it from a registry", dep.Name, relativeFile)
@@ -254,7 +255,7 @@ func (s *vulnerabilityScan) markUnresolved(dep pythonDependency, relativeFile st
 // claim records a dependency at its current version and reports whether a manifest is still
 // needed for it, which is false when the same package at the same version was already handled.
 func (s *vulnerabilityScan) claim(dep pythonDependency, currentVersion string) bool {
-	name := normalizeName(dep.Name)
+	name := pep503.NormalizeName(dep.Name)
 	s.resolved[name] = true
 
 	key := name + "==" + currentVersion

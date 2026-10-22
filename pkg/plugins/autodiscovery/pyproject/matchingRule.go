@@ -6,6 +6,7 @@ import (
 
 	gopep440 "github.com/aquasecurity/go-pep440-version"
 	"github.com/updatecli/updatecli/pkg/core/log"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pep503"
 )
 
 // MatchingRule defines a rule to select Python dependencies.
@@ -61,7 +62,7 @@ func (m MatchingRules) Validate() error {
 		}
 		for _, group := range rule.DependencyGroups {
 			// Patterns are matched once normalized, so the normalized form is the one to check.
-			if _, err := filepath.Match(normalizeName(group), ""); err != nil {
+			if _, err := filepath.Match(pep503.NormalizeName(group), ""); err != nil {
 				return fmt.Errorf("rule %d has an invalid dependencygroups pattern %q: %w", i+1, group, err)
 			}
 		}
@@ -135,7 +136,7 @@ func (m MatchingRules) isMatchingRules(rootDir, filePath, packageName, packageVe
 			for _, dependencyGroup := range dependencyGroups {
 				for _, pattern := range rule.DependencyGroups {
 					// Patterns were checked by Validate, so the error can be ignored.
-					if ok, _ := filepath.Match(normalizeName(pattern), normalizeName(dependencyGroup)); ok {
+					if ok, _ := filepath.Match(pep503.NormalizeName(pattern), pep503.NormalizeName(dependencyGroup)); ok {
 						match = true
 						break outGroup
 					}

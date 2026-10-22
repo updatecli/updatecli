@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/BurntSushi/toml"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pep503"
 )
 
 const uvLockFile = "uv.lock"
@@ -81,7 +82,7 @@ func loadUvLockVersions(dir string, trustedRegistries map[string]bool) (lockedPa
 		if pkg.Name == "" {
 			continue
 		}
-		name := normalizeName(pkg.Name)
+		name := pep503.NormalizeName(pkg.Name)
 
 		rawRegistry, fromRegistry := pkg.Source["registry"]
 		if !fromRegistry {
