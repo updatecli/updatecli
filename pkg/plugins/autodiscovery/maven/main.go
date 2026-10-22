@@ -1,6 +1,7 @@
 package maven
 
 import (
+	"errors"
 	"fmt"
 	"path"
 
@@ -8,6 +9,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/vulnerability"
 )
 
 /*
@@ -77,8 +79,34 @@ type Spec struct {
 	//     seven days ago. An empty "age: {}" disables it.
 	//   * a release's age is the Last-Modified date the repository reports for its pom file.
 	//     On a repository reporting none, the generated sources are skipped: disable it with "age: {}".
+	//   * security fixes don't wait for it, see "vulnerability".
 	//
 	Age *age.Spec `yaml:",omitempty"`
+	// "vulnerability" switches the autodiscovery to security updates, based on the OSV database (https://osv.dev).
+	//
+	// A Maven artifact is only updated when its current version has known vulnerabilities,
+	// to the lowest version without any.
+	//
+	// remark:
+	//   * only security updates are generated, routine updates require a separate manifest.
+	//   * it cannot be combined with:
+	//     * "age", as a fixed version is suggested as soon as it is known. The default age
+	//       doesn't apply either.
+	//     * "versionfilter", as the version is the lowest one without known vulnerabilities.
+	//   * dependencies, managed dependencies and the parent pom are covered.
+	//   * the current version is the version written in pom.xml. Artifacts whose version relies on
+	//     a property, such as "${log4j.version}", or is a version range, such as "[1.0,2.0)", are ignored.
+	//   * labels, such as "security", are set on the action used by the manifest.
+	//
+	// example:
+	//   ```
+	//   vulnerability:
+	//     minseverity: high
+	//     ignore:
+	//       - CVE-2021-44228
+	//   ```
+	//
+	Vulnerability *vulnerability.Spec `yaml:",omitempty"`
 }
 
 // Maven hold all information needed to generate helm manifest.
@@ -116,10 +144,18 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Maven, error) {
 		return Maven{}, fmt.Errorf("invalid only spec: %w", err)
 	}
 
+	if err := s.validateVulnerability(); err != nil {
+		return Maven{}, err
+	}
+
 	// By default, wait for a release to be old enough before suggesting it
 	releaseAge := age.Spec{Minimum: defaultMinimumReleaseAge}
-	if s.Age != nil {
+	switch {
+	case s.Age != nil:
 		releaseAge = *s.Age
+	case s.Vulnerability != nil:
+		// A fixed version is suggested as soon as it is known
+		releaseAge = age.Spec{}
 	}
 
 	if err := releaseAge.Validate(); err != nil {
@@ -154,6 +190,27 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Maven, error) {
 		releaseAge:    releaseAge,
 	}, nil
 
+}
+
+// validateVulnerability checks the vulnerability spec and the settings it can't be combined with.
+func (s Spec) validateVulnerability() error {
+	if s.Vulnerability == nil {
+		return nil
+	}
+
+	if err := s.Vulnerability.Validate(); err != nil {
+		return fmt.Errorf("invalid vulnerability spec: %w", err)
+	}
+
+	if s.Age != nil && !s.Age.IsZero() {
+		return errors.New("age can't be combined with vulnerability, use a separate manifest for routine updates")
+	}
+
+	if !s.VersionFilter.IsZero() {
+		return errors.New("versionfilter can't be combined with vulnerability, the version is the lowest one without known vulnerabilities")
+	}
+
+	return nil
 }
 
 func (m Maven) DiscoverManifests() ([][]byte, error) {

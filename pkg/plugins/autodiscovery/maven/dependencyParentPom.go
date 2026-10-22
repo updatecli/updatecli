@@ -72,6 +72,12 @@ func (m Maven) discoverParentPomDependencyManifests() ([][]byte, error) {
 			continue
 		}
 
+		// No current version can be checked against the OSV database
+		if m.spec.Vulnerability != nil && isVersionRange(parentPom.Version) {
+			log.Printf("Skipping parent pom %q in %q as it relies on the version range %q", parentPom.ArtifactID, relativePomFile, parentPom.Version)
+			continue
+		}
+
 		artifactFullName := fmt.Sprintf("%s/%s", parentPom.GroupID, parentPom.ArtifactID)
 
 		if len(m.spec.Ignore) > 0 {
