@@ -61,12 +61,13 @@ func recentPackageData() string {
 
 func TestSourceAge(t *testing.T) {
 	tests := []struct {
-		name           string
-		spec           Spec
-		mockedBody     string
-		expectedResult string
-		expectedStatus string
-		expectedError  bool
+		name                 string
+		spec                 Spec
+		mockedBody           string
+		expectedResult       string
+		expectedStatus       string
+		expectedError        bool
+		expectedErrorMessage string
 	}{
 		{
 			name:           "latest falls back to the highest stable release older than the minimum",
@@ -175,21 +176,34 @@ func TestSourceAge(t *testing.T) {
 			expectedError: true,
 		},
 		{
-			// Releases older than the maximum never match again, so it isn't a cooldown either.
-			name:          "every release older than the maximum fails instead of skipping",
-			spec:          Spec{Name: "requests", Age: age.Spec{Maximum: "1y"}},
-			mockedBody:    recentPackageDataAt(730),
-			expectedError: true,
+			// Like the npm resource, the age filter discarding every release skips the source.
+			name:           "every release older than the maximum skips the source",
+			spec:           Spec{Name: "requests", Age: age.Spec{Maximum: "1y"}},
+			mockedBody:     recentPackageDataAt(730),
+			expectedStatus: result.SKIPPED,
 		},
 		{
-			name: "releases matching the versionfilter only older than the maximum fail",
+			name: "releases matching the versionfilter only older than the maximum skip the source",
 			spec: Spec{
 				Name:          "requests",
 				Age:           age.Spec{Maximum: "1y"},
 				VersionFilter: version.Filter{Kind: "pep440", Pattern: "==2.29.0"},
 			},
-			mockedBody:    agedPackageData(),
-			expectedError: true,
+			mockedBody:     agedPackageData(),
+			expectedStatus: result.SKIPPED,
+		},
+		{
+			name: "a development latest release ignored by the versionfilter kind is reported as such",
+			spec: Spec{Name: "testpkg"},
+			mockedBody: `{
+  "info": {"name": "testpkg", "version": "2.0.dev3", "project_urls": {}},
+  "releases": {
+    "1.0.0": [{"yanked": false}],
+    "2.0.dev3": [{"yanked": false}]
+  }
+}`,
+			expectedError:        true,
+			expectedErrorMessage: "is a development release",
 		},
 		{
 			// 3.0.0 was uploaded out of order, the fallback stays below the registry latest.
@@ -284,6 +298,9 @@ func TestSourceAge(t *testing.T) {
 			err = p.Source(context.Background(), pathresolver.Resolver{}, &gotResult)
 			if tt.expectedError {
 				require.Error(t, err)
+				if tt.expectedErrorMessage != "" {
+					assert.Contains(t, err.Error(), tt.expectedErrorMessage)
+				}
 				return
 			}
 			require.NoError(t, err)
