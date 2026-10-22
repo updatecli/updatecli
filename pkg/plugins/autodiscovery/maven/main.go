@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/updatecli/updatecli/pkg/core/log"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
@@ -61,6 +62,23 @@ type Spec struct {
 	//   ```
 	//
 	VersionFilter version.Filter `yaml:",omitempty"`
+	// "age" defines the minimum or maximum age of a release to be considered valid.
+	//
+	// remark:
+	//   * it accepts a duration string, such as "24h", "7d", "3w" or "1y".
+	//   * it is propagated to the generated maven sources.
+	//   * a release's age is the Last-Modified date the repository reports for its pom file.
+	//     On a repository reporting none, the generated sources are skipped.
+	//   * when the most recent release is too recent, an older one is suggested, which can be lower
+	//     than the version in pom.xml. Combine it with a "versionfilter" to bound the versions.
+	//
+	// example:
+	//   ```
+	//   age:
+	//     minimum: 7d
+	//   ```
+	//
+	Age age.Spec `yaml:",omitempty"`
 }
 
 // Maven hold all information needed to generate helm manifest.
@@ -94,6 +112,10 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Maven, error) {
 	// Validate only rules
 	if err := s.Only.Validate(); err != nil {
 		return Maven{}, fmt.Errorf("invalid only spec: %w", err)
+	}
+
+	if err := s.Age.Validate(); err != nil {
+		return Maven{}, fmt.Errorf("wrong age spec: %w", err)
 	}
 
 	dir := rootDir
