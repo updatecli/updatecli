@@ -90,8 +90,8 @@ type Spec struct {
 	//   * a release's age is based on the earliest upload time of its files.
 	//   * releases for which the registry reports no upload time are ignored.
 	//   * the lookup fails when the registry reports no upload time for any release.
-	//   * the source is skipped when the releases it could return are still too recent,
-	//     as they will match later. Releases older than "maximum" never will, so they don't skip it.
+	//   * the source is skipped when the age filter discards every release it could return,
+	//     too recent or older than "maximum", as the npm resource does.
 	//   * with the kind "latest", the highest release matching the age filter is used
 	//     when the latest release reported by the registry doesn't match it.
 	//
@@ -330,14 +330,16 @@ func (p *Pypi) getVersions(ctx context.Context) (string, error) {
 	}
 
 	versions := rels.candidates(ageMatching)
-	coolingDown := rels.candidates(ageTooRecent)
+	// Releases with an upload time the age filter rejects, too recent or older than its maximum.
+	// Like the npm resource, a source left with nothing but those is skipped rather than failed.
+	discarded := rels.candidates(ageTooRecent, ageTooOld)
 
 	/*
 		The package does publish versions but the age filter discarded every one of them,
-		which reports a cooldown still running rather than a lookup failure, so callers are
-		expected to skip rather than to fail.
+		which reports an age filter not matching rather than a lookup failure, so callers
+		are expected to skip rather than to fail.
 	*/
-	if len(versions) == 0 && len(coolingDown) > 0 {
+	if len(versions) == 0 && len(discarded) > 0 {
 		return "", fmt.Errorf("%w for the PyPI package %q", age.ErrNoVersionMatchingAge, p.spec.Name)
 	}
 
@@ -348,12 +350,12 @@ func (p *Pypi) getVersions(ctx context.Context) (string, error) {
 	p.foundVersion, err = p.versionFilter.Search(versions)
 	if err != nil {
 		/*
-			Only the versions matching the version filter may be cooling down, such as a
-			release published yesterday being the only one satisfying ">=3.0". That is still
-			a cooldown, not a lookup failure, so callers are expected to skip rather than to fail.
+			Only the versions matching the version filter may be discarded by the age filter, such
+			as a release published yesterday being the only one satisfying ">=3.0". That is still
+			the age filter not matching, not a lookup failure, so callers are expected to skip.
 		*/
-		if len(coolingDown) > 0 {
-			if _, errAll := p.versionFilter.Search(slices.Concat(versions, coolingDown)); errAll == nil {
+		if len(discarded) > 0 {
+			if _, errAll := p.versionFilter.Search(slices.Concat(versions, discarded)); errAll == nil {
 				return "", fmt.Errorf("%w for the PyPI package %q", age.ErrNoVersionMatchingAge, p.spec.Name)
 			}
 		}
@@ -369,24 +371,26 @@ func (p *Pypi) latestVersion(rels releases) (string, error) {
 	latest := p.data.Info.Version
 
 	rel, published := rels[latest]
-	status := rel.status
 	switch {
 	case !published:
+		// Dev releases are left out when they can't be normalized for the versionfilter kind.
+		if files, found := p.data.Releases[latest]; found && !isYanked(files) {
+			return "", fmt.Errorf("latest version %q of package %q is a development release, which the %q versionfilter kind ignores", latest, p.spec.Name, p.versionFilter.Kind)
+		}
 		return "", fmt.Errorf("latest version %q of package %q is yanked", latest, p.spec.Name)
-	case status == ageMatching:
+	case rel.status == ageMatching:
 		return latest, nil
-	case status == ageTooOld:
-		return "", fmt.Errorf("latest version %q of package %q is older than the age filter allows", latest, p.spec.Name)
 	}
 
-	// The latest release is too recent, or has no upload time to check: an older one may do.
+	// The age filter rejects the latest release, or it has no upload time to check: an older one may do.
 	if found := latestVersionMatchingAge(rels.versions(ageMatching), latest); found != "" {
 		log.Debugf("latest version %q of PyPI package %q doesn't match the age filter, using %q", latest, p.spec.Name, found)
 		return found, nil
 	}
 
-	// A release too recent matches later, which is a cooldown. A missing upload time never appears.
-	if status == ageUndated {
+	// The age filter not matching makes the source skip, like npm. A missing upload time is a
+	// registry limitation instead, which never resolves, so it fails.
+	if rel.status == ageUndated {
 		return "", fmt.Errorf("the registry reports no upload time for the latest version %q of package %q, and no older release matches the age filter", latest, p.spec.Name)
 	}
 	return "", fmt.Errorf("%w for the PyPI package %q", age.ErrNoVersionMatchingAge, p.spec.Name)
