@@ -1,5 +1,7 @@
 package pyproject
 
+import "github.com/updatecli/updatecli/pkg/plugins/utils/age"
+
 // manifestTemplate is the Go text/template used to generate updatecli manifests
 // for Python dependency updates discovered via pyproject.toml.
 var manifestTemplate = `name: '{{ .ManifestName }}'
@@ -17,6 +19,7 @@ sources:
 {{- if .IndexURL }}
       url: '{{ .IndexURL }}'
 {{- end }}
+{{- template "age" .SourceAge }}
       versionfilter:
         kind: '{{ .SourceVersionFilterKind }}'
         pattern: '{{ .SourceVersionFilterPattern }}'
@@ -54,6 +57,7 @@ type manifestTemplateParams struct {
 	SourceVersionFilterKind    string
 	SourceVersionFilterPattern string
 	SourceVersionFilterRegex   string
+	SourceAge                  age.Spec
 	DependencyName             string
 	IndexURL                   string
 	TargetID                   string

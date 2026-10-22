@@ -18,6 +18,10 @@
 //   - no lock file: only the pypi source is generated, so the latest version is reported but
 //     nothing is modified.
 //
+// Generated sources carry an age filter, by default a minimum of seven days, so a release
+// is only suggested once it has been published long enough to be yanked if it is broken
+// or malicious.
+//
 // Dependency strings are parsed as PEP 508 specifiers. Environment markers are stripped rather
 // than evaluated, extras are dropped from the tracked package name, and direct references such
 // as `mypkg @ https://...` are skipped.
@@ -29,6 +33,7 @@ import (
 
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/updatecli/updatecli/pkg/core/log"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
@@ -95,6 +100,26 @@ type Spec struct {
 	//     resource "token" field in the generated manifests.
 	//
 	IndexURL string `yaml:",omitempty"`
+	// "age" defines the minimum or maximum age of a release to be considered valid.
+	//
+	// default:
+	//   ```
+	//   age:
+	//     minimum: 7d
+	//   ```
+	//
+	// remark:
+	//   * it accepts a duration string, such as "24h", "7d", "3w" or "1y".
+	//   * it is propagated to the generated pypi sources.
+	//   * the default keeps Updatecli from suggesting a package version published less than seven days ago.
+	//   * the default doesn't apply with "indexurl", as private registries may not report the
+	//     upload times an age filter needs. Set "age" explicitly to filter on such a registry.
+	//   * security fixes wait for the same period, use a separate manifest with "age: {}" for urgent updates.
+	//   * an empty "age: {}" disables the default.
+	//   * private registries that report no upload time leave the age filter nothing to work with,
+	//     so the generated sources fail. Use "age: {}" with such registries.
+	//
+	Age *age.Spec `yaml:",omitempty"`
 }
 
 // Pyproject holds all state needed to discover pyproject.toml dependency manifests.
@@ -111,6 +136,8 @@ type Pyproject struct {
 	versionFilter version.Filter
 	// uvAvailable reports whether the uv CLI is present on PATH.
 	uvAvailable bool
+	// releaseAge holds the release age filter to propagate to generated manifests.
+	releaseAge age.Spec
 }
 
 // New constructs a valid Pyproject autodiscovery instance from the provided spec.
@@ -127,6 +154,20 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Pyproject, error) {
 
 	if err := s.Only.Validate(); err != nil {
 		return Pyproject{}, fmt.Errorf("invalid only spec: %w", err)
+	}
+
+	// By default, wait for a release to be old enough before suggesting it
+	releaseAge := age.Spec{Minimum: defaultMinimumReleaseAge}
+	switch {
+	case s.Age != nil:
+		releaseAge = *s.Age
+	case s.IndexURL != "":
+		// Private registries may not report upload times, which an age filter needs
+		releaseAge = age.Spec{}
+	}
+
+	if err := releaseAge.Validate(); err != nil {
+		return Pyproject{}, fmt.Errorf("wrong age spec: %w", err)
 	}
 
 	dir := rootDir
@@ -156,6 +197,7 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Pyproject, error) {
 		scmID:         scmID,
 		versionFilter: newFilter,
 		uvAvailable:   isUvAvailable(),
+		releaseAge:    releaseAge,
 	}, nil
 }
 
