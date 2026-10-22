@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"text/template"
 
 	"github.com/BurntSushi/toml"
 	"github.com/updatecli/updatecli/pkg/core/log"
@@ -47,12 +48,12 @@ func dependencyGroupEntries(group interface{}) ([]interface{}, bool) {
 
 // dependencyGroupMemberships returns, for each PEP 735 dependency group, the groups its
 // dependencies belong to: the group itself and every group including it, directly or not,
-// through {include-group = "..."} entries. Names are compared normalized, as PEP 735 requires,
-// and returned as declared, sorted. Include cycles, which PEP 735 forbids, don't loop.
+// through {include-group = "..."} entries. Names are compared and returned normalized, as
+// PEP 735 requires, sorted. Include cycles, which PEP 735 forbids, don't loop.
 func dependencyGroupMemberships(groups map[string]interface{}) map[string][]string {
-	declared := map[string]string{}
+	declared := map[string]bool{}
 	for name := range groups {
-		declared[pep503.NormalizeName(name)] = name
+		declared[pep503.NormalizeName(name)] = true
 	}
 
 	// includedBy maps a normalized group name to the normalized names of the groups including it.
@@ -92,8 +93,8 @@ func dependencyGroupMemberships(groups map[string]interface{}) map[string][]stri
 
 		var members []string
 		for normalized := range seen {
-			if d, found := declared[normalized]; found {
-				members = append(members, d)
+			if declared[normalized] {
+				members = append(members, normalized)
 			}
 		}
 		sort.Strings(members)
@@ -451,8 +452,8 @@ type dependencyList struct {
 	extra string
 	// group is the [dependency-groups] (PEP 735) group name, or "".
 	group string
-	// memberGroups holds the dependency groups the dependencies belong to, including the
-	// groups including group, as matched by dependencygroups rules.
+	// memberGroups holds the normalized names of the dependency groups the dependencies belong
+	// to, including the groups including group, as matched by dependencygroups rules.
 	memberGroups []string
 }
 
@@ -465,14 +466,10 @@ func (l dependencyList) label() string {
 	return l.extra
 }
 
-// processDependencies generates manifests for a list of PEP 508 dependency strings.
+// processDependencies generates manifests for a list of PEP 508 dependency strings:
+// security manifests in vulnerability mode, routine ones otherwise.
 func (p Pyproject) processDependencies(file discoveredFile, deps dependencyList) [][]byte {
 	var manifests [][]byte
-
-	tmpl := routineManifestTmpl
-	if file.scan != nil {
-		tmpl = securityManifestTmpl
-	}
 
 	for _, depStr := range deps.requirements {
 		dep, err := parsePEP508(depStr)
@@ -481,65 +478,107 @@ func (p Pyproject) processDependencies(file discoveredFile, deps dependencyList)
 			continue
 		}
 
-		// In vulnerability mode, rules match the version checked against the OSV database,
-		// the one from uv.lock or the exact pin, rather than the declared lower bound.
-		ruleVersion := dep.Version
-		currentVersion := ""
-		var forkedVersions []string
+		var manifest []byte
 		if file.scan != nil {
-			currentVersion, forkedVersions = file.scan.currentVersion(dep)
-			if currentVersion != "" {
-				ruleVersion = currentVersion
-			}
+			manifest = p.securityManifest(file, deps, dep)
+		} else {
+			manifest = p.routineManifest(file, deps, dep)
 		}
 
-		if len(p.spec.Ignore) > 0 && p.spec.Ignore.isMatchingRules(p.rootDir, file.relativeFile, dep.Name, ruleVersion, deps.memberGroups) {
-			log.Debugf("ignoring %q from %q as matching ignore rule(s)", dep.Name, file.relativeFile)
-			continue
+		if manifest != nil {
+			manifests = append(manifests, manifest)
 		}
-
-		if len(p.spec.Only) > 0 && !p.spec.Only.isMatchingRules(p.rootDir, file.relativeFile, dep.Name, ruleVersion, deps.memberGroups) {
-			log.Debugf("ignoring %q from %q as not matching only rule(s)", dep.Name, file.relativeFile)
-			continue
-		}
-
-		// In vulnerability mode, a dependency without current version or already handled gives no manifest.
-		if file.scan != nil {
-			if currentVersion == "" {
-				file.scan.markUnresolved(dep, file.relativeFile, forkedVersions)
-				continue
-			}
-			if !file.scan.claim(dep, currentVersion) {
-				continue
-			}
-		}
-
-		params := p.buildTemplateParams(file, dep, deps.label())
-		if file.scan != nil {
-			params = p.securityTemplateParams(params, dep, currentVersion)
-		}
-
-		var buf bytes.Buffer
-		if err := tmpl.Execute(&buf, params); err != nil {
-			log.Debugln(err)
-			continue
-		}
-
-		manifests = append(manifests, buf.Bytes())
 	}
 
 	return manifests
 }
 
-// securityTemplateParams adapts the parameters of a routine manifest to the security manifest
-// updating a dependency whose currentVersion has known vulnerabilities.
-func (p Pyproject) securityTemplateParams(params manifestTemplateParams, dep pythonDependency, currentVersion string) manifestTemplateParams {
-	// The pipeline name contains the fixed version, so it can be used as pullrequest title
-	params.ManifestName = params.TargetName
-	params.SourceName = fmt.Sprintf("Get lowest %q package version without known vulnerabilities", dep.Name)
-	params.Vulnerability = p.spec.Vulnerability
-	params.CurrentVersion = currentVersion
-	return params
+// routineManifest returns the manifest bumping a dependency to its latest version,
+// or nil when only and ignore rules leave it out.
+func (p Pyproject) routineManifest(file discoveredFile, deps dependencyList, dep pythonDependency) []byte {
+	if !p.isSelected(file, deps, dep, dep.Version) {
+		return nil
+	}
+
+	return renderManifest(routineManifestTmpl, p.buildTemplateParams(file, dep, deps.label()))
+}
+
+// securityManifest returns the manifest updating a dependency whose current version has known
+// vulnerabilities, or nil when it has no identifiable current version, was already handled
+// at that version, or is left out by only and ignore rules.
+func (p Pyproject) securityManifest(file discoveredFile, deps dependencyList, dep pythonDependency) []byte {
+	currentVersion, forkedVersions := file.scan.currentVersion(dep)
+
+	// Rules match the version checked against the OSV database, the one from uv.lock or the
+	// exact pin, rather than the declared lower bound.
+	ruleVersion := dep.Version
+	if currentVersion != "" {
+		ruleVersion = currentVersion
+	}
+	if !p.isSelected(file, deps, dep, ruleVersion) {
+		return nil
+	}
+
+	if currentVersion == "" {
+		file.scan.markUnresolved(dep, file.relativeFile, forkedVersions)
+		return nil
+	}
+	if !file.scan.claim(dep, currentVersion) {
+		return nil
+	}
+
+	return renderManifest(securityManifestTmpl, p.securityTemplateParams(file, dep, currentVersion))
+}
+
+// isSelected reports whether only and ignore rules keep a dependency at the given version.
+func (p Pyproject) isSelected(file discoveredFile, deps dependencyList, dep pythonDependency, ver string) bool {
+	if len(p.spec.Ignore) > 0 && p.spec.Ignore.isMatchingRules(p.rootDir, file.relativeFile, dep.Name, ver, deps.memberGroups) {
+		log.Debugf("ignoring %q from %q as matching ignore rule(s)", dep.Name, file.relativeFile)
+		return false
+	}
+
+	if len(p.spec.Only) > 0 && !p.spec.Only.isMatchingRules(p.rootDir, file.relativeFile, dep.Name, ver, deps.memberGroups) {
+		log.Debugf("ignoring %q from %q as not matching only rule(s)", dep.Name, file.relativeFile)
+		return false
+	}
+
+	return true
+}
+
+// renderManifest executes a manifest template, returning nil when it fails.
+func renderManifest(tmpl *template.Template, params manifestTemplateParams) []byte {
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, params); err != nil {
+		log.Debugln(err)
+		return nil
+	}
+	return buf.Bytes()
+}
+
+// bumpTargetName returns the name of the target bumping a dependency to the version of its source.
+func bumpTargetName(dependency string) string {
+	return fmt.Sprintf("deps(pypi): bump %q to {{ source %q }}", dependency, dependency)
+}
+
+// securityTemplateParams returns the parameters of the security manifest updating a dependency
+// whose currentVersion has known vulnerabilities.
+func (p Pyproject) securityTemplateParams(file discoveredFile, dep pythonDependency, currentVersion string) manifestTemplateParams {
+	return manifestTemplateParams{
+		// The pipeline name contains the fixed version, so it can be used as pullrequest title
+		ManifestName:   bumpTargetName(dep.Name),
+		ActionID:       p.actionID,
+		SourceID:       dep.Name,
+		SourceName:     fmt.Sprintf("Get lowest %q package version without known vulnerabilities", dep.Name),
+		DependencyName: dep.Name,
+		TargetID:       dep.Name,
+		TargetName:     bumpTargetName(dep.Name),
+		ScmID:          p.scmID,
+		UvEnabled:      file.lockSupport.uv,
+		LockFile:       uvLockFile,
+		Workdir:        file.workdir,
+		Vulnerability:  p.spec.Vulnerability,
+		CurrentVersion: currentVersion,
+	}
 }
 
 // buildTemplateParams constructs the manifestTemplateParams for a single dependency.
@@ -594,7 +633,7 @@ func (p Pyproject) buildTemplateParams(file discoveredFile, dep pythonDependency
 		DependencyName:             dep.Name,
 		IndexURL:                   p.spec.IndexURL,
 		TargetID:                   dep.Name,
-		TargetName:                 fmt.Sprintf("deps(pypi): bump %q to {{ source %q }}", dep.Name, dep.Name),
+		TargetName:                 bumpTargetName(dep.Name),
 		ScmID:                      p.scmID,
 		UvEnabled:                  file.lockSupport.uv,
 		LockFile:                   uvLockFile,

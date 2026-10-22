@@ -37,7 +37,7 @@ func TestDependencyGroupMemberships(t *testing.T) {
 
 	memberships := dependencyGroupMemberships(groups)
 
-	assert.Equal(t, []string{"Test_Group", "all", "dev"}, memberships["Test_Group"])
+	assert.Equal(t, []string{"all", "dev", "test-group"}, memberships["Test_Group"])
 	assert.Equal(t, []string{"all", "lint"}, memberships["lint"])
 	assert.Equal(t, []string{"all", "dev"}, memberships["dev"])
 	assert.Equal(t, []string{"all"}, memberships["all"])

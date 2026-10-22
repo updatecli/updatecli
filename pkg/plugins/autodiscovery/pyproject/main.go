@@ -260,6 +260,10 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Pyproject, error) {
 		return Pyproject{}, fmt.Errorf("invalid only spec: %w", err)
 	}
 
+	// Patterns are matched against normalized group names, so they are normalized once here.
+	s.Ignore = s.Ignore.normalized()
+	s.Only = s.Only.normalized()
+
 	if err := s.validateVulnerability(); err != nil {
 		return Pyproject{}, err
 	}

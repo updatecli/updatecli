@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pep503"
 )
 
 func TestMatchingRulesValidate(t *testing.T) {
@@ -288,11 +289,12 @@ func TestIsMatchingRules(t *testing.T) {
 
 	for _, d := range dataset {
 		t.Run(d.name, func(t *testing.T) {
+			// As New and the discovery do: rules and group names are normalized before matching.
 			var groups []string
 			if d.dependencyGroup != "" {
-				groups = []string{d.dependencyGroup}
+				groups = []string{pep503.NormalizeName(d.dependencyGroup)}
 			}
-			got := d.rules.isMatchingRules(d.rootDir, d.filePath, d.packageName, d.packageVersion, groups)
+			got := d.rules.normalized().isMatchingRules(d.rootDir, d.filePath, d.packageName, d.packageVersion, groups)
 			assert.Equal(t, d.expectedResult, got)
 		})
 	}
