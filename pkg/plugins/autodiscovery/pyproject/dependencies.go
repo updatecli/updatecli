@@ -10,6 +10,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/updatecli/updatecli/pkg/core/log"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
@@ -255,7 +256,7 @@ func (p Pyproject) processDependencies(
 		group = "group:" + dependencyGroup
 	}
 
-	tmpl, err := template.New("manifest").Parse(manifestTemplate)
+	tmpl, err := template.New("manifest").Parse(age.ManifestTemplate + manifestTemplate)
 	if err != nil {
 		log.Errorln(err)
 		return manifests
@@ -345,6 +346,7 @@ func (p Pyproject) buildTemplateParams(
 		SourceVersionFilterKind:    sourceVersionFilterKind,
 		SourceVersionFilterPattern: sourceVersionFilterPattern,
 		SourceVersionFilterRegex:   sourceVersionFilterRegex,
+		SourceAge:                  p.releaseAge,
 		DependencyName:             dep.Name,
 		IndexURL:                   p.spec.IndexURL,
 		TargetID:                   dep.Name,

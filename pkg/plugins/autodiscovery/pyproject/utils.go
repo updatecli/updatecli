@@ -17,6 +17,12 @@ const pyprojectFile = "pyproject.toml"
 // dependencyGroupNameRegex matches the dependency group names PEP 735 allows.
 var dependencyGroupNameRegex = regexp.MustCompile(`(?i)^([A-Z0-9]|[A-Z0-9][A-Z0-9._-]*[A-Z0-9])$`)
 
+// defaultMinimumReleaseAge defines how long a release must have been published before
+// Updatecli suggests it. It reduces the exposure to malicious or broken releases that get
+// yanked or deleted shortly after. It is longer than npm's three days because PyPI has no
+// unpublish window: a release can be removed at any time, so detection time is what matters.
+const defaultMinimumReleaseAge = "7d"
+
 // skipDirs lists directories that should never be walked for pyproject.toml files.
 var skipDirs = map[string]bool{
 	".venv":        true,
