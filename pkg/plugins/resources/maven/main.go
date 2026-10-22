@@ -8,8 +8,10 @@ import (
 	"strings"
 
 	"github.com/go-viper/mapstructure/v2"
+	"github.com/updatecli/updatecli/pkg/core/httpclient"
 	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/mavenmetadata"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
@@ -108,12 +110,39 @@ type Spec struct {
 	//   * source
 	//
 	VersionFilter version.Filter `yaml:",omitempty"`
+	// "age" defines the minimum or maximum age of a release to be considered valid.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//
+	// remark:
+	//   * it accepts a duration string, such as "24h", "7d", "3w" or "1y".
+	//   * a release's age is based on the Last-Modified date the repository reports for its pom file.
+	//   * with the kind "latest", the highest release below the latest one is used when the latest
+	//     one doesn't match the age filter, as the pypi resource does. Releases are preferred to
+	//     pre-releases, unless the latest one is a pre-release.
+	//   * releases are checked from the one the versionfilter selects downwards, at most 20 per
+	//     repository. Releases whose pom file isn't found, such as SNAPSHOT versions, have no date
+	//     and are ignored. The source is skipped when the age filter discards every release checked,
+	//     or when none of them has a date.
+	//   * a repository answering with an error other than "not found" fails the source,
+	//     rather than an older release being returned.
+	//   * a condition doesn't match a version without date.
+	//
+	// example:
+	//   age:
+	//     minimum: 7d
+	//
+	Age age.Spec `yaml:",omitempty"`
 }
 
 // Maven defines a resource of kind "maven"
 type Maven struct {
 	spec             Spec
 	metadataHandlers []mavenmetadata.Handler
+	// webClient retrieves the release dates used by the age filter.
+	webClient httpclient.HTTPClient
 }
 
 // New returns a reference to a newly initialized Maven object from a Spec
@@ -131,8 +160,13 @@ func New(spec interface{}) (*Maven, error) {
 		return &Maven{}, err
 	}
 
+	if err := newSpec.Age.Validate(); err != nil {
+		return &Maven{}, fmt.Errorf("wrong age spec: %w", err)
+	}
+
 	newResource := &Maven{
-		spec: newSpec,
+		spec:      newSpec,
+		webClient: httpclient.NewRetryClient(),
 	}
 
 	if len(newSpec.Repository) > 0 {
@@ -277,5 +311,6 @@ func (m *Maven) ReportConfig() interface{} {
 		Repository:   redact.URL(m.spec.Repository),
 		Repositories: repositories,
 		URL:          redact.URL(m.spec.URL),
+		Age:          m.spec.Age,
 	}
 }
