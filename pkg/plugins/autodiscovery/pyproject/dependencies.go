@@ -141,14 +141,9 @@ func loadPyprojectData(filePath string) (pyprojectTOML, error) {
 
 // vulnerabilityScan tracks the dependencies of one pyproject.toml in vulnerability mode.
 type vulnerabilityScan struct {
-	// locked holds the versions resolved in uv.lock from a trusted registry, nil without a readable uv.lock.
-	locked lockedVersions
-	// notFromRegistry holds the normalized names uv.lock resolves from a workspace, a path,
-	// a git repository or a URL. They are not PyPI releases, so they are never scanned.
-	notFromRegistry map[string]bool
-	// untrustedRegistry maps the normalized names uv.lock resolves from a registry other than
-	// pypi.org or a trusted mirror to that registry. They are never scanned.
-	untrustedRegistry map[string]string
+	// lock holds what uv.lock resolved, its zero value without a readable uv.lock.
+	// Packages not resolved from pypi.org or a trusted mirror are never scanned.
+	lock lockedPackages
 	// skippedUntrusted maps the normalized names skipped for coming from an untrusted registry
 	// to their declared name, so they are reported at once.
 	skippedUntrusted map[string]string
@@ -183,14 +178,12 @@ func newVulnerabilityScan(dir string, hasUvLock bool, trustedRegistries map[stri
 		return scan
 	}
 
-	locked, err := loadUvLockVersions(dir, trustedRegistries)
+	lock, err := loadUvLockVersions(dir, trustedRegistries)
 	if err != nil {
 		scan.lockErr = err
 		return scan
 	}
-	scan.locked = locked.versions
-	scan.notFromRegistry = locked.notFromRegistry
-	scan.untrustedRegistry = locked.untrustedRegistry
+	scan.lock = lock
 
 	return scan
 }
@@ -202,13 +195,13 @@ func newVulnerabilityScan(dir string, hasUvLock bool, trustedRegistries map[stri
 // only and ignore rules can be evaluated against the version before it is accounted for.
 func (s *vulnerabilityScan) currentVersion(dep pythonDependency) (version string, forkedVersions []string) {
 	name := pep503.NormalizeName(dep.Name)
-	if _, untrusted := s.untrustedRegistry[name]; untrusted || s.notFromRegistry[name] {
+	if _, untrusted := s.lock.untrustedRegistry[name]; untrusted || s.lock.notFromRegistry[name] {
 		// Not a PyPI release, even when pinned with "==" in pyproject.toml.
 		return "", nil
 	}
 
-	if s.locked != nil {
-		switch versions := s.locked[name]; len(versions) {
+	if s.lock.versions != nil {
+		switch versions := s.lock.versions[name]; len(versions) {
 		case 0:
 		case 1:
 			return versions[0], nil
@@ -225,12 +218,12 @@ func (s *vulnerabilityScan) currentVersion(dep pythonDependency) (version string
 func (s *vulnerabilityScan) markUnresolved(dep pythonDependency, relativeFile string, forkedVersions []string) {
 	name := pep503.NormalizeName(dep.Name)
 
-	if s.notFromRegistry[name] {
+	if s.lock.notFromRegistry[name] {
 		log.Debugf("ignoring %q from %q, as uv.lock doesn't resolve it from a registry", dep.Name, relativeFile)
 		return
 	}
 
-	if _, untrusted := s.untrustedRegistry[name]; untrusted {
+	if _, untrusted := s.lock.untrustedRegistry[name]; untrusted {
 		s.skippedUntrusted[name] = dep.Name
 		return
 	}
@@ -280,7 +273,7 @@ func (s *vulnerabilityScan) unresolvedMessage(relativeFile string) string {
 	sort.Strings(names)
 	skipped := strings.Join(names, ", ")
 
-	if s.locked == nil {
+	if s.lock.versions == nil {
 		return fmt.Sprintf("no uv.lock found for %q, skipping its dependencies not pinned to an exact version: %s", relativeFile, skipped)
 	}
 
@@ -296,7 +289,7 @@ func (s *vulnerabilityScan) untrustedMessage(relativeFile string) string {
 
 	var skipped []string
 	for name, declared := range s.skippedUntrusted {
-		skipped = append(skipped, fmt.Sprintf("%s (%s)", declared, s.untrustedRegistry[name]))
+		skipped = append(skipped, fmt.Sprintf("%s (%s)", declared, s.lock.untrustedRegistry[name]))
 	}
 	sort.Strings(skipped)
 
