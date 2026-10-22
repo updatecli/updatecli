@@ -6,6 +6,7 @@ import (
 
 	gopep440 "github.com/aquasecurity/go-pep440-version"
 	"github.com/updatecli/updatecli/pkg/core/log"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pep503"
 )
 
 // MatchingRule defines a rule to select Python dependencies.
@@ -61,7 +62,7 @@ func (m MatchingRules) Validate() error {
 		}
 		for _, group := range rule.DependencyGroups {
 			// Patterns are matched once normalized, so the normalized form is the one to check.
-			if _, err := filepath.Match(normalizeName(group), ""); err != nil {
+			if _, err := filepath.Match(pep503.NormalizeName(group), ""); err != nil {
 				return fmt.Errorf("rule %d has an invalid dependencygroups pattern %q: %w", i+1, group, err)
 			}
 		}
@@ -69,8 +70,26 @@ func (m MatchingRules) Validate() error {
 	return nil
 }
 
+// normalized returns a copy of the rules with their dependencygroups patterns normalized as
+// PEP 735 requires, so matching compares them with normalized group names as they are.
+func (m MatchingRules) normalized() MatchingRules {
+	rules := make(MatchingRules, 0, len(m))
+	for _, rule := range m {
+		if len(rule.DependencyGroups) > 0 {
+			patterns := make([]string, 0, len(rule.DependencyGroups))
+			for _, pattern := range rule.DependencyGroups {
+				patterns = append(patterns, pep503.NormalizeName(pattern))
+			}
+			rule.DependencyGroups = patterns
+		}
+		rules = append(rules, rule)
+	}
+	return rules
+}
+
 // isMatchingRules reports whether the given file/package pair matches any rule in the list.
-// dependencyGroups holds the PEP 735 groups the package belongs to, empty when it belongs to none.
+// dependencyGroups holds the normalized names of the PEP 735 groups the package belongs to,
+// empty when it belongs to none. The rules must have been normalized first.
 // Multiple conditions within one rule are AND-ed; multiple rules are OR-ed.
 func (m MatchingRules) isMatchingRules(rootDir, filePath, packageName, packageVersion string, dependencyGroups []string) bool {
 	if len(m) == 0 {
@@ -135,7 +154,7 @@ func (m MatchingRules) isMatchingRules(rootDir, filePath, packageName, packageVe
 			for _, dependencyGroup := range dependencyGroups {
 				for _, pattern := range rule.DependencyGroups {
 					// Patterns were checked by Validate, so the error can be ignored.
-					if ok, _ := filepath.Match(normalizeName(pattern), normalizeName(dependencyGroup)); ok {
+					if ok, _ := filepath.Match(pattern, dependencyGroup); ok {
 						match = true
 						break outGroup
 					}

@@ -12,41 +12,45 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
-const pyprojectFile = "pyproject.toml"
+const (
+	// pyprojectFile is the name of the files the autodiscovery looks for.
+	pyprojectFile = "pyproject.toml"
+	// defaultMinimumReleaseAge defines how long a release must have been published before
+	// Updatecli suggests it. It reduces the exposure to malicious or broken releases that get
+	// yanked or deleted shortly after. It is longer than npm's three days because PyPI has no
+	// unpublish window: a release can be removed at any time, so detection time is what matters.
+	defaultMinimumReleaseAge = "7d"
+)
 
-// dependencyGroupNameRegex matches the dependency group names PEP 735 allows.
-var dependencyGroupNameRegex = regexp.MustCompile(`(?i)^([A-Z0-9]|[A-Z0-9][A-Z0-9._-]*[A-Z0-9])$`)
+var (
+	// dependencyGroupNameRegex matches the dependency group names PEP 735 allows.
+	dependencyGroupNameRegex = regexp.MustCompile(`(?i)^([A-Z0-9]|[A-Z0-9][A-Z0-9._-]*[A-Z0-9])$`)
 
-// defaultMinimumReleaseAge defines how long a release must have been published before
-// Updatecli suggests it. It reduces the exposure to malicious or broken releases that get
-// yanked or deleted shortly after. It is longer than npm's three days because PyPI has no
-// unpublish window: a release can be removed at any time, so detection time is what matters.
-const defaultMinimumReleaseAge = "7d"
+	// skipDirs lists directories that should never be walked for pyproject.toml files.
+	skipDirs = map[string]bool{
+		".venv":        true,
+		"__pycache__":  true,
+		".git":         true,
+		"node_modules": true,
+		".tox":         true,
+		".nox":         true,
+		".eggs":        true,
+	}
 
-// skipDirs lists directories that should never be walked for pyproject.toml files.
-var skipDirs = map[string]bool{
-	".venv":        true,
-	"__pycache__":  true,
-	".git":         true,
-	"node_modules": true,
-	".tox":         true,
-	".nox":         true,
-	".eggs":        true,
-}
+	// versionNumberRegex extracts the first PEP 440 version number from a constraint string.
+	// Used by isMatchingRules to evaluate Only/Ignore package version specifiers.
+	versionNumberRegex = regexp.MustCompile(`\d+(\.\d+)*((?:a|b|rc)\d+)?`)
 
-// versionNumberRegex extracts the first PEP 440 version number from a constraint string.
-// Used by isMatchingRules to evaluate Only/Ignore package version specifiers.
-var versionNumberRegex = regexp.MustCompile(`\d+(\.\d+)*((?:a|b|rc)\d+)?`)
+	// depNameRegex parses a PEP 508 dependency string into name, optional extras, and constraint.
+	// Group 1: package name
+	// Group 4: extras (contents inside brackets, if any)
+	// Group 5: version constraint (remainder after name/extras)
+	depNameRegex = regexp.MustCompile(`^([A-Za-z0-9]([A-Za-z0-9._-]*[A-Za-z0-9])?)(\[([^\]]+)\])?\s*(.*)$`)
 
-// depNameRegex parses a PEP 508 dependency string into name, optional extras, and constraint.
-// Group 1: package name
-// Group 4: extras (contents inside brackets, if any)
-// Group 5: version constraint (remainder after name/extras)
-var depNameRegex = regexp.MustCompile(`^([A-Za-z0-9]([A-Za-z0-9._-]*[A-Za-z0-9])?)(\[([^\]]+)\])?\s*(.*)$`)
-
-// directRefRegex detects PEP 508 direct references (name @ <url>).
-// Whitespace around @ is optional per the spec, so we match any amount of it.
-var directRefRegex = regexp.MustCompile(`^[A-Za-z0-9]([A-Za-z0-9._-]*[A-Za-z0-9])?\s*@\s*\S`)
+	// directRefRegex detects PEP 508 direct references (name @ <url>).
+	// Whitespace around @ is optional per the spec, so we match any amount of it.
+	directRefRegex = regexp.MustCompile(`^[A-Za-z0-9]([A-Za-z0-9._-]*[A-Za-z0-9])?\s*@\s*\S`)
+)
 
 // findPyprojectFiles walks rootDir recursively and returns absolute paths to every
 // pyproject.toml found, skipping common non-source directories.
@@ -98,7 +102,10 @@ func isLockFileDetected(lockfile string) bool {
 
 // lockFileSupport describes which lock-file package managers are available.
 type lockFileSupport struct {
+	// uv reports whether uv.lock is present and the uv command can update it.
 	uv bool
+	// uvLock reports whether uv.lock is present, even when the uv command is missing.
+	uvLock bool
 	// poetry bool // future
 	// pdm    bool // future
 }
@@ -106,18 +113,19 @@ type lockFileSupport struct {
 // detectLockFileSupport checks which lock-file managers are present for the given directory.
 // Returns the support config and whether this pyproject.toml should be skipped entirely.
 // Skipping happens when a lock file exists but the required CLI is not available —
-// proceeding without the CLI would leave the lock file out of sync.
+// proceeding without the CLI would leave the lock file out of sync. The caller reports it,
+// since vulnerability mode can still read the lock file to report vulnerable packages.
 //
 // uvAvailable is passed in (rather than calling isUvAvailable()) so that tests can
 // control the value deterministically without requiring the real uv CLI on PATH.
 func detectLockFileSupport(dir string, uvAvailable bool) (lockFileSupport, bool) {
 	support := lockFileSupport{}
 
-	if isLockFileDetected(filepath.Join(dir, "uv.lock")) {
+	if isLockFileDetected(filepath.Join(dir, uvLockFile)) {
+		support.uvLock = true
 		if uvAvailable {
 			support.uv = true
 		} else {
-			log.Warning("skipping, uv.lock detected but Updatecli couldn't detect the uv command to update it in case of a pyproject.toml update")
 			return support, true
 		}
 	}
@@ -159,6 +167,12 @@ func parsePEP508(dep string) (pythonDependency, error) {
 	name := matches[1]
 	extras := matches[4]
 	constraint := strings.TrimSpace(matches[5])
+	// PEP 508 also allows the constraint between parentheses, as in "requests (==2.25.0)".
+	if inner, found := strings.CutPrefix(constraint, "("); found {
+		if inner, found = strings.CutSuffix(inner, ")"); found {
+			constraint = strings.TrimSpace(inner)
+		}
+	}
 
 	version := versionNumberRegex.FindString(constraint)
 
@@ -168,13 +182,4 @@ func parsePEP508(dep string) (pythonDependency, error) {
 		Constraint: constraint,
 		Version:    version,
 	}, nil
-}
-
-// pep503Separators matches the runs of characters PEP 503 normalizes package names on.
-var pep503Separators = regexp.MustCompile(`[-_.]+`)
-
-// normalizeName returns the PEP 503 normalized form of a Python package name, which is
-// how uv.lock records it. PEP 735 normalizes dependency group names the same way.
-func normalizeName(name string) string {
-	return strings.ToLower(pep503Separators.ReplaceAllString(name, "-"))
 }

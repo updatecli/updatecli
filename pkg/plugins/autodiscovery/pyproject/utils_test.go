@@ -35,6 +35,16 @@ func TestParsePEP508(t *testing.T) {
 			expected: pythonDependency{Name: "black", Constraint: "==24.1.0", Version: "24.1.0"},
 		},
 		{
+			name:     "Constraint between parentheses",
+			input:    "requests (==2.25.0)",
+			expected: pythonDependency{Name: "requests", Constraint: "==2.25.0", Version: "2.25.0"},
+		},
+		{
+			name:     "Extras and constraints between parentheses",
+			input:    "requests[socks] ( >=2.0, <3 ) ; python_version >= '3.12'",
+			expected: pythonDependency{Name: "requests", Extras: "socks", Constraint: ">=2.0, <3", Version: "2.0"},
+		},
+		{
 			name:     "No version",
 			input:    "numpy",
 			expected: pythonDependency{Name: "numpy"},
