@@ -1,11 +1,9 @@
 package maven
 
 import (
-	"bytes"
 	"fmt"
 	"path"
 	"path/filepath"
-	"text/template"
 
 	"regexp"
 
@@ -102,19 +100,6 @@ func (m Maven) discoverDependencyManifests(kind string) ([][]byte, error) {
 
 			artifactFullName := fmt.Sprintf("%s/%s", dependency.GroupID, dependency.ArtifactID)
 
-			sourceVersionFilterKind := m.versionFilter.Kind
-			sourceVersionFilterPattern := m.versionFilter.Pattern
-			sourceVersionFilterRegex := m.versionFilter.Regex
-			if !m.spec.VersionFilter.IsZero() {
-				sourceVersionFilterKind = m.versionFilter.Kind
-				sourceVersionFilterPattern, err = m.versionFilter.GreaterThanPattern(dependency.Version)
-				sourceVersionFilterRegex = m.versionFilter.Regex
-				if err != nil {
-					log.Debugf("building version filter pattern: %s", err)
-					sourceVersionFilterPattern = "*"
-				}
-			}
-
 			if len(m.spec.Ignore) > 0 {
 				if m.spec.Ignore.isMatchingRules(m.rootDir, relativePomFile, dependency.GroupID, dependency.ArtifactID, dependency.Version) {
 					log.Debugf("Ignoring %s.%s from %q, as matching ignore rule(s)\n", dependency.GroupID, dependency.ArtifactID, relativePomFile)
@@ -129,73 +114,38 @@ func (m Maven) discoverDependencyManifests(kind string) ([][]byte, error) {
 				}
 			}
 
-			tmpl, err := template.New("manifest").Parse(manifestTemplate)
+			params := manifestTemplateParams{
+				ActionID:                 m.actionID,
+				ManifestName:             fmt.Sprintf("Bump Maven %s %s", kind, artifactFullName),
+				ConditionID:              artifactFullName,
+				ConditionGroupID:         "groupid",
+				ConditionGroupIDName:     fmt.Sprintf("Ensure %s groupId %q is specified", kind, dependency.GroupID),
+				ConditionGroupIDPath:     fmt.Sprintf("%s/dependencies/dependency[%d]/groupId", dependencyPathPrefix, i+1),
+				ConditionGroupIDValue:    dependency.GroupID,
+				ConditionArtifactID:      "artifactid",
+				ConditionArtifactIDName:  fmt.Sprintf("Ensure %s artifactId %q is specified", kind, dependency.ArtifactID),
+				ConditionArtifactIDPath:  fmt.Sprintf("%s/dependencies/dependency[%d]/artifactId", dependencyPathPrefix, i+1),
+				ConditionArtifactIDValue: dependency.ArtifactID,
+				SourceID:                 artifactFullName,
+				SourceName:               fmt.Sprintf("Get latest Maven Artifact version %q", artifactFullName),
+				SourceKind:               "maven",
+				SourceGroupID:            dependency.GroupID,
+				SourceArtifactID:         dependency.ArtifactID,
+				SourceRepositories:       mavenRepositories,
+				TargetID:                 artifactFullName,
+				TargetName:               fmt.Sprintf("deps(maven): update %q to {{ source %q }}", artifactFullName, artifactFullName),
+				TargetXMLPath:            fmt.Sprintf("%s/dependencies/dependency[%d]/version", dependencyPathPrefix, i+1),
+				File:                     relativePomFile,
+				ScmID:                    m.scmID,
+			}
+
+			manifest, err := m.renderManifest(params, dependency.Version)
 			if err != nil {
 				log.Debugln(err)
 				continue
 			}
 
-			params := struct {
-				ActionID                   string
-				ManifestName               string
-				ConditionID                string
-				ConditionGroupID           string
-				ConditionGroupIDName       string
-				ConditionGroupIDPath       string
-				ConditionGroupIDValue      string
-				ConditionArtifactID        string
-				ConditionArtifactIDName    string
-				ConditionArtifactIDPath    string
-				ConditionArtifactIDValue   string
-				SourceID                   string
-				SourceName                 string
-				SourceKind                 string
-				SourceGroupID              string
-				SourceArtifactID           string
-				SourceRepositories         []string
-				SourceVersionFilterKind    string
-				SourceVersionFilterPattern string
-				SourceVersionFilterRegex   string
-				TargetID                   string
-				TargetName                 string
-				TargetXMLPath              string
-				File                       string
-				ScmID                      string
-			}{
-				ActionID:                   m.actionID,
-				ManifestName:               fmt.Sprintf("Bump Maven %s %s", kind, artifactFullName),
-				ConditionID:                artifactFullName,
-				ConditionGroupID:           "groupid",
-				ConditionGroupIDName:       fmt.Sprintf("Ensure %s groupId %q is specified", kind, dependency.GroupID),
-				ConditionGroupIDPath:       fmt.Sprintf("%s/dependencies/dependency[%d]/groupId", dependencyPathPrefix, i+1),
-				ConditionGroupIDValue:      dependency.GroupID,
-				ConditionArtifactID:        "artifactid",
-				ConditionArtifactIDName:    fmt.Sprintf("Ensure %s artifactId %q is specified", kind, dependency.ArtifactID),
-				ConditionArtifactIDPath:    fmt.Sprintf("%s/dependencies/dependency[%d]/artifactId", dependencyPathPrefix, i+1),
-				ConditionArtifactIDValue:   dependency.ArtifactID,
-				SourceID:                   artifactFullName,
-				SourceName:                 fmt.Sprintf("Get latest Maven Artifact version %q", artifactFullName),
-				SourceKind:                 "maven",
-				SourceGroupID:              dependency.GroupID,
-				SourceArtifactID:           dependency.ArtifactID,
-				SourceRepositories:         mavenRepositories,
-				SourceVersionFilterKind:    sourceVersionFilterKind,
-				SourceVersionFilterPattern: sourceVersionFilterPattern,
-				SourceVersionFilterRegex:   sourceVersionFilterRegex,
-				TargetID:                   artifactFullName,
-				TargetName:                 fmt.Sprintf("deps(maven): update %q to {{ source %q }}", artifactFullName, artifactFullName),
-				TargetXMLPath:              fmt.Sprintf("%s/dependencies/dependency[%d]/version", dependencyPathPrefix, i+1),
-				File:                       relativePomFile,
-				ScmID:                      m.scmID,
-			}
-
-			manifest := bytes.Buffer{}
-			if err := tmpl.Execute(&manifest, params); err != nil {
-				log.Debugln(err)
-				continue
-			}
-
-			manifests = append(manifests, manifest.Bytes())
+			manifests = append(manifests, manifest)
 		}
 	}
 
