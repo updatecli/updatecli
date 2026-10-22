@@ -278,10 +278,13 @@ func TestSourceAge(t *testing.T) {
 
 func TestConditionAge(t *testing.T) {
 	tests := []struct {
-		name         string
-		version      string
-		mockedBody   string
-		expectedPass bool
+		name            string
+		version         string
+		versionFilter   version.Filter
+		age             age.Spec
+		mockedBody      string
+		expectedPass    bool
+		expectedMessage string
 	}{
 		{
 			name:         "release older than the minimum passes",
@@ -296,6 +299,100 @@ func TestConditionAge(t *testing.T) {
 			expectedPass: false,
 		},
 		{
+			// The versionfilter only selects the source version, the condition checks existence.
+			name:          "a versionfilter matching nothing doesn't make the condition fail",
+			version:       "2.30.0",
+			versionFilter: version.Filter{Kind: "pep440", Pattern: ">=99"},
+			mockedBody:    agedPackageData(),
+			expectedPass:  true,
+		},
+		{
+			name:          "a semver versionfilter still finds a recent release as cooling down",
+			version:       "2.31.0",
+			versionFilter: version.Filter{Kind: "semver", Pattern: "*"},
+			mockedBody:    agedPackageData(),
+			expectedPass:  false,
+		},
+		{
+			// 1.0.0 is cooling down, the old 1.0.0.post1 normalizes to the same semver version.
+			name:          "a cooling down release doesn't pass through another one normalized alike",
+			version:       "1.0.0",
+			versionFilter: version.Filter{Kind: "semver", Pattern: "*"},
+			mockedBody: fmt.Sprintf(`{
+  "info": {"name": "requests", "version": "1.0.0.post1", "project_urls": {}},
+  "releases": {
+    "1.0.0": [{"yanked": false, "upload_time_iso_8601": %q}],
+    "1.0.0.post1": [{"yanked": false, "upload_time_iso_8601": %q}]
+  }
+}`, daysAgo(1), daysAgo(30)),
+			expectedPass:    false,
+			expectedMessage: "exists but doesn't match the age filter yet",
+		},
+		{
+			// Only 1.0.0.post1 exists and it is cooling down, 1.0.0 doesn't exist at all.
+			name:          "a missing version isn't reported as cooling down because another one normalizes alike",
+			version:       "1.0.0",
+			versionFilter: version.Filter{Kind: "semver", Pattern: "*"},
+			mockedBody: fmt.Sprintf(`{
+  "info": {"name": "requests", "version": "1.0.0.post1", "project_urls": {}},
+  "releases": {
+    "0.9.0": [{"yanked": false, "upload_time_iso_8601": %q}],
+    "1.0.0.post1": [{"yanked": false, "upload_time_iso_8601": %q}]
+  }
+}`, daysAgo(30), daysAgo(1)),
+			expectedPass:    false,
+			expectedMessage: "does not exist",
+		},
+		{
+			name:    "a release without upload time is reported as such, not as missing",
+			version: "2.31.0",
+			mockedBody: fmt.Sprintf(`{
+  "info": {"name": "requests", "version": "2.31.0", "project_urls": {}},
+  "releases": {
+    "2.30.0": [{"yanked": false, "upload_time_iso_8601": %q}],
+    "2.31.0": [{"yanked": false}]
+  }
+}`, daysAgo(365)),
+			expectedPass:    false,
+			expectedMessage: "reports no upload time",
+		},
+		{
+			// "1.0.0-beta.2" is the normalized form of the "1.0b2" release published yesterday.
+			name:          "a normalized version of a cooling down release is reported as cooling down",
+			version:       "1.0.0-beta.2",
+			versionFilter: version.Filter{Kind: "semver", Pattern: "*"},
+			mockedBody: fmt.Sprintf(`{
+  "info": {"name": "requests", "version": "0.9.0", "project_urls": {}},
+  "releases": {
+    "0.9.0": [{"yanked": false, "upload_time_iso_8601": %q}],
+    "1.0b2": [{"yanked": false, "upload_time_iso_8601": %q}]
+  }
+}`, daysAgo(365), daysAgo(1)),
+			expectedPass:    false,
+			expectedMessage: "doesn't match the age filter yet",
+		},
+		{
+			name:          "a normalized version of a release matching the age filter passes",
+			version:       "1.0.0-beta.2",
+			versionFilter: version.Filter{Kind: "semver", Pattern: "*"},
+			mockedBody: fmt.Sprintf(`{
+  "info": {"name": "requests", "version": "0.9.0", "project_urls": {}},
+  "releases": {
+    "0.9.0": [{"yanked": false, "upload_time_iso_8601": %q}],
+    "1.0b2": [{"yanked": false, "upload_time_iso_8601": %q}]
+  }
+}`, daysAgo(365), daysAgo(30)),
+			expectedPass: true,
+		},
+		{
+			name:            "a release older than the maximum is reported as such",
+			version:         "2.29.0",
+			age:             age.Spec{Maximum: "30d"},
+			mockedBody:      agedPackageData(),
+			expectedPass:    false,
+			expectedMessage: "older than the age filter allows",
+		},
+		{
 			name:         "cooldown running on every release fails without error",
 			version:      "2.31.0",
 			mockedBody:   recentPackageData(),
@@ -305,14 +402,21 @@ func TestConditionAge(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			p, err := New(Spec{Name: "requests", Version: tt.version, Age: age.Spec{Minimum: "7d"}})
+			releaseAge := tt.age
+			if releaseAge.IsZero() {
+				releaseAge = age.Spec{Minimum: "7d"}
+			}
+			p, err := New(Spec{Name: "requests", Version: tt.version, Age: releaseAge, VersionFilter: tt.versionFilter})
 			require.NoError(t, err)
 
 			p.webClient = GetMockClient(pypiDefaultURL, "", tt.mockedBody, 200)
 
-			pass, _, err := p.Condition(context.Background(), "", nil, pathresolver.Resolver{})
+			pass, message, err := p.Condition(context.Background(), "", nil, pathresolver.Resolver{})
 			require.NoError(t, err)
 			assert.Equal(t, tt.expectedPass, pass)
+			if tt.expectedMessage != "" {
+				assert.Contains(t, message, tt.expectedMessage)
+			}
 		})
 	}
 }
