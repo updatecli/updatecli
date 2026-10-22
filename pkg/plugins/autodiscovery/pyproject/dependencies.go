@@ -366,12 +366,20 @@ func (p Pyproject) discoverDependencyManifests() ([][]byte, error) {
 			}
 		}
 
+		file := discoveredFile{
+			relativeFile: relativeFile,
+			projectName:  projectName,
+			workdir:      workdir,
+			lockSupport:  lockSupport,
+			scan:         scan,
+		}
+
 		// Process [project.dependencies] — the main dependency group.
 		mainDeps := make([]string, len(data.Project.Dependencies))
 		copy(mainDeps, data.Project.Dependencies)
 		sort.Strings(mainDeps)
 
-		manifests = append(manifests, p.processDependencies(mainDeps, "", "", nil, relativeFile, lockSupport, projectName, workdir, scan)...)
+		manifests = append(manifests, p.processDependencies(file, dependencyList{requirements: mainDeps})...)
 
 		// Process each [project.optional-dependencies] group in deterministic order.
 		groups := make([]string, 0, len(data.Project.OptionalDependencies))
@@ -385,7 +393,7 @@ func (p Pyproject) discoverDependencyManifests() ([][]byte, error) {
 			copy(groupDeps, data.Project.OptionalDependencies[group])
 			sort.Strings(groupDeps)
 
-			manifests = append(manifests, p.processDependencies(groupDeps, group, "", nil, relativeFile, lockSupport, projectName, workdir, scan)...)
+			manifests = append(manifests, p.processDependencies(file, dependencyList{requirements: groupDeps, extra: group})...)
 		}
 
 		// Process each [dependency-groups] group (PEP 735) in deterministic order.
@@ -406,7 +414,11 @@ func (p Pyproject) discoverDependencyManifests() ([][]byte, error) {
 			groupDeps := dependencyGroupRequirements(data.DependencyGroups[group])
 			sort.Strings(groupDeps)
 
-			manifests = append(manifests, p.processDependencies(groupDeps, "", group, memberships[group], relativeFile, lockSupport, projectName, workdir, scan)...)
+			manifests = append(manifests, p.processDependencies(file, dependencyList{
+				requirements: groupDeps,
+				group:        group,
+				memberGroups: memberships[group],
+			})...)
 		}
 
 		if scan != nil {
@@ -424,40 +436,55 @@ func (p Pyproject) discoverDependencyManifests() ([][]byte, error) {
 	return manifests, nil
 }
 
+// discoveredFile holds what the manifests generated for one pyproject.toml share.
+type discoveredFile struct {
+	// relativeFile is the pyproject.toml path, relative to the root directory.
+	relativeFile string
+	// projectName is the [project] name, used in manifest names.
+	projectName string
+	// workdir is the pyproject.toml directory, relative to the root directory, where uv runs.
+	workdir string
+	// lockSupport tells which lock files the generated targets update.
+	lockSupport lockFileSupport
+	// scan is only set in vulnerability mode.
+	scan *vulnerabilityScan
+}
+
+// dependencyList is a list of dependencies declared by one table of a pyproject.toml.
+type dependencyList struct {
+	// requirements holds the PEP 508 dependency strings.
+	requirements []string
+	// extra is the [project.optional-dependencies] group name, or "".
+	extra string
+	// group is the [dependency-groups] (PEP 735) group name, or "".
+	group string
+	// memberGroups holds the dependency groups the dependencies belong to, including the
+	// groups including group, as matched by dependencygroups rules.
+	memberGroups []string
+}
+
+// label returns the name of the list as shown in manifest names, or "" for the main dependencies.
+// The "group:" prefix keeps dependency groups apart from optional-dependency groups of the same name.
+func (l dependencyList) label() string {
+	if l.group != "" {
+		return "group:" + l.group
+	}
+	return l.extra
+}
+
 // processDependencies generates manifests for a list of PEP 508 dependency strings.
-// extra is the optional-dependency group name and dependencyGroup the PEP 735 group name;
-// both are "" for main dependencies.
-// memberGroups holds the dependency groups the dependencies belong to, which includes the
-// groups including dependencyGroup, as matched by dependencygroups rules.
-// scan is only set in vulnerability mode.
-func (p Pyproject) processDependencies(
-	deps []string,
-	extra string,
-	dependencyGroup string,
-	memberGroups []string,
-	relativeFile string,
-	lockSupport lockFileSupport,
-	projectName string,
-	workdir string,
-	scan *vulnerabilityScan,
-) [][]byte {
+func (p Pyproject) processDependencies(file discoveredFile, deps dependencyList) [][]byte {
 	var manifests [][]byte
 
-	// The "group:" prefix keeps dependency groups apart from optional-dependency groups of the same name.
-	group := extra
-	if dependencyGroup != "" {
-		group = "group:" + dependencyGroup
-	}
-
 	tmpl := routineManifestTmpl
-	if scan != nil {
+	if file.scan != nil {
 		tmpl = securityManifestTmpl
 	}
 
-	for _, depStr := range deps {
+	for _, depStr := range deps.requirements {
 		dep, err := parsePEP508(depStr)
 		if err != nil {
-			log.Warningf("skipping dependency %q from %q: %s", depStr, relativeFile, err)
+			log.Warningf("skipping dependency %q from %q: %s", depStr, file.relativeFile, err)
 			continue
 		}
 
@@ -466,40 +493,37 @@ func (p Pyproject) processDependencies(
 		ruleVersion := dep.Version
 		currentVersion := ""
 		var forkedVersions []string
-		if scan != nil {
-			currentVersion, forkedVersions = scan.currentVersion(dep)
+		if file.scan != nil {
+			currentVersion, forkedVersions = file.scan.currentVersion(dep)
 			if currentVersion != "" {
 				ruleVersion = currentVersion
 			}
 		}
 
-		if len(p.spec.Ignore) > 0 && p.spec.Ignore.isMatchingRules(p.rootDir, relativeFile, dep.Name, ruleVersion, memberGroups) {
-			log.Debugf("ignoring %q from %q as matching ignore rule(s)", dep.Name, relativeFile)
+		if len(p.spec.Ignore) > 0 && p.spec.Ignore.isMatchingRules(p.rootDir, file.relativeFile, dep.Name, ruleVersion, deps.memberGroups) {
+			log.Debugf("ignoring %q from %q as matching ignore rule(s)", dep.Name, file.relativeFile)
 			continue
 		}
 
-		if len(p.spec.Only) > 0 && !p.spec.Only.isMatchingRules(p.rootDir, relativeFile, dep.Name, ruleVersion, memberGroups) {
-			log.Debugf("ignoring %q from %q as not matching only rule(s)", dep.Name, relativeFile)
+		if len(p.spec.Only) > 0 && !p.spec.Only.isMatchingRules(p.rootDir, file.relativeFile, dep.Name, ruleVersion, deps.memberGroups) {
+			log.Debugf("ignoring %q from %q as not matching only rule(s)", dep.Name, file.relativeFile)
 			continue
 		}
 
-		params := p.buildTemplateParams(dep, group, lockSupport, projectName, workdir)
-
-		if scan != nil {
+		// In vulnerability mode, a dependency without current version or already handled gives no manifest.
+		if file.scan != nil {
 			if currentVersion == "" {
-				scan.markUnresolved(dep, relativeFile, forkedVersions)
+				file.scan.markUnresolved(dep, file.relativeFile, forkedVersions)
 				continue
 			}
-
-			if !scan.claim(dep, currentVersion) {
+			if !file.scan.claim(dep, currentVersion) {
 				continue
 			}
+		}
 
-			// The pipeline name contains the fixed version, so it can be used as pullrequest title
-			params.ManifestName = params.TargetName
-			params.SourceName = fmt.Sprintf("Get lowest %q package version without known vulnerabilities", dep.Name)
-			params.Vulnerability = p.spec.Vulnerability
-			params.CurrentVersion = currentVersion
+		params := p.buildTemplateParams(file, dep, deps.label())
+		if file.scan != nil {
+			params = p.securityTemplateParams(params, dep, currentVersion)
 		}
 
 		var buf bytes.Buffer
@@ -514,20 +538,26 @@ func (p Pyproject) processDependencies(
 	return manifests
 }
 
+// securityTemplateParams adapts the parameters of a routine manifest to the security manifest
+// updating a dependency whose currentVersion has known vulnerabilities.
+func (p Pyproject) securityTemplateParams(params manifestTemplateParams, dep pythonDependency, currentVersion string) manifestTemplateParams {
+	// The pipeline name contains the fixed version, so it can be used as pullrequest title
+	params.ManifestName = params.TargetName
+	params.SourceName = fmt.Sprintf("Get lowest %q package version without known vulnerabilities", dep.Name)
+	params.Vulnerability = p.spec.Vulnerability
+	params.CurrentVersion = currentVersion
+	return params
+}
+
 // buildTemplateParams constructs the manifestTemplateParams for a single dependency.
-func (p Pyproject) buildTemplateParams(
-	dep pythonDependency,
-	group string,
-	lockSupport lockFileSupport,
-	projectName string,
-	workdir string,
-) manifestTemplateParams {
-	// Build a human-readable manifest name that includes the optional group when set.
+// label is the dependency list label shown in the manifest name, "" for the main dependencies.
+func (p Pyproject) buildTemplateParams(file discoveredFile, dep pythonDependency, label string) manifestTemplateParams {
+	// Build a human-readable manifest name that includes the group when set.
 	var manifestName string
-	if group == "" {
-		manifestName = fmt.Sprintf("deps(pypi): bump %q for %q project", dep.Name, projectName)
+	if label == "" {
+		manifestName = fmt.Sprintf("deps(pypi): bump %q for %q project", dep.Name, file.projectName)
 	} else {
-		manifestName = fmt.Sprintf("deps(pypi): bump %q [%s] for %q project", dep.Name, group, projectName)
+		manifestName = fmt.Sprintf("deps(pypi): bump %q [%s] for %q project", dep.Name, label, file.projectName)
 	}
 
 	// Determine version filter.
@@ -573,8 +603,8 @@ func (p Pyproject) buildTemplateParams(
 		TargetID:                   dep.Name,
 		TargetName:                 fmt.Sprintf("deps(pypi): bump %q to {{ source %q }}", dep.Name, dep.Name),
 		ScmID:                      p.scmID,
-		UvEnabled:                  lockSupport.uv,
+		UvEnabled:                  file.lockSupport.uv,
 		LockFile:                   uvLockFile,
-		Workdir:                    workdir,
+		Workdir:                    file.workdir,
 	}
 }
