@@ -123,17 +123,11 @@ type pypiData struct {
 
 // Pypi defines a resource of kind "pypi".
 type Pypi struct {
-	spec                 Spec
-	versionFilter        version.Filter
-	foundVersion         version.Version
-	data                 pypiData
-	webClient            httpclient.HTTPClient
-	normalizedToOriginal map[string]string // maps semver-normalized version back to original PEP 440
-	// releaseStatus maps every non-yanked release, by its version as published, to how it
-	// relates to the age filter. Without age filter, every release matches. Versions are kept
-	// as published since normalization can map distinct releases, such as "1.0.0" and
-	// "1.0.0.post1", to the same version.
-	releaseStatus map[string]releaseAgeStatus
+	spec          Spec
+	versionFilter version.Filter
+	foundVersion  version.Version
+	data          pypiData
+	webClient     httpclient.HTTPClient
 }
 
 const pypiDefaultURL = "https://pypi.org/"
@@ -221,23 +215,17 @@ func (p *Pypi) getPackageData(ctx context.Context) (pypiData, error) {
 	return data, nil
 }
 
-// availableVersions returns the non-yanked release versions of the package matching the
-// age filter, and separately the ones too recent for it, which are cooling down and will
-// match later. Releases too old or without upload time are in neither list, see releaseStatus.
-// When the filter kind is pep440, raw PEP 440 versions are returned as-is.
-// Otherwise, versions are normalized to semver-compatible form and the mapping back
-// to the original PEP 440 string is preserved in normalizedToOriginal.
-func (p *Pypi) availableVersions(ctx context.Context) (versions []string, coolingDown []string, err error) {
+// availableVersions fetches the non-yanked releases of the package, along with how each one
+// relates to the age filter. Dev releases are left out unless the versionfilter kind is pep440,
+// since they can't be normalized to semver.
+func (p *Pypi) availableVersions(ctx context.Context) (releases, error) {
+	var err error
 	p.data, err = p.getPackageData(ctx)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	dated, undated := false, false
-	if p.versionFilter.Kind != version.PEP440VERSIONKIND {
-		p.normalizedToOriginal = make(map[string]string)
-	}
-	p.releaseStatus = make(map[string]releaseAgeStatus)
+	rels := releases{}
 	for ver, files := range p.data.Releases {
 		if isYanked(files) {
 			continue
@@ -255,29 +243,7 @@ func (p *Pypi) availableVersions(ctx context.Context) (versions []string, coolin
 		if !p.spec.Age.IsZero() {
 			status = ageStatus(ver, files, p.spec.Age)
 		}
-		p.releaseStatus[ver] = status
-
-		switch status {
-		case ageUndated:
-			undated = true
-			continue
-		case ageTooRecent:
-			dated = true
-			coolingDown = append(coolingDown, candidate)
-			continue
-		case ageTooOld:
-			dated = true
-			continue
-		}
-		dated = true
-
-		// Only releases matching the age filter are mapped back: two releases can normalize
-		// to the same version, such as "1.0.0" and "1.0.0.post1", and the one still cooling
-		// down must not be returned in place of the other.
-		if p.versionFilter.Kind != version.PEP440VERSIONKIND {
-			p.normalizedToOriginal[candidate] = ver
-		}
-		versions = append(versions, candidate)
+		rels[ver] = release{version: ver, candidate: candidate, status: status}
 	}
 
 	/*
@@ -285,12 +251,12 @@ func (p *Pypi) availableVersions(ctx context.Context) (versions []string, coolin
 		with. That isn't a cooldown, it would never end, so it fails rather than skipping
 		the source forever without an obvious reason.
 	*/
-	if !p.spec.Age.IsZero() && undated && !dated {
-		return nil, nil, fmt.Errorf("the registry %q doesn't report any upload time for the PyPI package %q, so the age filter can't be applied: remove it for this registry",
+	if !p.spec.Age.IsZero() && len(rels) > 0 && len(rels.withStatus(ageUndated)) == len(rels) {
+		return nil, fmt.Errorf("the registry %q doesn't report any upload time for the PyPI package %q, so the age filter can't be applied: remove it for this registry",
 			redact.URL(p.spec.URL), p.spec.Name)
 	}
 
-	return versions, coolingDown, nil
+	return rels, nil
 }
 
 // pep440PreRelease matches PEP 440 pre-release suffixes: a0, b1, rc2, .post1, .dev3
@@ -356,20 +322,15 @@ func isYanked(files []releaseFile) bool {
 	return true
 }
 
-// originalVersion maps a normalized version back to the original PEP 440 string.
-func (p *Pypi) originalVersion(normalized string) string {
-	if orig, ok := p.normalizedToOriginal[normalized]; ok {
-		return orig
-	}
-	return normalized
-}
-
 // getVersions returns the version matching the filter.
 func (p *Pypi) getVersions(ctx context.Context) (string, error) {
-	versions, coolingDown, err := p.availableVersions(ctx)
+	rels, err := p.availableVersions(ctx)
 	if err != nil {
 		return "", err
 	}
+
+	versions := rels.candidates(ageMatching)
+	coolingDown := rels.candidates(ageTooRecent)
 
 	/*
 		The package does publish versions but the age filter discarded every one of them,
@@ -381,7 +342,7 @@ func (p *Pypi) getVersions(ctx context.Context) (string, error) {
 	}
 
 	if p.versionFilter.Kind == version.LATESTVERSIONKIND {
-		return p.latestVersion()
+		return p.latestVersion(rels)
 	}
 
 	p.foundVersion, err = p.versionFilter.Search(versions)
@@ -399,20 +360,16 @@ func (p *Pypi) getVersions(ctx context.Context) (string, error) {
 		return "", err
 	}
 
-	found := p.foundVersion.GetVersion()
-	if p.versionFilter.Kind != version.PEP440VERSIONKIND {
-		found = p.originalVersion(found)
-	}
-	return found, nil
+	return rels.original(p.foundVersion.GetVersion()), nil
 }
 
 // latestVersion returns the latest release reported by the registry or, when the age filter
 // keeps it out for now, the highest older release matching the age filter.
-// It must be called after availableVersions.
-func (p *Pypi) latestVersion() (string, error) {
+func (p *Pypi) latestVersion(rels releases) (string, error) {
 	latest := p.data.Info.Version
 
-	status, published := p.releaseStatus[latest]
+	rel, published := rels[latest]
+	status := rel.status
 	switch {
 	case !published:
 		return "", fmt.Errorf("latest version %q of package %q is yanked", latest, p.spec.Name)
@@ -423,7 +380,7 @@ func (p *Pypi) latestVersion() (string, error) {
 	}
 
 	// The latest release is too recent, or has no upload time to check: an older one may do.
-	if found := latestVersionMatchingAge(p.releasesWithStatus(ageMatching), latest); found != "" {
+	if found := latestVersionMatchingAge(rels.versions(ageMatching), latest); found != "" {
 		log.Debugf("latest version %q of PyPI package %q doesn't match the age filter, using %q", latest, p.spec.Name, found)
 		return found, nil
 	}
@@ -433,18 +390,6 @@ func (p *Pypi) latestVersion() (string, error) {
 		return "", fmt.Errorf("the registry reports no upload time for the latest version %q of package %q, and no older release matches the age filter", latest, p.spec.Name)
 	}
 	return "", fmt.Errorf("%w for the PyPI package %q", age.ErrNoVersionMatchingAge, p.spec.Name)
-}
-
-// releasesWithStatus returns the published versions having the given age status, sorted.
-func (p *Pypi) releasesWithStatus(status releaseAgeStatus) []string {
-	var releases []string
-	for ver, s := range p.releaseStatus {
-		if s == status {
-			releases = append(releases, ver)
-		}
-	}
-	slices.Sort(releases)
-	return releases
 }
 
 // ReportConfig returns a sanitized copy of the spec for reporting.
