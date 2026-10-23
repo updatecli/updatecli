@@ -11,6 +11,15 @@ import (
 	"github.com/beevik/etree"
 )
 
+// defaultMinimumReleaseAge defines how long a release must have been published before
+// the generated manifests suggest it, unless "age" is set.
+const defaultMinimumReleaseAge = "7d"
+
+// isVersionRange returns true for a Maven version range, such as "[1.0,2.0)" or "[1.5,)".
+func isVersionRange(version string) bool {
+	return strings.ContainsAny(version, "[](),")
+}
+
 // searchPomFiles will look, recursively, for every files named Chart.yaml from a root directory.
 func searchPomFiles(rootDir string, files []string) ([]string, error) {
 

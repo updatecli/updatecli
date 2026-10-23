@@ -2,9 +2,11 @@ package text
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io"
 	"net"
+	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -27,6 +29,24 @@ type TextRetriever interface {
 	SetHttpClient(client httpclient.HTTPClient)
 }
 
+// ErrNotFound is returned when an http/https url doesn't exist.
+var ErrNotFound = errors.New("not found")
+
+// httpStatusError reports an http/https url returning an error status code.
+type httpStatusError struct {
+	url        string
+	statusCode int
+}
+
+func (e *httpStatusError) Error() string {
+	return fmt.Sprintf("URL %q not found or in error, status %d", e.url, e.statusCode)
+}
+
+// Is reports a 404 or 410 status code as ErrNotFound.
+func (e *httpStatusError) Is(target error) bool {
+	return target == ErrNotFound && (e.statusCode == http.StatusNotFound || e.statusCode == http.StatusGone)
+}
+
 type Text struct {
 	httpClient httpclient.HTTPClient
 }
@@ -41,13 +61,13 @@ func (t *Text) readFromURL(url string, line int) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	defer resp.Body.Close()
+
 	log.Debugf("HTTP GET to %q got a response with code %d", redact.URL(url), resp.StatusCode)
 	if resp.StatusCode > 399 {
 		log.Debugf("HTTP return code %d for URL %q", resp.StatusCode, redact.URL(url))
-		return "", fmt.Errorf("URL %q not found or in error", redact.URL(url))
+		return "", &httpStatusError{url: redact.URL(url), statusCode: resp.StatusCode}
 	}
-
-	defer resp.Body.Close()
 
 	// Only retrieve the specified line in memory if specified
 	if line > 0 {
