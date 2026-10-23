@@ -69,7 +69,7 @@ policies:
 
   - name: Update githubactions
     id: githubactions
-    policy: ghcr.io/updatecli/policies/autodiscovery/githubaction:0.4.1@sha256:869b676074f9fee7edd5d488140a12c3b09a5f8a175f12f26ea85a4f8bd0a9d1
+    policy: ghcr.io/updatecli/policies/autodiscovery/githubaction:0.5.0@sha256:7dd97c132950994dc3fb89e0bc77037358e9168d8e6980705b2a06e444270626
     valuesinline:
       spec:
         rootdir: ".github"
