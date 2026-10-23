@@ -29,6 +29,8 @@ type Action struct {
 	PipelineURL *PipelineURL `xml:"a,omitempty" json:"pipelineURL,omitempty"`
 	// Link is the URL of the action
 	Link string `xml:"link,omitempty" json:"actionUrl,omitempty"`
+	// CreatedLabels is the list of SCM labels that were created because they didn't already exist
+	CreatedLabels []string `xml:"-" json:"createdLabels,omitempty"`
 }
 
 // ActionTargetChangelog is a struct used to store a target changelog
