@@ -52,7 +52,7 @@ func (m *Maven) releaseDate(ctx context.Context, metadataURL, ver string) (time.
 	}
 
 	// Some repositories don't accept HEAD requests
-	if resp.StatusCode == http.StatusMethodNotAllowed || resp.StatusCode == http.StatusNotImplemented {
+	if resp.code == http.StatusMethodNotAllowed || resp.code == http.StatusNotImplemented {
 		resp, err = m.request(ctx, http.MethodGet, pom)
 		if err != nil {
 			return time.Time{}, false, err
@@ -60,16 +60,16 @@ func (m *Maven) releaseDate(ctx context.Context, metadataURL, ver string) (time.
 	}
 
 	switch {
-	case resp.StatusCode == http.StatusNotFound || resp.StatusCode == http.StatusGone:
+	case resp.code == http.StatusNotFound || resp.code == http.StatusGone:
 		// The pom file name differs, such as for a SNAPSHOT version holding a timestamp
-		log.Debugf("no release date for version %q, %s returned %s", ver, redact.URL(pom), resp.Status)
+		log.Debugf("no release date for version %q, %s returned %s", ver, redact.URL(pom), resp.status)
 		return time.Time{}, false, nil
-	case resp.StatusCode < 200 || resp.StatusCode > 299:
+	case resp.code < 200 || resp.code > 299:
 		// Any other failure, such as wrong credentials, mustn't be mistaken for a missing date
-		return time.Time{}, false, fmt.Errorf("retrieving the release date of version %q: %s returned %s", ver, redact.URL(pom), resp.Status)
+		return time.Time{}, false, fmt.Errorf("retrieving the release date of version %q: %s returned %s", ver, redact.URL(pom), resp.status)
 	}
 
-	date, err := http.ParseTime(resp.Header.Get("Last-Modified"))
+	date, err := http.ParseTime(resp.header.Get("Last-Modified"))
 	if err != nil {
 		log.Debugf("no release date for version %q, %s returned no valid Last-Modified header", ver, redact.URL(pom))
 		return time.Time{}, false, nil
@@ -78,23 +78,30 @@ func (m *Maven) releaseDate(ctx context.Context, metadataURL, ver string) (time.
 	return date, true, nil
 }
 
-// request sends a request whose body is discarded, only its status and headers are used.
-func (m *Maven) request(ctx context.Context, method, rawURL string) (*http.Response, error) {
+// headResult holds the status and headers of a response whose body was discarded.
+type headResult struct {
+	code   int
+	status string
+	header http.Header
+}
+
+// request sends a request and discards its body, only its status and headers are returned.
+func (m *Maven) request(ctx context.Context, method, rawURL string) (headResult, error) {
 	req, err := http.NewRequestWithContext(ctx, method, rawURL, nil)
 	if err != nil {
-		return nil, err
+		return headResult{}, err
 	}
 
 	resp, err := m.webClient.Do(req)
 	if err != nil {
 		// The http client already masks the password of the url in its errors
-		return nil, fmt.Errorf("requesting %s: %w", redact.URL(rawURL), err)
+		return headResult{}, fmt.Errorf("requesting %s: %w", redact.URL(rawURL), err)
 	}
+	defer resp.Body.Close()
 
 	_, _ = io.Copy(io.Discard, resp.Body)
-	_ = resp.Body.Close()
 
-	return resp, nil
+	return headResult{code: resp.StatusCode, status: resp.Status, header: resp.Header}, nil
 }
 
 // errNoReleaseDate reports a repository dating none of the versions checked. The source is skipped
