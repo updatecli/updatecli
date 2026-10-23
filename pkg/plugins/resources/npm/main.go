@@ -150,6 +150,55 @@ type Repository struct {
 	URL  string `json:"url,omitempty"`
 }
 
+// repositoryShorthandHosts maps the npm repository shorthand prefixes to their host.
+var repositoryShorthandHosts = map[string]string{
+	"github":    "github.com",
+	"gitlab":    "gitlab.com",
+	"bitbucket": "bitbucket.org",
+}
+
+// UnmarshalJSON accepts the two forms that a packument uses for "repository":
+// the object holding "type" and "url", and the string shorthand such as
+// "github:owner/repo" or "owner/repo".
+func (r *Repository) UnmarshalJSON(data []byte) error {
+	var shorthand string
+	if err := json.Unmarshal(data, &shorthand); err == nil {
+		*r = Repository{Type: "git", URL: repositoryShorthandURL(shorthand)}
+		return nil
+	}
+
+	type repository Repository
+	var object repository
+	if err := json.Unmarshal(data, &object); err != nil {
+		return err
+	}
+
+	*r = Repository(object)
+
+	return nil
+}
+
+// repositoryShorthandURL expands an npm shorthand into the git URL that the object
+// form carries, and returns the input untouched when it is not a known shorthand.
+func repositoryShorthandURL(shorthand string) string {
+	host := "github.com"
+	path := shorthand
+
+	if prefix, remainder, found := strings.Cut(shorthand, ":"); found {
+		knownHost, ok := repositoryShorthandHosts[prefix]
+		if !ok {
+			return shorthand
+		}
+		host, path = knownHost, remainder
+	}
+
+	if strings.Count(path, "/") != 1 {
+		return shorthand
+	}
+
+	return fmt.Sprintf("git+https://%s/%s.git", host, path)
+}
+
 // Npm defines a resource of kind "npm"
 type Npm struct {
 	spec          Spec
