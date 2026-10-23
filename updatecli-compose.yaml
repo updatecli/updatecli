@@ -76,7 +76,7 @@ policies:
 
   - name: Sync Updatecli workflows
     id: updatecli
-    policy: ghcr.io/updatecli/policies/updatecli/githubaction/scaffold:0.1.1@sha256:121dfef5a33bc5cad4eced09ae1fd2305319ce2fd6d23ff661b5c99d11d0d9d2
+    policy: ghcr.io/updatecli/policies/updatecli/githubaction/scaffold:0.2.0@sha256:abfecc050f1598f0ee835d673ddc06c89f71319c64672486e608d6f47f0d8987
     valuesinline:
       gha:
         golang:
