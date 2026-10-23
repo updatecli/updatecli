@@ -15,7 +15,7 @@ policies:
 
   - name: Update Updatecli policies
     id: root_updatecli_policies
-    policy: ghcr.io/updatecli/policies/updatecli/autodiscovery:0.8.1@sha256:f8edda1a6cbf0d7274e2b847ede29fc4dc70dd5302ccb8575ae21b069cc0d8a0
+    policy: ghcr.io/updatecli/policies/updatecli/autodiscovery:0.9.0@sha256:67026697434a99f6e01a662caa662e8ed02e39e8abf8f7399ab673d113abb360
     valuesinline:
       spec:
         files:
