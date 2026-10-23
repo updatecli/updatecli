@@ -115,7 +115,7 @@ func (m Maven) discoverParentPomDependencyManifests() ([][]byte, error) {
 
 		manifest, err := m.renderManifest(params, parentPom.Version)
 		if err != nil {
-			log.Debugln(err)
+			log.Errorln(err)
 			continue
 		}
 

@@ -2,6 +2,8 @@ package maven
 
 import (
 	"bytes"
+	"fmt"
+	"sync"
 	"text/template"
 
 	"github.com/updatecli/updatecli/pkg/core/log"
@@ -73,7 +75,10 @@ targets:
 
 // routineManifestTmpl generates the manifests bumping a dependency to its latest version.
 // The manifest template is a constant, so it is parsed once rather than for every dependency.
-var routineManifestTmpl = template.Must(template.New("manifest").Parse(manifestTemplate))
+// A parsing error is returned to the caller instead of panicking.
+var routineManifestTmpl = sync.OnceValues(func() (*template.Template, error) {
+	return template.New("manifest").Parse(manifestTemplate)
+})
 
 // manifestTemplateParams holds the values injected into manifestTemplate.
 type manifestTemplateParams struct {
@@ -120,8 +125,13 @@ func (m Maven) renderManifest(params manifestTemplateParams, currentVersion stri
 		params.SourceVersionFilterPattern = pattern
 	}
 
+	tmpl, err := routineManifestTmpl()
+	if err != nil {
+		return nil, fmt.Errorf("parsing Maven manifest template: %w", err)
+	}
+
 	manifest := bytes.Buffer{}
-	if err := routineManifestTmpl.Execute(&manifest, params); err != nil {
+	if err := tmpl.Execute(&manifest, params); err != nil {
 		return nil, err
 	}
 
