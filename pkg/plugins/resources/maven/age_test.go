@@ -285,6 +285,27 @@ func TestConditionAgeTriesEveryRepository(t *testing.T) {
 	assert.Equal(t, int64(1), failing.pomRequests.Load())
 }
 
+func TestConditionAgeMismatchTriesEveryRepository(t *testing.T) {
+	// A mirror reporting when it cached the version, after the repository deployed it
+	mirror := &fakeRepository{releases: []fakeRelease{{"1.0.0", 1}}}
+	m := newAgeTestMaven(t, &fakeRepository{releases: []fakeRelease{{"1.0.0", 30}}}, version.Filter{}, age.Spec{Minimum: "7d"})
+	m.metadataHandlers = append(newAgeTestMaven(t, mirror, version.Filter{}, age.Spec{Minimum: "7d"}).metadataHandlers, m.metadataHandlers...)
+
+	got, _, err := m.Condition(context.Background(), "1.0.0", nil, pathresolver.Resolver{})
+	require.NoError(t, err)
+	assert.True(t, got)
+	assert.Equal(t, int64(1), mirror.pomRequests.Load())
+}
+
+func TestConditionAgeMismatchDoesNotHideOtherFailures(t *testing.T) {
+	failing := &fakeRepository{releases: []fakeRelease{{"1.0.0", unavailable}}}
+	m := newAgeTestMaven(t, &fakeRepository{releases: []fakeRelease{{"1.0.0", 1}}}, version.Filter{}, age.Spec{Minimum: "7d"})
+	m.metadataHandlers = append(m.metadataHandlers, newAgeTestMaven(t, failing, version.Filter{}, age.Spec{Minimum: "7d"}).metadataHandlers...)
+
+	_, _, err := m.Condition(context.Background(), "1.0.0", nil, pathresolver.Resolver{})
+	require.ErrorContains(t, err, "403")
+}
+
 func TestConditionAgeWithoutReleaseDateNamesTheRepository(t *testing.T) {
 	m := newAgeTestMaven(t, &fakeRepository{releases: []fakeRelease{{"1.0.0", -1}}}, version.Filter{}, age.Spec{Minimum: "7d"})
 

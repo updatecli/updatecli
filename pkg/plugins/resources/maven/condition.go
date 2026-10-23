@@ -26,7 +26,11 @@ func (m *Maven) Condition(ctx context.Context, source string, scm scm.ScmHandler
 
 	// undated holds the repositories having the version without reporting its release date.
 	var undated []string
-	// errs holds the failures retrieving the release date, reported when no repository has the version.
+	// mismatch is set when a repository dates the version outside the age filter, reported when
+	// no other repository dates it within, as a mirror may report when it cached the version.
+	mismatch := ""
+	// errs holds the failures retrieving the release date, reported when no repository dates the
+	// version within the age filter, as a failure such as wrong credentials mustn't be hidden.
 	var errs []error
 
 	for _, metadataHandler := range m.metadataHandlers {
@@ -58,8 +62,10 @@ func (m *Maven) Condition(ctx context.Context, source string, scm scm.ScmHandler
 				continue
 			}
 			if !m.spec.Age.Matches(date) {
-				return false, fmt.Sprintf("Version %s released on %s does not match the age filter for Maven artifact (%s/%s)",
-					m.spec.Version, date, m.spec.GroupID, m.spec.ArtifactID), nil
+				// Another repository may date it within the age filter
+				mismatch = fmt.Sprintf("Version %s released on %s does not match the age filter for Maven artifact (%s/%s) on the Maven Repository (%s)",
+					m.spec.Version, date, m.spec.GroupID, m.spec.ArtifactID, repositoryURL(metadataHandler.GetMetadataURL()))
+				continue
 			}
 		}
 
@@ -69,6 +75,10 @@ func (m *Maven) Condition(ctx context.Context, source string, scm scm.ScmHandler
 
 	if len(errs) > 0 {
 		return false, "", errors.Join(errs...)
+	}
+
+	if mismatch != "" {
+		return false, mismatch, nil
 	}
 
 	if len(undated) > 0 {
