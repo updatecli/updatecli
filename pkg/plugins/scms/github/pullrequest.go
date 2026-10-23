@@ -16,6 +16,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/shurcooL/githubv4"
@@ -223,6 +224,10 @@ type PullRequest struct {
 	repository        *Repository
 }
 
+// autoMergeDeprecationWarning keeps the "automerge" deprecation notice to one line
+// per execution.
+var autoMergeDeprecationWarning sync.Once
+
 // isMergeMethodValid ensure that we specified a valid merge method.
 func isMergeMethodValid(method string) (bool, error) {
 	if len(method) == 0 ||
@@ -244,7 +249,11 @@ func (s *ActionSpec) Validate() error {
 
 	// Handle deprecated AutoMerge field
 	if s.AutoMerge != nil {
-		log.Warningln("'automerge' is deprecated, please use 'merge.strategy: auto' instead")
+		// A run over many repositories validates one action per pipeline, and the
+		// advice is the same every time, so it is only worth a single line.
+		autoMergeDeprecationWarning.Do(func() {
+			log.Warningln("'automerge' is deprecated, please use 'merge.strategy: auto' instead")
+		})
 		switch *s.AutoMerge {
 		case true:
 			s.Merge.Strategy = MergeStrategyAuto
