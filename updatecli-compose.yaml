@@ -43,7 +43,7 @@ policies:
 
   - name: Golang Version
     id: golang_version
-    policy: ghcr.io/updatecli/policies/golang/version:0.8.0@sha256:5bd7aa9da3251bdb73e3001715acf76f40add7d4aa5a0fa0621b31bd8a3ccc0a
+    policy: ghcr.io/updatecli/policies/golang/version:0.9.0@sha256:4ebf4c09d559ba1dcdd64b6f5749b4e0d7e473adef2f4805f85bc1a0f0795aa6
     valuesinline:
       pipeline:
         labels:
