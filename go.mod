@@ -47,7 +47,7 @@ require (
 	github.com/minamijoyo/hcledit v0.2.18
 	github.com/minamijoyo/tfupdate v0.10.2
 	github.com/mitchellh/hashstructure v1.1.0
-	github.com/moby/buildkit v0.34.0
+	github.com/moby/buildkit v0.34.1
 	github.com/muesli/mango-cobra v1.3.0
 	github.com/muesli/roff v0.1.0
 	github.com/muesli/termenv v0.16.0
@@ -87,7 +87,7 @@ require (
 	gopkg.in/ini.v1 v1.67.3
 	gopkg.in/yaml.v2 v2.4.0
 	helm.sh/helm/v3 v3.22.0
-	oras.land/oras-go/v2 v2.6.2
+	oras.land/oras-go/v2 v2.6.3
 	sigs.k8s.io/yaml v1.6.0
 )
 
