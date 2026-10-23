@@ -24,8 +24,8 @@ func (m *Maven) Condition(ctx context.Context, source string, scm scm.ScmHandler
 		m.spec.Version = source
 	}
 
-	// undated is set when a repository has the version without reporting its release date.
-	undated := false
+	// undated holds the repositories having the version without reporting its release date.
+	var undated []string
 	// errs holds the failures retrieving the release date, reported when no repository has the version.
 	var errs []error
 
@@ -54,7 +54,7 @@ func (m *Maven) Condition(ctx context.Context, source string, scm scm.ScmHandler
 			}
 			if !dated {
 				// Another repository may report it
-				undated = true
+				undated = append(undated, repositoryURL(metadataHandler.GetMetadataURL()))
 				continue
 			}
 			if !m.spec.Age.Matches(date) {
@@ -71,9 +71,9 @@ func (m *Maven) Condition(ctx context.Context, source string, scm scm.ScmHandler
 		return false, "", errors.Join(errs...)
 	}
 
-	if undated {
-		return false, fmt.Sprintf("Version %s of Maven artifact (%s/%s) has no release date, so the age filter can't be applied: remove it for this repository",
-			m.spec.Version, m.spec.GroupID, m.spec.ArtifactID), nil
+	if len(undated) > 0 {
+		return false, fmt.Sprintf("Version %s of Maven artifact (%s/%s) has no release date on %s, so the age filter can't be applied: remove it",
+			m.spec.Version, m.spec.GroupID, m.spec.ArtifactID, describeRepositories(undated)), nil
 	}
 
 	return false, fmt.Sprintf("Version %s is not found for Maven artifact (%s/%s)",

@@ -221,6 +221,7 @@ func TestSourceAgeWithoutReleaseDateExplainsTheSkip(t *testing.T) {
 	require.NoError(t, m.Source(context.Background(), pathresolver.Resolver{}, &got))
 	assert.Equal(t, result.SKIPPED, got.Result)
 	assert.Contains(t, got.Description, "reports no release date")
+	assert.Contains(t, got.Description, "the repository "+m.spec.Repository)
 }
 
 func TestSourceAgeIgnoresRepositoriesWithoutTheArtifact(t *testing.T) {
@@ -282,6 +283,15 @@ func TestConditionAgeTriesEveryRepository(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, got)
 	assert.Equal(t, int64(1), failing.pomRequests.Load())
+}
+
+func TestConditionAgeWithoutReleaseDateNamesTheRepository(t *testing.T) {
+	m := newAgeTestMaven(t, &fakeRepository{releases: []fakeRelease{{"1.0.0", -1}}}, version.Filter{}, age.Spec{Minimum: "7d"})
+
+	got, message, err := m.Condition(context.Background(), "1.0.0", nil, pathresolver.Resolver{})
+	require.NoError(t, err)
+	assert.False(t, got)
+	assert.Contains(t, message, "the repository "+m.spec.Repository)
 }
 
 func TestNewInvalidAge(t *testing.T) {

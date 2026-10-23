@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"slices"
 
 	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/result"
@@ -20,6 +19,8 @@ func (m *Maven) Source(ctx context.Context, pathResolver pathresolver.Resolver, 
 
 	// errs holds the lookup failure of each repository, reported when none returns a version.
 	var errs []error
+	// undated holds the repositories dating none of the versions checked against the age filter.
+	var undated []string
 
 	for _, metadataHandler := range m.metadataHandlers {
 		// metadataURL contains the URL without username/password
@@ -31,6 +32,9 @@ func (m *Maven) Source(ctx context.Context, pathResolver pathresolver.Resolver, 
 		latestVersion, err := m.latestVersion(ctx, metadataHandler)
 		if err != nil {
 			errs = append(errs, err)
+			if errors.Is(err, errNoReleaseDate) {
+				undated = append(undated, repositoryURL(metadataHandler.GetMetadataURL()))
+			}
 			// The age filter holding back every version is expected, not worth a warning
 			if errors.Is(err, age.ErrNoVersionMatchingAge) {
 				log.Debugf("getting latest version: %v", err)
@@ -61,9 +65,9 @@ func (m *Maven) Source(ctx context.Context, pathResolver pathresolver.Resolver, 
 	if isAgeHold(errs) {
 		resultSource.Result = result.SKIPPED
 		resultSource.Description = fmt.Sprintf("no version of the Maven artifact %s/%s matches the age filter yet", m.spec.GroupID, m.spec.ArtifactID)
-		if slices.ContainsFunc(errs, func(err error) bool { return errors.Is(err, errNoReleaseDate) }) {
-			resultSource.Description = fmt.Sprintf("the age filter can't be applied to the Maven artifact %s/%s, as the repository reports no release date: remove it for this repository",
-				m.spec.GroupID, m.spec.ArtifactID)
+		if len(undated) > 0 {
+			resultSource.Description = fmt.Sprintf("the age filter can't be applied to the Maven artifact %s/%s, as %s reports no release date: remove it",
+				m.spec.GroupID, m.spec.ArtifactID, describeRepositories(undated))
 		}
 		return nil
 	}

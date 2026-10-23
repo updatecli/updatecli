@@ -104,6 +104,21 @@ func (m *Maven) request(ctx context.Context, method, rawURL string) (headResult,
 	return headResult{code: resp.StatusCode, status: resp.Status, header: resp.Header}, nil
 }
 
+// repositoryURL returns the redacted url of the repository holding a maven-metadata.xml file,
+// so that messages name the repository to act on.
+func repositoryURL(metadataURL string) string {
+	return redact.URL(strings.TrimSuffix(metadataURL, "maven-metadata.xml"))
+}
+
+// describeRepositories returns "the repository <url>" or "the repositories <url>, <url>", to name
+// in messages the repositories a user has to act on.
+func describeRepositories(urls []string) string {
+	if len(urls) == 1 {
+		return "the repository " + urls[0]
+	}
+	return "the repositories " + strings.Join(urls, ", ")
+}
+
 // errNoReleaseDate reports a repository dating none of the versions checked. The source is skipped
 // rather than failed, as when the age filter discards every version, so that an age filter set by
 // default doesn't break a pipeline that worked without it.
@@ -147,7 +162,7 @@ func (m *Maven) versionMatchingAge(ctx context.Context, handler mavenmetadata.Ha
 	}
 
 	return "", fmt.Errorf("%w: none of the %d versions checked of the Maven artifact %s/%s has one on the repository %s, so the age filter can't be applied: remove it for this repository",
-		errNoReleaseDate, len(candidates), m.spec.GroupID, m.spec.ArtifactID, redact.URL(strings.TrimSuffix(metadataURL, "maven-metadata.xml")))
+		errNoReleaseDate, len(candidates), m.spec.GroupID, m.spec.ArtifactID, repositoryURL(metadataURL))
 }
 
 // ageCandidates returns the versions to check against the age filter, in order of preference,
