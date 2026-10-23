@@ -26,6 +26,15 @@ func (f *File) Target(_ context.Context, source string, scm scm.ScmHandler, path
 		return fmt.Errorf("init files: %w", err)
 	}
 
+	if len(f.files) == 0 {
+		if f.spec.SearchPattern {
+			resultTarget.Description = "no file found matching criteria"
+			resultTarget.Result = result.SKIPPED
+			return nil
+		}
+		return fmt.Errorf("no file found")
+	}
+
 	var files []string
 
 	if f.spec.Line > 0 && f.spec.ForceCreate {

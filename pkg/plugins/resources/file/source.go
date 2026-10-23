@@ -42,6 +42,11 @@ func (f *File) Source(_ context.Context, pathResolver pathresolver.Resolver, res
 	}
 
 	if len(f.files) == 0 {
+		if f.spec.SearchPattern {
+			resultSource.Description = "no file found matching criteria"
+			resultSource.Result = result.SKIPPED
+			return nil
+		}
 		return fmt.Errorf("no file found")
 	}
 

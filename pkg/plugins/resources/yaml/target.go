@@ -23,6 +23,11 @@ func (y *Yaml) Target(_ context.Context, source string, scm scm.ScmHandler, path
 	}
 
 	if len(y.files) == 0 {
+		if y.spec.SearchPattern {
+			resultTarget.Description = "no yaml file found matching criteria"
+			resultTarget.Result = result.SKIPPED
+			return nil
+		}
 		return fmt.Errorf("no yaml file found")
 	}
 
