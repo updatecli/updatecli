@@ -150,9 +150,12 @@ type Repository struct {
 	URL  string `json:"url,omitempty"`
 }
 
+// githubHost is the host of the default npm repository shorthand.
+const githubHost = "github.com"
+
 // repositoryShorthandHosts maps the npm repository shorthand prefixes to their host.
 var repositoryShorthandHosts = map[string]string{
-	"github":    "github.com",
+	"github":    githubHost,
 	"gitlab":    "gitlab.com",
 	"bitbucket": "bitbucket.org",
 }
@@ -181,7 +184,7 @@ func (r *Repository) UnmarshalJSON(data []byte) error {
 // repositoryShorthandURL expands an npm shorthand into the git URL that the object
 // form carries, and returns the input untouched when it is not a known shorthand.
 func repositoryShorthandURL(shorthand string) string {
-	host := "github.com"
+	host := githubHost
 	path := shorthand
 
 	if prefix, remainder, found := strings.Cut(shorthand, ":"); found {
