@@ -33,7 +33,7 @@ func (y *Yaml) Condition(_ context.Context, source string, scm scm.ScmHandler, p
 
 	if len(y.files) == 0 {
 		if y.spec.SearchPattern {
-			return false, "no yaml file found matching criteria", nil
+			return false, noYamlFileFoundMatchingCriteria, nil
 		}
 		return false, "", fmt.Errorf("no yaml file found")
 	}

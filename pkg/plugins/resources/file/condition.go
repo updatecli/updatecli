@@ -23,7 +23,7 @@ func (f *File) Condition(_ context.Context, source string, scm scm.ScmHandler, p
 	}
 
 	if len(f.files) == 0 && f.spec.SearchPattern {
-		return false, "no file found matching criteria", nil
+		return false, noFileFoundMatchingCriteria, nil
 	}
 
 	files := f.spec.Files

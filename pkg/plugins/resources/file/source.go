@@ -43,7 +43,7 @@ func (f *File) Source(_ context.Context, pathResolver pathresolver.Resolver, res
 
 	if len(f.files) == 0 {
 		if f.spec.SearchPattern {
-			resultSource.Description = "no file found matching criteria"
+			resultSource.Description = noFileFoundMatchingCriteria
 			resultSource.Result = result.SKIPPED
 			return nil
 		}
@@ -76,7 +76,7 @@ func (f *File) Source(_ context.Context, pathResolver pathresolver.Resolver, res
 			}
 
 			if len(f.files) == 0 {
-				resultSource.Description = "no file found matching criteria"
+				resultSource.Description = noFileFoundMatchingCriteria
 				resultSource.Result = result.SKIPPED
 				return nil
 			}

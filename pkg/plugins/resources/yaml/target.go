@@ -24,7 +24,7 @@ func (y *Yaml) Target(_ context.Context, source string, scm scm.ScmHandler, path
 
 	if len(y.files) == 0 {
 		if y.spec.SearchPattern {
-			resultTarget.Description = "no yaml file found matching criteria"
+			resultTarget.Description = noYamlFileFoundMatchingCriteria
 			resultTarget.Result = result.SKIPPED
 			return nil
 		}
@@ -75,7 +75,7 @@ func (y *Yaml) Target(_ context.Context, source string, scm scm.ScmHandler, path
 	monitoredFiles := len(y.files) - ignoredFiles
 
 	if monitoredFiles == 0 {
-		resultTarget.Description = "no yaml file found matching criteria"
+		resultTarget.Description = noYamlFileFoundMatchingCriteria
 		resultTarget.Result = result.SKIPPED
 		return nil
 	}
