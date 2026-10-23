@@ -1,0 +1,20 @@
+[project]
+name = "malformed-groups-project"
+dependencies = [
+    "requests>=2.28",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+]
+# TOML accepts a quoted key PEP 735 doesn't allow as group name, it would break the manifest.
+"it's" = [
+    "rich>=13.0",
+]
+
+[dependency-groups.broken]
+pytest = ">=8.0"
+
+[[dependency-groups.all]]
+include-group = "dev"
