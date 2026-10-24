@@ -1124,3 +1124,19 @@ jdk_version = "11.0.12"`,
 		})
 	}
 }
+
+// TestFile_TargetSearchPatternIgnoresMissingFile covers spec.searchpattern matching
+// no file at all, which used to report every content as up to date because the
+// target counted zero unchanged files out of zero.
+func TestFile_TargetSearchPatternIgnoresMissingFile(t *testing.T) {
+	t.Chdir(t.TempDir())
+
+	f, err := New(Spec{Files: []string{".github/workflows/*"}, SearchPattern: true})
+	require.NoError(t, err)
+
+	gotResult := result.Target{}
+	require.NoError(t, f.Target(context.Background(), "v1", nil, pathresolver.Resolver{}, false, &gotResult))
+
+	assert.False(t, gotResult.Changed)
+	assert.Equal(t, result.SKIPPED, gotResult.Result)
+}
