@@ -14,6 +14,15 @@ import (
 
 const pyprojectFile = "pyproject.toml"
 
+// dependencyGroupNameRegex matches the dependency group names PEP 735 allows.
+var dependencyGroupNameRegex = regexp.MustCompile(`(?i)^([A-Z0-9]|[A-Z0-9][A-Z0-9._-]*[A-Z0-9])$`)
+
+// defaultMinimumReleaseAge defines how long a release must have been published before
+// Updatecli suggests it. It reduces the exposure to malicious or broken releases that get
+// yanked or deleted shortly after. It is longer than npm's three days because PyPI has no
+// unpublish window: a release can be removed at any time, so detection time is what matters.
+const defaultMinimumReleaseAge = "7d"
+
 // skipDirs lists directories that should never be walked for pyproject.toml files.
 var skipDirs = map[string]bool{
 	".venv":        true,
@@ -89,7 +98,10 @@ func isLockFileDetected(lockfile string) bool {
 
 // lockFileSupport describes which lock-file package managers are available.
 type lockFileSupport struct {
+	// uv reports whether uv.lock is present and the uv command can update it.
 	uv bool
+	// uvLock reports whether uv.lock is present, even when the uv command is missing.
+	uvLock bool
 	// poetry bool // future
 	// pdm    bool // future
 }
@@ -97,18 +109,19 @@ type lockFileSupport struct {
 // detectLockFileSupport checks which lock-file managers are present for the given directory.
 // Returns the support config and whether this pyproject.toml should be skipped entirely.
 // Skipping happens when a lock file exists but the required CLI is not available —
-// proceeding without the CLI would leave the lock file out of sync.
+// proceeding without the CLI would leave the lock file out of sync. The caller reports it,
+// since vulnerability mode can still read the lock file to report vulnerable packages.
 //
 // uvAvailable is passed in (rather than calling isUvAvailable()) so that tests can
 // control the value deterministically without requiring the real uv CLI on PATH.
 func detectLockFileSupport(dir string, uvAvailable bool) (lockFileSupport, bool) {
 	support := lockFileSupport{}
 
-	if isLockFileDetected(filepath.Join(dir, "uv.lock")) {
+	if isLockFileDetected(filepath.Join(dir, uvLockFile)) {
+		support.uvLock = true
 		if uvAvailable {
 			support.uv = true
 		} else {
-			log.Warning("skipping, uv.lock detected but Updatecli couldn't detect the uv command to update it in case of a pyproject.toml update")
 			return support, true
 		}
 	}

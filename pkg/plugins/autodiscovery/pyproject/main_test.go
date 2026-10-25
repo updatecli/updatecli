@@ -30,6 +30,8 @@ sources:
     kind: 'pypi'
     spec:
       name: 'flask'
+      age:
+        minimum: '7d'
       versionfilter:
         kind: 'pep440'
         pattern: '>=3.0'
@@ -56,6 +58,8 @@ sources:
     kind: 'pypi'
     spec:
       name: 'requests'
+      age:
+        minimum: '7d'
       versionfilter:
         kind: 'pep440'
         pattern: '>=2.28'
@@ -95,6 +99,8 @@ sources:
     kind: 'pypi'
     spec:
       name: 'requests'
+      age:
+        minimum: '7d'
       versionfilter:
         kind: 'pep440'
         pattern: '>=2.28'
@@ -113,6 +119,8 @@ sources:
     kind: 'pypi'
     spec:
       name: 'requests'
+      age:
+        minimum: '7d'
       versionfilter:
         kind: 'pep440'
         pattern: '>=2.28'
@@ -139,6 +147,8 @@ sources:
     kind: 'pypi'
     spec:
       name: 'pytest'
+      age:
+        minimum: '7d'
       versionfilter:
         kind: 'pep440'
         pattern: '>=8.0'
@@ -165,6 +175,8 @@ sources:
     kind: 'pypi'
     spec:
       name: 'ruff'
+      age:
+        minimum: '7d'
       versionfilter:
         kind: 'pep440'
         pattern: '>=0.4'
@@ -204,6 +216,8 @@ sources:
     kind: 'pypi'
     spec:
       name: 'flask'
+      age:
+        minimum: '7d'
       versionfilter:
         kind: 'pep440'
         pattern: '>=3.0'
@@ -235,6 +249,8 @@ sources:
     kind: 'pypi'
     spec:
       name: 'requests'
+      age:
+        minimum: '7d'
       versionfilter:
         kind: 'pep440'
         pattern: '>=2.28'
@@ -274,6 +290,8 @@ sources:
     kind: 'pypi'
     spec:
       name: 'requests'
+      age:
+        minimum: '7d'
       versionfilter:
         kind: 'pep440'
         pattern: '>=2.28'
@@ -312,6 +330,8 @@ sources:
     kind: 'pypi'
     spec:
       name: 'requests'
+      age:
+        minimum: '7d'
       versionfilter:
         kind: 'pep440'
         pattern: '>=2.28'
@@ -345,6 +365,8 @@ sources:
     kind: 'pypi'
     spec:
       name: 'pywin32'
+      age:
+        minimum: '7d'
       versionfilter:
         kind: 'pep440'
         pattern: '>=300'
@@ -371,6 +393,8 @@ sources:
     kind: 'pypi'
     spec:
       name: 'requests'
+      age:
+        minimum: '7d'
       versionfilter:
         kind: 'pep440'
         pattern: '>=2.28'
@@ -404,6 +428,8 @@ sources:
     kind: 'pypi'
     spec:
       name: 'numpy'
+      age:
+        minimum: '7d'
       versionfilter:
         kind: 'pep440'
         pattern: '*'
@@ -500,6 +526,8 @@ sources:
     kind: 'pypi'
     spec:
       name: 'flask'
+      age:
+        minimum: '7d'
       versionfilter:
         kind: 'semver'
         pattern: '3.x'
@@ -526,6 +554,8 @@ sources:
     kind: 'pypi'
     spec:
       name: 'requests'
+      age:
+        minimum: '7d'
       versionfilter:
         kind: 'semver'
         pattern: '2.x'
@@ -559,6 +589,8 @@ sources:
     kind: 'pypi'
     spec:
       name: 'requests'
+      age:
+        minimum: '7d'
       versionfilter:
         kind: 'pep440'
         pattern: '>=2.28'
@@ -576,6 +608,170 @@ targets:
       environments:
         - name: PATH
       workdir: 'foo/bar'
+    disablesourceinput: true
+`,
+			},
+		},
+		{
+			name:        "Scenario 13 -- dependency groups, include-group not expanded, ignore applied",
+			rootDir:     "testdata/dependency_groups",
+			uvAvailable: true,
+			spec: Spec{
+				Ignore: MatchingRules{
+					{Packages: map[string]string{"requests": ""}},
+				},
+			},
+			expectedPipelines: []string{
+				`name: 'deps(pypi): bump "rich" [dev] for "groups-project" project'
+sources:
+  rich:
+    name: 'Get latest "rich" package version'
+    kind: 'pypi'
+    spec:
+      name: 'rich'
+      age:
+        minimum: '7d'
+      versionfilter:
+        kind: 'pep440'
+        pattern: '>=13.0'
+targets:
+  rich:
+    name: 'deps(pypi): bump "rich" to {{ source "rich" }}'
+    kind: 'shell'
+    spec:
+      command: 'uv lock --upgrade-package rich=={{ source "rich" }}'
+      changedif:
+        kind: file/checksum
+        spec:
+          files:
+            - "uv.lock"
+      environments:
+        - name: PATH
+      workdir: '.'
+    disablesourceinput: true
+`,
+				`name: 'deps(pypi): bump "ruff" [group:dev] for "groups-project" project'
+sources:
+  ruff:
+    name: 'Get latest "ruff" package version'
+    kind: 'pypi'
+    spec:
+      name: 'ruff'
+      age:
+        minimum: '7d'
+      versionfilter:
+        kind: 'pep440'
+        pattern: '>=0.4'
+targets:
+  ruff:
+    name: 'deps(pypi): bump "ruff" to {{ source "ruff" }}'
+    kind: 'shell'
+    spec:
+      command: 'uv lock --upgrade-package ruff=={{ source "ruff" }}'
+      changedif:
+        kind: file/checksum
+        spec:
+          files:
+            - "uv.lock"
+      environments:
+        - name: PATH
+      workdir: '.'
+    disablesourceinput: true
+`,
+				`name: 'deps(pypi): bump "pytest" [group:test] for "groups-project" project'
+sources:
+  pytest:
+    name: 'Get latest "pytest" package version'
+    kind: 'pypi'
+    spec:
+      name: 'pytest'
+      age:
+        minimum: '7d'
+      versionfilter:
+        kind: 'pep440'
+        pattern: '>=8.0'
+targets:
+  pytest:
+    name: 'deps(pypi): bump "pytest" to {{ source "pytest" }}'
+    kind: 'shell'
+    spec:
+      command: 'uv lock --upgrade-package pytest=={{ source "pytest" }}'
+      changedif:
+        kind: file/checksum
+        spec:
+          files:
+            - "uv.lock"
+      environments:
+        - name: PATH
+      workdir: '.'
+    disablesourceinput: true
+`,
+			},
+		},
+		{
+			name:        "Scenario 14 -- only rule on the dev dependency group, which includes the test group",
+			rootDir:     "testdata/dependency_groups",
+			uvAvailable: true,
+			spec: Spec{
+				Only: MatchingRules{
+					{DependencyGroups: []string{"dev"}},
+				},
+			},
+			expectedPipelines: []string{
+				`name: 'deps(pypi): bump "ruff" [group:dev] for "groups-project" project'
+sources:
+  ruff:
+    name: 'Get latest "ruff" package version'
+    kind: 'pypi'
+    spec:
+      name: 'ruff'
+      age:
+        minimum: '7d'
+      versionfilter:
+        kind: 'pep440'
+        pattern: '>=0.4'
+targets:
+  ruff:
+    name: 'deps(pypi): bump "ruff" to {{ source "ruff" }}'
+    kind: 'shell'
+    spec:
+      command: 'uv lock --upgrade-package ruff=={{ source "ruff" }}'
+      changedif:
+        kind: file/checksum
+        spec:
+          files:
+            - "uv.lock"
+      environments:
+        - name: PATH
+      workdir: '.'
+    disablesourceinput: true
+`,
+				`name: 'deps(pypi): bump "pytest" [group:test] for "groups-project" project'
+sources:
+  pytest:
+    name: 'Get latest "pytest" package version'
+    kind: 'pypi'
+    spec:
+      name: 'pytest'
+      age:
+        minimum: '7d'
+      versionfilter:
+        kind: 'pep440'
+        pattern: '>=8.0'
+targets:
+  pytest:
+    name: 'deps(pypi): bump "pytest" to {{ source "pytest" }}'
+    kind: 'shell'
+    spec:
+      command: 'uv lock --upgrade-package pytest=={{ source "pytest" }}'
+      changedif:
+        kind: file/checksum
+        spec:
+          files:
+            - "uv.lock"
+      environments:
+        - name: PATH
+      workdir: '.'
     disablesourceinput: true
 `,
 			},
@@ -599,6 +795,88 @@ targets:
 			for i := range manifests {
 				assert.Equal(t, tt.expectedPipelines[i], string(manifests[i]))
 			}
+		})
+	}
+}
+
+func TestNewAge(t *testing.T) {
+	testdata := []struct {
+		name             string
+		spec             map[string]interface{}
+		expectedPipeline string
+		expectedError    bool
+	}{
+		{
+			name: "explicit age replaces the default",
+			spec: map[string]interface{}{"age": map[string]interface{}{"minimum": "2w", "maximum": "1y"}},
+			expectedPipeline: `name: 'deps(pypi): bump "requests" for "no-lock-project" project'
+sources:
+  requests:
+    name: 'Get latest "requests" package version'
+    kind: 'pypi'
+    spec:
+      name: 'requests'
+      age:
+        minimum: '2w'
+        maximum: '1y'
+      versionfilter:
+        kind: 'pep440'
+        pattern: '>=2.28'
+`,
+		},
+		{
+			name: "empty age disables the default",
+			spec: map[string]interface{}{"age": map[string]interface{}{}},
+			expectedPipeline: `name: 'deps(pypi): bump "requests" for "no-lock-project" project'
+sources:
+  requests:
+    name: 'Get latest "requests" package version'
+    kind: 'pypi'
+    spec:
+      name: 'requests'
+      versionfilter:
+        kind: 'pep440'
+        pattern: '>=2.28'
+`,
+		},
+		{
+			name: "the default doesn't apply with indexurl, an explicit age does",
+			spec: map[string]interface{}{"indexurl": "https://pypi.internal/simple", "age": map[string]interface{}{"minimum": "7d"}},
+			expectedPipeline: `name: 'deps(pypi): bump "requests" for "no-lock-project" project'
+sources:
+  requests:
+    name: 'Get latest "requests" package version'
+    kind: 'pypi'
+    spec:
+      name: 'requests'
+      url: 'https://pypi.internal/simple'
+      age:
+        minimum: '7d'
+      versionfilter:
+        kind: 'pep440'
+        pattern: '>=2.28'
+`,
+		},
+		{
+			name:          "invalid age is rejected",
+			spec:          map[string]interface{}{"age": map[string]interface{}{"minimum": "seven days"}},
+			expectedError: true,
+		},
+	}
+
+	for _, tt := range testdata {
+		t.Run(tt.name, func(t *testing.T) {
+			p, err := New(tt.spec, "testdata/no_lockfile", "", "")
+			if tt.expectedError {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+
+			manifests, err := p.DiscoverManifests()
+			require.NoError(t, err)
+			require.Len(t, manifests, 1)
+			assert.Equal(t, tt.expectedPipeline, string(manifests[0]))
 		})
 	}
 }

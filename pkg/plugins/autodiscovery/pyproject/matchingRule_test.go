@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pep503"
 )
 
 func TestMatchingRulesValidate(t *testing.T) {
@@ -32,6 +33,30 @@ func TestMatchingRulesValidate(t *testing.T) {
 				{Packages: map[string]string{"requests": ""}},
 			},
 			expectError: false,
+		},
+		{
+			name: "rule with dependencygroups should pass",
+			rules: MatchingRules{
+				{DependencyGroups: []string{"dev"}},
+			},
+			expectError: false,
+		},
+		{
+			name: "invalid dependencygroups pattern should fail",
+			rules: MatchingRules{
+				{DependencyGroups: []string{"[dev"}},
+			},
+			expectError: true,
+			errorMsg:    "invalid dependencygroups pattern",
+		},
+		{
+			// "[a_]" is valid but normalizes to "[a-]", an unterminated range.
+			name: "dependencygroups pattern invalid once normalized should fail",
+			rules: MatchingRules{
+				{DependencyGroups: []string{"[a_]"}},
+			},
+			expectError: true,
+			errorMsg:    "invalid dependencygroups pattern",
 		},
 		{
 			name: "empty rule should fail",
@@ -67,13 +92,14 @@ func TestMatchingRulesValidate(t *testing.T) {
 
 func TestIsMatchingRules(t *testing.T) {
 	dataset := []struct {
-		name           string
-		rules          MatchingRules
-		rootDir        string
-		filePath       string
-		packageName    string
-		packageVersion string
-		expectedResult bool
+		name            string
+		rules           MatchingRules
+		rootDir         string
+		filePath        string
+		packageName     string
+		packageVersion  string
+		dependencyGroup string
+		expectedResult  bool
 	}{
 		{
 			name: "path matches exactly",
@@ -190,11 +216,85 @@ func TestIsMatchingRules(t *testing.T) {
 			packageVersion: "0.51b0",
 			expectedResult: false,
 		},
+		{
+			name: "dependency group matches",
+			rules: MatchingRules{
+				{DependencyGroups: []string{"dev"}},
+			},
+			filePath:        "pyproject.toml",
+			packageName:     "pytest",
+			dependencyGroup: "dev",
+			expectedResult:  true,
+		},
+		{
+			name: "dependency group names are compared normalized",
+			rules: MatchingRules{
+				{DependencyGroups: []string{"dev-tools"}},
+			},
+			filePath:        "pyproject.toml",
+			packageName:     "pytest",
+			dependencyGroup: "Dev_Tools",
+			expectedResult:  true,
+		},
+		{
+			name: "dependency group patterns are normalized too",
+			rules: MatchingRules{
+				{DependencyGroups: []string{"Dev.*"}},
+			},
+			filePath:        "pyproject.toml",
+			packageName:     "pytest",
+			dependencyGroup: "dev-tools",
+			expectedResult:  true,
+		},
+		{
+			name: "dependency group wildcard matches any group",
+			rules: MatchingRules{
+				{DependencyGroups: []string{"*"}},
+			},
+			filePath:        "pyproject.toml",
+			packageName:     "pytest",
+			dependencyGroup: "test",
+			expectedResult:  true,
+		},
+		{
+			name: "dependency group does not match another group",
+			rules: MatchingRules{
+				{DependencyGroups: []string{"dev"}},
+			},
+			filePath:        "pyproject.toml",
+			packageName:     "pytest",
+			dependencyGroup: "test",
+			expectedResult:  false,
+		},
+		{
+			name: "dependency group never matches a main dependency",
+			rules: MatchingRules{
+				{DependencyGroups: []string{"*"}},
+			},
+			filePath:       "pyproject.toml",
+			packageName:    "requests",
+			expectedResult: false,
+		},
+		{
+			name: "dependency group and package are AND-ed",
+			rules: MatchingRules{
+				{DependencyGroups: []string{"dev"}, Packages: map[string]string{"ruff": ""}},
+			},
+			filePath:        "pyproject.toml",
+			packageName:     "pytest",
+			dependencyGroup: "dev",
+			expectedResult:  false,
+		},
 	}
 
 	for _, d := range dataset {
 		t.Run(d.name, func(t *testing.T) {
-			got := d.rules.isMatchingRules(d.rootDir, d.filePath, d.packageName, d.packageVersion)
+			// As New and the discovery do: rules and group names are normalized before matching.
+			var groups []string
+			if d.dependencyGroup != "" {
+				groups = []string{pep503.NormalizeName(d.dependencyGroup)}
+			}
+			got := d.rules.normalized().isMatchingRules(d.rootDir, d.filePath, d.packageName, d.packageVersion, groups)
 			assert.Equal(t, d.expectedResult, got)
 		})
 	}
