@@ -129,6 +129,26 @@ func TestIsMatchingRules(t *testing.T) {
 			arch:           "amd64",
 			expectedResult: true,
 		},
+		{
+			name: "Scenario 7 - multiple ignore rules are evaluated as OR",
+			rules: MatchingRules{
+				MatchingRule{
+					Path: "applications/clickhouse.yaml",
+				},
+				MatchingRule{
+					Path: "applications/postgres.yaml",
+				},
+				MatchingRule{
+					Images: []string{
+						"ghcr.io/private/",
+					},
+				},
+			},
+			filePath:       "applications/redis.yaml",
+			service:        "redis",
+			image:          "ghcr.io/private/redis:latest",
+			expectedResult: true,
+		},
 	}
 
 	for _, tt := range testdata {
