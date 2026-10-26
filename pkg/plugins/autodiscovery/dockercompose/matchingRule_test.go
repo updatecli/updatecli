@@ -130,7 +130,7 @@ func TestIsMatchingRules(t *testing.T) {
 			expectedResult: true,
 		},
 		{
-			name: "Scenario 7 - multiple ignore rules are evaluated as OR",
+			name: "Scenario 7 - multiple rules are evaluated as OR",
 			rules: MatchingRules{
 				MatchingRule{
 					Path: "applications/clickhouse.yaml",
