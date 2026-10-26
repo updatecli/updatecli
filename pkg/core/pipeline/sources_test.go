@@ -14,6 +14,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/pipeline/condition"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/source"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/shell"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/shell/success/exitcode"
@@ -217,6 +218,54 @@ func TestRunSources(t *testing.T) {
 				"successbis": result.SUCCESS,
 			},
 			expectedPipelineResult: result.SUCCESS,
+		},
+		{
+			conf: config.Config{
+				Spec: config.Spec{
+					Name: "Test referencing a skipped source via template returns an error",
+					Sources: map[string]source.Config{
+						"skipped": {
+							ResourceConfig: resource.ResourceConfig{
+								Kind: "shell",
+								Name: "skipped source",
+								Spec: shell.Spec{
+									Command: "echo hello",
+								},
+								DependsOn: []string{"condition#skip"},
+							},
+						},
+					},
+					Conditions: map[string]condition.Config{
+						"skip": {
+							ResourceConfig: resource.ResourceConfig{
+								Kind: "shell",
+								Name: "skip",
+								Spec: shell.Spec{
+									Command: "false",
+								},
+							},
+							DisableSourceInput: true,
+						},
+					},
+					Targets: map[string]target.Config{
+						"default": {
+							ResourceConfig: resource.ResourceConfig{
+								Kind: "shell",
+								Name: "target using skipped source",
+								Spec: shell.Spec{
+									Command: `echo {{ source "skipped" }}`,
+								},
+							},
+							DisableSourceInput: true,
+						},
+					},
+				},
+			},
+			expectedError: true,
+			expectedSourcesResult: map[string]string{
+				"skipped": result.SKIPPED,
+			},
+			expectedPipelineResult: result.FAILURE,
 		},
 	}
 

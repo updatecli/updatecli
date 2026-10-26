@@ -16,6 +16,12 @@ type Source struct {
 			* "SKIPPED"
 	*/
 	Result string
+	// IsRun reports whether the pipeline has finalized this source, meaning it
+	// either executed or was explicitly skipped through a dependsOn condition.
+	// It distinguishes a source still pending execution (Result defaults to
+	// SKIPPED while IsRun is false) from one that actually ran or was
+	// deliberately skipped (IsRun is true).
+	IsRun bool
 	// Information stores the information detected by the source execution such as a version
 	Information string
 	// Description stores the source execution description
