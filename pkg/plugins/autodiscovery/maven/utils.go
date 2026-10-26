@@ -4,12 +4,21 @@ import (
 	"fmt"
 	"io/fs"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/updatecli/updatecli/pkg/core/log"
 
 	"github.com/beevik/etree"
 )
+
+// propertyRegex matches a version relying on a property, such as "${log4j.version}".
+var propertyRegex = regexp.MustCompile(`\$\{.*\}`)
+
+// isPropertyVersion returns true for a version relying on a property, such as "${log4j.version}".
+func isPropertyVersion(version string) bool {
+	return propertyRegex.MatchString(version)
+}
 
 // isVersionRange returns true for a Maven version range, such as "[1.0,2.0)" or "[1.5,)".
 func isVersionRange(version string) bool {

@@ -333,3 +333,17 @@ func TestDiscoverManifestsAge(t *testing.T) {
 		})
 	}
 }
+
+func TestDiscoverManifestsSkipsVersionRanges(t *testing.T) {
+	maven, err := New(Spec{}, "testdata/vulnerability", "", "")
+	require.NoError(t, err)
+
+	manifests, err := maven.DiscoverManifests()
+	require.NoError(t, err)
+
+	// The dependencies relying on a property or a version range are ignored
+	require.Len(t, manifests, 2)
+	for _, manifest := range manifests {
+		assert.NotContains(t, string(manifest), "commons-collections")
+	}
+}

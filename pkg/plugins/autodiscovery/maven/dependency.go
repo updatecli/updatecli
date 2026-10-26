@@ -5,8 +5,6 @@ import (
 	"path"
 	"path/filepath"
 
-	"regexp"
-
 	"github.com/beevik/etree"
 	"github.com/updatecli/updatecli/pkg/core/log"
 )
@@ -71,30 +69,15 @@ func (m Maven) discoverDependencyManifests(kind string) ([][]byte, error) {
 			continue
 		}
 
-		containsVariableRegex, err := regexp.Compile(`.*\$\{.*\}.*`)
-
-		if err != nil {
-			log.Errorln(err)
-			continue
-		}
-
 		for i, dependency := range dependencies {
 
-			// Test if current version contains a variable, and skip the depend if it's the case
-			isContainVariable := containsVariableRegex.Match([]byte(dependency.Version))
-
-			if err != nil {
-				log.Debugln(err)
-				continue
-			}
-
-			if isContainVariable {
+			if isPropertyVersion(dependency.Version) {
 				log.Printf("Skipping dependency %q in %q as it relies on property %q", dependency.ArtifactID, relativePomFile, dependency.Version)
 				continue
 			}
 
-			// No current version can be checked against the OSV database
-			if m.spec.Vulnerability != nil && isVersionRange(dependency.Version) {
+			// A version range would be replaced by a single version
+			if isVersionRange(dependency.Version) {
 				log.Printf("Skipping dependency %q in %q as it relies on the version range %q", dependency.ArtifactID, relativePomFile, dependency.Version)
 				continue
 			}
