@@ -9,7 +9,7 @@ import (
 )
 
 // isPullRequestExist queries a remote Gitea instance to know if a pullrequest already exists.
-func (g *Gitea) isPullRequestExist(ctx context.Context) (title, description, link string, err error) {
+func (g *Gitea) isPullRequestExist(ctx context.Context) (*giteasdk.PullRequest, error) {
 	page := 0
 	for {
 		optsSearch := giteasdk.ListPullRequestsOptions{
@@ -29,7 +29,7 @@ func (g *Gitea) isPullRequestExist(ctx context.Context) (title, description, lin
 
 		if err != nil {
 			log.Debugf("gitea/isPullRequestExist RC: %s\n", err)
-			return "", "", "", err
+			return nil, err
 		}
 
 		if resp != nil && resp.StatusCode > 400 {
@@ -37,6 +37,10 @@ func (g *Gitea) isPullRequestExist(ctx context.Context) (title, description, lin
 		}
 
 		for _, p := range pullrequests {
+			// A fork can use the same branch name as the working branch.
+			if p.Head == nil || p.Base == nil || p.Head.RepoID != p.Base.RepoID {
+				continue
+			}
 			if p.Head.Name == g.SourceBranch &&
 				p.Base.Name == g.TargetBranch &&
 				// If no closed and merged date is set, the pullrequest is still open
@@ -47,7 +51,7 @@ func (g *Gitea) isPullRequestExist(ctx context.Context) (title, description, lin
 					result.SUCCESS,
 					p.URL)
 
-				return p.Title, p.Body, p.URL, nil
+				return p, nil
 			}
 		}
 
@@ -57,7 +61,7 @@ func (g *Gitea) isPullRequestExist(ctx context.Context) (title, description, lin
 		page++
 	}
 
-	return "", "", "", nil
+	return nil, nil
 }
 
 // isRemoteBranchesExist queries a remote Gitea instance to know if both the pull-request source branch and the target branch exist.

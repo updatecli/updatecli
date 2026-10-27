@@ -2,6 +2,8 @@ package pullrequest
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	giteasdk "gitea.dev/sdk"
 	"github.com/updatecli/updatecli/pkg/core/log"
@@ -31,20 +33,19 @@ func (g *Gitea) CreateAction(ctx context.Context, report *reports.Action, resetD
 		title = g.spec.Title
 	}
 
-	// Check if a pull-request is already opened then exit early if it does.
-	pullrequestTitle, pullrequestDescription, pullrequestLink, err := g.isPullRequestExist(ctx)
+	pr, err := g.isPullRequestExist(ctx)
 	if err != nil {
 		return err
 	}
 
 	// If a pullrequest already exist, we update the report with the existing pullrequest
-	if pullrequestLink != "" {
-		log.Debugf("Gitea pullrequest already exist, nothing to do")
+	if pr != nil {
+		log.Debugf("Gitea pullrequest already exists")
 
-		report.Title = pullrequestTitle
-		report.Link = pullrequestLink
-		report.Description = pullrequestDescription
-		return nil
+		report.Title = pr.Title
+		report.Link = pr.URL
+		report.Description = pr.Body
+		return g.enableAutoMerge(ctx, pr)
 	}
 
 	// Test that both sourceBranch and targetBranch exists on remote before creating a new one
@@ -93,6 +94,9 @@ func (g *Gitea) CreateAction(ctx context.Context, report *reports.Action, resetD
 	}
 
 	if err != nil {
+		if strings.EqualFold(g.spec.Merge.Strategy, MergeStrategyAuto) {
+			return fmt.Errorf("creating Gitea pull request for auto-merge: %w", err)
+		}
 		log.Infof("Gitea pullrequest not created, skipping")
 		return nil
 	}
@@ -103,5 +107,5 @@ func (g *Gitea) CreateAction(ctx context.Context, report *reports.Action, resetD
 
 	log.Infof("Gitea pullrequest successfully opened on %q", pr.URL)
 
-	return nil
+	return g.enableAutoMerge(ctx, pr)
 }

@@ -10,17 +10,17 @@ import (
 // CheckActionExist verifies if an existing GitTea pullrequest is already opened.
 func (g *Gitea) CheckActionExist(ctx context.Context, report *reports.Action) error {
 
-	pullrequestTitle, pullrequestDescription, pullrequestLink, err := g.isPullRequestExist(ctx)
+	pr, err := g.isPullRequestExist(ctx)
 	if err != nil {
 		return err
 	}
 
-	if pullrequestLink != "" {
+	if pr != nil {
 		log.Debugf("GiTea pull request detected")
 
-		report.Title = pullrequestTitle
-		report.Link = pullrequestLink
-		report.Description = pullrequestDescription
+		report.Title = pr.Title
+		report.Link = pr.URL
+		report.Description = pr.Body
 		return nil
 	}
 
