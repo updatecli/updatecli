@@ -1,13 +1,15 @@
 package pullrequest
 
 import (
-	giteasdk "code.gitea.io/sdk/gitea"
+	"context"
+
+	giteasdk "gitea.dev/sdk"
 	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 // isPullRequestExist queries a remote Gitea instance to know if a pullrequest already exists.
-func (g *Gitea) isPullRequestExist() (title, description, link string, err error) {
+func (g *Gitea) isPullRequestExist(ctx context.Context) (title, description, link string, err error) {
 	page := 0
 	for {
 		optsSearch := giteasdk.ListPullRequestsOptions{
@@ -18,7 +20,8 @@ func (g *Gitea) isPullRequestExist() (title, description, link string, err error
 			},
 		}
 
-		pullrequests, resp, err := g.client.ListRepoPullRequests(
+		pullrequests, resp, err := g.client.PullRequests.ListRepoPullRequests(
+			ctx,
 			g.Owner,
 			g.Repository,
 			optsSearch,
@@ -58,7 +61,7 @@ func (g *Gitea) isPullRequestExist() (title, description, link string, err error
 }
 
 // isRemoteBranchesExist queries a remote Gitea instance to know if both the pull-request source branch and the target branch exist.
-func (g *Gitea) isRemoteBranchesExist() (bool, error) {
+func (g *Gitea) isRemoteBranchesExist(ctx context.Context) (bool, error) {
 
 	var sourceBranch string
 	var targetBranch string
@@ -87,7 +90,8 @@ func (g *Gitea) isRemoteBranchesExist() (bool, error) {
 		repository = g.spec.Repository
 	}
 
-	remoteBranches, resp, err := g.client.ListRepoBranches(
+	remoteBranches, resp, err := g.client.Repositories.ListRepoBranches(
+		ctx,
 		owner,
 		repository,
 		giteasdk.ListRepoBranchesOptions{
