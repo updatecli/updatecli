@@ -1,44 +1,47 @@
 name: "Test GitLab tag"
-
-sources:
-  default:
-    kind: "gitlab/tag"
-    spec:
-      owner: "olblak"
-      repository: "updatecli"
-      versionfilter:
-        kind: "semver"
-        pattern: "~0.46"
-  latest:
-    kind: "gitlab/tag"
-    spec:
-      url: "gitlab.com"
-      owner: "olblak"
-      repository: "updatecli"
-      age:
-        minimum: 4y
-
-conditions:
-  default:
-    name: Test that tag v0.1.11 do not exist
-    kind: "gitlab/tag"
-    disablesourceinput: true
-    spec:
-      owner: "olblak"
-      repository: "updatecli"
-      tag: "v0.1.11"
-    failwhen: true
-  sourcedefault:
-    name: Test that tag retrieved from sourceid default exist
-    kind: "gitlab/tag"
-    sourceid: "default"
-    spec:
-      owner: "olblak"
-      repository: "updatecli"
-  latest:
-    name: Test that tag retrieved from sourceid latest exist
-    kind: "gitlab/tag"
-    sourceid: "latest"
-    spec:
-      owner: "olblak"
-      repository: "updatecli"
+### I am disabling this tests
+### Due to the new Gitlab rate limit
+### https://about.gitlab.com/blog/rate-limit-change-2026/
+#
+#sources:
+#  default:
+#    kind: "gitlab/tag"
+#    spec:
+#      owner: "olblak"
+#      repository: "updatecli"
+#      versionfilter:
+#        kind: "semver"
+#        pattern: "~0.46"
+#  latest:
+#    kind: "gitlab/tag"
+#    spec:
+#      url: "gitlab.com"
+#      owner: "olblak"
+#      repository: "updatecli"
+#      age:
+#        minimum: 4y
+#
+#conditions:
+#  default:
+#    name: Test that tag v0.1.11 do not exist
+#    kind: "gitlab/tag"
+#    disablesourceinput: true
+#    spec:
+#      owner: "olblak"
+#      repository: "updatecli"
+#      tag: "v0.1.11"
+#    failwhen: true
+#  sourcedefault:
+#    name: Test that tag retrieved from sourceid default exist
+#    kind: "gitlab/tag"
+#    sourceid: "default"
+#    spec:
+#      owner: "olblak"
+#      repository: "updatecli"
+#  latest:
+#    name: Test that tag retrieved from sourceid latest exist
+#    kind: "gitlab/tag"
+#    sourceid: "latest"
+#    spec:
+#      owner: "olblak"
+#      repository: "updatecli"
