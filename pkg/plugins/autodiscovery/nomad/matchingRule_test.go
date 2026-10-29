@@ -124,6 +124,26 @@ func TestIsMatchingRules(t *testing.T) {
 			image:          "mongo:6",
 			expectedResult: true,
 		},
+		{
+			name: "Scenario 7 - multiple rules are evaluated as OR",
+			rules: MatchingRules{
+				MatchingRule{
+					Path: "applications/clickhouse.yaml",
+				},
+				MatchingRule{
+					Path: "applications/postgres.yaml",
+				},
+				MatchingRule{
+					Images: []string{
+						"ghcr.io/private/",
+					},
+				},
+			},
+			filePath:       "applications/redis.yaml",
+			job:            "redis",
+			image:          "ghcr.io/private/redis:latest",
+			expectedResult: true,
+		},
 	}
 
 	for _, tt := range testdata {

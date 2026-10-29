@@ -3,7 +3,7 @@ package pullrequest
 import (
 	"context"
 
-	giteasdk "code.gitea.io/sdk/gitea"
+	giteasdk "gitea.dev/sdk"
 	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/reports"
 	utils "github.com/updatecli/updatecli/pkg/plugins/utils/action"
@@ -32,7 +32,7 @@ func (g *Gitea) CreateAction(ctx context.Context, report *reports.Action, resetD
 	}
 
 	// Check if a pull-request is already opened then exit early if it does.
-	pullrequestTitle, pullrequestDescription, pullrequestLink, err := g.isPullRequestExist()
+	pullrequestTitle, pullrequestDescription, pullrequestLink, err := g.isPullRequestExist(ctx)
 	if err != nil {
 		return err
 	}
@@ -48,7 +48,7 @@ func (g *Gitea) CreateAction(ctx context.Context, report *reports.Action, resetD
 	}
 
 	// Test that both sourceBranch and targetBranch exists on remote before creating a new one
-	ok, err := g.isRemoteBranchesExist()
+	ok, err := g.isRemoteBranchesExist(ctx)
 
 	if err != nil {
 		return err
@@ -86,7 +86,7 @@ func (g *Gitea) CreateAction(ctx context.Context, report *reports.Action, resetD
 		log.Debugf("Setting assignees for pull request: %v", g.spec.Assignees)
 	}
 
-	pr, resp, err := g.client.CreatePullRequest(g.Owner, g.Repository, sdkOpts)
+	pr, resp, err := g.client.PullRequests.CreatePullRequest(ctx, g.Owner, g.Repository, sdkOpts)
 
 	if resp != nil && resp.StatusCode > 400 {
 		log.Debugf("RC: %s\nBody:\n%s", resp.Status, resp.Body)
