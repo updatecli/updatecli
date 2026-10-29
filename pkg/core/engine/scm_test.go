@@ -239,14 +239,17 @@ func TestPushSCMCommitsRecoversFromPushErrors(t *testing.T) {
 			var scmHandler scm.ScmHandler = &mockScm
 
 			pipelines := make([]*pipeline.Pipeline, 0, tt.pipelines)
+			targetResults := make([]*result.Target, 0, tt.pipelines)
 			for i := 0; i < tt.pipelines; i++ {
+				targetResult := &result.Target{Result: result.SUCCESS}
+				targetResults = append(targetResults, targetResult)
 				pipelines = append(pipelines, &pipeline.Pipeline{
 					Name: "test",
 					Targets: map[string]target.Target{
 						"default": {
 							Scm:    &scmHandler,
 							ToPush: true,
-							Result: &result.Target{Result: result.SUCCESS},
+							Result: targetResult,
 						},
 					},
 				})
@@ -258,8 +261,21 @@ func TestPushSCMCommitsRecoversFromPushErrors(t *testing.T) {
 
 			if tt.expectedError {
 				require.Error(t, gotErr)
+				for _, targetResult := range targetResults {
+					// A branch which is not published must keep its targets failed,
+					// otherwise actions would run for changes that were not pushed.
+					assert.Equal(t, result.FAILURE, targetResult.Result)
+					assert.Equal(t, "failed to push commits", targetResult.Description)
+				}
 			} else {
 				require.NoError(t, gotErr)
+				for _, targetResult := range targetResults {
+					// Once the branch is published the previous target result must be
+					// restored, otherwise the action creating the pull request is
+					// skipped as it only runs for targets requiring attention.
+					assert.Equal(t, result.SUCCESS, targetResult.Result)
+					assert.Empty(t, targetResult.Description)
+				}
 			}
 			assert.Equal(t, tt.expectedPushCounter, mockScm.pushCounter)
 		})

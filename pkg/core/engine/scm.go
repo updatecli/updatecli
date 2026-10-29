@@ -96,6 +96,37 @@ func (e *Engine) pushSCMCommits() error {
 		pushErrs[url][branch] = msg
 	}
 
+	// pushFailedTargets records, per repository URL and working branch, the
+	// targets whose push failed with the result they had before the failure.
+	// Failing to push sets the target result to FAILURE, and actions are only
+	// created for targets in an attention state, so the previous result must be
+	// restored once the branch is published: otherwise the action would silently
+	// be skipped even though the target's changes have been pushed.
+	type failedTarget struct {
+		result *result.Target
+		before result.Target
+	}
+	pushFailedTargets := map[string]map[string][]failedTarget{}
+	recordFailedTarget := func(url, branch string, targetResult *result.Target, before result.Target) {
+		if _, ok := pushFailedTargets[url]; !ok {
+			pushFailedTargets[url] = map[string][]failedTarget{}
+		}
+		pushFailedTargets[url][branch] = append(pushFailedTargets[url][branch], failedTarget{
+			result: targetResult,
+			before: before,
+		})
+	}
+	clearPushFailure := func(url, branch string) {
+		delete(pushErrs[url], branch)
+
+		for _, failed := range pushFailedTargets[url][branch] {
+			if failed.result != nil {
+				*failed.result = failed.before
+			}
+		}
+		delete(pushFailedTargets[url], branch)
+	}
+
 	changedSCM := map[string][]string{}
 
 	inconclusiveSCM := e.inconclusiveSCMBranches()
@@ -148,21 +179,26 @@ func (e *Engine) pushSCMCommits() error {
 					msg := fmt.Sprintf("checking out git repository: %v", err)
 					log.Errorf("%s", msg)
 					recordPushErr(url, branch, msg)
+					recordFailedTarget(url, branch, target.Result, *target.Result)
 					target.Result.Result = result.FAILURE
 					continue
 				}
 
+				// PushCommits reports the failure by overwriting the target
+				// result, so its previous value is saved first to be restored if
+				// the branch is eventually published.
+				resultBeforePush := *target.Result
 				err = target.PushCommits()
 				if err != nil {
 					msg := fmt.Sprintf("pushing commits for target %q: %s", target.Config.Name, err.Error())
 					log.Errorf("%s", msg)
 					recordPushErr(url, branch, msg)
-					target.Result.Result = result.FAILURE
+					recordFailedTarget(url, branch, target.Result, resultBeforePush)
 					continue
 				}
 				// The shared working branch has been pushed, so errors reported
 				// by previous targets for that branch are no longer relevant.
-				delete(pushErrs[url], branch)
+				clearPushFailure(url, branch)
 				log.Debugf("Pushed to URL: %q on branch: %q", redact.URL(url), branch)
 
 				if _, ok := changedSCM[url]; !ok {
@@ -200,7 +236,7 @@ func (e *Engine) pushSCMCommits() error {
 				// The working branch has just been pushed, or the remote branch
 				// already contains the local commits, so earlier push errors for
 				// that branch are no longer relevant.
-				delete(pushErrs[url], branch)
+				clearPushFailure(url, branch)
 			}
 			stopCapture()
 		}
