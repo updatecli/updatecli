@@ -93,8 +93,11 @@ type Spec struct {
 	//     * "age", as a fixed version is suggested as soon as it is known.
 	//     * "versionfilter", as the version is the lowest one without known vulnerabilities.
 	//   * dependencies, managed dependencies and the parent pom are covered.
-	//   * the current version is the version written in pom.xml. Artifacts whose version relies on
-	//     a property, such as "${log4j.version}", or is a version range, such as "[1.0,2.0)", are ignored.
+	//   * the current version is the version written in pom.xml. When it is a property, such as
+	//     "${log4j.version}", defined in the same pom.xml, the property is updated instead.
+	//     Artifacts relying on a property defined elsewhere, or on a version range, such as "[1.0,2.0)", are ignored.
+	//   * several artifacts sharing a property each get their own manifest updating that property.
+	//   * BOM imports are ignored, as OSV knows about the artifacts they manage, not the BOM itself.
 	//   * labels, such as "security", are set on the action used by the manifest.
 	//
 	// example:

@@ -3,7 +3,6 @@ package maven
 import (
 	"bytes"
 	"fmt"
-	"strings"
 	"sync"
 	"text/template"
 
@@ -91,25 +90,26 @@ conditions:{{ template "xmlconditions" . }}{{ template "xmltarget" . }}`
 // The "vulnerable" condition stops the pipeline when the current version has none.
 // The pipeline keeps the routine name, which tells the dependency kinds apart, as the
 // pullrequest title is the action one.
+// The OSV values are rendered as double-quoted YAML strings, so a pom.xml value can't break the manifest.
 const securityManifestTemplate = `{{ template "header" . }}sources:
   {{ .SourceID }}:
     name: '{{ .SourceName }}'
     kind: 'vulnerability/osv'
     spec:
       ecosystem: 'Maven'
-      name: '{{ .SourceGroupID }}:{{ .SourceArtifactID }}'
-      version: '{{ .CurrentVersion }}'
+      name: {{ printf "%s:%s" .SourceGroupID .SourceArtifactID | printf "%q" }}
+      version: {{ printf "%q" .CurrentVersion }}
 {{- template "vulnerability" .Vulnerability }}
 conditions:
   vulnerable:
-    name: 'Test if Maven artifact "{{ .SourceID }}" version {{ .CurrentVersion }} has known vulnerabilities'
+    name: {{ printf "Test if Maven artifact %q version %s has known vulnerabilities" .SourceID .CurrentVersion | printf "%q" }}
     kind: 'vulnerability/osv'
     disablesourceinput: true
     failwhen: true
     spec:
       ecosystem: 'Maven'
-      name: '{{ .SourceGroupID }}:{{ .SourceArtifactID }}'
-      version: '{{ .CurrentVersion }}'
+      name: {{ printf "%s:%s" .SourceGroupID .SourceArtifactID | printf "%q" }}
+      version: {{ printf "%q" .CurrentVersion }}
 {{- template "vulnerability" .Vulnerability }}{{ template "xmlconditions" . }}{{ template "xmltarget" . }}`
 
 // The manifest templates are constants, so they are parsed once rather than for every dependency.
@@ -181,8 +181,7 @@ func (m Maven) withRoutineUpdate(params *manifestTemplateParams, currentVersion 
 func (m Maven) withSecurityUpdate(params *manifestTemplateParams, currentVersion string) {
 	params.SourceName = fmt.Sprintf("Get lowest Maven artifact %q version without known vulnerabilities", params.SourceID)
 	params.Vulnerability = m.spec.Vulnerability
-	// POM readers keep the whitespace around a version, which would break the generated YAML
-	params.CurrentVersion = strings.TrimSpace(currentVersion)
+	params.CurrentVersion = currentVersion
 }
 
 // renderManifest generates the manifest updating an artifact from its current version: a security

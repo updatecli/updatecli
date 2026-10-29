@@ -137,6 +137,8 @@ func TestGetDependencyManagementsFromPom(t *testing.T) {
 					GroupID:    "io.jenkins.tools.bom",
 					ArtifactID: "bom-2.346.x",
 					Version:    "1508.v4b_d09ff0e893",
+					Type:       "pom",
+					Scope:      "import",
 				},
 			},
 		},

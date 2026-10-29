@@ -69,10 +69,29 @@ func (m Maven) discoverDependencyManifests(kind string) ([][]byte, error) {
 			continue
 		}
 
+		properties := getPropertiesFromPom(doc)
+
 		for i, dependency := range dependencies {
 
+			targetXMLPath := fmt.Sprintf("%s/dependencies/dependency[%d]/version", dependencyPathPrefix, i+1)
+
+			if m.spec.Vulnerability != nil {
+				// A security update bumps the property, defined in the same pom.xml, holding the version
+				if name, ok := propertyName(dependency.Version); ok {
+					if value, found := properties[name]; found {
+						dependency.Version = value
+						targetXMLPath = "/project/properties/" + name
+					}
+				}
+			}
+
 			if isPropertyVersion(dependency.Version) {
-				log.Printf("Skipping dependency %q in %q as it relies on property %q", dependency.ArtifactID, relativePomFile, dependency.Version)
+				if m.spec.Vulnerability != nil {
+					// A user expects every dependency to be checked for vulnerabilities
+					log.Warningf("Skipping dependency %q in %q as its vulnerabilities can't be checked: property %q isn't defined in this pom.xml", dependency.ArtifactID, relativePomFile, dependency.Version)
+				} else {
+					log.Printf("Skipping dependency %q in %q as it relies on property %q", dependency.ArtifactID, relativePomFile, dependency.Version)
+				}
 				continue
 			}
 
@@ -83,7 +102,7 @@ func (m Maven) discoverDependencyManifests(kind string) ([][]byte, error) {
 			}
 
 			// No need to update Version if it's not specified
-			if len(dependencies[i].Version) == 0 {
+			if len(dependency.Version) == 0 {
 				continue
 			}
 
@@ -101,6 +120,12 @@ func (m Maven) discoverDependencyManifests(kind string) ([][]byte, error) {
 					log.Debugf("Ignoring package %s.%s from %q, as not matching only rule(s)\n", dependency.GroupID, dependency.ArtifactID, relativePomFile)
 					continue
 				}
+			}
+
+			// OSV indexes the artifacts a BOM manages, not the BOM itself
+			if m.spec.Vulnerability != nil && dependency.isBOM() {
+				log.Warningf("Skipping BOM %q in %q as OSV doesn't know about the versions it manages", dependency.ArtifactID, relativePomFile)
+				continue
 			}
 
 			params := manifestTemplateParams{
@@ -123,7 +148,7 @@ func (m Maven) discoverDependencyManifests(kind string) ([][]byte, error) {
 				SourceRepositories:       mavenRepositories,
 				TargetID:                 artifactFullName,
 				TargetName:               fmt.Sprintf("deps(maven): update %q to {{ source %q }}", artifactFullName, artifactFullName),
-				TargetXMLPath:            fmt.Sprintf("%s/dependencies/dependency[%d]/version", dependencyPathPrefix, i+1),
+				TargetXMLPath:            targetXMLPath,
 				File:                     relativePomFile,
 				ScmID:                    m.scmID,
 			}
