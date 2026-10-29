@@ -3,6 +3,7 @@ package maven
 import (
 	"bytes"
 	"fmt"
+	"strings"
 	"sync"
 	"text/template"
 
@@ -180,7 +181,8 @@ func (m Maven) withRoutineUpdate(params *manifestTemplateParams, currentVersion 
 func (m Maven) withSecurityUpdate(params *manifestTemplateParams, currentVersion string) {
 	params.SourceName = fmt.Sprintf("Get lowest Maven artifact %q version without known vulnerabilities", params.SourceID)
 	params.Vulnerability = m.spec.Vulnerability
-	params.CurrentVersion = currentVersion
+	// POM readers keep the whitespace around a version, which would break the generated YAML
+	params.CurrentVersion = strings.TrimSpace(currentVersion)
 }
 
 // renderManifest generates the manifest updating an artifact from its current version: a security
