@@ -10,7 +10,9 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-// FindFilesMatchingPathPattern returns a list of files matching a file pattern
+// FindFilesMatchingPathPattern returns a list of files matching a file pattern.
+// An empty list is returned when nothing matches, so that callers decide whether
+// a pattern matching no file is an error or something to skip.
 func FindFilesMatchingPathPattern(rootDir, filePathPattern string) ([]string, error) {
 
 	if strings.HasPrefix(filePathPattern, "https://") ||
@@ -62,10 +64,6 @@ func FindFilesMatchingPathPattern(rootDir, filePathPattern string) ([]string, er
 
 	if err != nil {
 		return []string{}, fmt.Errorf("unable to walk %q: %s", rootDir, err)
-	}
-
-	if len(results) == 0 {
-		return nil, fmt.Errorf("unable to find files matching %q", filePathPattern)
 	}
 
 	log.Debugf("Found %d files matching %q", len(results), filePathPattern)
