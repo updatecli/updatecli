@@ -53,6 +53,14 @@ func TestSource(t *testing.T) {
 			},
 			expectedResult: "Belgian Waffles",
 		},
+		{
+			name: "Whitespace around a multi-line value is removed",
+			spec: Spec{
+				File: "testdata/data_3.xml",
+				Path: "/project/dependency/artifactId",
+			},
+			expectedResult: "commons-collections",
+		},
 	}
 
 	for _, tt := range testData {

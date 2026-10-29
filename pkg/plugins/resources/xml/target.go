@@ -52,10 +52,11 @@ func (x *XML) Target(_ context.Context, source string, scm scm.ScmHandler, pathR
 		return fmt.Errorf("nothing found at path %q from file %q", x.spec.Path, resourceFile)
 	}
 
-	resultTarget.Information = elem.Text()
+	resultTarget.Information = elemText(elem)
 	resultTarget.NewInformation = value
 
-	if elem.Text() == value {
+	// The whitespace around a value, such as the indentation of an element spanning several lines, is ignored
+	if elemText(elem) == strings.TrimSpace(value) {
 		resultTarget.Result = result.SUCCESS
 		resultTarget.Description = fmt.Sprintf("path %q already set to %q in file %q",
 			x.spec.Path,
@@ -68,12 +69,12 @@ func (x *XML) Target(_ context.Context, source string, scm scm.ScmHandler, pathR
 
 	resultTarget.Description = fmt.Sprintf("path %q updated from %q to %q in file %q",
 		x.spec.Path,
-		elem.Text(),
+		elemText(elem),
 		value,
 		resourceFile)
 
 	if !dryRun {
-		elem.SetText(value)
+		setElemText(elem, value)
 
 		if err := doc.WriteToFile(resourceFile); err != nil {
 			return err
