@@ -88,6 +88,9 @@ conditions:{{ template "xmlconditions" . }}{{ template "xmltarget" . }}`
 // securityManifestTemplate is the Go template used to generate Maven manifests updating an
 // artifact with known vulnerabilities, according to the OSV database.
 // The "vulnerable" condition stops the pipeline when the current version has none.
+// The "currentversion" condition stops it when pom.xml no longer holds the current version, such as
+// a property shared by several artifacts already updated by another pipeline, so a lower fixed
+// version never overwrites a higher one. The next run checks the new version.
 // The pipeline keeps the routine name, which tells the dependency kinds apart, as the
 // pullrequest title is the action one.
 // The OSV values are rendered as double-quoted YAML strings, so a pom.xml value can't break the manifest.
@@ -110,7 +113,19 @@ conditions:
       ecosystem: 'Maven'
       name: {{ printf "%s:%s" .SourceGroupID .SourceArtifactID | printf "%q" }}
       version: {{ printf "%q" .CurrentVersion }}
-{{- template "vulnerability" .Vulnerability }}{{ template "xmlconditions" . }}{{ template "xmltarget" . }}`
+{{- template "vulnerability" .Vulnerability }}
+  currentversion:
+    name: {{ printf "Test if %q still holds version %s" .TargetXMLPath .CurrentVersion | printf "%q" }}
+    kind: 'xml'
+{{- if .ScmID }}
+    scmid: '{{ .ScmID }}'
+{{- end }}
+    disablesourceinput: true
+    spec:
+      file: '{{ .File }}'
+      path: '{{ .TargetXMLPath }}'
+      value: {{ printf "%q" .CurrentVersion }}
+{{- template "xmlconditions" . }}{{ template "xmltarget" . }}`
 
 // The manifest templates are constants, so they are parsed once rather than for every dependency.
 // A parsing error is returned to the caller instead of panicking.

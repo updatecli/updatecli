@@ -97,6 +97,7 @@ type Spec struct {
 	//     "${log4j.version}", defined in the same pom.xml, the property is updated instead.
 	//     Artifacts relying on a property defined elsewhere, or on a version range, such as "[1.0,2.0)", are ignored.
 	//   * several artifacts sharing a property each get their own manifest updating that property.
+	//     Once one manifest updates it, the others are skipped, and the next run checks the new version.
 	//   * BOM imports are ignored, as OSV knows about the artifacts they manage, not the BOM itself.
 	//   * labels, such as "security", are set on the action used by the manifest.
 	//
