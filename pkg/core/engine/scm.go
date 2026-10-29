@@ -83,6 +83,19 @@ func Clone(
 func (e *Engine) pushSCMCommits() error {
 	errs := []string{}
 
+	// pushErrs records push errors per repository URL and working branch.
+	// A working branch is shared by every target of the same SCM, so an error
+	// reported while pushing one target must be cleared as soon as another
+	// target, or the branch publication below, manages to push that branch or
+	// finds it up to date.
+	pushErrs := map[string]map[string]string{}
+	recordPushErr := func(url, branch, msg string) {
+		if _, ok := pushErrs[url]; !ok {
+			pushErrs[url] = map[string]string{}
+		}
+		pushErrs[url][branch] = msg
+	}
+
 	changedSCM := map[string][]string{}
 
 	inconclusiveSCM := e.inconclusiveSCMBranches()
@@ -134,7 +147,7 @@ func (e *Engine) pushSCMCommits() error {
 				if err != nil {
 					msg := fmt.Sprintf("checking out git repository: %v", err)
 					log.Errorf("%s", msg)
-					errs = append(errs, msg)
+					recordPushErr(url, branch, msg)
 					target.Result.Result = result.FAILURE
 					continue
 				}
@@ -143,10 +156,13 @@ func (e *Engine) pushSCMCommits() error {
 				if err != nil {
 					msg := fmt.Sprintf("pushing commits for target %q: %s", target.Config.Name, err.Error())
 					log.Errorf("%s", msg)
-					errs = append(errs, msg)
+					recordPushErr(url, branch, msg)
 					target.Result.Result = result.FAILURE
 					continue
 				}
+				// The shared working branch has been pushed, so errors reported
+				// by previous targets for that branch are no longer relevant.
+				delete(pushErrs[url], branch)
 				log.Debugf("Pushed to URL: %q on branch: %q", redact.URL(url), branch)
 
 				if _, ok := changedSCM[url]; !ok {
@@ -176,11 +192,27 @@ func (e *Engine) pushSCMCommits() error {
 			}
 
 			stopCapture := e.captureSCMConsoleOutput(url, branch)
-			if err := pushSCMBranch(*scmHandlerPtr, url, branch, slices.Contains(inconclusiveSCM[url], branch)); err != nil {
+			branchInconclusive := slices.Contains(inconclusiveSCM[url], branch)
+			if err := pushSCMBranch(*scmHandlerPtr, url, branch, branchInconclusive); err != nil {
 				log.Errorf("%s", err)
 				errs = append(errs, err.Error())
+			} else if !branchInconclusive {
+				// The working branch has just been pushed, or the remote branch
+				// already contains the local commits, so earlier push errors for
+				// that branch are no longer relevant.
+				delete(pushErrs[url], branch)
 			}
 			stopCapture()
+		}
+	}
+
+	// Only keep push errors that no later push of the same working branch managed
+	// to recover from.
+	for url := range allScm {
+		for branch := range allScm[url] {
+			if msg, ok := pushErrs[url][branch]; ok {
+				errs = append(errs, msg)
+			}
 		}
 	}
 

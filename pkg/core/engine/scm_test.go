@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -19,6 +20,10 @@ type mockPushScm struct {
 	targetBranch  string
 	// remoteBranchUpToDate reports if the remote branch already contains the local commits
 	remoteBranchUpToDate bool
+
+	// pushErrors holds the error returned by each successive Push call, if any.
+	// A nil entry makes the corresponding Push call succeed.
+	pushErrors []error
 
 	pushCounter               int
 	cleanWorkingBranchCounter int
@@ -47,6 +52,11 @@ func (m *mockPushScm) Checkout() error {
 
 func (m *mockPushScm) Push() (bool, error) {
 	m.pushCounter++
+	if m.pushCounter <= len(m.pushErrors) {
+		if err := m.pushErrors[m.pushCounter-1]; err != nil {
+			return false, err
+		}
+	}
 	return true, nil
 }
 
@@ -171,6 +181,87 @@ func TestPruneSCMBranches(t *testing.T) {
 
 			require.NoError(t, gotErr)
 			assert.Equal(t, tt.expectedCleanWorkingBranchCounter, mockScm.cleanWorkingBranchCounter)
+		})
+	}
+}
+
+// TestPushSCMCommitsRecoversFromPushErrors checks that a working branch which
+// ends up pushed is not reported as a failure because an earlier push attempt
+// of the same branch errored. See https://github.com/updatecli/updatecli/issues/10825
+func TestPushSCMCommitsRecoversFromPushErrors(t *testing.T) {
+	refLockErr := errors.New("cannot lock ref 'refs/heads/updatecli_main': reference already exists")
+
+	testdata := []struct {
+		name string
+		// pipelines is the number of pipelines sharing the same SCM working branch
+		pipelines            int
+		pushErrors           []error
+		remoteBranchUpToDate bool
+		expectedError        bool
+		expectedPushCounter  int
+	}{
+		{
+			name:                 "an earlier push error is cleared when a later target pushes the branch",
+			pipelines:            2,
+			pushErrors:           []error{refLockErr, nil},
+			remoteBranchUpToDate: true,
+			expectedError:        false,
+			expectedPushCounter:  2,
+		},
+		{
+			name:                 "an earlier push error is cleared when the remote branch is up to date",
+			pipelines:            1,
+			pushErrors:           []error{refLockErr},
+			remoteBranchUpToDate: true,
+			expectedError:        false,
+			expectedPushCounter:  1,
+		},
+		{
+			name:                 "push errors are kept when the branch cannot be published",
+			pipelines:            1,
+			pushErrors:           []error{refLockErr, refLockErr},
+			remoteBranchUpToDate: false,
+			expectedError:        true,
+			expectedPushCounter:  2,
+		},
+	}
+
+	for _, tt := range testdata {
+		t.Run(tt.name, func(t *testing.T) {
+			mockScm := mockPushScm{
+				url:                  "https://github.com/updatecli/updatecli.git",
+				workingBranch:        "updatecli_main",
+				targetBranch:         "main",
+				remoteBranchUpToDate: tt.remoteBranchUpToDate,
+				pushErrors:           tt.pushErrors,
+			}
+
+			var scmHandler scm.ScmHandler = &mockScm
+
+			pipelines := make([]*pipeline.Pipeline, 0, tt.pipelines)
+			for i := 0; i < tt.pipelines; i++ {
+				pipelines = append(pipelines, &pipeline.Pipeline{
+					Name: "test",
+					Targets: map[string]target.Target{
+						"default": {
+							Scm:    &scmHandler,
+							ToPush: true,
+							Result: &result.Target{Result: result.SUCCESS},
+						},
+					},
+				})
+			}
+
+			e := Engine{Pipelines: pipelines}
+
+			gotErr := e.pushSCMCommits()
+
+			if tt.expectedError {
+				require.Error(t, gotErr)
+			} else {
+				require.NoError(t, gotErr)
+			}
+			assert.Equal(t, tt.expectedPushCounter, mockScm.pushCounter)
 		})
 	}
 }
