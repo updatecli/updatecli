@@ -12,6 +12,9 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
+// noFileFoundMatchingCriteria reports a searchpattern that matched no file or no content
+const noFileFoundMatchingCriteria = "no file found matching criteria"
+
 /*
 "file" defines the specification for manipulating any text file.
 It can be used as a "source", a "condition", or a "target".
