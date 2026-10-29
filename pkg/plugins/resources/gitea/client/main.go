@@ -3,7 +3,7 @@ package client
 import (
 	"time"
 
-	giteasdk "code.gitea.io/sdk/gitea"
+	giteasdk "gitea.dev/sdk"
 	"github.com/drone/go-scm/scm"
 	gitea "github.com/drone/go-scm/scm/driver/gitea"
 	"github.com/drone/go-scm/scm/transport/oauth2"
@@ -47,16 +47,5 @@ func NewSDKClient(s Spec) (SDKClient, error) {
 	httpClient := httpclient.NewUncachedRetryClient()
 	httpClient.Timeout = 30 * time.Second
 
-	client, err := giteasdk.NewClient(s.URL, giteasdk.SetToken(s.Token), giteasdk.SetHTTPClient(httpClient))
-
-	if err != nil {
-		// giteasdk.NewClient may perform a network call (for instance to fetch server version)
-		// which makes unit tests that only validate initialization fail when DNS is not available.
-		// To keep New() testable offline, fall back to returning an empty SDK client instead
-		// of failing. Consumers that actually perform requests will encounter errors when
-		// using this client, but tests that only validate configuration will pass.
-		return &giteasdk.Client{}, nil
-	}
-
-	return client, nil
+	return giteasdk.NewClient(s.URL, giteasdk.SetToken(s.Token), giteasdk.SetHTTPClient(httpClient))
 }

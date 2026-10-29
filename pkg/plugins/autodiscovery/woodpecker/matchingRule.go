@@ -42,7 +42,7 @@ func (m MatchingRules) Validate() error {
 	return nil
 }
 
-// isMatchingRule tests that all defined rules are matching and returns true if it's the case otherwise returns false
+// isMatchingRule tests if any of the defined rules matches.
 func (m MatchingRules) isMatchingRule(rootDir, filePath, image string) bool {
 	if len(m) > 0 {
 		for _, matchingRule := range m {
