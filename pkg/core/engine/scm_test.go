@@ -18,6 +18,7 @@ type mockPushScm struct {
 	url           string
 	workingBranch string
 	targetBranch  string
+	directory     string
 	// remoteBranchUpToDate reports if the remote branch already contains the local commits
 	remoteBranchUpToDate bool
 
@@ -31,6 +32,10 @@ type mockPushScm struct {
 
 func (m *mockPushScm) GetURL() string {
 	return m.url
+}
+
+func (m *mockPushScm) GetDirectory() string {
+	return m.directory
 }
 
 func (m *mockPushScm) GetBranches() (sourceBranch, workingBranch, targetBranch string) {
@@ -280,4 +285,68 @@ func TestPushSCMCommitsRecoversFromPushErrors(t *testing.T) {
 			assert.Equal(t, tt.expectedPushCounter, mockScm.pushCounter)
 		})
 	}
+}
+
+// TestPushSCMCommitsKeepsFailuresFromOtherCheckouts checks that a push from one
+// working directory does not clear the push failure of another checkout sharing
+// the same repository URL and working branch.
+func TestPushSCMCommitsKeepsFailuresFromOtherCheckouts(t *testing.T) {
+	refLockErr := errors.New("cannot lock ref 'refs/heads/updatecli_main': reference already exists")
+
+	failedScm := mockPushScm{
+		url:                  "https://github.com/updatecli/updatecli.git",
+		workingBranch:        "updatecli_main",
+		targetBranch:         "main",
+		directory:            "/checkouts/one",
+		remoteBranchUpToDate: false,
+		pushErrors:           []error{refLockErr, refLockErr},
+	}
+	pushedScm := mockPushScm{
+		url:                  "https://github.com/updatecli/updatecli.git",
+		workingBranch:        "updatecli_main",
+		targetBranch:         "main",
+		directory:            "/checkouts/two",
+		remoteBranchUpToDate: true,
+	}
+
+	var failedHandler scm.ScmHandler = &failedScm
+	var pushedHandler scm.ScmHandler = &pushedScm
+
+	failedResult := &result.Target{Result: result.SUCCESS}
+	pushedResult := &result.Target{Result: result.SUCCESS}
+
+	e := Engine{Pipelines: []*pipeline.Pipeline{
+		{
+			Name: "failing checkout",
+			Targets: map[string]target.Target{
+				"default": {
+					Scm:    &failedHandler,
+					ToPush: true,
+					Result: failedResult,
+				},
+			},
+		},
+		{
+			Name: "pushing checkout",
+			Targets: map[string]target.Target{
+				"default": {
+					Scm:    &pushedHandler,
+					ToPush: true,
+					Result: pushedResult,
+				},
+			},
+		},
+	}}
+
+	gotErr := e.pushSCMCommits()
+
+	// The second checkout pushed its commits, but nothing proves that the first
+	// checkout's commits have been published, so its failure must be kept.
+	require.Error(t, gotErr)
+	assert.Equal(t, result.FAILURE, failedResult.Result)
+	assert.Equal(t, "failed to push commits", failedResult.Description)
+
+	// The checkout which pushed its commits is unaffected.
+	assert.Equal(t, result.SUCCESS, pushedResult.Result)
+	assert.Empty(t, pushedResult.Description)
 }
