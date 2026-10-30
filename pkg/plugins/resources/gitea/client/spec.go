@@ -5,7 +5,12 @@ import (
 	"strings"
 
 	"github.com/updatecli/updatecli/pkg/core/log"
+	"github.com/updatecli/updatecli/pkg/plugins/resources/gitea/credential"
 )
+
+// defaultTokenUsername is the git username used with a token when no username is set,
+// as git authentication requires a non-empty username.
+const defaultTokenUsername string = "oauth2"
 
 // Spec defines the settings used to connect to a Gitea instance.
 // It is shared by every "gitea" resource and by the "gitea/pullrequest" action.
@@ -25,6 +30,8 @@ type Spec struct {
 	//
 	// remark:
 	//   * in a "gitea/pullrequest" action, the value is inherited from the scm when unset.
+	//   * when unset, the environment variable "UPDATECLI_GITEA_USERNAME" is used.
+	//   * when still unset and a token is available, "oauth2" is used.
 	//
 	Username string `yaml:",omitempty"`
 	// "token" defines the credential used to authenticate with the Gitea API.
@@ -32,10 +39,12 @@ type Spec struct {
 	// remark:
 	//   * a token is sensitive information. Do not set it directly in the manifest.
 	//     Use an environment variable or a SOPS file instead.
-	//   * `{{ requiredEnv "GITEA_TOKEN" }}` retrieves the token from the environment variable "GITEA_TOKEN".
+	//   * `{{ requiredEnv "MY_TOKEN" }}` retrieves the token from the environment variable "MY_TOKEN".
 	//   * `{{ .gitea.token }}` retrieves the token from a SOPS file.
 	//     See https://github.com/getsops/sops for more information about SOPS files.
 	//   * in a "gitea/pullrequest" action, the value is inherited from the scm when unset.
+	//   * when unset, the environment variable "UPDATECLI_GITEA_TOKEN" is used.
+	//     It applies to every Gitea server used by a pipeline.
 	//
 	Token string `yaml:",omitempty"`
 }
@@ -61,6 +70,20 @@ func (s *Spec) Sanitize() error {
 
 	if !strings.HasPrefix(s.URL, "https://") && !strings.HasPrefix(s.URL, "http://") {
 		s.URL = "https://" + s.URL
+	}
+
+	username, token := credential.GetCredentialsFromEnv()
+
+	if s.Username == "" {
+		s.Username = username
+	}
+
+	if s.Token == "" {
+		s.Token = token
+	}
+
+	if s.Username == "" && s.Token != "" {
+		s.Username = defaultTokenUsername
 	}
 
 	return nil

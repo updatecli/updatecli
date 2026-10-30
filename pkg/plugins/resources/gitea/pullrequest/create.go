@@ -3,6 +3,7 @@ package pullrequest
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	giteasdk "gitea.dev/sdk"
 	"github.com/updatecli/updatecli/pkg/core/log"
@@ -61,7 +62,7 @@ func (g *Gitea) CreateAction(ctx context.Context, report *reports.Action, resetD
 		report.Title = pr.Title
 		report.Link = pr.HTMLURL
 		report.Description = pr.Body
-		return nil
+		return g.enableAutoMerge(ctx, pr)
 	}
 
 	body, err := g.pullRequestBody("", report, resetDescription)
@@ -115,6 +116,9 @@ func (g *Gitea) CreateAction(ctx context.Context, report *reports.Action, resetD
 	}
 
 	if err != nil {
+		if strings.EqualFold(g.spec.Merge.Strategy, MergeStrategyAuto) {
+			return fmt.Errorf("creating Gitea pull request for auto-merge: %w", err)
+		}
 		log.Infof("Gitea pullrequest not created, skipping")
 		return nil
 	}
@@ -125,7 +129,7 @@ func (g *Gitea) CreateAction(ctx context.Context, report *reports.Action, resetD
 
 	log.Infof("Gitea pullrequest successfully opened on %q", pr.HTMLURL)
 
-	return nil
+	return g.enableAutoMerge(ctx, pr)
 }
 
 // pullRequestBody generates the pull request description, merging the report

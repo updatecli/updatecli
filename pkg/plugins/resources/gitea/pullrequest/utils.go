@@ -30,7 +30,11 @@ var (
 
 // findExistingPullRequest queries a remote Gitea instance to find the open pullrequest
 // matching the source and target branches. It returns nil if there is none.
+// A pull request opened from a fork can use the same branch names, so it's only returned
+// if no pull request has its head on the repository itself.
 func (g *Gitea) findExistingPullRequest(ctx context.Context) (*giteasdk.PullRequest, error) {
+	var fork *giteasdk.PullRequest
+
 	page := 1
 	for {
 		optsSearch := giteasdk.ListPullRequestsOptions{
@@ -58,11 +62,22 @@ func (g *Gitea) findExistingPullRequest(ctx context.Context) (*giteasdk.PullRequ
 		}
 
 		for _, p := range pullrequests {
+			// Without both branches, a pull request can't match the source and target branches.
+			if p.Head == nil || p.Base == nil {
+				continue
+			}
 			if p.Head.Name == g.SourceBranch &&
 				p.Base.Name == g.TargetBranch &&
 				// If no closed and merged date is set, the pullrequest is still open
 				p.Closed == nil &&
 				p.Merged == nil {
+
+				if p.Head.RepoID != p.Base.RepoID {
+					if fork == nil {
+						fork = p
+					}
+					continue
+				}
 
 				log.Infof("%s GiTea pullrequest detected at:\n\t%s",
 					result.SUCCESS,
@@ -78,7 +93,7 @@ func (g *Gitea) findExistingPullRequest(ctx context.Context) (*giteasdk.PullRequ
 		page = resp.NextPage
 	}
 
-	return nil, nil
+	return fork, nil
 }
 
 /*

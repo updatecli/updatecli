@@ -1,8 +1,35 @@
 package pullrequest
 
 import (
+	"fmt"
+	"strings"
+
+	giteasdk "gitea.dev/sdk"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/gitea/client"
 )
+
+const (
+	MergeStrategyAuto   = "auto"
+	MergeStrategyManual = "manual"
+)
+
+// MergeSpec defines how Updatecli merges a pull request.
+type MergeSpec struct {
+	// "strategy" defines how the pull request is merged.
+	//
+	// default:
+	//   manual
+	//
+	// remark:
+	//   * accepted values are "auto", "manual" or empty, case-insensitive.
+	//   * "manual" and empty neither request nor cancel auto-merge.
+	//   * "auto" requests server-side auto-merge. Use Gitea 1.22+ or Forgejo 8+.
+	//   * settings are applied when target changes trigger the action. Runs without target changes only report an existing PR.
+	//   * configure required checks and branch protections on the repository. Merging may be immediate.
+	//   * an existing auto-merge schedule is left unchanged.
+	//
+	Strategy string `yaml:",omitempty"`
+}
 
 /*
 "gitea/pullrequest" defines the specification for opening a pull request on a Gitea repository.
@@ -97,4 +124,49 @@ type Spec struct {
 	// ```
 	//
 	Assignees []string `yaml:",omitempty"`
+	// "merge" defines how Updatecli merges the pull request.
+	//
+	// default:
+	//   strategy manual
+	//
+	// example:
+	// ```
+	//   merge:
+	//     strategy: auto
+	// ```
+	//
+	Merge MergeSpec `yaml:",omitempty"`
+	// "mergemethod" defines the merge method used with "merge.strategy: auto".
+	//
+	// default:
+	//   empty, which uses the repository's default merge style.
+	//
+	// remark:
+	//   * accepted values are "merge", "rebase", "rebase-merge", "squash", "fast-forward-only" or empty, case-insensitive.
+	//   * the server enforces which merge methods are allowed on the repository.
+	//   * changing this value does not change the method of an existing auto-merge schedule.
+	//
+	MergeMethod string `yaml:",omitempty"`
+}
+
+// Validate ensures that the provided Spec is valid.
+func (s *Spec) Validate() error {
+	switch strings.ToLower(s.Merge.Strategy) {
+	case "", MergeStrategyAuto, MergeStrategyManual:
+	default:
+		return fmt.Errorf("invalid merge strategy %q, accepting one of 'auto', 'manual', or ''", s.Merge.Strategy)
+	}
+	if s.MergeMethod != "" && !isMergeMethodValid(s.MergeMethod) {
+		return fmt.Errorf("invalid merge method %q, accepting one of 'merge', 'rebase', 'rebase-merge', 'squash', 'fast-forward-only', or ''", s.MergeMethod)
+	}
+	return nil
+}
+
+func isMergeMethodValid(method string) bool {
+	switch giteasdk.MergeStyle(strings.ToLower(method)) {
+	case giteasdk.MergeStyleMerge, giteasdk.MergeStyleRebase, giteasdk.MergeStyleRebaseMerge,
+		giteasdk.MergeStyleSquash, giteasdk.MergeStyleFastForwardOnly:
+		return true
+	}
+	return false
 }
