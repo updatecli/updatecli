@@ -58,8 +58,8 @@ func (g *Gitea) findExistingPullRequest(ctx context.Context) (*giteasdk.PullRequ
 		}
 
 		for _, p := range pullrequests {
-			// A fork can use the same branch name as the working branch.
-			if p.Head == nil || p.Base == nil || p.Head.RepoID != p.Base.RepoID {
+			// Without both branches, a pull request can't match the source and target branches.
+			if p.Head == nil || p.Base == nil {
 				continue
 			}
 			if p.Head.Name == g.SourceBranch &&
