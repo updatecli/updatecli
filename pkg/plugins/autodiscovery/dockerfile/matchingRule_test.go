@@ -56,7 +56,7 @@ func TestIsMatchingRules(t *testing.T) {
 			rules: MatchingRules{
 				MatchingRule{
 					Images: []string{
-						"updatecli/updatecli:latest",
+						"updatecli/updatecli",
 					},
 				},
 			},
@@ -70,12 +70,12 @@ func TestIsMatchingRules(t *testing.T) {
 				},
 				MatchingRule{
 					Images: []string{
-						"updatecli/updatecli:latest",
+						"updatecli/updatecli",
 					},
 				},
 			},
 			filePath:       "alpine/Dockerfile",
-			image:          "updatecli/updatecli:latest",
+			image:          "updatecli/updatecli",
 			expectedResult: true,
 		},
 		{
@@ -83,13 +83,32 @@ func TestIsMatchingRules(t *testing.T) {
 				MatchingRule{
 					Path: "Dockerfile",
 					Images: []string{
-						"updatecli/updatecli:latest",
+						"updatecli/updatecli",
 					},
 				},
 			},
 			filePath:       "alpine/Dockerfile",
-			image:          "updatecli/updatecli:latest",
+			image:          "updatecli/updatecli",
 			expectedResult: false,
+		},
+		{
+			name: "multiple rules are evaluated as OR",
+			rules: MatchingRules{
+				MatchingRule{
+					Path: "applications/clickhouse.yaml",
+				},
+				MatchingRule{
+					Path: "applications/postgres.yaml",
+				},
+				MatchingRule{
+					Images: []string{
+						"ghcr.io/private/redis",
+					},
+				},
+			},
+			filePath:       "applications/redis.yaml",
+			image:          "ghcr.io/private/redis",
+			expectedResult: true,
 		},
 	}
 
