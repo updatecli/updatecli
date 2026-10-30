@@ -90,41 +90,49 @@ func (g *Gitea) isRemoteBranchesExist(ctx context.Context) (bool, error) {
 		repository = g.spec.Repository
 	}
 
-	remoteBranches, resp, err := g.client.Repositories.ListRepoBranches(
-		ctx,
-		owner,
-		repository,
-		giteasdk.ListRepoBranchesOptions{
-			ListOptions: giteasdk.ListOptions{
-				Page:     1,
-				PageSize: 30,
-			},
-		},
-	)
-
-	if err != nil {
-		log.Debugf("Error: %s", err)
-		return false, err
-	}
-
-	if resp != nil && resp.StatusCode > 400 {
-		log.Debugf("gitea/ListRepoBranches RC: %d", resp.StatusCode)
-	}
-
 	foundRemoteSourceBranch := false
 	foundRemoteTargetBranch := false
 
-	for _, remoteBranch := range remoteBranches {
-		if remoteBranch.Name == sourceBranch {
-			foundRemoteSourceBranch = true
-		}
-		if remoteBranch.Name == targetBranch {
-			foundRemoteTargetBranch = true
+	page := 1
+	for {
+		remoteBranches, resp, err := g.client.Repositories.ListRepoBranches(
+			ctx,
+			owner,
+			repository,
+			giteasdk.ListRepoBranchesOptions{
+				ListOptions: giteasdk.ListOptions{
+					Page:     page,
+					PageSize: 30,
+				},
+			},
+		)
+
+		if err != nil {
+			log.Debugf("Error: %s", err)
+			return false, err
 		}
 
-		if foundRemoteSourceBranch && foundRemoteTargetBranch {
-			return true, nil
+		if resp != nil && resp.StatusCode > 400 {
+			log.Debugf("gitea/ListRepoBranches RC: %d", resp.StatusCode)
 		}
+
+		for _, remoteBranch := range remoteBranches {
+			if remoteBranch.Name == sourceBranch {
+				foundRemoteSourceBranch = true
+			}
+			if remoteBranch.Name == targetBranch {
+				foundRemoteTargetBranch = true
+			}
+
+			if foundRemoteSourceBranch && foundRemoteTargetBranch {
+				return true, nil
+			}
+		}
+
+		if resp == nil || resp.NextPage == 0 {
+			break
+		}
+		page = resp.NextPage
 	}
 
 	if !foundRemoteSourceBranch {
