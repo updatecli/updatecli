@@ -94,6 +94,8 @@ If they still diverge after maxAttempts, then we consider that we don't know eno
 close the pull request and we let a future Updatecli execution deal with it.
 */
 func (g *Gitea) isPullRequestEmpty(ctx context.Context, listed *giteasdk.PullRequest, maxAttempts int) (bool, error) {
+	index := listed.Index
+
 	for attempt := 1; attempt <= maxAttempts; attempt++ {
 		pullrequest, _, err := g.client.PullRequests.GetPullRequest(ctx, g.Owner, g.Repository, listed.Index)
 		if err != nil {
@@ -127,6 +129,14 @@ func (g *Gitea) isPullRequestEmpty(ctx context.Context, listed *giteasdk.PullReq
 
 		if listed == nil {
 			// The pull request is not open anymore so there is nothing to clean
+			return false, nil
+		}
+
+		if listed.Index != index {
+			// Another pull request replaced the one we were asked to clean
+			log.Debugf("Skipping pull request cleanup as pull request %d replaced pull request %d",
+				listed.Index,
+				index)
 			return false, nil
 		}
 	}

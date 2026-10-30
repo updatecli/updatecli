@@ -35,6 +35,8 @@ type cleanServer struct {
 	// listedSha returns the pull request ref commit for each list request, the last value being repeated
 	listedSha []string
 	branchSha string
+	// replacementIndex is the index of the pull request listed from the second list request
+	replacementIndex int64
 	// title and body describe the existing pull request
 	title string
 	body  string
@@ -74,7 +76,11 @@ func (s *cleanServer) handler(w http.ResponseWriter, r *http.Request) {
 		pullRequests := []giteasdk.PullRequest{}
 		if !s.noPullRequest {
 			sha := s.listedSha[min(s.listCount, len(s.listedSha))-1]
-			pullRequests = append(pullRequests, pullRequest(sha))
+			pr := pullRequest(sha)
+			if s.replacementIndex != 0 && s.listCount > 1 {
+				pr.Index = s.replacementIndex
+			}
+			pullRequests = append(pullRequests, pr)
 		}
 		_ = json.NewEncoder(w).Encode(pullRequests)
 
@@ -187,6 +193,18 @@ func TestCleanAction(t *testing.T) {
 			},
 			expectedLists:  cleanupMaxAttempts,
 			expectedSleeps: cleanupMaxAttempts - 1,
+		},
+		{
+			name: "Pull request replaced while waiting for its ref to catch up",
+			server: cleanServer{
+				headRepoID:       testRepoID,
+				changedFiles:     intPtr(0),
+				listedSha:        []string{"old", "abc"},
+				branchSha:        "abc",
+				replacementIndex: testPRIndex + 1,
+			},
+			expectedLists:  2,
+			expectedSleeps: 1,
 		},
 		{
 			name: "Pull request opened from a fork",
