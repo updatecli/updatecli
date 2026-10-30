@@ -3,6 +3,7 @@ package pullrequest
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	giteasdk "gitea.dev/sdk"
@@ -26,15 +27,48 @@ const (
 var (
 	// cleanupSleep is a variable so it can be overridden from the tests.
 	cleanupSleep = time.Sleep
+	// draftTitlePrefixes lists the title prefixes marking a pull request as a draft on a default Gitea configuration.
+	draftTitlePrefixes = []string{"WIP:", "[WIP]"}
 )
+
+// draftTitlePrefix returns the prefix marking a pull request title as a draft, as written in the
+// title, or an empty string if there is none.
+func draftTitlePrefix(title string) string {
+	for _, prefix := range draftTitlePrefixes {
+		if len(title) >= len(prefix) && strings.EqualFold(title[:len(prefix)], prefix) {
+			return title[:len(prefix)]
+		}
+	}
+	return ""
+}
+
+// isDraftPullRequest tells if a pull request is held back as a draft. Gitea marks a pull request
+// as a draft based on its title, and each server can configure its own prefixes.
+func isDraftPullRequest(pr *giteasdk.PullRequest) bool {
+	return pr.Draft || draftTitlePrefix(pr.Title) != ""
+}
+
+// existingPullRequestTitle returns the title to set on an existing pull request.
+// The title follows the pipeline, but a draft must remain a draft.
+func existingPullRequestTitle(title string, pr *giteasdk.PullRequest) string {
+	prefix := draftTitlePrefix(pr.Title)
+
+	switch {
+	case !isDraftPullRequest(pr), draftTitlePrefix(title) != "":
+		return title
+	case prefix == "", title == "":
+		// Without a known prefix, the server uses one we can't detect so we keep the title as it is.
+		return pr.Title
+	}
+
+	return prefix + " " + title
+}
 
 // findExistingPullRequest queries a remote Gitea instance to find the open pullrequest
 // matching the source and target branches. It returns nil if there is none.
-// A pull request opened from a fork can use the same branch names, so it's only returned
-// if no pull request has its head on the repository itself.
+// A pull request opened from a fork can use the same branch names but isn't managed
+// by Updatecli, so it's ignored.
 func (g *Gitea) findExistingPullRequest(ctx context.Context) (*giteasdk.PullRequest, error) {
-	var fork *giteasdk.PullRequest
-
 	page := 1
 	for {
 		optsSearch := giteasdk.ListPullRequestsOptions{
@@ -73,15 +107,13 @@ func (g *Gitea) findExistingPullRequest(ctx context.Context) (*giteasdk.PullRequ
 				p.Merged == nil {
 
 				if p.Head.RepoID != p.Base.RepoID {
-					if fork == nil {
-						fork = p
-					}
+					log.Debugf("Ignoring Gitea pull request as its head is on another repository:\n\t%s", p.HTMLURL)
 					continue
 				}
 
 				log.Infof("%s GiTea pullrequest detected at:\n\t%s",
 					result.SUCCESS,
-					p.URL)
+					p.HTMLURL)
 
 				return p, nil
 			}
@@ -93,7 +125,7 @@ func (g *Gitea) findExistingPullRequest(ctx context.Context) (*giteasdk.PullRequ
 		page = resp.NextPage
 	}
 
-	return fork, nil
+	return nil, nil
 }
 
 /*
@@ -109,6 +141,8 @@ If they still diverge after maxAttempts, then we consider that we don't know eno
 close the pull request and we let a future Updatecli execution deal with it.
 */
 func (g *Gitea) isPullRequestEmpty(ctx context.Context, listed *giteasdk.PullRequest, maxAttempts int) (bool, error) {
+	index := listed.Index
+
 	for attempt := 1; attempt <= maxAttempts; attempt++ {
 		pullrequest, _, err := g.client.PullRequests.GetPullRequest(ctx, g.Owner, g.Repository, listed.Index)
 		if err != nil {
@@ -144,11 +178,19 @@ func (g *Gitea) isPullRequestEmpty(ctx context.Context, listed *giteasdk.PullReq
 			// The pull request is not open anymore so there is nothing to clean
 			return false, nil
 		}
+
+		if listed.Index != index {
+			// Another pull request replaced the one we were asked to clean
+			log.Debugf("Skipping pull request cleanup as pull request %d replaced pull request %d",
+				listed.Index,
+				index)
+			return false, nil
+		}
 	}
 
 	log.Debugf("Skipping pull request cleanup as its state doesn't reflect the working branch %q yet:\n\t%s",
 		g.SourceBranch,
-		listed.URL)
+		listed.HTMLURL)
 
 	return false, nil
 }
@@ -168,7 +210,7 @@ func (g *Gitea) closePullRequest(ctx context.Context, index int64) error {
 		return fmt.Errorf("update Gitea pull request: %w", err)
 	}
 
-	log.Infof("%s at:\n\n\t%s\n\n", pullRequestClosedMessage, pullrequest.URL)
+	log.Infof("%s at:\n\n\t%s\n\n", pullRequestClosedMessage, pullrequest.HTMLURL)
 
 	// Not returning an error if the comment failed to be added
 	// as the main purpose of this function is to close the pullrequest
