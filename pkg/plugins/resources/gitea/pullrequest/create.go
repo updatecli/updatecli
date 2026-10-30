@@ -49,7 +49,7 @@ func (g *Gitea) CreateAction(ctx context.Context, report *reports.Action, resetD
 		}
 
 		report.Title = pr.Title
-		report.Link = pr.URL
+		report.Link = pr.HTMLURL
 		report.Description = pr.Body
 		return nil
 	}
@@ -111,9 +111,9 @@ func (g *Gitea) CreateAction(ctx context.Context, report *reports.Action, resetD
 
 	report.Title = pr.Title
 	report.Description = pr.Body
-	report.Link = pr.URL
+	report.Link = pr.HTMLURL
 
-	log.Infof("Gitea pullrequest successfully opened on %q", pr.URL)
+	log.Infof("Gitea pullrequest successfully opened on %q", pr.HTMLURL)
 
 	return nil
 }

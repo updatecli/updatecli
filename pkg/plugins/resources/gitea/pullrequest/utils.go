@@ -66,7 +66,7 @@ func (g *Gitea) findExistingPullRequest(ctx context.Context) (*giteasdk.PullRequ
 
 				log.Infof("%s GiTea pullrequest detected at:\n\t%s",
 					result.SUCCESS,
-					p.URL)
+					p.HTMLURL)
 
 				return p, nil
 			}
@@ -133,7 +133,7 @@ func (g *Gitea) isPullRequestEmpty(ctx context.Context, listed *giteasdk.PullReq
 
 	log.Debugf("Skipping pull request cleanup as its state doesn't reflect the working branch %q yet:\n\t%s",
 		g.SourceBranch,
-		listed.URL)
+		listed.HTMLURL)
 
 	return false, nil
 }
@@ -153,7 +153,7 @@ func (g *Gitea) closePullRequest(ctx context.Context, index int64) error {
 		return fmt.Errorf("update Gitea pull request: %w", err)
 	}
 
-	log.Infof("%s at:\n\n\t%s\n\n", pullRequestClosedMessage, pullrequest.URL)
+	log.Infof("%s at:\n\n\t%s\n\n", pullRequestClosedMessage, pullrequest.HTMLURL)
 
 	// Not returning an error if the comment failed to be added
 	// as the main purpose of this function is to close the pullrequest

@@ -57,13 +57,14 @@ func (s *cleanServer) handler(w http.ResponseWriter, r *http.Request) {
 
 	pullRequest := func(sha string) giteasdk.PullRequest {
 		return giteasdk.PullRequest{
-			Index: testPRIndex,
-			URL:   "https://gitea.example.com/updatecli/updatecli/pulls/42",
-			Title: s.title,
-			Body:  s.body,
-			State: giteasdk.StateOpen,
-			Head:  &giteasdk.PRBranchInfo{Name: "updatecli", Sha: sha, RepoID: s.headRepoID},
-			Base:  &giteasdk.PRBranchInfo{Name: "main", RepoID: testRepoID},
+			Index:   testPRIndex,
+			URL:     "https://gitea.example.com/api/v1/repos/updatecli/updatecli/pulls/42",
+			HTMLURL: "https://gitea.example.com/updatecli/updatecli/pulls/42",
+			Title:   s.title,
+			Body:    s.body,
+			State:   giteasdk.StateOpen,
+			Head:    &giteasdk.PRBranchInfo{Name: "updatecli", Sha: sha, RepoID: s.headRepoID},
+			Base:    &giteasdk.PRBranchInfo{Name: "main", RepoID: testRepoID},
 		}
 	}
 
