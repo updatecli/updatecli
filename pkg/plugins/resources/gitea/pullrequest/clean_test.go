@@ -378,7 +378,7 @@ func TestFindExistingPullRequest(t *testing.T) {
 	}
 }
 
-func TestFindExistingPullRequestPrefersOwned(t *testing.T) {
+func TestFindExistingPullRequestIgnoresForks(t *testing.T) {
 	branches := func(index, headRepoID int64) *giteasdk.PullRequest {
 		return &giteasdk.PullRequest{
 			Index: index,
@@ -403,9 +403,8 @@ func TestFindExistingPullRequestPrefersOwned(t *testing.T) {
 			expectedIndex: 2,
 		},
 		{
-			name:          "Only a fork",
-			pages:         [][]*giteasdk.PullRequest{{branches(1, testForkID)}},
-			expectedIndex: 1,
+			name:  "Only a fork",
+			pages: [][]*giteasdk.PullRequest{{branches(1, testForkID)}},
 		},
 	}
 
@@ -438,6 +437,12 @@ func TestFindExistingPullRequestPrefersOwned(t *testing.T) {
 
 			got, err := g.findExistingPullRequest(t.Context())
 			require.NoError(t, err)
+
+			if tt.expectedIndex == 0 {
+				assert.Nil(t, got)
+				return
+			}
+
 			require.NotNil(t, got)
 			assert.Equal(t, tt.expectedIndex, got.Index)
 		})

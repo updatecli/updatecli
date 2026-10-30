@@ -28,16 +28,6 @@ func (g *Gitea) CreateAction(ctx context.Context, report *reports.Action, resetD
 
 	// If a pullrequest already exist, we update it and the report with the merged description
 	if pullrequest != nil {
-		// A pull request opened from a fork isn't managed by Updatecli, even if it uses the same branch name
-		if pullrequest.Base == nil || pullrequest.Head.RepoID != pullrequest.Base.RepoID {
-			log.Debugf("Skipping Gitea pull request update as its head is on another repository:\n\t%s", pullrequest.HTMLURL)
-
-			report.Title = pullrequest.Title
-			report.Link = pullrequest.HTMLURL
-			report.Description = pullrequest.Body
-			return nil
-		}
-
 		log.Debugf("Gitea pullrequest already exist, updating it")
 
 		body, err := g.pullRequestBody(pullrequest.Body, report, resetDescription)

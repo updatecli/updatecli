@@ -20,12 +20,6 @@ func (g *Gitea) CleanAction(ctx context.Context, report *reports.Action) error {
 		return nil
 	}
 
-	// A pull request opened from a fork isn't managed by Updatecli, even if it uses the same branch name
-	if existingPR.Base == nil || existingPR.Head.RepoID != existingPR.Base.RepoID {
-		log.Debugf("Skipping Gitea pull request cleanup as its head is on another repository:\n\t%s", existingPR.HTMLURL)
-		return nil
-	}
-
 	isEmpty, err := g.isPullRequestEmpty(ctx, existingPR, cleanupMaxAttempts)
 	if err != nil {
 		return err

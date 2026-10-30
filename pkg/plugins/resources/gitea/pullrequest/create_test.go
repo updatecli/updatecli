@@ -2,8 +2,10 @@ package pullrequest
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	giteasdk "gitea.dev/sdk"
@@ -153,10 +155,76 @@ func TestCreateActionExistingPullRequest(t *testing.T) {
 }
 
 func TestCreateActionForkPullRequest(t *testing.T) {
+	const openedIndex = testPRIndex + 1
+	openedLink := "https://gitea.example.com/updatecli/updatecli/pulls/43"
+
 	fake := cleanServer{
 		headRepoID: testForkID,
 		listedSha:  []string{"abc"},
 		branchSha:  "abc",
+		title:      "remote title",
+		body:       "remote body",
+	}
+
+	var mergePaths []string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+
+		switch {
+		case r.URL.Path == "/api/v1/version":
+			_, _ = w.Write([]byte(`{"version":"1.24.0"}`))
+		case r.Method == http.MethodGet && r.URL.Path == "/api/v1/repos/updatecli/updatecli/branches":
+			_ = json.NewEncoder(w).Encode([]giteasdk.Branch{{Name: "updatecli"}, {Name: "main"}})
+		case r.Method == http.MethodPost && r.URL.Path == "/api/v1/repos/updatecli/updatecli/pulls":
+			w.WriteHeader(http.StatusCreated)
+			_ = json.NewEncoder(w).Encode(giteasdk.PullRequest{
+				Index:   openedIndex,
+				HTMLURL: openedLink,
+				Title:   "report title",
+				Head:    &giteasdk.PRBranchInfo{Name: "updatecli", Sha: "def", RepoID: testRepoID},
+				Base:    &giteasdk.PRBranchInfo{Name: "main", RepoID: testRepoID},
+			})
+		case r.Method == http.MethodPost && strings.HasSuffix(r.URL.Path, "/merge"):
+			mergePaths = append(mergePaths, r.URL.Path)
+		default:
+			fake.handler(w, r)
+		}
+	}))
+	defer server.Close()
+
+	client, err := giteasdk.NewClient(server.URL)
+	require.NoError(t, err)
+
+	g := Gitea{
+		spec: Spec{
+			Owner:        "updatecli",
+			Repository:   "updatecli",
+			SourceBranch: "updatecli",
+			TargetBranch: "main",
+			Merge:        MergeSpec{Strategy: MergeStrategyAuto},
+			MergeMethod:  "squash",
+		},
+		client:       client,
+		Owner:        "updatecli",
+		Repository:   "updatecli",
+		SourceBranch: "updatecli",
+		TargetBranch: "main",
+	}
+
+	report := testActionReport("current")
+
+	require.NoError(t, g.CreateAction(t.Context(), &report, false))
+
+	// The fork's pull request is left untouched and Updatecli opens its own
+	assert.Zero(t, fake.closeCount)
+	assert.Equal(t, openedLink, report.Link)
+	assert.Equal(t, []string{fmt.Sprintf("/api/v1/repos/updatecli/updatecli/pulls/%d/merge", openedIndex)}, mergePaths)
+}
+
+func TestCheckActionExistForkPullRequest(t *testing.T) {
+	fake := cleanServer{
+		headRepoID: testForkID,
+		listedSha:  []string{"abc"},
 		title:      "remote title",
 		body:       "remote body",
 	}
@@ -174,12 +242,10 @@ func TestCreateActionForkPullRequest(t *testing.T) {
 		TargetBranch: "main",
 	}
 
-	report := testActionReport("current")
+	report := reports.Action{}
 
-	require.NoError(t, g.CreateAction(t.Context(), &report, false))
+	require.NoError(t, g.CheckActionExist(t.Context(), &report))
 
-	assert.Zero(t, fake.closeCount)
-	assert.Equal(t, "remote title", report.Title)
-	assert.Equal(t, "remote body", report.Description)
-	assert.Equal(t, "https://gitea.example.com/updatecli/updatecli/pulls/42", report.Link)
+	assert.Empty(t, report.Link)
+	assert.Empty(t, report.Title)
 }

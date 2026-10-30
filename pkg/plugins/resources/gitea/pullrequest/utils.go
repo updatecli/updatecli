@@ -30,11 +30,9 @@ var (
 
 // findExistingPullRequest queries a remote Gitea instance to find the open pullrequest
 // matching the source and target branches. It returns nil if there is none.
-// A pull request opened from a fork can use the same branch names, so it's only returned
-// if no pull request has its head on the repository itself.
+// A pull request opened from a fork can use the same branch names but isn't managed
+// by Updatecli, so it's ignored.
 func (g *Gitea) findExistingPullRequest(ctx context.Context) (*giteasdk.PullRequest, error) {
-	var fork *giteasdk.PullRequest
-
 	page := 1
 	for {
 		optsSearch := giteasdk.ListPullRequestsOptions{
@@ -73,9 +71,7 @@ func (g *Gitea) findExistingPullRequest(ctx context.Context) (*giteasdk.PullRequ
 				p.Merged == nil {
 
 				if p.Head.RepoID != p.Base.RepoID {
-					if fork == nil {
-						fork = p
-					}
+					log.Debugf("Ignoring Gitea pull request as its head is on another repository:\n\t%s", p.HTMLURL)
 					continue
 				}
 
@@ -93,7 +89,7 @@ func (g *Gitea) findExistingPullRequest(ctx context.Context) (*giteasdk.PullRequ
 		page = resp.NextPage
 	}
 
-	return fork, nil
+	return nil, nil
 }
 
 /*
