@@ -7,6 +7,7 @@ import (
 	"github.com/drone/go-scm/scm"
 	gitea "github.com/drone/go-scm/scm/driver/gitea"
 	"github.com/drone/go-scm/scm/transport/oauth2"
+	"github.com/hashicorp/go-retryablehttp"
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
 )
 
@@ -43,8 +44,13 @@ func New(s Spec) (Client, error) {
 // NewSDKClient creates a new Gitea client based on the official gitea sdk instead of drone's go-scm
 func NewSDKClient(s Spec) (SDKClient, error) {
 
-	// Set a global timeout on the underlying HTTP client used by the Gitea SDK
-	httpClient := httpclient.NewUncachedRetryClient()
+	// Gitea/Forgejo can return 405 "Please try again later" just after a PR is created or updated (the shared client doesn't retry 405 responses).
+	retryClient := retryablehttp.NewClient()
+	retryClient.HTTPClient = httpclient.NewUncachedRetryClient()
+	retryClient.Logger = nil
+	retryClient.RetryMax = httpclient.RetryCount
+	retryClient.CheckRetry = retryMerge
+	httpClient := retryClient.StandardClient()
 	httpClient.Timeout = 30 * time.Second
 
 	return giteasdk.NewClient(s.URL, giteasdk.SetToken(s.Token), giteasdk.SetHTTPClient(httpClient))
