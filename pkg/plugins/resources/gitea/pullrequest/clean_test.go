@@ -35,6 +35,12 @@ type cleanServer struct {
 	// listedSha returns the pull request ref commit for each list request, the last value being repeated
 	listedSha []string
 	branchSha string
+	// replacementIndex is the index of the pull request listed from the second list request
+	replacementIndex int64
+	// title and body describe the existing pull request
+	title string
+	body  string
+	draft bool
 
 	closeStatus   int
 	commentStatus int
@@ -54,11 +60,15 @@ func (s *cleanServer) handler(w http.ResponseWriter, r *http.Request) {
 
 	pullRequest := func(sha string) giteasdk.PullRequest {
 		return giteasdk.PullRequest{
-			Index: testPRIndex,
-			URL:   "https://gitea.example.com/updatecli/updatecli/pulls/42",
-			State: giteasdk.StateOpen,
-			Head:  &giteasdk.PRBranchInfo{Name: "updatecli", Sha: sha, RepoID: s.headRepoID},
-			Base:  &giteasdk.PRBranchInfo{Name: "main", RepoID: testRepoID},
+			Index:   testPRIndex,
+			URL:     "https://gitea.example.com/api/v1/repos/updatecli/updatecli/pulls/42",
+			HTMLURL: "https://gitea.example.com/updatecli/updatecli/pulls/42",
+			Title:   s.title,
+			Body:    s.body,
+			Draft:   s.draft,
+			State:   giteasdk.StateOpen,
+			Head:    &giteasdk.PRBranchInfo{Name: "updatecli", Sha: sha, RepoID: s.headRepoID},
+			Base:    &giteasdk.PRBranchInfo{Name: "main", RepoID: testRepoID},
 		}
 	}
 
@@ -68,7 +78,11 @@ func (s *cleanServer) handler(w http.ResponseWriter, r *http.Request) {
 		pullRequests := []giteasdk.PullRequest{}
 		if !s.noPullRequest {
 			sha := s.listedSha[min(s.listCount, len(s.listedSha))-1]
-			pullRequests = append(pullRequests, pullRequest(sha))
+			pr := pullRequest(sha)
+			if s.replacementIndex != 0 && s.listCount > 1 {
+				pr.Index = s.replacementIndex
+			}
+			pullRequests = append(pullRequests, pr)
 		}
 		_ = json.NewEncoder(w).Encode(pullRequests)
 
@@ -85,7 +99,17 @@ func (s *cleanServer) handler(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(s.closeStatus)
 			return
 		}
-		_ = json.NewEncoder(w).Encode(pullRequest(s.branchSha))
+		// Like Gitea, only the fields set in the request are updated
+		pr := pullRequest(s.branchSha)
+		var opt giteasdk.EditPullRequestOption
+		_ = json.Unmarshal(body, &opt)
+		if opt.Title != "" {
+			pr.Title = opt.Title
+		}
+		if opt.Body != nil {
+			pr.Body = *opt.Body
+		}
+		_ = json.NewEncoder(w).Encode(pr)
 
 	case r.Method == http.MethodPost && r.URL.Path == commentPath:
 		body, _ := io.ReadAll(r.Body)
@@ -171,6 +195,18 @@ func TestCleanAction(t *testing.T) {
 			},
 			expectedLists:  cleanupMaxAttempts,
 			expectedSleeps: cleanupMaxAttempts - 1,
+		},
+		{
+			name: "Pull request replaced while waiting for its ref to catch up",
+			server: cleanServer{
+				headRepoID:       testRepoID,
+				changedFiles:     intPtr(0),
+				listedSha:        []string{"old", "abc"},
+				branchSha:        "abc",
+				replacementIndex: testPRIndex + 1,
+			},
+			expectedLists:  2,
+			expectedSleeps: 1,
 		},
 		{
 			name: "Pull request opened from a fork",
@@ -334,6 +370,77 @@ func TestFindExistingPullRequest(t *testing.T) {
 			assert.Equal(t, []int{1, 2, 3}, requestedPages)
 
 			if tt.expectedNil {
+				assert.Nil(t, got)
+				return
+			}
+
+			require.NotNil(t, got)
+			assert.Equal(t, tt.expectedIndex, got.Index)
+		})
+	}
+}
+
+func TestFindExistingPullRequestIgnoresForks(t *testing.T) {
+	branches := func(index, headRepoID int64) *giteasdk.PullRequest {
+		return &giteasdk.PullRequest{
+			Index: index,
+			Head:  &giteasdk.PRBranchInfo{Name: "updatecli", RepoID: headRepoID},
+			Base:  &giteasdk.PRBranchInfo{Name: "main", RepoID: testRepoID},
+		}
+	}
+
+	testData := []struct {
+		name          string
+		pages         [][]*giteasdk.PullRequest
+		expectedIndex int64
+	}{
+		{
+			name:          "Fork listed before the owned pull request on the same page",
+			pages:         [][]*giteasdk.PullRequest{{branches(1, testForkID), branches(2, testRepoID)}},
+			expectedIndex: 2,
+		},
+		{
+			name:          "Fork listed before the owned pull request on another page",
+			pages:         [][]*giteasdk.PullRequest{{branches(1, testForkID)}, {branches(2, testRepoID)}},
+			expectedIndex: 2,
+		},
+		{
+			name:  "Only a fork",
+			pages: [][]*giteasdk.PullRequest{{branches(1, testForkID)}},
+		},
+	}
+
+	for _, tt := range testData {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				page, err := strconv.Atoi(r.URL.Query().Get("page"))
+				if err != nil || page < 1 || page > len(tt.pages) {
+					http.Error(w, "unexpected page", http.StatusBadRequest)
+					return
+				}
+				if page < len(tt.pages) {
+					w.Header().Set("Link", fmt.Sprintf(`<http://%s%s?page=%d>; rel="next"`, r.Host, r.URL.Path, page+1))
+				}
+				w.Header().Set("Content-Type", "application/json")
+				_ = json.NewEncoder(w).Encode(tt.pages[page-1])
+			}))
+			defer server.Close()
+
+			client, err := giteasdk.NewClient(server.URL)
+			require.NoError(t, err)
+
+			g := Gitea{
+				client:       client,
+				Owner:        "updatecli",
+				Repository:   "updatecli",
+				SourceBranch: "updatecli",
+				TargetBranch: "main",
+			}
+
+			got, err := g.findExistingPullRequest(t.Context())
+			require.NoError(t, err)
+
+			if tt.expectedIndex == 0 {
 				assert.Nil(t, got)
 				return
 			}
