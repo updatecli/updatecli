@@ -3,7 +3,6 @@ package pullrequest
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	giteasdk "gitea.dev/sdk"
 	"github.com/updatecli/updatecli/pkg/core/log"
@@ -106,11 +105,7 @@ func (g *Gitea) CreateAction(ctx context.Context, report *reports.Action, resetD
 	}
 
 	if err != nil {
-		if strings.EqualFold(g.spec.Merge.Strategy, MergeStrategyAuto) {
-			return fmt.Errorf("creating Gitea pull request for auto-merge: %w", err)
-		}
-		log.Infof("Gitea pullrequest not created, skipping")
-		return nil
+		return fmt.Errorf("create Gitea pull request: %w", err)
 	}
 
 	report.Title = pr.Title

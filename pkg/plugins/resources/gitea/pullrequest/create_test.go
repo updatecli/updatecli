@@ -249,3 +249,62 @@ func TestCheckActionExistForkPullRequest(t *testing.T) {
 	assert.Empty(t, report.Link)
 	assert.Empty(t, report.Title)
 }
+
+func TestCreateActionFailure(t *testing.T) {
+	testData := []struct {
+		name string
+		spec Spec
+	}{
+		{
+			name: "Without auto-merge",
+		},
+		{
+			name: "With auto-merge",
+			spec: Spec{Merge: MergeSpec{Strategy: MergeStrategyAuto}},
+		},
+	}
+
+	for _, tt := range testData {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+
+				switch {
+				case r.Method == http.MethodGet && r.URL.Path == "/api/v1/repos/updatecli/updatecli/pulls":
+					_ = json.NewEncoder(w).Encode([]giteasdk.PullRequest{})
+				case r.Method == http.MethodGet && r.URL.Path == "/api/v1/repos/updatecli/updatecli/branches":
+					_ = json.NewEncoder(w).Encode([]giteasdk.Branch{{Name: "updatecli"}, {Name: "main"}})
+				case r.Method == http.MethodPost && r.URL.Path == "/api/v1/repos/updatecli/updatecli/pulls":
+					http.Error(w, `{"message":"forbidden"}`, http.StatusForbidden)
+				default:
+					http.Error(w, "unexpected request "+r.Method+" "+r.URL.Path, http.StatusNotFound)
+				}
+			}))
+			defer server.Close()
+
+			client, err := giteasdk.NewClient(server.URL)
+			require.NoError(t, err)
+
+			tt.spec.Owner = "updatecli"
+			tt.spec.Repository = "updatecli"
+			tt.spec.SourceBranch = "updatecli"
+			tt.spec.TargetBranch = "main"
+
+			g := Gitea{
+				spec:         tt.spec,
+				client:       client,
+				Owner:        "updatecli",
+				Repository:   "updatecli",
+				SourceBranch: "updatecli",
+				TargetBranch: "main",
+			}
+
+			report := testActionReport("current")
+
+			err = g.CreateAction(t.Context(), &report, false)
+
+			require.ErrorContains(t, err, "create Gitea pull request")
+			assert.Empty(t, report.Link)
+		})
+	}
+}
