@@ -33,19 +33,20 @@ func (g *Gitea) CreateAction(ctx context.Context, report *reports.Action, resetD
 		title = g.spec.Title
 	}
 
-	pr, err := g.isPullRequestExist(ctx)
+	// Check if a pull-request is already opened then exit early if it does.
+	pullrequest, err := g.findExistingPullRequest(ctx)
 	if err != nil {
 		return err
 	}
 
 	// If a pullrequest already exist, we update the report with the existing pullrequest
-	if pr != nil {
+	if pullrequest != nil {
 		log.Debugf("Gitea pullrequest already exists")
 
-		report.Title = pr.Title
-		report.Link = pr.URL
-		report.Description = pr.Body
-		return g.enableAutoMerge(ctx, pr)
+		report.Title = pullrequest.Title
+		report.Link = pullrequest.URL
+		report.Description = pullrequest.Body
+		return g.enableAutoMerge(ctx, pullrequest)
 	}
 
 	// Test that both sourceBranch and targetBranch exists on remote before creating a new one
