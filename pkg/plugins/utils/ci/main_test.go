@@ -38,6 +38,14 @@ func TestNew(t *testing.T) {
 			},
 			expect: GitHubActions{},
 		},
+		{
+			name: "Gitea Actions",
+			env: map[string]string{
+				"GITEA_ACTIONS": "true",
+				"GITHUB_ACTION": "http://example.com",
+			},
+			expect: GiteaActions{},
+		},
 	}
 
 	for _, tt := range tests {
@@ -57,6 +65,14 @@ func TestNew(t *testing.T) {
 			assert.Equal(t, tt.expect, got)
 		})
 	}
+}
+
+func TestGiteaActionsURL(t *testing.T) {
+	t.Setenv("GITHUB_SERVER_URL", "https://gitea.example.com")
+	t.Setenv("GITHUB_REPOSITORY", "updatecli/updatecli")
+	t.Setenv("GITHUB_RUN_NUMBER", "42")
+
+	assert.Equal(t, "https://gitea.example.com/updatecli/updatecli/actions/runs/42", GiteaActions{}.URL())
 }
 
 func TestIsDebug(t *testing.T) {
@@ -120,6 +136,15 @@ func TestIsDebug(t *testing.T) {
 				"ACTIONS_STEP_DEBUG":   "false",
 			},
 			expect:          GitHubActions{},
+			expectedIsDebug: true,
+		},
+		{
+			name: "Gitea Actions - ACTIONS_STEP_DEBUG set to true",
+			env: map[string]string{
+				"GITEA_ACTIONS":      "true",
+				"ACTIONS_STEP_DEBUG": "true",
+			},
+			expect:          GiteaActions{},
 			expectedIsDebug: true,
 		},
 		{
