@@ -151,3 +151,35 @@ func TestCreateActionExistingPullRequest(t *testing.T) {
 		})
 	}
 }
+
+func TestCreateActionForkPullRequest(t *testing.T) {
+	fake := cleanServer{
+		headRepoID: testForkID,
+		listedSha:  []string{"abc"},
+		branchSha:  "abc",
+		title:      "remote title",
+		body:       "remote body",
+	}
+	server := httptest.NewServer(http.HandlerFunc(fake.handler))
+	defer server.Close()
+
+	client, err := giteasdk.NewClient(server.URL)
+	require.NoError(t, err)
+
+	g := Gitea{
+		client:       client,
+		Owner:        "updatecli",
+		Repository:   "updatecli",
+		SourceBranch: "updatecli",
+		TargetBranch: "main",
+	}
+
+	report := testActionReport("current")
+
+	require.NoError(t, g.CreateAction(t.Context(), &report, false))
+
+	assert.Zero(t, fake.closeCount)
+	assert.Equal(t, "remote title", report.Title)
+	assert.Equal(t, "remote body", report.Description)
+	assert.Equal(t, "https://gitea.example.com/updatecli/updatecli/pulls/42", report.Link)
+}
