@@ -28,7 +28,7 @@ func (g *Gitea) enableAutoMerge(ctx context.Context, pr *giteasdk.PullRequest) e
 		}
 	}
 	if pr.Head == nil || pr.Head.Sha == "" {
-		return fmt.Errorf("cannot request auto-merge for Gitea pull request %q without a head commit ID", pr.URL)
+		return fmt.Errorf("cannot request auto-merge for Gitea pull request %q without a head commit ID", pr.HTMLURL)
 	}
 
 	accepted, resp, err := g.client.PullRequests.MergePullRequest(ctx, g.Owner, g.Repository, pr.Index, giteasdk.MergePullRequestOption{
@@ -37,16 +37,16 @@ func (g *Gitea) enableAutoMerge(ctx context.Context, pr *giteasdk.PullRequest) e
 		HeadCommitId:           pr.Head.Sha,
 	})
 	if errors.Is(err, client.ErrAutoMergeAlreadyScheduled) {
-		log.Infof("Gitea pullrequest auto-merge already enabled on %q; keeping the existing schedule", pr.URL)
+		log.Infof("Gitea pullrequest auto-merge already enabled on %q; keeping the existing schedule", pr.HTMLURL)
 		return nil
 	}
 	if err != nil {
-		return fmt.Errorf("requesting auto-merge for Gitea pull request %q: %w", pr.URL, err)
+		return fmt.Errorf("requesting auto-merge for Gitea pull request %q: %w", pr.HTMLURL, err)
 	}
 	// The SDK closes the response body and returns false, nil for HTTP rejections.
 	if !accepted {
-		return fmt.Errorf("auto-merge request for Gitea pull request %q rejected: HTTP %s", pr.URL, resp.Status)
+		return fmt.Errorf("auto-merge request for Gitea pull request %q rejected: HTTP %s", pr.HTMLURL, resp.Status)
 	}
-	log.Infof("Gitea pullrequest auto-merge requested on %q", pr.URL)
+	log.Infof("Gitea pullrequest auto-merge requested on %q", pr.HTMLURL)
 	return nil
 }
