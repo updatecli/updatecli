@@ -85,6 +85,7 @@ type Spec struct {
 	//
 	// remark:
 	//   * setting the title in the action (option 2) is usually preferred.
+	//   * the title of an existing pull request is updated on each run.
 	//
 	// example:
 	// ```
@@ -100,6 +101,8 @@ type Spec struct {
 	//
 	// default:
 	//   a body generated from the pipeline execution.
+	//   On an existing pull request, it's merged with the report in the current description.
+	//   A description without a report, such as one written by hand, is replaced.
 	//
 	// remark:
 	//   * unless you know what you are doing, do not set this value and rely on the default.
