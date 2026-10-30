@@ -32,18 +32,18 @@ func (g *Gitea) CreateAction(ctx context.Context, report *reports.Action, resetD
 	}
 
 	// Check if a pull-request is already opened then exit early if it does.
-	pullrequestTitle, pullrequestDescription, pullrequestLink, err := g.isPullRequestExist(ctx)
+	pullrequest, err := g.findExistingPullRequest(ctx)
 	if err != nil {
 		return err
 	}
 
 	// If a pullrequest already exist, we update the report with the existing pullrequest
-	if pullrequestLink != "" {
+	if pullrequest != nil {
 		log.Debugf("Gitea pullrequest already exist, nothing to do")
 
-		report.Title = pullrequestTitle
-		report.Link = pullrequestLink
-		report.Description = pullrequestDescription
+		report.Title = pullrequest.Title
+		report.Link = pullrequest.URL
+		report.Description = pullrequest.Body
 		return nil
 	}
 
