@@ -2,6 +2,8 @@ package pullrequest
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	giteasdk "gitea.dev/sdk"
 	"github.com/updatecli/updatecli/pkg/core/log"
@@ -32,19 +34,29 @@ func (g *Gitea) CreateAction(ctx context.Context, report *reports.Action, resetD
 	}
 
 	// Check if a pull-request is already opened then exit early if it does.
-	pullrequestTitle, pullrequestDescription, pullrequestLink, err := g.isPullRequestExist(ctx)
+	pullrequest, err := g.findExistingPullRequest(ctx)
 	if err != nil {
 		return err
 	}
 
 	// If a pullrequest already exist, we update the report with the existing pullrequest
-	if pullrequestLink != "" {
-		log.Debugf("Gitea pullrequest already exist, nothing to do")
+	if pullrequest != nil {
+		// A pull request opened from a fork isn't managed by Updatecli, even if it uses the same branch name
+		if pullrequest.Base == nil || pullrequest.Head.RepoID != pullrequest.Base.RepoID {
+			log.Debugf("Skipping Gitea pull request auto-merge as its head is on another repository:\n\t%s", pullrequest.URL)
 
-		report.Title = pullrequestTitle
-		report.Link = pullrequestLink
-		report.Description = pullrequestDescription
-		return nil
+			report.Title = pullrequest.Title
+			report.Link = pullrequest.URL
+			report.Description = pullrequest.Body
+			return nil
+		}
+
+		log.Debugf("Gitea pullrequest already exists")
+
+		report.Title = pullrequest.Title
+		report.Link = pullrequest.URL
+		report.Description = pullrequest.Body
+		return g.enableAutoMerge(ctx, pullrequest)
 	}
 
 	// Test that both sourceBranch and targetBranch exists on remote before creating a new one
@@ -93,6 +105,9 @@ func (g *Gitea) CreateAction(ctx context.Context, report *reports.Action, resetD
 	}
 
 	if err != nil {
+		if strings.EqualFold(g.spec.Merge.Strategy, MergeStrategyAuto) {
+			return fmt.Errorf("creating Gitea pull request for auto-merge: %w", err)
+		}
 		log.Infof("Gitea pullrequest not created, skipping")
 		return nil
 	}
@@ -103,5 +118,5 @@ func (g *Gitea) CreateAction(ctx context.Context, report *reports.Action, resetD
 
 	log.Infof("Gitea pullrequest successfully opened on %q", pr.URL)
 
-	return nil
+	return g.enableAutoMerge(ctx, pr)
 }
