@@ -16,6 +16,11 @@ func (g *Gitea) enableAutoMerge(ctx context.Context, pr *giteasdk.PullRequest) e
 		return nil
 	}
 
+	if isDraftPullRequest(pr) {
+		log.Infof("Skipping Gitea pullrequest auto-merge as %q is a draft", pr.HTMLURL)
+		return nil
+	}
+
 	method := giteasdk.MergeStyle(strings.ToLower(g.spec.MergeMethod))
 	if method == "" {
 		repo, _, err := g.client.Repositories.GetRepo(ctx, g.Owner, g.Repository)
