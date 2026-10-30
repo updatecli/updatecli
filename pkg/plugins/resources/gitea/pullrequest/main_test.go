@@ -165,6 +165,18 @@ func TestNew(t *testing.T) {
 			scm:     nil,
 			wantErr: true,
 		},
+		{
+			name:           "Unsupported merge strategy",
+			spec:           Spec{Merge: MergeSpec{Strategy: "client"}},
+			wantErr:        true,
+			wantErrMessage: `invalid merge strategy "client"`,
+		},
+		{
+			name:           "Unsupported merge method",
+			spec:           Spec{MergeMethod: "fast-forward"},
+			wantErr:        true,
+			wantErrMessage: `invalid merge method "fast-forward"`,
+		},
 	}
 
 	for _, tt := range testData {
@@ -175,6 +187,9 @@ func TestNew(t *testing.T) {
 
 			if tt.wantErr {
 				require.Error(t, gotErr)
+				if tt.wantErrMessage != "" {
+					assert.ErrorContains(t, gotErr, tt.wantErrMessage)
+				}
 			} else {
 				require.NoError(t, gotErr)
 			}
