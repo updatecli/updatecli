@@ -35,6 +35,9 @@ type cleanServer struct {
 	// listedSha returns the pull request ref commit for each list request, the last value being repeated
 	listedSha []string
 	branchSha string
+	// title and body describe the existing pull request
+	title string
+	body  string
 
 	closeStatus   int
 	commentStatus int
@@ -56,6 +59,8 @@ func (s *cleanServer) handler(w http.ResponseWriter, r *http.Request) {
 		return giteasdk.PullRequest{
 			Index: testPRIndex,
 			URL:   "https://gitea.example.com/updatecli/updatecli/pulls/42",
+			Title: s.title,
+			Body:  s.body,
 			State: giteasdk.StateOpen,
 			Head:  &giteasdk.PRBranchInfo{Name: "updatecli", Sha: sha, RepoID: s.headRepoID},
 			Base:  &giteasdk.PRBranchInfo{Name: "main", RepoID: testRepoID},
@@ -85,7 +90,17 @@ func (s *cleanServer) handler(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(s.closeStatus)
 			return
 		}
-		_ = json.NewEncoder(w).Encode(pullRequest(s.branchSha))
+		// Like Gitea, only the fields set in the request are updated
+		pr := pullRequest(s.branchSha)
+		var opt giteasdk.EditPullRequestOption
+		_ = json.Unmarshal(body, &opt)
+		if opt.Title != "" {
+			pr.Title = opt.Title
+		}
+		if opt.Body != nil {
+			pr.Body = *opt.Body
+		}
+		_ = json.NewEncoder(w).Encode(pr)
 
 	case r.Method == http.MethodPost && r.URL.Path == commentPath:
 		body, _ := io.ReadAll(r.Body)

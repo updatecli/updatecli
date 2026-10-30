@@ -77,6 +77,7 @@ type Spec struct {
 	// remark:
 	//   * unless you know what you are doing, do not set this value and rely on the default.
 	//   * it is useful to give reviewers additional information, such as a changelog url.
+	//   * when set, it also replaces the description of an existing pull request.
 	//
 	Body string `yaml:",inline,omitempty"`
 

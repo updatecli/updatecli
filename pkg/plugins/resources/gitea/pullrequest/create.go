@@ -2,6 +2,7 @@ package pullrequest
 
 import (
 	"context"
+	"fmt"
 
 	giteasdk "gitea.dev/sdk"
 	"github.com/updatecli/updatecli/pkg/core/log"
@@ -9,42 +10,53 @@ import (
 	utils "github.com/updatecli/updatecli/pkg/plugins/utils/action"
 )
 
-// CreateAction opens a Pull Request on the Gitea server
+// CreateAction opens or updates a Pull Request on the Gitea server
 func (g *Gitea) CreateAction(ctx context.Context, report *reports.Action, resetDescription bool) error {
 
 	title := report.Title
-
-	// One Gitea pullrequest body can contain multiple action report
-	// It would be better to refactor CreateAction to be able to reuse existing pullrequest description.
-	// similar to what we did for github pullrequest.
-	body, err := utils.GeneratePullRequestBody("", report.ToActionsString())
-
-	if err != nil {
-		log.Warningf("something wrong happened while generating gitea pullrequest body: %s", err)
-	}
-
-	if len(g.spec.Body) > 0 {
-		body = g.spec.Body
-	}
 
 	if len(g.spec.Title) > 0 {
 		title = g.spec.Title
 	}
 
-	// Check if a pull-request is already opened then exit early if it does.
+	// Check if a pull-request is already opened then update it if it does.
 	pullrequest, err := g.findExistingPullRequest(ctx)
 	if err != nil {
 		return err
 	}
 
-	// If a pullrequest already exist, we update the report with the existing pullrequest
+	// If a pullrequest already exist, we update it and the report with the merged description
 	if pullrequest != nil {
-		log.Debugf("Gitea pullrequest already exist, nothing to do")
+		log.Debugf("Gitea pullrequest already exist, updating it")
 
-		report.Title = pullrequest.Title
-		report.Link = pullrequest.URL
-		report.Description = pullrequest.Body
+		body, err := g.pullRequestBody(pullrequest.Body, report, resetDescription)
+		if err != nil {
+			return fmt.Errorf("generate Gitea pull request body: %w", err)
+		}
+
+		pr, _, err := g.client.PullRequests.EditPullRequest(
+			ctx,
+			g.Owner,
+			g.Repository,
+			pullrequest.Index,
+			giteasdk.EditPullRequestOption{
+				Title: title,
+				Body:  &body,
+			},
+		)
+		if err != nil {
+			return fmt.Errorf("update Gitea pull request: %w", err)
+		}
+
+		report.Title = pr.Title
+		report.Link = pr.URL
+		report.Description = pr.Body
 		return nil
+	}
+
+	body, err := g.pullRequestBody("", report, resetDescription)
+	if err != nil {
+		return fmt.Errorf("generate Gitea pull request body: %w", err)
 	}
 
 	// Test that both sourceBranch and targetBranch exists on remote before creating a new one
@@ -104,4 +116,26 @@ func (g *Gitea) CreateAction(ctx context.Context, report *reports.Action, resetD
 	log.Infof("Gitea pullrequest successfully opened on %q", pr.URL)
 
 	return nil
+}
+
+// pullRequestBody generates the pull request description, merging the report
+// with the existing description unless it must be reset.
+func (g *Gitea) pullRequestBody(existingDescription string, report *reports.Action, resetBody bool) (string, error) {
+	if len(g.spec.Body) > 0 {
+		return g.spec.Body, nil
+	}
+
+	actions := report.ToActionsString()
+
+	if resetBody {
+		log.Debugf("Resetting pull request description with new report")
+		return utils.GeneratePullRequestBody("", actions)
+	}
+
+	if existingDescription != "" {
+		log.Debugf("Merging pull request description with new report")
+		actions = reports.MergeFromString(existingDescription, actions)
+	}
+
+	return utils.GeneratePullRequestBody("", actions)
 }
