@@ -27,6 +27,7 @@ type MergeSpec struct {
 	//   * settings are applied when target changes trigger the action. Runs without target changes only report an existing PR.
 	//   * configure required checks and branch protections on the repository. Merging may be immediate.
 	//   * an existing auto-merge schedule is left unchanged.
+	//   * auto-merge isn't requested on a draft pull request.
 	//
 	Strategy string `yaml:",omitempty"`
 }
@@ -86,6 +87,7 @@ type Spec struct {
 	// remark:
 	//   * setting the title in the action (option 2) is usually preferred.
 	//   * the title of an existing pull request is updated on each run.
+	//     A draft keeps its "WIP:" or "[WIP]" prefix. With any other draft prefix, the title isn't updated.
 	//
 	// example:
 	// ```

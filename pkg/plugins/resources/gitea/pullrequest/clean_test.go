@@ -40,6 +40,7 @@ type cleanServer struct {
 	// title and body describe the existing pull request
 	title string
 	body  string
+	draft bool
 
 	closeStatus   int
 	commentStatus int
@@ -64,6 +65,7 @@ func (s *cleanServer) handler(w http.ResponseWriter, r *http.Request) {
 			HTMLURL: "https://gitea.example.com/updatecli/updatecli/pulls/42",
 			Title:   s.title,
 			Body:    s.body,
+			Draft:   s.draft,
 			State:   giteasdk.StateOpen,
 			Head:    &giteasdk.PRBranchInfo{Name: "updatecli", Sha: sha, RepoID: s.headRepoID},
 			Base:    &giteasdk.PRBranchInfo{Name: "main", RepoID: testRepoID},

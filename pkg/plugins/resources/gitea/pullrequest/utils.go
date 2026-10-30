@@ -3,6 +3,7 @@ package pullrequest
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	giteasdk "gitea.dev/sdk"
@@ -26,7 +27,42 @@ const (
 var (
 	// cleanupSleep is a variable so it can be overridden from the tests.
 	cleanupSleep = time.Sleep
+	// draftTitlePrefixes lists the title prefixes marking a pull request as a draft on a default Gitea configuration.
+	draftTitlePrefixes = []string{"WIP:", "[WIP]"}
 )
+
+// draftTitlePrefix returns the prefix marking a pull request title as a draft, as written in the
+// title, or an empty string if there is none.
+func draftTitlePrefix(title string) string {
+	for _, prefix := range draftTitlePrefixes {
+		if len(title) >= len(prefix) && strings.EqualFold(title[:len(prefix)], prefix) {
+			return title[:len(prefix)]
+		}
+	}
+	return ""
+}
+
+// isDraftPullRequest tells if a pull request is held back as a draft. Gitea marks a pull request
+// as a draft based on its title, and each server can configure its own prefixes.
+func isDraftPullRequest(pr *giteasdk.PullRequest) bool {
+	return pr.Draft || draftTitlePrefix(pr.Title) != ""
+}
+
+// existingPullRequestTitle returns the title to set on an existing pull request.
+// The title follows the pipeline, but a draft must remain a draft.
+func existingPullRequestTitle(title string, pr *giteasdk.PullRequest) string {
+	prefix := draftTitlePrefix(pr.Title)
+
+	switch {
+	case !isDraftPullRequest(pr), draftTitlePrefix(title) != "":
+		return title
+	case prefix == "", title == "":
+		// Without a known prefix, the server uses one we can't detect so we keep the title as it is.
+		return pr.Title
+	}
+
+	return prefix + " " + title
+}
 
 // findExistingPullRequest queries a remote Gitea instance to find the open pullrequest
 // matching the source and target branches. It returns nil if there is none.

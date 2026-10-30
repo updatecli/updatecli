@@ -41,7 +41,7 @@ func (g *Gitea) CreateAction(ctx context.Context, report *reports.Action, resetD
 			g.Repository,
 			pullrequest.Index,
 			giteasdk.EditPullRequestOption{
-				Title: title,
+				Title: existingPullRequestTitle(title, pullrequest),
 				Body:  &body,
 			},
 		)
