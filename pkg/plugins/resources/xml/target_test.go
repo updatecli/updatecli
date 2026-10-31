@@ -3,6 +3,8 @@ package xml
 import (
 	"context"
 	"errors"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -89,6 +91,15 @@ func TestTarget(t *testing.T) {
 			expectedResult:   false,
 			expectedErrorMsg: errors.New("URL scheme is not supported for XML target: \"https://raw.githubusercontent.com/updatecli/updatecli/main/pkg/plugins/resources/xml/testdata/data_2.xml\""),
 		},
+		{
+			name: "Whitespace around a multi-line value is ignored",
+			spec: Spec{
+				File:  "testdata/data_3.xml",
+				Path:  "/project/dependency/version",
+				Value: "3.2.1",
+			},
+			expectedResult: false,
+		},
 	}
 
 	for _, tt := range testData {
@@ -111,4 +122,26 @@ func TestTarget(t *testing.T) {
 		})
 	}
 
+}
+
+func TestTargetKeepsMultiLineLayout(t *testing.T) {
+	content, err := os.ReadFile("testdata/data_3.xml")
+	require.NoError(t, err)
+
+	file := filepath.Join(t.TempDir(), "pom.xml")
+	require.NoError(t, os.WriteFile(file, content, 0o600)) //nolint:gosec // G703 false positive: file is under t.TempDir()
+
+	x, err := New(Spec{File: file, Path: "/project/dependency/version", Value: "3.2.2"})
+	require.NoError(t, err)
+
+	gotResult := result.Target{}
+	require.NoError(t, x.Target(context.Background(), "", nil, pathresolver.Resolver{}, false, &gotResult))
+
+	assert.True(t, gotResult.Changed)
+	assert.Equal(t, "3.2.1", gotResult.Information)
+
+	got, err := os.ReadFile(file)
+	require.NoError(t, err)
+	// Only the version changes, the indentation around it is kept
+	assert.Contains(t, string(got), "<version>\n      3.2.2\n    </version>")
 }

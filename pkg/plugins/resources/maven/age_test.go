@@ -32,11 +32,11 @@ type fakeRelease struct {
 }
 
 // fakeRepository serves the maven-metadata.xml and pom files of the artifact org.example:lib.
-// The pom requests are counted, and HEAD requests are rejected when headNotAllowed is set.
+// The pom requests are counted, and HEAD requests are rejected with headStatus when set.
 type fakeRepository struct {
-	releases       []fakeRelease
-	headNotAllowed bool
-	pomRequests    atomic.Int64
+	releases    []fakeRelease
+	headStatus  int
+	pomRequests atomic.Int64
 }
 
 func (f *fakeRepository) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -59,8 +59,8 @@ func (f *fakeRepository) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 
 		f.pomRequests.Add(1)
-		if f.headNotAllowed && r.Method == http.MethodHead {
-			w.WriteHeader(http.StatusMethodNotAllowed)
+		if f.headStatus != 0 && r.Method == http.MethodHead {
+			w.WriteHeader(f.headStatus)
 			return
 		}
 		if rel.daysAgo == unavailable {
@@ -97,14 +97,14 @@ func newAgeTestMaven(t *testing.T, repo *fakeRepository, filter version.Filter, 
 
 func TestSourceAge(t *testing.T) {
 	tests := []struct {
-		name           string
-		releases       []fakeRelease
-		filter         version.Filter
-		age            age.Spec
-		headNotAllowed bool
-		want           string
-		wantResult     string
-		wantErr        string
+		name       string
+		releases   []fakeRelease
+		filter     version.Filter
+		age        age.Spec
+		headStatus int
+		want       string
+		wantResult string
+		wantErr    string
 	}{
 		{
 			name:       "latest version old enough",
@@ -169,18 +169,26 @@ func TestSourceAge(t *testing.T) {
 			wantErr:  "403",
 		},
 		{
-			name:           "HEAD not allowed falls back to GET",
-			releases:       []fakeRelease{{"1.0.0", 30}, {"1.1.0", 10}},
-			age:            age.Spec{Minimum: "7d"},
-			headNotAllowed: true,
-			want:           "1.1.0",
-			wantResult:     result.SUCCESS,
+			name:       "HEAD not allowed falls back to GET",
+			releases:   []fakeRelease{{"1.0.0", 30}, {"1.1.0", 10}},
+			age:        age.Spec{Minimum: "7d"},
+			headStatus: http.StatusMethodNotAllowed,
+			want:       "1.1.0",
+			wantResult: result.SUCCESS,
+		},
+		{
+			name:       "HEAD denied falls back to GET",
+			releases:   []fakeRelease{{"1.0.0", 30}, {"1.1.0", 10}},
+			age:        age.Spec{Minimum: "7d"},
+			headStatus: http.StatusForbidden,
+			want:       "1.1.0",
+			wantResult: result.SUCCESS,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := newAgeTestMaven(t, &fakeRepository{releases: tt.releases, headNotAllowed: tt.headNotAllowed}, tt.filter, tt.age)
+			m := newAgeTestMaven(t, &fakeRepository{releases: tt.releases, headStatus: tt.headStatus}, tt.filter, tt.age)
 
 			got := result.Source{}
 			err := m.Source(context.Background(), pathresolver.Resolver{}, &got)
@@ -282,7 +290,8 @@ func TestConditionAgeTriesEveryRepository(t *testing.T) {
 	got, _, err := m.Condition(context.Background(), "1.0.0", nil, pathresolver.Resolver{})
 	require.NoError(t, err)
 	assert.True(t, got)
-	assert.Equal(t, int64(1), failing.pomRequests.Load())
+	// The denied HEAD request is retried with GET
+	assert.Equal(t, int64(2), failing.pomRequests.Load())
 }
 
 func TestConditionAgeMismatchTriesEveryRepository(t *testing.T) {

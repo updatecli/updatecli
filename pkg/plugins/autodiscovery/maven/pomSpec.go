@@ -11,6 +11,14 @@ type dependency struct {
 	GroupID    string
 	ArtifactID string
 	Version    string
+	// Type and Scope are only read for managed dependencies, to tell BOM imports apart
+	Type  string
+	Scope string
+}
+
+// isBOM returns true for a managed dependency importing a bill of materials.
+func (d dependency) isBOM() bool {
+	return d.Type == "pom" && d.Scope == "import"
 }
 
 // parentPom contains parent yinformation retrieved from a pom.xml

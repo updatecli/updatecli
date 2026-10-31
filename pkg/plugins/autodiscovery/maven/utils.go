@@ -4,12 +4,44 @@ import (
 	"fmt"
 	"io/fs"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/updatecli/updatecli/pkg/core/log"
 
 	"github.com/beevik/etree"
 )
+
+// propertyRegex matches a version relying on a property, such as "${log4j.version}".
+var propertyRegex = regexp.MustCompile(`\$\{.*\}`)
+
+// isPropertyVersion returns true for a version relying on a property, such as "${log4j.version}".
+func isPropertyVersion(version string) bool {
+	return propertyRegex.MatchString(version)
+}
+
+// propertyNameRegex captures the property name of a version made of a single property, such as "${log4j.version}".
+var propertyNameRegex = regexp.MustCompile(`^\$\{([^${}]+)\}$`)
+
+// propertyName returns the name of the property a version is made of, such as "log4j.version" for "${log4j.version}".
+func propertyName(version string) (string, bool) {
+	match := propertyNameRegex.FindStringSubmatch(version)
+	if match == nil {
+		return "", false
+	}
+	return match[1], true
+}
+
+// elemText returns the text of an XML element without the whitespace around it,
+// which POM files often have when an element spans several lines.
+func elemText(elem *etree.Element) string {
+	return strings.TrimSpace(elem.Text())
+}
+
+// isVersionRange returns true for a Maven version range, such as "[1.0,2.0)" or "[1.5,)".
+func isVersionRange(version string) bool {
+	return strings.ContainsAny(version, "[](),")
+}
 
 // searchPomFiles will look, recursively, for every files named Chart.yaml from a root directory.
 func searchPomFiles(rootDir string, files []string) ([]string, error) {
@@ -53,23 +85,23 @@ func getParentFromPom(doc *etree.Document) parentPom {
 	}
 
 	if elem := parent.FindElement("./groupId"); elem != nil {
-		p.GroupID = elem.Text()
+		p.GroupID = elemText(elem)
 	}
 
 	if elem := parent.FindElement("./artifactId"); elem != nil {
-		p.ArtifactID = elem.Text()
+		p.ArtifactID = elemText(elem)
 	}
 
 	if elem := parent.FindElement("./version"); elem != nil {
-		p.Version = elem.Text()
+		p.Version = elemText(elem)
 	}
 
 	if elem := parent.FindElement("./packaging"); elem != nil {
-		p.Packaging = elem.Text()
+		p.Packaging = elemText(elem)
 	}
 
 	if elem := parent.FindElement("./relativePath"); elem != nil {
-		p.RelativePath = elem.Text()
+		p.RelativePath = elemText(elem)
 	}
 
 	return p
@@ -91,11 +123,11 @@ func getRepositoriesFromPom(doc *etree.Document) []repository {
 		rep := repository{}
 
 		if elem := repositoryElem.FindElement("./url"); elem != nil {
-			rep.URL = elem.Text()
+			rep.URL = elemText(elem)
 		}
 
 		if elem := repositoryElem.FindElement("./id"); elem != nil {
-			rep.ID = elem.Text()
+			rep.ID = elemText(elem)
 		}
 
 		repositories = append(repositories, rep)
@@ -119,15 +151,15 @@ func getDependenciesFromPom(doc *etree.Document) []dependency {
 		}
 
 		if elem := dependencyElem.FindElement("./groupId"); elem != nil {
-			dep.GroupID = elem.Text()
+			dep.GroupID = elemText(elem)
 		}
 
 		if elem := dependencyElem.FindElement("./artifactId"); elem != nil {
-			dep.ArtifactID = elem.Text()
+			dep.ArtifactID = elemText(elem)
 		}
 
 		if elem := dependencyElem.FindElement("./version"); elem != nil {
-			dep.Version = elem.Text()
+			dep.Version = elemText(elem)
 		}
 
 		dependencies = append(dependencies, dep)
@@ -151,21 +183,40 @@ func getDependencyManagementsFromPom(doc *etree.Document) []dependency {
 		}
 
 		if elem := dependencyElem.FindElement("./groupId"); elem != nil {
-			dep.GroupID = elem.Text()
+			dep.GroupID = elemText(elem)
 		}
 
 		if elem := dependencyElem.FindElement("./artifactId"); elem != nil {
-			dep.ArtifactID = elem.Text()
+			dep.ArtifactID = elemText(elem)
 		}
 
 		if elem := dependencyElem.FindElement("./version"); elem != nil {
-			dep.Version = elem.Text()
+			dep.Version = elemText(elem)
+		}
+
+		if elem := dependencyElem.FindElement("./type"); elem != nil {
+			dep.Type = elemText(elem)
+		}
+
+		if elem := dependencyElem.FindElement("./scope"); elem != nil {
+			dep.Scope = elemText(elem)
 		}
 
 		dependencies = append(dependencies, dep)
 
 	}
 	return dependencies
+}
+
+// getPropertiesFromPom returns the properties defined in a pom.xml, by name.
+func getPropertiesFromPom(doc *etree.Document) map[string]string {
+	properties := map[string]string{}
+
+	for _, elem := range doc.FindElements("//project/properties/*") {
+		properties[elem.Tag] = elemText(elem)
+	}
+
+	return properties
 }
 
 // getMavenRepositoriesURL returns the URL for all repository while trying to identify potential credentials and mirrors

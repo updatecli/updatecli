@@ -41,7 +41,7 @@ func (x *XML) Source(_ context.Context, pathResolver pathresolver.Resolver, resu
 		)
 	}
 
-	queryResult := elem.Text()
+	queryResult := elemText(elem)
 
 	resultSource.Result = result.SUCCESS
 	resultSource.Information = queryResult

@@ -5,8 +5,6 @@ import (
 	"path"
 	"path/filepath"
 
-	"regexp"
-
 	"github.com/beevik/etree"
 	"github.com/updatecli/updatecli/pkg/core/log"
 )
@@ -55,20 +53,14 @@ func (m Maven) discoverParentPomDependencyManifests() ([][]byte, error) {
 			continue
 		}
 
-		// Retrieve dependencies
-
-		containsVariableRegex, err := regexp.Compile(`.*\$\{.*\}.*`)
-
-		if err != nil {
-			log.Debugln(err)
+		if isPropertyVersion(parentPom.Version) {
+			log.Printf("Skipping parent pom %q in %q as it relies on the property %q", parentPom.ArtifactID, relativePomFile, parentPom.Version)
 			continue
 		}
 
-		// Test if current version contains a variable, and skip the depend if it's the case
-		isContainVariable := containsVariableRegex.Match([]byte(parentPom.Version))
-
-		if isContainVariable {
-			log.Printf("Skipping parent pom %q in %q as it relies on the property %q", parentPom.ArtifactID, relativePomFile, parentPom.Version)
+		// A version range would be replaced by a single version
+		if isVersionRange(parentPom.Version) {
+			log.Printf("Skipping parent pom %q in %q as it relies on the version range %q", parentPom.ArtifactID, relativePomFile, parentPom.Version)
 			continue
 		}
 
