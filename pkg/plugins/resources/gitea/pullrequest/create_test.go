@@ -157,68 +157,104 @@ func TestCreateActionExistingPullRequest(t *testing.T) {
 func TestCreateActionForkPullRequest(t *testing.T) {
 	const openedIndex = testPRIndex + 1
 	openedLink := "https://gitea.example.com/updatecli/updatecli/pulls/43"
+	pullsPath := "/api/v1/repos/updatecli/updatecli/pulls"
+	openedPath := fmt.Sprintf("%s/%d", pullsPath, openedIndex)
 
-	fake := cleanServer{
-		headRepoID: testForkID,
-		listedSha:  []string{"abc"},
-		branchSha:  "abc",
-		title:      "remote title",
-		body:       "remote body",
-	}
-
-	var mergePaths []string
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-
-		switch {
-		case r.URL.Path == "/api/v1/version":
-			_, _ = w.Write([]byte(`{"version":"1.24.0"}`))
-		case r.Method == http.MethodGet && r.URL.Path == "/api/v1/repos/updatecli/updatecli/branches":
-			_ = json.NewEncoder(w).Encode([]giteasdk.Branch{{Name: "updatecli"}, {Name: "main"}})
-		case r.Method == http.MethodPost && r.URL.Path == "/api/v1/repos/updatecli/updatecli/pulls":
-			w.WriteHeader(http.StatusCreated)
-			_ = json.NewEncoder(w).Encode(giteasdk.PullRequest{
-				Index:   openedIndex,
-				HTMLURL: openedLink,
-				Title:   "report title",
-				Head:    &giteasdk.PRBranchInfo{Name: "updatecli", Sha: "def", RepoID: testRepoID},
-				Base:    &giteasdk.PRBranchInfo{Name: "main", RepoID: testRepoID},
-			})
-		case r.Method == http.MethodPost && strings.HasSuffix(r.URL.Path, "/merge"):
-			mergePaths = append(mergePaths, r.URL.Path)
-		default:
-			fake.handler(w, r)
-		}
-	}))
-	defer server.Close()
-
-	client, err := giteasdk.NewClient(server.URL)
-	require.NoError(t, err)
-
-	g := Gitea{
-		spec: Spec{
-			Owner:        "updatecli",
-			Repository:   "updatecli",
-			SourceBranch: "updatecli",
-			TargetBranch: "main",
-			Merge:        MergeSpec{Strategy: MergeStrategyAuto},
-			MergeMethod:  "squash",
+	testData := []struct {
+		name          string
+		requestStatus int
+	}{
+		{
+			name:          "Reviewer request succeeds",
+			requestStatus: http.StatusCreated,
 		},
-		client:       client,
-		Owner:        "updatecli",
-		Repository:   "updatecli",
-		SourceBranch: "updatecli",
-		TargetBranch: "main",
+		{
+			name:          "Reviewer request fails",
+			requestStatus: http.StatusForbidden,
+		},
 	}
 
-	report := testActionReport("current")
+	for _, tt := range testData {
+		t.Run(tt.name, func(t *testing.T) {
+			fake := cleanServer{
+				headRepoID: testForkID,
+				listedSha:  []string{"abc"},
+				branchSha:  "abc",
+				title:      "remote title",
+				body:       "remote body",
+			}
 
-	require.NoError(t, g.CreateAction(t.Context(), &report, false))
+			var calls []string
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
 
-	// The fork's pull request is left untouched and Updatecli opens its own
-	assert.Zero(t, fake.closeCount)
-	assert.Equal(t, openedLink, report.Link)
-	assert.Equal(t, []string{fmt.Sprintf("/api/v1/repos/updatecli/updatecli/pulls/%d/merge", openedIndex)}, mergePaths)
+				switch {
+				case r.URL.Path == "/api/v1/version":
+					_, _ = w.Write([]byte(`{"version":"1.24.0"}`))
+				case r.Method == http.MethodGet && r.URL.Path == "/api/v1/settings/api":
+					_, _ = w.Write([]byte(`{"max_response_items":50}`))
+				case r.Method == http.MethodGet && r.URL.Path == "/api/v1/repos/updatecli/updatecli/branches":
+					_ = json.NewEncoder(w).Encode([]giteasdk.Branch{{Name: "updatecli"}, {Name: "main"}})
+				case r.Method == http.MethodPost && r.URL.Path == pullsPath:
+					calls = append(calls, r.URL.Path)
+					w.WriteHeader(http.StatusCreated)
+					_ = json.NewEncoder(w).Encode(giteasdk.PullRequest{
+						Index:   openedIndex,
+						HTMLURL: openedLink,
+						Title:   "report title",
+						Head:    &giteasdk.PRBranchInfo{Name: "updatecli", Sha: "def", RepoID: testRepoID},
+						Base:    &giteasdk.PRBranchInfo{Name: "main", RepoID: testRepoID},
+					})
+				case r.Method == http.MethodPost && strings.HasSuffix(r.URL.Path, "/merge"):
+					calls = append(calls, r.URL.Path)
+				case r.Method == http.MethodGet && r.URL.Path == openedPath+"/reviews":
+					w.Header().Set("X-Total-Count", "0")
+					_, _ = w.Write([]byte(`[]`))
+				case r.Method == http.MethodPost && strings.HasSuffix(r.URL.Path, "/requested_reviewers"):
+					calls = append(calls, r.URL.Path)
+					w.WriteHeader(tt.requestStatus)
+				default:
+					fake.handler(w, r)
+				}
+			}))
+			defer server.Close()
+
+			client, err := giteasdk.NewClient(server.URL)
+			require.NoError(t, err)
+
+			g := Gitea{
+				spec: Spec{
+					Owner:        "updatecli",
+					Repository:   "updatecli",
+					SourceBranch: "updatecli",
+					TargetBranch: "main",
+					Merge:        MergeSpec{Strategy: MergeStrategyAuto},
+					MergeMethod:  "squash",
+					Reviewers:    []string{"alice"},
+				},
+				client:       client,
+				Owner:        "updatecli",
+				Repository:   "updatecli",
+				SourceBranch: "updatecli",
+				TargetBranch: "main",
+			}
+
+			report := testActionReport("current")
+
+			err = g.CreateAction(t.Context(), &report, false)
+			if tt.requestStatus == http.StatusCreated {
+				require.NoError(t, err)
+				assert.Equal(t, []string{pullsPath, openedPath + "/requested_reviewers", openedPath + "/merge"}, calls)
+			} else {
+				require.ErrorContains(t, err, "requesting reviewers")
+				assert.Equal(t, []string{pullsPath, openedPath + "/requested_reviewers"}, calls)
+			}
+
+			// The fork's pull request is left untouched and Updatecli opens its own
+			assert.Zero(t, fake.closeCount)
+			assert.Equal(t, openedLink, report.Link)
+		})
+	}
 }
 
 func TestCheckActionExistForkPullRequest(t *testing.T) {
