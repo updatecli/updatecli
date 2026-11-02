@@ -10,8 +10,9 @@ type Options struct {
 	Target target.Options
 	// DisableChangelog disables changelog retrieval for targets.
 	DisableChangelog bool
-	// LocalScmDirectory, when set, makes every scm of the pipeline use this existing
-	// checkout instead of cloning. See EnforceLocalScm for what that turns off.
+	// LocalScmDirectory, when set, makes every scm describing the repository of this existing
+	// checkout use it instead of cloning. Other scms are cloned, and their targets run in dry
+	// run. See EnforceLocalScm for what else that turns off.
 	LocalScmDirectory string
 }
 

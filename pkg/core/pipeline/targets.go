@@ -29,7 +29,14 @@ func (p *Pipeline) RunTarget(ctx context.Context, id string, sourceIds []string)
 	target.Result.Name = target.Config.Name
 	target.Result.DryRun = target.DryRun
 
-	err = target.Run(ctx, p.Sources[target.Config.SourceID].Output, &p.Options.Target)
+	targetOptions := p.targetOptions(id, target)
+	if targetOptions.DryRun && !p.Options.Target.DryRun {
+		// Dev mode forced the target into dry run: the report must not show it as applied.
+		target.DryRun = true
+		target.Result.DryRun = true
+	}
+
+	err = target.Run(ctx, p.Sources[target.Config.SourceID].Output, &targetOptions)
 	if err != nil {
 		p.Report.Result = result.FAILURE
 		target.Result.Result = result.FAILURE
