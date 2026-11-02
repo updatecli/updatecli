@@ -41,6 +41,7 @@ var (
 	disableChangelog    bool
 	validateSchema      bool
 	relativePaths       string
+	devMode             bool
 	uniqueTmpDir        bool
 	disableVersionCheck bool
 	exportReportToYAML  bool
@@ -170,6 +171,11 @@ func run(command string) error {
 
 	e.Options.ExportToYAML = exportReportToYAML
 	e.Options.DisableUdashReport = disableUdashReport
+
+	if err := applyDevFlag(); err != nil {
+		log.Errorf("%s %s", result.FAILURE, err)
+		return err
+	}
 
 	switch command {
 	case "apply", "compose/apply", "pipeline/apply":
