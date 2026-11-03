@@ -99,11 +99,11 @@ func (y *Yaml) Source(_ context.Context, pathResolver pathresolver.Resolver, res
 		}
 
 		// Decode the file into one or more YAML document nodes
-		var docs []*yaml.Node
-		dec := yaml.NewDecoder(strings.NewReader(y.files[filePath].content))
+		var docs []*yaml.Node                                                //nolint:forbidigo // yamlpath only accepts go.yaml.in/yaml/v3 nodes
+		dec := yaml.NewDecoder(strings.NewReader(y.files[filePath].content)) //nolint:forbidigo // yamlpath only accepts go.yaml.in/yaml/v3 nodes
 		for {
-			var doc yaml.Node
-			if derr := dec.Decode(&doc); derr != nil {
+			var doc yaml.Node                          //nolint:forbidigo // yamlpath only accepts go.yaml.in/yaml/v3 nodes
+			if derr := dec.Decode(&doc); derr != nil { //nolint:forbidigo // yamlpath only accepts go.yaml.in/yaml/v3 nodes
 				if derr == io.EOF {
 					break
 				}
@@ -125,7 +125,7 @@ func (y *Yaml) Source(_ context.Context, pathResolver pathresolver.Resolver, res
 			}
 
 			for i := range founds {
-				results = append(results, founds[i].Value)
+				results = append(results, founds[i].Value) //nolint:forbidigo // yamlpath only accepts go.yaml.in/yaml/v3 nodes
 			}
 		}
 

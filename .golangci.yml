@@ -52,6 +52,9 @@ linters:
         - pattern: ^http\.(DefaultClient|DefaultTransport|Get|Head|Post|PostForm)$
           pkg: ^net/http$
           msg: use pkg/core/httpclient so requests get the shared proxy, retry, throttling and caching behaviour
+        - pattern: .*
+          pkg: ^(gopkg\.in/yaml\.v[23]|go\.yaml\.in/yaml/v[23])$
+          msg: use go.yaml.in/yaml/v4
     funlen:
       lines: 200
       statements: 150
