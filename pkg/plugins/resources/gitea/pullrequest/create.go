@@ -51,6 +51,9 @@ func (g *Gitea) CreateAction(ctx context.Context, report *reports.Action, resetD
 		report.Title = pr.Title
 		report.Link = pr.HTMLURL
 		report.Description = pr.Body
+		if err := g.requestReviewers(ctx, pr); err != nil {
+			return err
+		}
 		return g.enableAutoMerge(ctx, pr)
 	}
 
@@ -114,6 +117,9 @@ func (g *Gitea) CreateAction(ctx context.Context, report *reports.Action, resetD
 
 	log.Infof("Gitea pullrequest successfully opened on %q", pr.HTMLURL)
 
+	if err := g.requestReviewers(ctx, pr); err != nil {
+		return err
+	}
 	return g.enableAutoMerge(ctx, pr)
 }
 
