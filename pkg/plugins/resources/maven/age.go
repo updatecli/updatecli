@@ -51,8 +51,9 @@ func (m *Maven) releaseDate(ctx context.Context, metadataURL, ver string) (time.
 		return time.Time{}, false, err
 	}
 
-	// Some repositories don't accept HEAD requests
-	if resp.code == http.StatusMethodNotAllowed || resp.code == http.StatusNotImplemented {
+	// Some repositories don't accept HEAD requests, or deny them while serving GET requests
+	switch resp.code {
+	case http.StatusMethodNotAllowed, http.StatusNotImplemented, http.StatusUnauthorized, http.StatusForbidden:
 		resp, err = m.request(ctx, http.MethodGet, pom)
 		if err != nil {
 			return time.Time{}, false, err
