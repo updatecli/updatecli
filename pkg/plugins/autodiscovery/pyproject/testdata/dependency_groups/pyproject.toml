@@ -1,0 +1,20 @@
+[project]
+name = "groups-project"
+requires-python = ">=3.12"
+dependencies = [
+    "requests>=2.28",
+]
+
+[project.optional-dependencies]
+dev = [
+    "rich>=13.0",
+]
+
+[dependency-groups]
+test = [
+    "pytest>=8.0",
+]
+dev = [
+    { include-group = "test" },
+    "ruff>=0.4",
+]
