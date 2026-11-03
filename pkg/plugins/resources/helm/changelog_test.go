@@ -89,7 +89,7 @@ func TestChangelog(t *testing.T) {
 			},
 			indexFile: "testdata/kyverno-index.yaml",
 			from:      "3.3.4",
-			to:   "3.3.5",
+			to:        "3.3.5",
 			expected: &result.Changelogs{
 				{
 					Title:       "3.3.5",
