@@ -6,6 +6,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
 // TestMain isolates HOME/MAVEN_HOME/M2_HOME for the whole package so that
@@ -265,4 +267,83 @@ targets:
 		})
 	}
 
+}
+
+func TestDiscoverManifestsWithoutRepository(t *testing.T) {
+	// Without repositories in the pom.xml or settings.xml, the source uses Maven Central
+	// and must still apply the version filter
+	maven, err := New(Spec{VersionFilter: version.Filter{Kind: "semver", Pattern: "minor"}}, "testdata/norepository", "", "")
+	require.NoError(t, err)
+
+	manifests, err := maven.DiscoverManifests()
+	require.NoError(t, err)
+	require.Len(t, manifests, 1)
+
+	assert.NotContains(t, string(manifests[0]), "repositories:")
+	assert.Contains(t, string(manifests[0]), "      versionfilter:\n        kind: 'semver'\n")
+}
+
+func TestDiscoverManifestsAge(t *testing.T) {
+	tests := []struct {
+		name    string
+		spec    map[string]interface{}
+		want    string
+		wantErr bool
+	}{
+		{
+			name: "no age by default",
+			spec: map[string]interface{}{},
+		},
+		{
+			name: "explicit age",
+			spec: map[string]interface{}{"age": map[string]interface{}{"minimum": "3d", "maximum": "1y"}},
+			want: "      age:\n        minimum: '3d'\n        maximum: '1y'\n",
+		},
+		{
+			name: "empty age",
+			spec: map[string]interface{}{"age": map[string]interface{}{}},
+		},
+		{
+			name:    "invalid age",
+			spec:    map[string]interface{}{"age": map[string]interface{}{"minimum": "soon"}},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			maven, err := New(tt.spec, "testdata/externalhttp", "", "")
+			if tt.wantErr {
+				require.ErrorContains(t, err, "wrong age spec")
+				return
+			}
+			require.NoError(t, err)
+
+			manifests, err := maven.DiscoverManifests()
+			require.NoError(t, err)
+			require.NotEmpty(t, manifests)
+
+			for _, manifest := range manifests {
+				if tt.want == "" {
+					assert.NotContains(t, string(manifest), "age:")
+					continue
+				}
+				assert.Contains(t, string(manifest), tt.want)
+			}
+		})
+	}
+}
+
+func TestDiscoverManifestsSkipsVersionRanges(t *testing.T) {
+	maven, err := New(Spec{}, "testdata/vulnerability", "", "")
+	require.NoError(t, err)
+
+	manifests, err := maven.DiscoverManifests()
+	require.NoError(t, err)
+
+	// The dependencies relying on a property or a version range are ignored
+	require.Len(t, manifests, 2)
+	for _, manifest := range manifests {
+		assert.NotContains(t, string(manifest), "commons-collections")
+	}
 }

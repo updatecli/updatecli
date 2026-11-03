@@ -8,7 +8,7 @@ import (
 
 	"github.com/heimdalr/dag"
 	"github.com/updatecli/updatecli/pkg/core/log"
-	"go.yaml.in/yaml/v3"
+	"go.yaml.in/yaml/v4"
 )
 
 /*

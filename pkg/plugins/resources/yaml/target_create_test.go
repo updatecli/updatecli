@@ -632,6 +632,34 @@ func Test_TargetSearchPatternIgnoresMissingKey(t *testing.T) {
 	assert.Equal(t, "foo: bar\n", mockedText.Contents["test.yaml"])
 }
 
+// Test_TargetSearchPatternIgnoresMissingFile covers spec.searchpattern matching no
+// file at all, which used to fail the target. An org wide run then broke on every
+// repository missing the searched path, such as ".github/workflows/*".
+func Test_TargetSearchPatternIgnoresMissingFile(t *testing.T) {
+	t.Chdir(t.TempDir())
+
+	y, err := New(Spec{Files: []string{".github/workflows/*"}, Key: "$.jobs", SearchPattern: true})
+	require.NoError(t, err)
+
+	gotResult := result.Target{}
+	require.NoError(t, y.Target(context.Background(), "v1", nil, pathresolver.Resolver{}, false, &gotResult))
+
+	assert.False(t, gotResult.Changed)
+	assert.Equal(t, result.SKIPPED, gotResult.Result)
+}
+
+// Test_TargetMissingFileErrors covers a file that does not exist still failing the
+// target when spec.searchpattern is not set.
+func Test_TargetMissingFileErrors(t *testing.T) {
+	t.Chdir(t.TempDir())
+
+	y, err := New(Spec{File: "test.yaml", Key: "$.foo"})
+	require.NoError(t, err)
+
+	gotResult := result.Target{}
+	assert.Error(t, y.Target(context.Background(), "v1", nil, pathresolver.Resolver{}, false, &gotResult))
+}
+
 // Test_TargetYamlPathMissingKeyErrors covers the yamlpath engine reporting a key
 // missing from every document, which used to be silently skipped because the check
 // sat inside the document loop.

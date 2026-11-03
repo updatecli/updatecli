@@ -114,7 +114,7 @@ func GetChangelogFromGitHub(url, from, to string) *result.Changelogs {
 		return nil
 	}
 
-	if parsedModule[0] != "github.com" {
+	if parsedModule[0] != githubHost {
 		return nil
 	}
 

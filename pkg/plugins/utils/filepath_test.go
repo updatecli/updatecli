@@ -34,6 +34,10 @@ func TestFindFilesMatchingPathPattern(t *testing.T) {
 				"filepath_test.go",
 			},
 		},
+		{
+			filepath:           "*.nomatch",
+			expectedFoundFiles: []string{},
+		},
 	}
 
 	for _, data := range testdata {

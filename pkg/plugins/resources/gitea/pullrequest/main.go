@@ -48,6 +48,9 @@ func New(spec any, scm *giteascm.Gitea) (Gitea, error) {
 	if err != nil {
 		return Gitea{}, fmt.Errorf("error decoding spec: %w", err)
 	}
+	if err := s.Validate(); err != nil {
+		return Gitea{}, err
+	}
 
 	if scm != nil {
 

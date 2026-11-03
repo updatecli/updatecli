@@ -22,6 +22,10 @@ func (f *File) Condition(_ context.Context, source string, scm scm.ScmHandler, p
 		return false, "", fmt.Errorf("init files: %w", err)
 	}
 
+	if len(f.files) == 0 && f.spec.SearchPattern {
+		return false, noFileFoundMatchingCriteria, nil
+	}
+
 	files := f.spec.Files
 	files = append(files, f.spec.File)
 

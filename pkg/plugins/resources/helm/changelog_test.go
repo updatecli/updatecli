@@ -1,19 +1,26 @@
 package helm
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
 func TestChangelog(t *testing.T) {
 	tests := []struct {
-		name                string
-		from                string
-		to                  string
-		spec                Spec
+		name string
+		from string
+		to   string
+		spec Spec
+		// indexFile, when set, is served as the repository index.yaml from a
+		// local server instead of fetching spec.URL, so the test does not break
+		// when the upstream repository regenerates its index.
+		indexFile           string
 		requiresGithubToken bool
 		expected            *result.Changelogs
 	}{
@@ -78,15 +85,15 @@ func TestChangelog(t *testing.T) {
 		{
 			name: "Valid chart with rich changelog string in annotation",
 			spec: Spec{
-				URL:  "https://kyverno.github.io/kyverno/",
 				Name: "kyverno",
 			},
-			from: "3.3.4",
-			to:   "3.3.5",
+			indexFile: "testdata/kyverno-index.yaml",
+			from:      "3.3.4",
+			to:        "3.3.5",
 			expected: &result.Changelogs{
 				{
 					Title:       "3.3.5",
-					PublishedAt: "2026-06-21 16:33:28.043578633 +0530 +0530",
+					PublishedAt: "2026-11-02 22:41:10.363978005 +0000 UTC",
 					Body:        "\n## Added\n\n* added a new option .reportsController.sanityChecks to disable checks for policy reports crds\n\n## Fixed\n\n* fix validation error in validate.yaml\n* fixed global image registry config by introducing *.image.defaultRegistry.\n",
 				},
 			},
@@ -179,6 +186,18 @@ func TestChangelog(t *testing.T) {
 					t.Skip("Skipping test because GITHUB_TOKEN is not set")
 				}
 			}
+			if tt.indexFile != "" {
+				index, err := os.ReadFile(tt.indexFile)
+				require.NoError(t, err)
+
+				server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					_, _ = w.Write(index)
+				}))
+				t.Cleanup(server.Close)
+
+				tt.spec.URL = server.URL
+			}
+
 			chart, err := New(tt.spec)
 			assert.NoError(t, err)
 

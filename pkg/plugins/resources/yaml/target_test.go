@@ -724,6 +724,46 @@ services:
 			wantedResult: true,
 		},
 		{
+			name: "Folded scalar sibling of an updated key should be preserved (issue #8295)",
+			spec: Spec{
+				File:    "test.yaml",
+				Key:     "$.jobs.build.steps[0].uses",
+				Comment: "v2.0.0",
+			},
+			files: map[string]file{
+				"test.yaml": {
+					filePath:         "test.yaml",
+					originalFilePath: "test.yaml",
+				},
+			},
+			inputSourceValue: "actions/checkout@def456",
+			mockedContents: map[string]string{
+				"test.yaml": `jobs:
+  build:
+    environment: >-
+      ${{
+        github.ref == 'refs/heads/main' && 'dev' ||
+        'unknown'
+      }}
+    steps:
+      - uses: actions/checkout@abc123 # v1.0.0
+`,
+			},
+			wantedContents: map[string]string{
+				"test.yaml": `jobs:
+  build:
+    environment: >-
+      ${{
+        github.ref == 'refs/heads/main' && 'dev' ||
+        'unknown'
+      }}
+    steps:
+      - uses: actions/checkout@def456 # v2.0.0
+`,
+			},
+			wantedResult: true,
+		},
+		{
 			name: "Error case with multiple keys, one key not found",
 			spec: Spec{
 				File: "test.yaml",

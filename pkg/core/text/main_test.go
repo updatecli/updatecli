@@ -37,7 +37,7 @@ func TestFile_ReadFromUrl(t *testing.T) {
 		{
 			name:        "404",
 			location:    "http://updatecli.io/notfound",
-			expectedErr: fmt.Errorf("URL \"http://updatecli.io/notfound\" not found or in error"),
+			expectedErr: fmt.Errorf("URL \"http://updatecli.io/notfound\" not found or in error, status 404"),
 		},
 		{
 			name:         "Success with retry",
@@ -75,8 +75,8 @@ func TestFile_ReadFromUrl(t *testing.T) {
 			tr := Text{}
 			content, err := tr.readFromURL(location, 0)
 			if tt.expectedErr != nil {
-				assert.Error(t, err)
-				assert.Equal(t, tt.expectedErr, err)
+				assert.EqualError(t, err, tt.expectedErr.Error())
+				assert.ErrorIs(t, err, ErrNotFound)
 			} else {
 				assert.NoError(t, err)
 			}

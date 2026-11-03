@@ -48,13 +48,11 @@ func (m MatchingRules) Validate() error {
 	return nil
 }
 
-// isMatchingRule tests that all defined rule are matching and return true if it's the case otherwise return false
+// isMatchingRule tests if any of the defined rules matches.
 func (m MatchingRules) isMatchingRule(rootDir, filePath, image, arch string) bool {
-	// Test if the ignore rule are respected
-	var ruleResults []bool
-
 	if len(m) > 0 {
 		for _, rule := range m {
+			var ruleResults []bool
 			var match bool
 			var err error
 
@@ -118,7 +116,6 @@ func (m MatchingRules) isMatchingRule(rootDir, filePath, image, arch string) boo
 			if isAllMatching {
 				return true
 			}
-			ruleResults = []bool{}
 		}
 	}
 

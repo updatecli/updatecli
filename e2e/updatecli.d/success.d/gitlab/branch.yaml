@@ -1,25 +1,28 @@
 name: "Test GitLab branch"
-
-sources:
-  default:
-    kind: "gitlab/branch"
-    spec:
-      owner: "olblak"
-      repository: "updatecli"
-      branch: main
-
-conditions:
-  default:
-    kind: "gitlab/branch"
-    disablesourceinput: true
-    spec:
-      owner: "olblak"
-      repository: "updatecli"
-      branch: "main"
-
-  sourcedefault:
-    kind: "gitlab/branch"
-    sourceid: "default"
-    spec:
-      owner: "olblak"
-      repository: "updatecli"
+# # I am disabling this tests
+# # Due to the new Gitlab rate limit
+# # https://about.gitlab.com/blog/rate-limit-change-2026/
+#
+# sources:
+#   default:
+#     kind: "gitlab/branch"
+#     spec:
+#       owner: "olblak"
+#       repository: "updatecli"
+#       branch: main
+#
+# conditions:
+#   default:
+#     kind: "gitlab/branch"
+#     disablesourceinput: true
+#     spec:
+#       owner: "olblak"
+#       repository: "updatecli"
+#       branch: "main"
+#
+#   sourcedefault:
+#     kind: "gitlab/branch"
+#     sourceid: "default"
+#     spec:
+#       owner: "olblak"
+#       repository: "updatecli"

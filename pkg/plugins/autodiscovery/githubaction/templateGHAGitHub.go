@@ -176,7 +176,6 @@ targets:
     spec:
       file: '{{ .File }}'
       key: '{{ .TargetKey }}'
-      engine: 'yamlpath'
 {{- if .Digest }}
       comment: '{{ "{{" }} source "release" {{ "}}" }}'
 {{- end }}
@@ -196,7 +195,6 @@ targets:
     spec:
       file: '{{ .File }}'
       key: '{{ .TargetKey }}'
-      engine: 'yamlpath'
 {{- if .Digest }}
       comment: '{{ "{{" }} source "tag" {{ "}}" }}'
 {{- end }}
@@ -216,7 +214,6 @@ targets:
     spec:
       file: '{{ .File }}'
       key: '{{ .TargetKey }}'
-      engine: 'yamlpath'
 {{- if .Digest }}
       comment: '{{ "{{" }} source "branch" {{ "}}" }}'
 {{- end }}

@@ -79,6 +79,15 @@ func TestCondition(t *testing.T) {
 			},
 			expectedResult: false,
 		},
+		{
+			name: "Whitespace around a multi-line value is ignored",
+			spec: Spec{
+				File:  "testdata/data_3.xml",
+				Path:  "/project/dependency/version",
+				Value: "3.2.1",
+			},
+			expectedResult: true,
+		},
 	}
 
 	for _, tt := range testData {

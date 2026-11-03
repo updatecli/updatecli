@@ -1,62 +1,65 @@
 name: Test GitLab scm
-pipelineid: gitlab/scm
-
-scms:
-  gitlab:
-    kind: gitlab
-    spec:
-      owner: "olblak"
-      repository: "updatecli"
-      branch: main
-
-sources:
-  license:
-    name: Retrieve license file content
-    kind: file
-    scmid: gitlab
-    spec:
-      file: LICENSE
-  readme:
-    name: Retrieve readme file content
-    kind: file
-    scmid: gitlab
-    spec:
-      file: README.adoc
-
-conditions:
-  license:
-    name: Retrieve license file content
-    kind: file
-    scmid: gitlab
-    sourceid: license
-    spec:
-      file: LICENSE
-  readme:
-    name: Retrieve license file content
-    kind: file
-    sourceid: readme
-    scmid: gitlab
-    spec:
-      file: README.adoc
-targets:
-  license:
-    name: Update license file content
-    kind: file
-    scmid: gitlab
-    sourceid: license
-    spec:
-      file: LICENSE
-  readme:
-    name: Update README license file content
-    kind: file
-    sourceid: readme
-    scmid: gitlab
-    spec:
-      file: README.adoc
-
-actions:
-  default:
-    title: Bump xxx
-    kind: gitlab/mergerequest
-    scmid: gitlab
+## I am disabling this tests
+## Due to the new Gitlab rate limit
+## https://about.gitlab.com/blog/rate-limit-change-2026/
+#pipelineid: gitlab/scm
+#
+#scms:
+#  gitlab:
+#    kind: gitlab
+#    spec:
+#      owner: "olblak"
+#      repository: "updatecli"
+#      branch: main
+#
+#sources:
+#  license:
+#    name: Retrieve license file content
+#    kind: file
+#    scmid: gitlab
+#    spec:
+#      file: LICENSE
+#  readme:
+#    name: Retrieve readme file content
+#    kind: file
+#    scmid: gitlab
+#    spec:
+#      file: README.adoc
+#
+#conditions:
+#  license:
+#    name: Retrieve license file content
+#    kind: file
+#    scmid: gitlab
+#    sourceid: license
+#    spec:
+#      file: LICENSE
+#  readme:
+#    name: Retrieve license file content
+#    kind: file
+#    sourceid: readme
+#    scmid: gitlab
+#    spec:
+#      file: README.adoc
+#targets:
+#  license:
+#    name: Update license file content
+#    kind: file
+#    scmid: gitlab
+#    sourceid: license
+#    spec:
+#      file: LICENSE
+#  readme:
+#    name: Update README license file content
+#    kind: file
+#    sourceid: readme
+#    scmid: gitlab
+#    spec:
+#      file: README.adoc
+#
+#actions:
+#  default:
+#    title: Bump xxx
+#    kind: gitlab/mergerequest
+#    scmid: gitlab
 

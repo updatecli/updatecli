@@ -15,7 +15,7 @@ import (
 	"dario.cat/mergo"
 	"github.com/Masterminds/sprig/v3"
 	"github.com/getsops/sops/v3/decrypt"
-	"go.yaml.in/yaml/v3"
+	"go.yaml.in/yaml/v4"
 
 	"cuelang.org/go/cue"
 	cueast "cuelang.org/go/cue/ast"

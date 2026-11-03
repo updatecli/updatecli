@@ -18,12 +18,29 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
+// skipOnNoFileFound reports a searchpattern that matched no file. Validate rejects an
+// empty "file" and "files", so nothing else leaves the target without a file to update.
+func (f *File) skipOnNoFileFound(resultTarget *result.Target) bool {
+	if len(f.files) > 0 {
+		return false
+	}
+
+	resultTarget.Description = noFileFoundMatchingCriteria
+	resultTarget.Result = result.SKIPPED
+
+	return true
+}
+
 // Target creates or updates a file from a source control management system.
 // The default content is the value retrieved from source
 func (f *File) Target(_ context.Context, source string, scm scm.ScmHandler, pathResolver pathresolver.Resolver, dryRun bool, resultTarget *result.Target) error {
 
 	if err := f.initFiles(pathResolver); err != nil {
 		return fmt.Errorf("init files: %w", err)
+	}
+
+	if f.skipOnNoFileFound(resultTarget) {
+		return nil
 	}
 
 	var files []string
