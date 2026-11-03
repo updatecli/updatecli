@@ -1,6 +1,8 @@
 package engine
 
 import (
+	"errors"
+
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -173,4 +175,41 @@ func TestPruneSCMBranches(t *testing.T) {
 			assert.Equal(t, tt.expectedCleanWorkingBranchCounter, mockScm.cleanWorkingBranchCounter)
 		})
 	}
+}
+
+// mockCloneScm implements the scm methods used while cloning git repositories.
+type mockCloneScm struct {
+	scm.ScmHandler
+	directory string
+	cloneErr  error
+}
+
+func (m *mockCloneScm) GetDirectory() string {
+	return m.directory
+}
+
+func (m *mockCloneScm) Clone() (string, error) {
+	return m.directory, m.cloneErr
+}
+
+func TestInitSCMFailedClone(t *testing.T) {
+	failing := &pipeline.Pipeline{
+		Name: "failing",
+		SCMs: map[string]scm.Scm{
+			"broken": {Handler: &mockCloneScm{directory: "/tmp/broken", cloneErr: errors.New("authentication required")}},
+		},
+	}
+	working := &pipeline.Pipeline{
+		Name: "working",
+		SCMs: map[string]scm.Scm{
+			"default": {Handler: &mockCloneScm{directory: "/tmp/default"}},
+		},
+	}
+
+	e := Engine{Pipelines: []*pipeline.Pipeline{failing, working}}
+
+	require.NoError(t, e.InitSCM())
+
+	assert.EqualError(t, e.failedSCMError(failing), `scm "broken" failed to clone: authentication required`)
+	assert.NoError(t, e.failedSCMError(working))
 }
