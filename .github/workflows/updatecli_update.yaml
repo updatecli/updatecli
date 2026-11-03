@@ -45,3 +45,38 @@ jobs:
           UPDATECLI_UDASH_API_URL: ${{ secrets.UPDATECLI_UDASH_API_URL }}
           UPDATECLI_UDASH_ACCESS_TOKEN: ${{ secrets.UPDATECLI_UDASH_ACCESS_TOKEN }}
           UPDATECLI_UDASH_URL: ${{ secrets.UPDATECLI_UDASH_URL }}
+  ## When Udash is enabled, run updatecli diff once across all pipelines after
+  ## every matrix job has finished, so Udash learns about pull requests that
+  ## have been merged or closed in the meantime.
+  refresh:
+    name: "Updatecli - Refresh"
+    runs-on: ubuntu-latest
+    needs: updatecli
+    if: ${{ !cancelled() }}
+    ## updatecli diff is a dry run, read access is enough
+    permissions:
+      contents: read
+    steps:
+      - name: "Checkout"
+        uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v7.0.1
+        with:
+          persist-credentials: false
+      - name: "Setup updatecli"
+        uses: "updatecli/updatecli-action@93ae2608256484ef8598e902aa675bbc9e278e4e" # v3.10.0
+        with:
+          version: "v0.123.0"
+      - name: "Set up Go"
+        uses: "actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e" # v7.0.0
+        with:
+          go-version-file: "go.mod"
+          cache: false
+        id: go
+      - name: "Refresh updatecli"
+        run: updatecli compose diff --experimental
+        env:
+          UPDATECLI_GITHUB_APP_CLIENT_ID: ${{ secrets.UPDATECLIBOT_APP_ID }}
+          UPDATECLI_GITHUB_APP_PRIVATE_KEY: ${{ secrets.UPDATECLIBOT_APP_PRIVKEY }}
+          UPDATECLI_GITHUB_APP_INSTALLATION_ID: ${{ secrets.UPDATECLIBOT_APP_INSTALLATION_ID }}
+          UPDATECLI_UDASH_API_URL: ${{ secrets.UPDATECLI_UDASH_API_URL }}
+          UPDATECLI_UDASH_ACCESS_TOKEN: ${{ secrets.UPDATECLI_UDASH_ACCESS_TOKEN }}
+          UPDATECLI_UDASH_URL: ${{ secrets.UPDATECLI_UDASH_URL }}
