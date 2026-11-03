@@ -1,8 +1,11 @@
 // Package pyproject implements the autodiscovery crawler for Python projects.
 //
 // It walks a root directory looking for pyproject.toml files and generates one manifest per
-// dependency declared in [project.dependencies] and [project.optional-dependencies]. Other
-// tables, such as [dependency-groups], [tool.poetry], and [build-system], are not read.
+// dependency declared in [project.dependencies], [project.optional-dependencies], and
+// [dependency-groups] (PEP 735). In dependency groups, {include-group = "..."} entries don't
+// generate manifests since the included group is processed on its own, but "dependencygroups"
+// rules consider the dependencies of an included group part of the including one too. Other tables, such as
+// [tool.poetry], [tool.uv] dev-dependencies, and [build-system], are not read.
 //
 // The package manager is detected from the lock file sitting next to each pyproject.toml.
 // Only uv is supported today, through uv.lock:

@@ -3,6 +3,7 @@ package xml
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/beevik/etree"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
@@ -46,7 +47,8 @@ func (x *XML) Condition(_ context.Context, source string, scm scm.ScmHandler, pa
 		), nil
 	}
 
-	if value == elem.Text() {
+	// The whitespace around a value, such as the indentation of an element spanning several lines, is ignored
+	if strings.TrimSpace(value) == elemText(elem) {
 		return true, fmt.Sprintf("Path %q, from file %q, is correctly set to %s",
 			x.spec.Path,
 			resourceFile,
@@ -56,7 +58,7 @@ func (x *XML) Condition(_ context.Context, source string, scm scm.ScmHandler, pa
 	return false, fmt.Sprintf("Path %q, from file %q, is incorrectly set to %q and should be %q",
 		x.spec.Path,
 		resourceFile,
-		elem.Text(),
+		elemText(elem),
 		value,
 	), nil
 }

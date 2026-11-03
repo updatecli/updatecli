@@ -129,6 +129,25 @@ type Spec struct {
 	// ```
 	//
 	Assignees []string `yaml:",omitempty"`
+	// "reviewers" defines the usernames to request a review from.
+	//
+	// default:
+	//   no review requests.
+	//
+	// remark:
+	//   * requests are added when target changes create or update a pull request.
+	//   * users who have already reviewed or been requested are left unchanged.
+	//   * removing a username does not remove its review or request.
+	//   * a failed review request stops the action before requesting auto-merge.
+	//
+	// example:
+	// ```
+	//   reviewers:
+	//     - alice
+	//     - bob
+	// ```
+	//
+	Reviewers []string `yaml:",omitempty"`
 	// "merge" defines how Updatecli merges the pull request.
 	//
 	// default:

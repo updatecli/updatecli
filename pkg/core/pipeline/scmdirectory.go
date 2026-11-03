@@ -7,7 +7,7 @@ import (
 
 	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
-	"go.yaml.in/yaml/v3"
+	"go.yaml.in/yaml/v4"
 )
 
 // scmDirectoryAttribute is the attribute every scm kind uses to name the local checkout

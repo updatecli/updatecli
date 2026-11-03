@@ -21,7 +21,7 @@ func loadOCIRepository(filename string) (map[int]fluxcdv1.OCIRepository, error) 
 		return nil, fmt.Errorf("opening file %s: %w", filename, err)
 	}
 
-	loader, err := goyaml.NewLoader(bytes.NewReader(content), goyaml.V4)
+	loader, err := goyaml.NewLoader(bytes.NewReader(content), goyaml.WithV4Defaults())
 	if err != nil {
 		return nil, fmt.Errorf("creating yaml loader: %w", err)
 	}
