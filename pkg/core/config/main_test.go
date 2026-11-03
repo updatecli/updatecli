@@ -937,7 +937,7 @@ func TestNew(t *testing.T) {
 				ManifestFile: "testdata/updatecli.d/badJenkins.yaml",
 			},
 			expectedResult: []Config{},
-			expectedError:  errors.New("yaml: unmarshal errors:\n  line 3: cannot unmarshal !!seq into map[string]source.Config"),
+			expectedError:  errors.New("yaml: construct errors: line 3: cannot construct !!seq into map[string]source.Config"),
 		},
 		{
 			id: "Test with matching label",

@@ -8,7 +8,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/engine/manifest"
 	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/registry"
-	"go.yaml.in/yaml/v3"
+	"go.yaml.in/yaml/v4"
 )
 
 // Compose is a struct that contains a compose object
