@@ -113,7 +113,7 @@ func (r *Reports) Sort() {
 }
 
 // Summary display a summary of
-func (r *Reports) Summary() (successCounter, changedCounter, failedCounter, skippedCounter int, actionLinks []string) {
+func (r *Reports) Summary() (successCounter, changedCounter, failedCounter, skippedCounter int, actionLinks []string, createdLabels []string) {
 
 	reports := *r
 
@@ -140,8 +140,14 @@ func (r *Reports) Summary() (successCounter, changedCounter, failedCounter, skip
 			if !slices.Contains(actionLinks, action.Link) && action.Link != "" {
 				actionLinks = append(actionLinks, action.Link)
 			}
+
+			for _, label := range action.CreatedLabels {
+				if !slices.Contains(createdLabels, label) {
+					createdLabels = append(createdLabels, label)
+				}
+			}
 		}
 	}
 
-	return successCounter, changedCounter, failedCounter, skippedCounter, actionLinks
+	return successCounter, changedCounter, failedCounter, skippedCounter, actionLinks, createdLabels
 }

@@ -114,6 +114,33 @@ func newTestPullRequest(c client.Client, remotePullRequest PullRequestApi) PullR
 	}
 }
 
+func TestActionSpecValidateLabelColor(t *testing.T) {
+	tests := []struct {
+		name       string
+		labelColor string
+		wantErr    bool
+	}{
+		{name: "empty is valid", labelColor: ""},
+		{name: "valid lowercase hex", labelColor: "ededed"},
+		{name: "valid uppercase hex", labelColor: "ABCDEF"},
+		{name: "leading hash is rejected", labelColor: "#ededed", wantErr: true},
+		{name: "too short is rejected", labelColor: "edc", wantErr: true},
+		{name: "non hex characters are rejected", labelColor: "zzzzzz", wantErr: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			spec := ActionSpec{LabelColor: tt.labelColor}
+			err := spec.Validate()
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+			assert.NoError(t, err)
+		})
+	}
+}
+
 func TestIsPullRequestEmpty(t *testing.T) {
 	testdata := []struct {
 		name                 string
