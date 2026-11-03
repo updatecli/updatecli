@@ -8,7 +8,7 @@ import (
 	validator "github.com/santhosh-tekuri/jsonschema/v6"
 	"github.com/updatecli/updatecli/pkg/core/jsonschema"
 	"github.com/updatecli/updatecli/pkg/core/log"
-	"go.yaml.in/yaml/v3"
+	"go.yaml.in/yaml/v4"
 )
 
 // composeSchemaID identifies the compiled compose schema. It is never fetched, the

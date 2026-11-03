@@ -4,7 +4,7 @@ import (
 	"os"
 	"strings"
 
-	goyaml "go.yaml.in/yaml/v3"
+	goyaml "go.yaml.in/yaml/v4"
 )
 
 // precommitRepo represent a precommit repo

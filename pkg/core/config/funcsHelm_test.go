@@ -60,17 +60,17 @@ func TestHelmFuncs(t *testing.T) {
 		},
 		{
 			tpl:    `{{ fromYaml . }}`,
-			expect: "map[Error:yaml: unmarshal errors:\n  line 1: cannot unmarshal !!seq into map[string]interface {}]",
+			expect: "map[Error:yaml: construct errors: line 1: cannot construct !!seq into map[string]interface {}]",
 			vars:   "- one\n- two\n",
 		},
 		{
 			tpl:    `{{ fromYaml . }}`,
-			expect: "map[Error:yaml: unmarshal errors:\n  line 1: cannot unmarshal !!seq into map[string]interface {}]",
+			expect: "map[Error:yaml: construct errors: line 1: cannot construct !!seq into map[string]interface {}]",
 			vars:   `["one", "two"]`,
 		},
 		{
 			tpl:    `{{ fromYamlArray . }}`,
-			expect: "[yaml: unmarshal errors:\n  line 1: cannot unmarshal !!map into []interface {}]",
+			expect: "[yaml: construct errors: line 1: cannot construct !!map into []interface {}]",
 			vars:   `hello: world`,
 		},
 		// Failure cases: functions swallow errors and embed them in the output.
@@ -81,12 +81,12 @@ func TestHelmFuncs(t *testing.T) {
 		},
 		{
 			tpl:    `{{ fromYaml . }}`,
-			expect: "map[Error:yaml: line 1: did not find expected ',' or ']']",
+			expect: "map[Error:yaml: line 2: did not find expected ',' or ']']",
 			vars:   "key: [unclosed",
 		},
 		{
 			tpl:    `{{ fromYamlArray . }}`,
-			expect: "[yaml: line 1: did not find expected ',' or ']']",
+			expect: "[yaml: line 2: did not find expected ',' or ']']",
 			vars:   "key: [unclosed",
 		},
 	}
