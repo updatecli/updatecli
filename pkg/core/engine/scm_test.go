@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -17,8 +18,13 @@ type mockPushScm struct {
 	url           string
 	workingBranch string
 	targetBranch  string
+	directory     string
 	// remoteBranchUpToDate reports if the remote branch already contains the local commits
 	remoteBranchUpToDate bool
+
+	// pushErrors holds the error returned by each successive Push call, if any.
+	// A nil entry makes the corresponding Push call succeed.
+	pushErrors []error
 
 	pushCounter               int
 	cleanWorkingBranchCounter int
@@ -26,6 +32,10 @@ type mockPushScm struct {
 
 func (m *mockPushScm) GetURL() string {
 	return m.url
+}
+
+func (m *mockPushScm) GetDirectory() string {
+	return m.directory
 }
 
 func (m *mockPushScm) GetBranches() (sourceBranch, workingBranch, targetBranch string) {
@@ -47,6 +57,11 @@ func (m *mockPushScm) Checkout() error {
 
 func (m *mockPushScm) Push() (bool, error) {
 	m.pushCounter++
+	if m.pushCounter <= len(m.pushErrors) {
+		if err := m.pushErrors[m.pushCounter-1]; err != nil {
+			return false, err
+		}
+	}
 	return true, nil
 }
 
@@ -173,4 +188,165 @@ func TestPruneSCMBranches(t *testing.T) {
 			assert.Equal(t, tt.expectedCleanWorkingBranchCounter, mockScm.cleanWorkingBranchCounter)
 		})
 	}
+}
+
+// TestPushSCMCommitsRecoversFromPushErrors checks that a working branch which
+// ends up pushed is not reported as a failure because an earlier push attempt
+// of the same branch errored. See https://github.com/updatecli/updatecli/issues/10825
+func TestPushSCMCommitsRecoversFromPushErrors(t *testing.T) {
+	refLockErr := errors.New("cannot lock ref 'refs/heads/updatecli_main': reference already exists")
+
+	testdata := []struct {
+		name string
+		// pipelines is the number of pipelines sharing the same SCM working branch
+		pipelines            int
+		pushErrors           []error
+		remoteBranchUpToDate bool
+		expectedError        bool
+		expectedPushCounter  int
+	}{
+		{
+			name:                 "an earlier push error is cleared when a later target pushes the branch",
+			pipelines:            2,
+			pushErrors:           []error{refLockErr, nil},
+			remoteBranchUpToDate: true,
+			expectedError:        false,
+			expectedPushCounter:  2,
+		},
+		{
+			name:                 "an earlier push error is cleared when the remote branch is up to date",
+			pipelines:            1,
+			pushErrors:           []error{refLockErr},
+			remoteBranchUpToDate: true,
+			expectedError:        false,
+			expectedPushCounter:  1,
+		},
+		{
+			name:                 "push errors are kept when the branch cannot be published",
+			pipelines:            1,
+			pushErrors:           []error{refLockErr, refLockErr},
+			remoteBranchUpToDate: false,
+			expectedError:        true,
+			expectedPushCounter:  2,
+		},
+	}
+
+	for _, tt := range testdata {
+		t.Run(tt.name, func(t *testing.T) {
+			mockScm := mockPushScm{
+				url:                  "https://github.com/updatecli/updatecli.git",
+				workingBranch:        "updatecli_main",
+				targetBranch:         "main",
+				remoteBranchUpToDate: tt.remoteBranchUpToDate,
+				pushErrors:           tt.pushErrors,
+			}
+
+			var scmHandler scm.ScmHandler = &mockScm
+
+			pipelines := make([]*pipeline.Pipeline, 0, tt.pipelines)
+			targetResults := make([]*result.Target, 0, tt.pipelines)
+			for i := 0; i < tt.pipelines; i++ {
+				targetResult := &result.Target{Result: result.SUCCESS}
+				targetResults = append(targetResults, targetResult)
+				pipelines = append(pipelines, &pipeline.Pipeline{
+					Name: "test",
+					Targets: map[string]target.Target{
+						"default": {
+							Scm:    &scmHandler,
+							ToPush: true,
+							Result: targetResult,
+						},
+					},
+				})
+			}
+
+			e := Engine{Pipelines: pipelines}
+
+			gotErr := e.pushSCMCommits()
+
+			if tt.expectedError {
+				require.Error(t, gotErr)
+				for _, targetResult := range targetResults {
+					// A branch which is not published must keep its targets failed,
+					// otherwise actions would run for changes that were not pushed.
+					assert.Equal(t, result.FAILURE, targetResult.Result)
+					assert.Equal(t, "failed to push commits", targetResult.Description)
+				}
+			} else {
+				require.NoError(t, gotErr)
+				for _, targetResult := range targetResults {
+					// Once the branch is published the previous target result must be
+					// restored, otherwise the action creating the pull request is
+					// skipped as it only runs for targets requiring attention.
+					assert.Equal(t, result.SUCCESS, targetResult.Result)
+					assert.Empty(t, targetResult.Description)
+				}
+			}
+			assert.Equal(t, tt.expectedPushCounter, mockScm.pushCounter)
+		})
+	}
+}
+
+// TestPushSCMCommitsKeepsFailuresFromOtherCheckouts checks that a push from one
+// working directory does not clear the push failure of another checkout sharing
+// the same repository URL and working branch.
+func TestPushSCMCommitsKeepsFailuresFromOtherCheckouts(t *testing.T) {
+	refLockErr := errors.New("cannot lock ref 'refs/heads/updatecli_main': reference already exists")
+
+	failedScm := mockPushScm{
+		url:                  "https://github.com/updatecli/updatecli.git",
+		workingBranch:        "updatecli_main",
+		targetBranch:         "main",
+		directory:            "/checkouts/one",
+		remoteBranchUpToDate: false,
+		pushErrors:           []error{refLockErr, refLockErr},
+	}
+	pushedScm := mockPushScm{
+		url:                  "https://github.com/updatecli/updatecli.git",
+		workingBranch:        "updatecli_main",
+		targetBranch:         "main",
+		directory:            "/checkouts/two",
+		remoteBranchUpToDate: true,
+	}
+
+	var failedHandler scm.ScmHandler = &failedScm
+	var pushedHandler scm.ScmHandler = &pushedScm
+
+	failedResult := &result.Target{Result: result.SUCCESS}
+	pushedResult := &result.Target{Result: result.SUCCESS}
+
+	e := Engine{Pipelines: []*pipeline.Pipeline{
+		{
+			Name: "failing checkout",
+			Targets: map[string]target.Target{
+				"default": {
+					Scm:    &failedHandler,
+					ToPush: true,
+					Result: failedResult,
+				},
+			},
+		},
+		{
+			Name: "pushing checkout",
+			Targets: map[string]target.Target{
+				"default": {
+					Scm:    &pushedHandler,
+					ToPush: true,
+					Result: pushedResult,
+				},
+			},
+		},
+	}}
+
+	gotErr := e.pushSCMCommits()
+
+	// The second checkout pushed its commits, but nothing proves that the first
+	// checkout's commits have been published, so its failure must be kept.
+	require.Error(t, gotErr)
+	assert.Equal(t, result.FAILURE, failedResult.Result)
+	assert.Equal(t, "failed to push commits", failedResult.Description)
+
+	// The checkout which pushed its commits is unaffected.
+	assert.Equal(t, result.SUCCESS, pushedResult.Result)
+	assert.Empty(t, pushedResult.Description)
 }

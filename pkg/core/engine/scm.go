@@ -83,6 +83,55 @@ func Clone(
 func (e *Engine) pushSCMCommits() error {
 	errs := []string{}
 
+	// pushFailureKey identifies the working copy a push failure belongs to.
+	// Two git SCM configurations may share a repository URL and a working branch
+	// while using different working directories, so the checkout directory must
+	// be part of the key: a push from one checkout must not clear the failure of
+	// another checkout whose commits were not published.
+	type pushFailureKey struct {
+		url       string
+		branch    string
+		directory string
+	}
+
+	// pushErrs records push errors per working copy.
+	// A working branch is shared by every target of the same checkout, so an
+	// error reported while pushing one target must be cleared as soon as another
+	// target, or the branch publication below, manages to push that branch or
+	// finds it up to date.
+	pushErrs := map[pushFailureKey]string{}
+	recordPushErr := func(key pushFailureKey, msg string) {
+		pushErrs[key] = msg
+	}
+
+	// pushFailedTargets records, per working copy, the targets whose push failed
+	// with the result they had before the failure. Failing to push sets the
+	// target result to FAILURE, and actions are only created for targets in an
+	// attention state, so the previous result must be restored once the branch
+	// is published: otherwise the action would silently be skipped even though
+	// the target's changes have been pushed.
+	type failedTarget struct {
+		result *result.Target
+		before result.Target
+	}
+	pushFailedTargets := map[pushFailureKey][]failedTarget{}
+	recordFailedTarget := func(key pushFailureKey, targetResult *result.Target, before result.Target) {
+		pushFailedTargets[key] = append(pushFailedTargets[key], failedTarget{
+			result: targetResult,
+			before: before,
+		})
+	}
+	clearPushFailure := func(key pushFailureKey) {
+		delete(pushErrs, key)
+
+		for _, failed := range pushFailedTargets[key] {
+			if failed.result != nil {
+				*failed.result = failed.before
+			}
+		}
+		delete(pushFailedTargets, key)
+	}
+
 	changedSCM := map[string][]string{}
 
 	inconclusiveSCM := e.inconclusiveSCMBranches()
@@ -112,6 +161,11 @@ func (e *Engine) pushSCMCommits() error {
 
 			url := scmHandler.GetURL()
 			_, branch, _ := scmHandler.GetBranches()
+			pushKey := pushFailureKey{
+				url:       url,
+				branch:    branch,
+				directory: scmHandler.GetDirectory(),
+			}
 
 			if _, ok := allScm[url]; !ok {
 				allScm[url] = map[string]*scm.ScmHandler{}
@@ -134,19 +188,27 @@ func (e *Engine) pushSCMCommits() error {
 				if err != nil {
 					msg := fmt.Sprintf("checking out git repository: %v", err)
 					log.Errorf("%s", msg)
-					errs = append(errs, msg)
+					recordPushErr(pushKey, msg)
+					recordFailedTarget(pushKey, target.Result, *target.Result)
 					target.Result.Result = result.FAILURE
 					continue
 				}
 
+				// PushCommits reports the failure by overwriting the target
+				// result, so its previous value is saved first to be restored if
+				// the branch is eventually published.
+				resultBeforePush := *target.Result
 				err = target.PushCommits()
 				if err != nil {
 					msg := fmt.Sprintf("pushing commits for target %q: %s", target.Config.Name, err.Error())
 					log.Errorf("%s", msg)
-					errs = append(errs, msg)
-					target.Result.Result = result.FAILURE
+					recordPushErr(pushKey, msg)
+					recordFailedTarget(pushKey, target.Result, resultBeforePush)
 					continue
 				}
+				// The shared working branch has been pushed, so errors reported
+				// by previous targets for that branch are no longer relevant.
+				clearPushFailure(pushKey)
 				log.Debugf("Pushed to URL: %q on branch: %q", redact.URL(url), branch)
 
 				if _, ok := changedSCM[url]; !ok {
@@ -176,12 +238,29 @@ func (e *Engine) pushSCMCommits() error {
 			}
 
 			stopCapture := e.captureSCMConsoleOutput(url, branch)
-			if err := pushSCMBranch(*scmHandlerPtr, url, branch, slices.Contains(inconclusiveSCM[url], branch)); err != nil {
+			branchInconclusive := slices.Contains(inconclusiveSCM[url], branch)
+			pushKey := pushFailureKey{
+				url:       url,
+				branch:    branch,
+				directory: (*scmHandlerPtr).GetDirectory(),
+			}
+			if err := pushSCMBranch(*scmHandlerPtr, url, branch, branchInconclusive); err != nil {
 				log.Errorf("%s", err)
 				errs = append(errs, err.Error())
+			} else if !branchInconclusive {
+				// The working branch has just been pushed, or the remote branch
+				// already contains the local commits, so earlier push errors for
+				// that working copy are no longer relevant.
+				clearPushFailure(pushKey)
 			}
 			stopCapture()
 		}
+	}
+
+	// Only keep push errors that no later push of the same working copy managed
+	// to recover from.
+	for _, msg := range pushErrs {
+		errs = append(errs, msg)
 	}
 
 	if len(errs) > 0 {
