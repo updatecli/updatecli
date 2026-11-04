@@ -18,7 +18,8 @@ func (e *Engine) runActions(ctx context.Context) error {
 
 	for id := range e.Pipelines {
 		pipeline := e.Pipelines[id]
-		if len(pipeline.Actions) > 0 {
+		// A pipeline rejected because its scm failed to clone never ran, so it must not publish or merge anything.
+		if len(pipeline.Actions) > 0 && e.failedSCMError(pipeline) == nil {
 			stopCapture := pipeline.CaptureConsoleOutput()
 			if err := pipeline.RunActions(ctx); err != nil {
 				errs = append(errs, err.Error())
@@ -44,7 +45,7 @@ func (e *Engine) runActions(ctx context.Context) error {
 
 	for id := range e.Pipelines {
 		pipeline := e.Pipelines[id]
-		if len(pipeline.Actions) > 0 {
+		if len(pipeline.Actions) > 0 && e.failedSCMError(pipeline) == nil {
 			stopCapture := pipeline.CaptureConsoleOutput()
 			if err := pipeline.RunCleanActions(ctx, handled); err != nil {
 				errs = append(errs, "cleaning: "+err.Error())

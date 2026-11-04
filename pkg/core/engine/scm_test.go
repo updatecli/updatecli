@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"context"
 	"errors"
 
 	"testing"
@@ -8,8 +9,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/pipeline"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/action"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
+	"github.com/updatecli/updatecli/pkg/core/reports"
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
@@ -212,4 +215,30 @@ func TestInitSCMFailedClone(t *testing.T) {
 
 	assert.EqualError(t, e.failedSCMError(failing), `scm "broken" failed to clone: authentication required`)
 	assert.NoError(t, e.failedSCMError(working))
+}
+
+type recordingActionHandler struct {
+	action.ActionHandler
+	cleaned int
+}
+
+func (h *recordingActionHandler) CleanAction(ctx context.Context, report *reports.Action) error {
+	h.cleaned++
+	return nil
+}
+
+func TestRunActionsSkipsFailedClonePipeline(t *testing.T) {
+	handler := &recordingActionHandler{}
+	failing := &pipeline.Pipeline{
+		Name:    "failing",
+		SCMs:    map[string]scm.Scm{"broken": {Handler: &mockCloneScm{directory: "/tmp/broken", cloneErr: errors.New("authentication required")}}},
+		Targets: map[string]target.Target{"t": {}},
+		Actions: map[string]action.Action{"pr": {Handler: handler}},
+	}
+
+	e := Engine{Pipelines: []*pipeline.Pipeline{failing}}
+	require.NoError(t, e.InitSCM())
+
+	require.NoError(t, e.runActions(context.Background()))
+	assert.Zero(t, handler.cleaned, "a pipeline whose scm failed to clone must not clean up or merge actions")
 }
