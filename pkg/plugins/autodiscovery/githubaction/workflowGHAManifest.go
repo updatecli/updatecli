@@ -111,7 +111,7 @@ func (g GitHubAction) getGitHubActionManifest(spec *githubActionManifestSpec) ([
 		if err != nil {
 			return nil, fmt.Errorf("parsing template: %s", err)
 		}
-	case kindGitea:
+	case kindGitea, kindForgejo:
 		tmpl, err = template.New("manifest").Parse(age.ManifestTemplate + workflowManifestGiteaTemplate)
 		if err != nil {
 			return nil, fmt.Errorf("parsing template: %s", err)

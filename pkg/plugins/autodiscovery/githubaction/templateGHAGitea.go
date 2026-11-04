@@ -28,6 +28,25 @@ sources:
         regex: '{{ .VersionFilterRegex }}'
         {{- end }}
 
+{{- if .Digest }}
+
+  release_digest:
+    dependson:
+      - 'condition#release:and'
+    name: 'Get commit for {{ .ActionName }} release'
+    kind: 'gittag'
+    spec:
+      url: "{{ .URL }}/{{ .Owner }}/{{ .Repository }}.git"
+      username: '{{ if .Token }}oauth2{{ end }}'
+      password: '{{ .Token }}'
+      lsremote: true
+      key: 'hash'
+      versionfilter:
+        kind: 'regex'
+        pattern: '^\Q{{ "{{" }} source "release" {{ "}}" }}\E$'
+
+{{- end }}
+
   tag:
     dependson:
       - 'condition#tag:and'
@@ -35,6 +54,7 @@ sources:
     kind: 'gittag'
     spec:
       url: "{{ .URL }}/{{ .Owner }}/{{ .Repository }}.git"
+      username: '{{ if .Token }}oauth2{{ end }}'
       password: '{{ .Token }}'
 {{- if and .Age.IsZero (ne .VersionFilterKind "latest") }}
       lsremote: true
@@ -46,6 +66,25 @@ sources:
         {{- if or (eq .VersionFilterKind "regex/semver") (eq .VersionFilterKind "regex/time") }}
         regex: '{{ .VersionFilterRegex }}'
         {{- end }}
+
+{{- if .Digest }}
+
+  tag_digest:
+    dependson:
+      - 'condition#tag:and'
+    name: 'Get commit for {{ .ActionName }} tag'
+    kind: 'gittag'
+    spec:
+      url: "{{ .URL }}/{{ .Owner }}/{{ .Repository }}.git"
+      username: '{{ if .Token }}oauth2{{ end }}'
+      password: '{{ .Token }}'
+      lsremote: true
+      key: 'hash'
+      versionfilter:
+        kind: 'regex'
+        pattern: '^\Q{{ "{{" }} source "tag" {{ "}}" }}\E$'
+
+{{- end }}
 
   branch:
     dependson:
@@ -54,6 +93,7 @@ sources:
     kind: 'gitbranch'
     spec:
       url: "{{ .URL }}/{{ .Owner }}/{{ .Repository }}.git"
+      username: '{{ if .Token }}oauth2{{ end }}'
       password: '{{ .Token }}'
 {{- if and .Age.IsZero (ne .VersionFilterKind "latest") }}
       lsremote: true
@@ -66,9 +106,28 @@ sources:
         regex: '{{ .VersionFilterRegex }}'
         {{- end }}
 
+{{- if .Digest }}
+
+  branch_digest:
+    dependson:
+      - 'condition#branch:and'
+    name: 'Get commit for {{ .ActionName }} branch'
+    kind: 'gitbranch'
+    spec:
+      url: "{{ .URL }}/{{ .Owner }}/{{ .Repository }}.git"
+      username: '{{ if .Token }}oauth2{{ end }}'
+      password: '{{ .Token }}'
+      lsremote: true
+      key: 'hash'
+      versionfilter:
+        kind: 'regex'
+        pattern: '^\Q{{ "{{" }} source "branch" {{ "}}" }}\E$'
+
+{{- end }}
+
 conditions:
   release:
-    name: 'Check if {{ .ActionName }}@{{ .Reference }} is a Gitea release'
+    name: 'Check if {{ .ActionName }}@{{ if .Digest }}{{ .PinReference }}{{ else }}{{ .Reference }}{{ end }} is a Gitea release'
     kind: 'gitea/release'
     disablesourceinput: true
     spec:
@@ -76,27 +135,29 @@ conditions:
       repository: '{{ .Repository }}'
       url: '{{ .URL }}'
       token: '{{ .Token }}'
-      tag: '{{ .Reference }}'
+      tag: '{{ if .Digest }}{{ .PinReference }}{{ else }}{{ .Reference }}{{ end }}'
 
   tag:
-    name: 'Check if {{ .ActionName }}@{{ .Reference }} is a tag'
+    name: 'Check if {{ .ActionName }}@{{ if .Digest }}{{ .PinReference }}{{ else }}{{ .Reference }}{{ end }} is a tag'
     kind: 'gittag'
     disablesourceinput: true
     spec:
       url: "{{ .URL }}/{{ .Owner }}/{{ .Repository }}.git"
+      username: '{{ if .Token }}oauth2{{ end }}'
       password: '{{ .Token }}'
       lsremote: true
       versionfilter:
         kind: 'regex'
-        pattern: '^{{ .Reference }}$'
+        pattern: '^\Q{{ if .Digest }}{{ .PinReference }}{{ else }}{{ .Reference }}{{ end }}\E$'
 
   branch:
-    name: 'Check if {{ .ActionName }}@{{ .Reference }} is a branch'
+    name: 'Check if {{ .ActionName }}@{{ if .Digest }}{{ .PinReference }}{{ else }}{{ .Reference }}{{ end }} is a branch'
     kind: 'gitbranch'
     disablesourceinput: true
     spec:
-      branch: '{{ .Reference }}'
+      branch: '{{ if .Digest }}{{ .PinReference }}{{ else }}{{ .Reference }}{{ end }}'
       url: "{{ .URL }}/{{ .Owner }}/{{ .Repository }}.git"
+      username: '{{ if .Token }}oauth2{{ end }}'
       password: '{{ .Token }}'
       lsremote: true
 
@@ -105,9 +166,9 @@ targets:
     dependson:
       - 'condition#release:and'
     disableconditions: true
-    name: 'deps(gitea): bump {{ .ActionName }} from {{ .Reference }} to {{ "{{" }} source "release" {{ "}}" }}'
+    name: 'deps(gitea): bump {{ .ActionName }} from {{ .Reference }} to {{ "{{" }} source "release{{if .Digest}}_digest{{end}}" {{ "}}" }}{{ if .Digest }} (Pinned from {{ "{{" }} source "release" {{ "}}" }}){{ end }}'
     kind: 'yaml'
-    sourceid: 'release'
+    sourceid: 'release{{if .Digest}}_digest{{end}}'
     transformers:
       - addprefix: '{{ .ActionName }}@'
 {{- if .ScmID }}
@@ -116,14 +177,17 @@ targets:
     spec:
       file: '{{ .File }}'
       key: '{{ .TargetKey }}'
+{{- if .Digest }}
+      comment: '{{ "{{" }} source "release" {{ "}}" }}'
+{{- end }}
 
   tag:
     dependson:
       - 'condition#tag:and'
     disableconditions: true
-    name: 'deps(gitea): bump {{ .ActionName }} from {{ .Reference }} to {{ "{{" }} source "tag" {{ "}}" }}'
+    name: 'deps(gitea): bump {{ .ActionName }} from {{ .Reference }} to {{ "{{" }} source "tag{{if .Digest}}_digest{{end}}" {{ "}}" }}{{ if .Digest }} (Pinned from {{ "{{" }} source "tag" {{ "}}" }}){{ end }}'
     kind: 'yaml'
-    sourceid: 'tag'
+    sourceid: 'tag{{if .Digest}}_digest{{end}}'
     transformers:
       - addprefix: '{{ .ActionName }}@'
 {{- if .ScmID }}
@@ -132,14 +196,17 @@ targets:
     spec:
       file: '{{ .File }}'
       key: '{{ .TargetKey }}'
+{{- if .Digest }}
+      comment: '{{ "{{" }} source "tag" {{ "}}" }}'
+{{- end }}
 
   branch:
     dependson:
       - 'condition#branch:and'
     disableconditions: true
-    name: 'deps(gitea): bump {{ .ActionName }} from {{ .Reference }} to {{ "{{" }} source "branch" {{ "}}" }}'
+    name: 'deps(gitea): bump {{ .ActionName }} from {{ .Reference }} to {{ "{{" }} source "branch{{if .Digest}}_digest{{end}}" {{ "}}" }}{{ if .Digest }} (Pinned from {{ "{{" }} source "branch" {{ "}}" }}){{ end }}'
     kind: yaml
-    sourceid: branch
+    sourceid: branch{{if .Digest}}_digest{{end}}
     transformers:
       - addprefix: '{{ .ActionName }}@'
 {{- if .ScmID }}
@@ -148,5 +215,8 @@ targets:
     spec:
       file: '{{ .File }}'
       key: '{{ .TargetKey }}'
+{{- if .Digest }}
+      comment: '{{ "{{" }} source "branch" {{ "}}" }}'
+{{- end }}
 `
 )

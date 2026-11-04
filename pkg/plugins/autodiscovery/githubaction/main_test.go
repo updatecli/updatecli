@@ -709,7 +709,7 @@ targets:
 `},
 		},
 		{
-			name:    "Scenario - Gitea Action with a single workflow file",
+			name:    "Scenario - Gitea Action with a single workflow file and digest",
 			rootDir: "testdata/gitea",
 			credentials: map[string]gitProviderToken{
 				"gitea.com": {
@@ -735,6 +735,21 @@ sources:
         kind: 'semver'
         pattern: '*'
 
+  release_digest:
+    dependson:
+      - 'condition#release:and'
+    name: 'Get commit for https://gitea.com/actions/checkout release'
+    kind: 'gittag'
+    spec:
+      url: "https://gitea.com/actions/checkout.git"
+      username: 'oauth2'
+      password: 'xxx'
+      lsremote: true
+      key: 'hash'
+      versionfilter:
+        kind: 'regex'
+        pattern: '^\Q{{ source "release" }}\E$'
+
   tag:
     dependson:
       - 'condition#tag:and'
@@ -742,11 +757,27 @@ sources:
     kind: 'gittag'
     spec:
       url: "https://gitea.com/actions/checkout.git"
+      username: 'oauth2'
       password: 'xxx'
       lsremote: true
       versionfilter:
         kind: 'semver'
         pattern: '*'
+
+  tag_digest:
+    dependson:
+      - 'condition#tag:and'
+    name: 'Get commit for https://gitea.com/actions/checkout tag'
+    kind: 'gittag'
+    spec:
+      url: "https://gitea.com/actions/checkout.git"
+      username: 'oauth2'
+      password: 'xxx'
+      lsremote: true
+      key: 'hash'
+      versionfilter:
+        kind: 'regex'
+        pattern: '^\Q{{ source "tag" }}\E$'
 
   branch:
     dependson:
@@ -755,11 +786,27 @@ sources:
     kind: 'gitbranch'
     spec:
       url: "https://gitea.com/actions/checkout.git"
+      username: 'oauth2'
       password: 'xxx'
       lsremote: true
       versionfilter:
         kind: 'semver'
         pattern: '*'
+
+  branch_digest:
+    dependson:
+      - 'condition#branch:and'
+    name: 'Get commit for https://gitea.com/actions/checkout branch'
+    kind: 'gitbranch'
+    spec:
+      url: "https://gitea.com/actions/checkout.git"
+      username: 'oauth2'
+      password: 'xxx'
+      lsremote: true
+      key: 'hash'
+      versionfilter:
+        kind: 'regex'
+        pattern: '^\Q{{ source "branch" }}\E$'
 
 conditions:
   release:
@@ -779,11 +826,12 @@ conditions:
     disablesourceinput: true
     spec:
       url: "https://gitea.com/actions/checkout.git"
+      username: 'oauth2'
       password: 'xxx'
       lsremote: true
       versionfilter:
         kind: 'regex'
-        pattern: '^v4$'
+        pattern: '^\Qv4\E$'
 
   branch:
     name: 'Check if https://gitea.com/actions/checkout@v4 is a branch'
@@ -792,6 +840,7 @@ conditions:
     spec:
       branch: 'v4'
       url: "https://gitea.com/actions/checkout.git"
+      username: 'oauth2'
       password: 'xxx'
       lsremote: true
 
@@ -800,40 +849,211 @@ targets:
     dependson:
       - 'condition#release:and'
     disableconditions: true
-    name: 'deps(gitea): bump https://gitea.com/actions/checkout from v4 to {{ source "release" }}'
+    name: 'deps(gitea): bump https://gitea.com/actions/checkout from v4 to {{ source "release_digest" }} (Pinned from {{ source "release" }})'
     kind: 'yaml'
-    sourceid: 'release'
+    sourceid: 'release_digest'
     transformers:
       - addprefix: 'https://gitea.com/actions/checkout@'
     spec:
       file: '.gitea/workflows/updatecli.yaml'
       key: '$.jobs.updatecli.steps[0].uses'
+      comment: '{{ source "release" }}'
 
   tag:
     dependson:
       - 'condition#tag:and'
     disableconditions: true
-    name: 'deps(gitea): bump https://gitea.com/actions/checkout from v4 to {{ source "tag" }}'
+    name: 'deps(gitea): bump https://gitea.com/actions/checkout from v4 to {{ source "tag_digest" }} (Pinned from {{ source "tag" }})'
     kind: 'yaml'
-    sourceid: 'tag'
+    sourceid: 'tag_digest'
     transformers:
       - addprefix: 'https://gitea.com/actions/checkout@'
     spec:
       file: '.gitea/workflows/updatecli.yaml'
       key: '$.jobs.updatecli.steps[0].uses'
+      comment: '{{ source "tag" }}'
 
   branch:
     dependson:
       - 'condition#branch:and'
     disableconditions: true
-    name: 'deps(gitea): bump https://gitea.com/actions/checkout from v4 to {{ source "branch" }}'
+    name: 'deps(gitea): bump https://gitea.com/actions/checkout from v4 to {{ source "branch_digest" }} (Pinned from {{ source "branch" }})'
     kind: yaml
-    sourceid: branch
+    sourceid: branch_digest
     transformers:
       - addprefix: 'https://gitea.com/actions/checkout@'
     spec:
       file: '.gitea/workflows/updatecli.yaml'
       key: '$.jobs.updatecli.steps[0].uses'
+      comment: '{{ source "branch" }}'
+`, `name: 'deps: bump https://gitea.com/actions/checkout Gitea workflow'
+
+sources:
+  release:
+    dependson:
+      - 'condition#release:and'
+    name: 'Get latest Gitea Release for https://gitea.com/actions/checkout'
+    kind: 'gitea/release'
+    spec:
+      owner: 'actions'
+      repository: 'checkout'
+      url: 'https://gitea.com'
+      token: 'xxx'
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
+
+  release_digest:
+    dependson:
+      - 'condition#release:and'
+    name: 'Get commit for https://gitea.com/actions/checkout release'
+    kind: 'gittag'
+    spec:
+      url: "https://gitea.com/actions/checkout.git"
+      username: 'oauth2'
+      password: 'xxx'
+      lsremote: true
+      key: 'hash'
+      versionfilter:
+        kind: 'regex'
+        pattern: '^\Q{{ source "release" }}\E$'
+
+  tag:
+    dependson:
+      - 'condition#tag:and'
+    name: 'Get latest tag for https://gitea.com/actions/checkout'
+    kind: 'gittag'
+    spec:
+      url: "https://gitea.com/actions/checkout.git"
+      username: 'oauth2'
+      password: 'xxx'
+      lsremote: true
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
+
+  tag_digest:
+    dependson:
+      - 'condition#tag:and'
+    name: 'Get commit for https://gitea.com/actions/checkout tag'
+    kind: 'gittag'
+    spec:
+      url: "https://gitea.com/actions/checkout.git"
+      username: 'oauth2'
+      password: 'xxx'
+      lsremote: true
+      key: 'hash'
+      versionfilter:
+        kind: 'regex'
+        pattern: '^\Q{{ source "tag" }}\E$'
+
+  branch:
+    dependson:
+      - 'condition#branch:and'
+    name: 'Get latest branch for https://gitea.com/actions/checkout'
+    kind: 'gitbranch'
+    spec:
+      url: "https://gitea.com/actions/checkout.git"
+      username: 'oauth2'
+      password: 'xxx'
+      lsremote: true
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
+
+  branch_digest:
+    dependson:
+      - 'condition#branch:and'
+    name: 'Get commit for https://gitea.com/actions/checkout branch'
+    kind: 'gitbranch'
+    spec:
+      url: "https://gitea.com/actions/checkout.git"
+      username: 'oauth2'
+      password: 'xxx'
+      lsremote: true
+      key: 'hash'
+      versionfilter:
+        kind: 'regex'
+        pattern: '^\Q{{ source "branch" }}\E$'
+
+conditions:
+  release:
+    name: 'Check if https://gitea.com/actions/checkout@v4.2.2 is a Gitea release'
+    kind: 'gitea/release'
+    disablesourceinput: true
+    spec:
+      owner: 'actions'
+      repository: 'checkout'
+      url: 'https://gitea.com'
+      token: 'xxx'
+      tag: 'v4.2.2'
+
+  tag:
+    name: 'Check if https://gitea.com/actions/checkout@v4.2.2 is a tag'
+    kind: 'gittag'
+    disablesourceinput: true
+    spec:
+      url: "https://gitea.com/actions/checkout.git"
+      username: 'oauth2'
+      password: 'xxx'
+      lsremote: true
+      versionfilter:
+        kind: 'regex'
+        pattern: '^\Qv4.2.2\E$'
+
+  branch:
+    name: 'Check if https://gitea.com/actions/checkout@v4.2.2 is a branch'
+    kind: 'gitbranch'
+    disablesourceinput: true
+    spec:
+      branch: 'v4.2.2'
+      url: "https://gitea.com/actions/checkout.git"
+      username: 'oauth2'
+      password: 'xxx'
+      lsremote: true
+
+targets:
+  release:
+    dependson:
+      - 'condition#release:and'
+    disableconditions: true
+    name: 'deps(gitea): bump https://gitea.com/actions/checkout from 11bd71901bbe5b1630ceea73d27597364c9af683 to {{ source "release_digest" }} (Pinned from {{ source "release" }})'
+    kind: 'yaml'
+    sourceid: 'release_digest'
+    transformers:
+      - addprefix: 'https://gitea.com/actions/checkout@'
+    spec:
+      file: '.gitea/workflows/updatecli.yaml'
+      key: '$.jobs.updatecli.steps[1].uses'
+      comment: '{{ source "release" }}'
+
+  tag:
+    dependson:
+      - 'condition#tag:and'
+    disableconditions: true
+    name: 'deps(gitea): bump https://gitea.com/actions/checkout from 11bd71901bbe5b1630ceea73d27597364c9af683 to {{ source "tag_digest" }} (Pinned from {{ source "tag" }})'
+    kind: 'yaml'
+    sourceid: 'tag_digest'
+    transformers:
+      - addprefix: 'https://gitea.com/actions/checkout@'
+    spec:
+      file: '.gitea/workflows/updatecli.yaml'
+      key: '$.jobs.updatecli.steps[1].uses'
+      comment: '{{ source "tag" }}'
+
+  branch:
+    dependson:
+      - 'condition#branch:and'
+    disableconditions: true
+    name: 'deps(gitea): bump https://gitea.com/actions/checkout from 11bd71901bbe5b1630ceea73d27597364c9af683 to {{ source "branch_digest" }} (Pinned from {{ source "branch" }})'
+    kind: yaml
+    sourceid: branch_digest
+    transformers:
+      - addprefix: 'https://gitea.com/actions/checkout@'
+    spec:
+      file: '.gitea/workflows/updatecli.yaml'
+      key: '$.jobs.updatecli.steps[1].uses'
+      comment: '{{ source "branch" }}'
 `},
 		},
 		{
