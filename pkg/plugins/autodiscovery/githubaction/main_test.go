@@ -1081,6 +1081,256 @@ targets:
 `},
 		},
 		{
+			name:    "Scenario - Gitea Action with a single workflow file",
+			rootDir: "testdata/gitea",
+			credentials: map[string]gitProviderToken{
+				"gitea.com": {
+					Kind:  "gitea",
+					Token: "xxx",
+				},
+			},
+			expectedPipelines: []string{`name: 'deps: bump https://gitea.com/actions/checkout Gitea workflow'
+
+sources:
+  release:
+    dependson:
+      - 'condition#release:and'
+    name: 'Get latest Gitea Release for https://gitea.com/actions/checkout'
+    kind: 'gitea/release'
+    spec:
+      owner: 'actions'
+      repository: 'checkout'
+      url: 'https://gitea.com'
+      token: 'xxx'
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
+
+  tag:
+    dependson:
+      - 'condition#tag:and'
+    name: 'Get latest tag for https://gitea.com/actions/checkout'
+    kind: 'gittag'
+    spec:
+      url: "https://gitea.com/actions/checkout.git"
+      username: 'oauth2'
+      password: 'xxx'
+      lsremote: true
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
+
+  branch:
+    dependson:
+      - 'condition#branch:and'
+    name: 'Get latest branch for https://gitea.com/actions/checkout'
+    kind: 'gitbranch'
+    spec:
+      url: "https://gitea.com/actions/checkout.git"
+      username: 'oauth2'
+      password: 'xxx'
+      lsremote: true
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
+
+conditions:
+  release:
+    name: 'Check if https://gitea.com/actions/checkout@v4 is a Gitea release'
+    kind: 'gitea/release'
+    disablesourceinput: true
+    spec:
+      owner: 'actions'
+      repository: 'checkout'
+      url: 'https://gitea.com'
+      token: 'xxx'
+      tag: 'v4'
+
+  tag:
+    name: 'Check if https://gitea.com/actions/checkout@v4 is a tag'
+    kind: 'gittag'
+    disablesourceinput: true
+    spec:
+      url: "https://gitea.com/actions/checkout.git"
+      username: 'oauth2'
+      password: 'xxx'
+      lsremote: true
+      versionfilter:
+        kind: 'regex'
+        pattern: '^\Qv4\E$'
+
+  branch:
+    name: 'Check if https://gitea.com/actions/checkout@v4 is a branch'
+    kind: 'gitbranch'
+    disablesourceinput: true
+    spec:
+      branch: 'v4'
+      url: "https://gitea.com/actions/checkout.git"
+      username: 'oauth2'
+      password: 'xxx'
+      lsremote: true
+
+targets:
+  release:
+    dependson:
+      - 'condition#release:and'
+    disableconditions: true
+    name: 'deps(gitea): bump https://gitea.com/actions/checkout from v4 to {{ source "release" }}'
+    kind: 'yaml'
+    sourceid: 'release'
+    transformers:
+      - addprefix: 'https://gitea.com/actions/checkout@'
+    spec:
+      file: '.gitea/workflows/updatecli.yaml'
+      key: '$.jobs.updatecli.steps[0].uses'
+
+  tag:
+    dependson:
+      - 'condition#tag:and'
+    disableconditions: true
+    name: 'deps(gitea): bump https://gitea.com/actions/checkout from v4 to {{ source "tag" }}'
+    kind: 'yaml'
+    sourceid: 'tag'
+    transformers:
+      - addprefix: 'https://gitea.com/actions/checkout@'
+    spec:
+      file: '.gitea/workflows/updatecli.yaml'
+      key: '$.jobs.updatecli.steps[0].uses'
+
+  branch:
+    dependson:
+      - 'condition#branch:and'
+    disableconditions: true
+    name: 'deps(gitea): bump https://gitea.com/actions/checkout from v4 to {{ source "branch" }}'
+    kind: yaml
+    sourceid: branch
+    transformers:
+      - addprefix: 'https://gitea.com/actions/checkout@'
+    spec:
+      file: '.gitea/workflows/updatecli.yaml'
+      key: '$.jobs.updatecli.steps[0].uses'
+`, `name: 'deps: bump https://gitea.com/actions/checkout Gitea workflow'
+
+sources:
+  release:
+    dependson:
+      - 'condition#release:and'
+    name: 'Get latest Gitea Release for https://gitea.com/actions/checkout'
+    kind: 'gitea/release'
+    spec:
+      owner: 'actions'
+      repository: 'checkout'
+      url: 'https://gitea.com'
+      token: 'xxx'
+      versionfilter:
+        kind: 'latest'
+        pattern: 'latest'
+
+  tag:
+    dependson:
+      - 'condition#tag:and'
+    name: 'Get latest tag for https://gitea.com/actions/checkout'
+    kind: 'gittag'
+    spec:
+      url: "https://gitea.com/actions/checkout.git"
+      username: 'oauth2'
+      password: 'xxx'
+      versionfilter:
+        kind: 'latest'
+        pattern: 'latest'
+
+  branch:
+    dependson:
+      - 'condition#branch:and'
+    name: 'Get latest branch for https://gitea.com/actions/checkout'
+    kind: 'gitbranch'
+    spec:
+      url: "https://gitea.com/actions/checkout.git"
+      username: 'oauth2'
+      password: 'xxx'
+      lsremote: true
+      versionfilter:
+        kind: 'regex'
+        pattern: '^\Q11bd71901bbe5b1630ceea73d27597364c9af683\E$'
+
+conditions:
+  release:
+    name: 'Check if https://gitea.com/actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 is a Gitea release'
+    kind: 'gitea/release'
+    disablesourceinput: true
+    spec:
+      owner: 'actions'
+      repository: 'checkout'
+      url: 'https://gitea.com'
+      token: 'xxx'
+      tag: '11bd71901bbe5b1630ceea73d27597364c9af683'
+
+  tag:
+    name: 'Check if https://gitea.com/actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 is a tag'
+    kind: 'gittag'
+    disablesourceinput: true
+    spec:
+      url: "https://gitea.com/actions/checkout.git"
+      username: 'oauth2'
+      password: 'xxx'
+      lsremote: true
+      versionfilter:
+        kind: 'regex'
+        pattern: '^\Q11bd71901bbe5b1630ceea73d27597364c9af683\E$'
+
+  branch:
+    name: 'Check if https://gitea.com/actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 is a branch'
+    kind: 'gitbranch'
+    disablesourceinput: true
+    spec:
+      branch: '11bd71901bbe5b1630ceea73d27597364c9af683'
+      url: "https://gitea.com/actions/checkout.git"
+      username: 'oauth2'
+      password: 'xxx'
+      lsremote: true
+
+targets:
+  release:
+    dependson:
+      - 'condition#release:and'
+    disableconditions: true
+    name: 'deps(gitea): bump https://gitea.com/actions/checkout from 11bd71901bbe5b1630ceea73d27597364c9af683 to {{ source "release" }}'
+    kind: 'yaml'
+    sourceid: 'release'
+    transformers:
+      - addprefix: 'https://gitea.com/actions/checkout@'
+    spec:
+      file: '.gitea/workflows/updatecli.yaml'
+      key: '$.jobs.updatecli.steps[1].uses'
+
+  tag:
+    dependson:
+      - 'condition#tag:and'
+    disableconditions: true
+    name: 'deps(gitea): bump https://gitea.com/actions/checkout from 11bd71901bbe5b1630ceea73d27597364c9af683 to {{ source "tag" }}'
+    kind: 'yaml'
+    sourceid: 'tag'
+    transformers:
+      - addprefix: 'https://gitea.com/actions/checkout@'
+    spec:
+      file: '.gitea/workflows/updatecli.yaml'
+      key: '$.jobs.updatecli.steps[1].uses'
+
+  branch:
+    dependson:
+      - 'condition#branch:and'
+    disableconditions: true
+    name: 'deps(gitea): bump https://gitea.com/actions/checkout from 11bd71901bbe5b1630ceea73d27597364c9af683 to {{ source "branch" }}'
+    kind: yaml
+    sourceid: branch
+    transformers:
+      - addprefix: 'https://gitea.com/actions/checkout@'
+    spec:
+      file: '.gitea/workflows/updatecli.yaml'
+      key: '$.jobs.updatecli.steps[1].uses'
+`},
+		},
+		{
 			name:    "Scenario - GitHub Action with duplicate_steps",
 			rootDir: "testdata/duplicate_steps",
 			credentials: map[string]gitProviderToken{
