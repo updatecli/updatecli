@@ -162,7 +162,7 @@ conditions:
       lsremote: true
       versionfilter:
         kind: 'regex'
-        pattern: '^v4$'
+        pattern: '^\Qv4\E$'
 
   branch:
     name: 'Check if actions/checkout@v4 is a branch'
@@ -255,7 +255,7 @@ sources:
       key: 'taghash'
       versionfilter:
         kind: 'regex'
-        pattern: '{{ source "release" }}'
+        pattern: '^\Q{{ source "release" }}\E$'
 
   tag:
     dependson:
@@ -282,7 +282,7 @@ sources:
       key: 'hash'
       versionfilter:
         kind: 'regex'
-        pattern: '{{ source "tag" }}'
+        pattern: '^\Q{{ source "tag" }}\E$'
 
   branch:
     dependson:
@@ -309,7 +309,7 @@ sources:
       key: 'hash'
       versionfilter:
         kind: 'regex'
-        pattern: '{{ source "branch" }}'
+        pattern: '^\Q{{ source "branch" }}\E$'
 
 conditions:
   release:
@@ -333,7 +333,7 @@ conditions:
       lsremote: true
       versionfilter:
         kind: 'regex'
-        pattern: '^v4$'
+        pattern: '^\Qv4\E$'
 
   branch:
     name: 'Check if actions/checkout@v4 is a branch'
@@ -417,7 +417,7 @@ sources:
       key: 'taghash'
       versionfilter:
         kind: 'regex'
-        pattern: '{{ source "release" }}'
+        pattern: '^\Q{{ source "release" }}\E$'
 
   tag:
     dependson:
@@ -444,7 +444,7 @@ sources:
       key: 'hash'
       versionfilter:
         kind: 'regex'
-        pattern: '{{ source "tag" }}'
+        pattern: '^\Q{{ source "tag" }}\E$'
 
   branch:
     dependson:
@@ -471,7 +471,7 @@ sources:
       key: 'hash'
       versionfilter:
         kind: 'regex'
-        pattern: '{{ source "branch" }}'
+        pattern: '^\Q{{ source "branch" }}\E$'
 
 conditions:
   release:
@@ -495,7 +495,7 @@ conditions:
       lsremote: true
       versionfilter:
         kind: 'regex'
-        pattern: '^v4.2.2$'
+        pattern: '^\Qv4.2.2\E$'
 
   branch:
     name: 'Check if actions/checkout@v4.2.2 is a branch'
@@ -578,7 +578,7 @@ sources:
       key: 'taghash'
       versionfilter:
         kind: 'regex'
-        pattern: '{{ source "release" }}'
+        pattern: '^\Q{{ source "release" }}\E$'
 
   tag:
     dependson:
@@ -603,7 +603,7 @@ sources:
       key: 'hash'
       versionfilter:
         kind: 'regex'
-        pattern: '{{ source "tag" }}'
+        pattern: '^\Q{{ source "tag" }}\E$'
 
   branch:
     dependson:
@@ -630,7 +630,7 @@ sources:
       key: 'hash'
       versionfilter:
         kind: 'regex'
-        pattern: '{{ source "branch" }}'
+        pattern: '^\Q{{ source "branch" }}\E$'
 
 conditions:
   release:
@@ -654,7 +654,7 @@ conditions:
       lsremote: true
       versionfilter:
         kind: 'regex'
-        pattern: '^main$'
+        pattern: '^\Qmain\E$'
 
   branch:
     name: 'Check if actions/checkout@main is a branch'
@@ -1132,7 +1132,7 @@ conditions:
       lsremote: true
       versionfilter:
         kind: 'regex'
-        pattern: '^v2.1$'
+        pattern: '^\Qv2.1\E$'
 
   branch:
     name: 'Check if tibdex/github-app-token@v2.1 is a branch'
@@ -1248,7 +1248,7 @@ conditions:
       lsremote: true
       versionfilter:
         kind: 'regex'
-        pattern: '^v2.1$'
+        pattern: '^\Qv2.1\E$'
 
   branch:
     name: 'Check if tibdex/github-app-token@v2.1 is a branch'
@@ -1364,7 +1364,7 @@ conditions:
       lsremote: true
       versionfilter:
         kind: 'regex'
-        pattern: '^v4$'
+        pattern: '^\Qv4\E$'
 
   branch:
     name: 'Check if actions/checkout@v4 is a branch'
@@ -1480,7 +1480,7 @@ conditions:
       lsremote: true
       versionfilter:
         kind: 'regex'
-        pattern: '^v2$'
+        pattern: '^\Qv2\E$'
 
   branch:
     name: 'Check if updatecli/updatecli-action@v2 is a branch'
@@ -1607,7 +1607,7 @@ conditions:
       lsremote: true
       versionfilter:
         kind: 'regex'
-        pattern: '^v4$'
+        pattern: '^\Qv4\E$'
 
   branch:
     name: 'Check if actions/checkout@v4 is a branch'
@@ -1723,7 +1723,7 @@ conditions:
       lsremote: true
       versionfilter:
         kind: 'regex'
-        pattern: '^v4$'
+        pattern: '^\Qv4\E$'
 
   branch:
     name: 'Check if actions/checkout@v4 is a branch'
@@ -1858,7 +1858,7 @@ conditions:
       lsremote: true
       versionfilter:
         kind: 'regex'
-        pattern: '^v4$'
+        pattern: '^\Qv4\E$'
 
   branch:
     name: 'Check if actions/checkout@v4 is a branch'

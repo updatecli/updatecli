@@ -44,7 +44,7 @@ sources:
       key: 'taghash'
       versionfilter:
         kind: 'regex'
-        pattern: '{{ "{{" }} source "release" {{ "}}" }}'
+        pattern: '^\Q{{ "{{" }} source "release" {{ "}}" }}\E$'
 
 {{- end }}
 
@@ -83,7 +83,7 @@ sources:
       key: 'hash'
       versionfilter:
         kind: 'regex'
-        pattern: '{{ "{{" }} source "tag" {{ "}}" }}'
+        pattern: '^\Q{{ "{{" }} source "tag" {{ "}}" }}\E$'
 
 {{- end }}
 
@@ -122,7 +122,7 @@ sources:
       key: 'hash'
       versionfilter:
         kind: 'regex'
-        pattern: '{{ "{{" }} source "branch" {{ "}}" }}'
+        pattern: '^\Q{{ "{{" }} source "branch" {{ "}}" }}\E$'
 
 {{- end }}
 
@@ -148,7 +148,7 @@ conditions:
       lsremote: true
       versionfilter:
         kind: 'regex'
-        pattern: '^{{ if .Digest }}{{ .PinReference }}{{ else }}{{ .Reference }}{{ end }}$'
+        pattern: '^\Q{{ if .Digest }}{{ .PinReference }}{{ else }}{{ .Reference }}{{ end }}\E$'
 
   branch:
     name: 'Check if {{ .ActionName }}@{{ if .Digest }}{{ .PinReference }}{{ else }}{{ .Reference }}{{ end }} is a branch'
