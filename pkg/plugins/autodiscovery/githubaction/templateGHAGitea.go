@@ -95,14 +95,14 @@ sources:
       url: "{{ .URL }}/{{ .Owner }}/{{ .Repository }}.git"
       username: '{{ if .Token }}oauth2{{ end }}'
       password: '{{ .Token }}'
-{{- if and .Age.IsZero (ne .VersionFilterKind "latest") }}
+{{- if and .Age.IsZero (ne .BranchVersionFilterKind "latest") }}
       lsremote: true
 {{- end }}
 {{- template "age" .Age }}
       versionfilter:
-        kind: '{{ .VersionFilterKind }}'
-        pattern: '{{ .VersionFilterPattern }}'
-        {{- if or (eq .VersionFilterKind "regex/semver") (eq .VersionFilterKind "regex/time") }}
+        kind: '{{ .BranchVersionFilterKind }}'
+        pattern: '{{ .BranchVersionFilterPattern }}'
+        {{- if or (eq .BranchVersionFilterKind "regex/semver") (eq .BranchVersionFilterKind "regex/time") }}
         regex: '{{ .VersionFilterRegex }}'
         {{- end }}
 

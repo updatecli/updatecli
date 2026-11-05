@@ -104,6 +104,18 @@ func (g GitHubAction) getGitHubActionManifest(spec *githubActionManifestSpec) ([
 		}
 	}
 
+	// A non semver reference such as "main" or "master" names one branch, so the branch
+	// source must track that branch. The "latest" filter would return the last branch by
+	// name and silently move the workflow to another branch.
+	branchVersionFilterKind := versionFilterKind
+	branchVersionFilterPattern := versionFilterPattern
+	if g.spec.VersionFilter.IsZero() &&
+		versionFilterKind == latestVersionIdentifier &&
+		versionFilterRef != latestVersionIdentifier {
+		branchVersionFilterKind = "regex"
+		branchVersionFilterPattern = `^\Q` + versionFilterRef + `\E$`
+	}
+
 	var tmpl *template.Template
 	switch kind {
 	case kindGitHub:
@@ -140,28 +152,33 @@ func (g GitHubAction) getGitHubActionManifest(spec *githubActionManifestSpec) ([
 		VersionFilterKind    string
 		VersionFilterPattern string
 		VersionFilterRegex   string
-		TargetKey            string
-		ScmID                string
-		Token                string
-		Digest               bool
-		Age                  age.Spec
+		// BranchVersionFilterKind and BranchVersionFilterPattern only apply to the branch source
+		BranchVersionFilterKind    string
+		BranchVersionFilterPattern string
+		TargetKey                  string
+		ScmID                      string
+		Token                      string
+		Digest                     bool
+		Age                        age.Spec
 	}{
-		ActionID:             g.actionID,
-		ActionName:           actionName,
-		Reference:            spec.Reference,
-		PinReference:         pinReference,
-		File:                 spec.RelativeFoundFile,
-		URL:                  spec.URL,
-		Owner:                spec.Owner,
-		Repository:           spec.Repository,
-		VersionFilterKind:    versionFilterKind,
-		VersionFilterPattern: versionFilterPattern,
-		VersionFilterRegex:   versionFilterRegex,
-		ScmID:                g.scmID,
-		TargetKey:            targetKey,
-		Token:                token,
-		Digest:               g.digest,
-		Age:                  g.spec.Age,
+		ActionID:                   g.actionID,
+		ActionName:                 actionName,
+		Reference:                  spec.Reference,
+		PinReference:               pinReference,
+		File:                       spec.RelativeFoundFile,
+		URL:                        spec.URL,
+		Owner:                      spec.Owner,
+		Repository:                 spec.Repository,
+		VersionFilterKind:          versionFilterKind,
+		VersionFilterPattern:       versionFilterPattern,
+		VersionFilterRegex:         versionFilterRegex,
+		BranchVersionFilterKind:    branchVersionFilterKind,
+		BranchVersionFilterPattern: branchVersionFilterPattern,
+		ScmID:                      g.scmID,
+		TargetKey:                  targetKey,
+		Token:                      token,
+		Digest:                     g.digest,
+		Age:                        g.spec.Age,
 	}
 
 	manifest := bytes.Buffer{}

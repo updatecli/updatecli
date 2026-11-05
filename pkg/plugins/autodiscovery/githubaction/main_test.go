@@ -613,8 +613,10 @@ sources:
     spec:
       url: "https://github.com/actions/checkout.git"
       password: 'xxx'
+      lsremote: true
       versionfilter:
-        kind: 'latest'
+        kind: 'regex'
+        pattern: '^\Qmain\E$'
 
   branch_digest:
     dependson:

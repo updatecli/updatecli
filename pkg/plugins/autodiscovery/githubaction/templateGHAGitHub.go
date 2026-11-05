@@ -95,16 +95,16 @@ sources:
     spec:
       url: "{{ .URL }}/{{ .Owner }}/{{ .Repository }}.git"
       password: '{{ .Token }}'
-{{- if and .Age.IsZero (ne .VersionFilterKind "latest") }}
+{{- if and .Age.IsZero (ne .BranchVersionFilterKind "latest") }}
       lsremote: true
 {{- end }}
 {{- template "age" .Age }}
       versionfilter:
-        kind: '{{ .VersionFilterKind }}'
-        {{- if ne .VersionFilterKind "latest" }}
-        pattern: '{{ .VersionFilterPattern }}'
+        kind: '{{ .BranchVersionFilterKind }}'
+        {{- if ne .BranchVersionFilterKind "latest" }}
+        pattern: '{{ .BranchVersionFilterPattern }}'
         {{- end }}
-        {{- if or (eq .VersionFilterKind "regex/semver") (eq .VersionFilterKind "regex/time") }}
+        {{- if or (eq .BranchVersionFilterKind "regex/semver") (eq .BranchVersionFilterKind "regex/time") }}
         regex: '{{ .VersionFilterRegex }}'
         {{- end }}
 
