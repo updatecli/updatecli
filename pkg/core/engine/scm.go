@@ -99,9 +99,12 @@ func (e *Engine) pushSCMCommits() error {
 	// error reported while pushing one target must be cleared as soon as another
 	// target, or the branch publication below, manages to push that branch or
 	// finds it up to date.
-	pushErrs := map[pushFailureKey]string{}
+	// Every message is kept, not only the last one: two targets sharing a working
+	// copy may fail for different reasons, and dropping the earlier cause would
+	// hide it from the returned error.
+	pushErrs := map[pushFailureKey][]string{}
 	recordPushErr := func(key pushFailureKey, msg string) {
-		pushErrs[key] = msg
+		pushErrs[key] = append(pushErrs[key], msg)
 	}
 
 	// pushFailedTargets records, per working copy, the targets whose push failed
@@ -270,8 +273,8 @@ func (e *Engine) pushSCMCommits() error {
 
 	// Only keep push errors that no later push of the same working copy managed
 	// to recover from.
-	for _, msg := range pushErrs {
-		errs = append(errs, msg)
+	for _, msgs := range pushErrs {
+		errs = append(errs, msgs...)
 	}
 
 	if len(errs) > 0 {
