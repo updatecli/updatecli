@@ -210,8 +210,8 @@ targets:
       - 'condition#branch:and'
     disableconditions: true
     name: 'deps(github): bump Action branch for actions/checkout from v4 to {{ source "branch" }}'
-    kind: yaml
-    sourceid: branch
+    kind: 'yaml'
+    sourceid: 'branch'
     transformers:
       - addprefix: 'actions/checkout@'
     spec:
@@ -249,7 +249,7 @@ sources:
   release_digest:
     dependson:
       - 'condition#release:and'
-    name: 'Get latest GitHub Release for actions/checkout'
+    name: 'Get commit for actions/checkout release'
     kind: 'githubrelease'
     spec:
       owner: 'actions'
@@ -278,7 +278,7 @@ sources:
   tag_digest:
     dependson:
       - 'condition#tag:and'
-    name: 'Get latest tag for actions/checkout'
+    name: 'Get commit for actions/checkout tag'
     kind: 'gittag'
     spec:
       url: "https://github.com/actions/checkout.git"
@@ -307,7 +307,7 @@ sources:
   branch_digest:
     dependson:
       - 'condition#branch:and'
-    name: 'Get latest branch for actions/checkout'
+    name: 'Get commit for actions/checkout branch'
     kind: 'gitbranch'
     spec:
       url: "https://github.com/actions/checkout.git"
@@ -389,8 +389,8 @@ targets:
       - 'condition#branch:and'
     disableconditions: true
     name: 'deps(github): bump Action branch for actions/checkout from v4 to {{ source "branch_digest" }} (Pinned from {{ source "branch" }})'
-    kind: yaml
-    sourceid: branch_digest
+    kind: 'yaml'
+    sourceid: 'branch_digest'
     transformers:
       - addprefix: 'actions/checkout@'
     spec:
@@ -417,7 +417,7 @@ sources:
   release_digest:
     dependson:
       - 'condition#release:and'
-    name: 'Get latest GitHub Release for actions/checkout'
+    name: 'Get commit for actions/checkout release'
     kind: 'githubrelease'
     spec:
       owner: 'actions'
@@ -446,7 +446,7 @@ sources:
   tag_digest:
     dependson:
       - 'condition#tag:and'
-    name: 'Get latest tag for actions/checkout'
+    name: 'Get commit for actions/checkout tag'
     kind: 'gittag'
     spec:
       url: "https://github.com/actions/checkout.git"
@@ -475,7 +475,7 @@ sources:
   branch_digest:
     dependson:
       - 'condition#branch:and'
-    name: 'Get latest branch for actions/checkout'
+    name: 'Get commit for actions/checkout branch'
     kind: 'gitbranch'
     spec:
       url: "https://github.com/actions/checkout.git"
@@ -557,8 +557,8 @@ targets:
       - 'condition#branch:and'
     disableconditions: true
     name: 'deps(github): bump Action branch for actions/checkout from 11bd71901bbe5b1630ceea73d27597364c9af683 to {{ source "branch_digest" }} (Pinned from {{ source "branch" }})'
-    kind: yaml
-    sourceid: branch_digest
+    kind: 'yaml'
+    sourceid: 'branch_digest'
     transformers:
       - addprefix: 'actions/checkout@'
     spec:
@@ -584,7 +584,7 @@ sources:
   release_digest:
     dependson:
       - 'condition#release:and'
-    name: 'Get latest GitHub Release for actions/checkout'
+    name: 'Get commit for actions/checkout release'
     kind: 'githubrelease'
     spec:
       owner: 'actions'
@@ -611,7 +611,7 @@ sources:
   tag_digest:
     dependson:
       - 'condition#tag:and'
-    name: 'Get latest tag for actions/checkout'
+    name: 'Get commit for actions/checkout tag'
     kind: 'gittag'
     spec:
       url: "https://github.com/actions/checkout.git"
@@ -640,7 +640,7 @@ sources:
   branch_digest:
     dependson:
       - 'condition#branch:and'
-    name: 'Get latest branch for actions/checkout'
+    name: 'Get commit for actions/checkout branch'
     kind: 'gitbranch'
     spec:
       url: "https://github.com/actions/checkout.git"
@@ -722,8 +722,8 @@ targets:
       - 'condition#branch:and'
     disableconditions: true
     name: 'deps(github): bump Action branch for actions/checkout from main to {{ source "branch_digest" }} (Pinned from {{ source "branch" }})'
-    kind: yaml
-    sourceid: branch_digest
+    kind: 'yaml'
+    sourceid: 'branch_digest'
     transformers:
       - addprefix: 'actions/checkout@'
     spec:
@@ -902,8 +902,8 @@ targets:
       - 'condition#branch:and'
     disableconditions: true
     name: 'deps(gitea): bump https://gitea.com/actions/checkout from v4 to {{ source "branch_digest" }} (Pinned from {{ source "branch" }})'
-    kind: yaml
-    sourceid: branch_digest
+    kind: 'yaml'
+    sourceid: 'branch_digest'
     transformers:
       - addprefix: 'https://gitea.com/actions/checkout@'
     spec:
@@ -1070,8 +1070,8 @@ targets:
       - 'condition#branch:and'
     disableconditions: true
     name: 'deps(gitea): bump https://gitea.com/actions/checkout from 11bd71901bbe5b1630ceea73d27597364c9af683 to {{ source "branch_digest" }} (Pinned from {{ source "branch" }})'
-    kind: yaml
-    sourceid: branch_digest
+    kind: 'yaml'
+    sourceid: 'branch_digest'
     transformers:
       - addprefix: 'https://gitea.com/actions/checkout@'
     spec:
@@ -1202,8 +1202,8 @@ targets:
       - 'condition#branch:and'
     disableconditions: true
     name: 'deps(gitea): bump https://gitea.com/actions/checkout from v4 to {{ source "branch" }}'
-    kind: yaml
-    sourceid: branch
+    kind: 'yaml'
+    sourceid: 'branch'
     transformers:
       - addprefix: 'https://gitea.com/actions/checkout@'
     spec:
@@ -1224,7 +1224,6 @@ sources:
       token: 'xxx'
       versionfilter:
         kind: 'latest'
-        pattern: 'latest'
 
   tag:
     dependson:
@@ -1237,7 +1236,6 @@ sources:
       password: 'xxx'
       versionfilter:
         kind: 'latest'
-        pattern: 'latest'
 
   branch:
     dependson:
@@ -1321,8 +1319,8 @@ targets:
       - 'condition#branch:and'
     disableconditions: true
     name: 'deps(gitea): bump https://gitea.com/actions/checkout from 11bd71901bbe5b1630ceea73d27597364c9af683 to {{ source "branch" }}'
-    kind: yaml
-    sourceid: branch
+    kind: 'yaml'
+    sourceid: 'branch'
     transformers:
       - addprefix: 'https://gitea.com/actions/checkout@'
     spec:
@@ -1500,8 +1498,8 @@ targets:
       - 'condition#branch:and'
     disableconditions: true
     name: 'deps(gitea): bump https://git.example.org/actions/checkout from v4 to {{ source "branch_digest" }} (Pinned from {{ source "branch" }})'
-    kind: yaml
-    sourceid: branch_digest
+    kind: 'yaml'
+    sourceid: 'branch_digest'
     transformers:
       - addprefix: 'https://git.example.org/actions/checkout@'
     spec:
@@ -1632,8 +1630,8 @@ targets:
       - 'condition#branch:and'
     disableconditions: true
     name: 'deps(github): bump Action branch for tibdex/github-app-token from v2.1 to {{ source "branch" }}'
-    kind: yaml
-    sourceid: branch
+    kind: 'yaml'
+    sourceid: 'branch'
     transformers:
       - addprefix: 'tibdex/github-app-token@'
     spec:
@@ -1752,8 +1750,8 @@ targets:
       - 'condition#branch:and'
     disableconditions: true
     name: 'deps(github): bump Action branch for tibdex/github-app-token from v2.1 to {{ source "branch" }}'
-    kind: yaml
-    sourceid: branch
+    kind: 'yaml'
+    sourceid: 'branch'
     transformers:
       - addprefix: 'tibdex/github-app-token@'
     spec:
@@ -1872,8 +1870,8 @@ targets:
       - 'condition#branch:and'
     disableconditions: true
     name: 'deps(github): bump Action branch for actions/checkout from v4 to {{ source "branch" }}'
-    kind: yaml
-    sourceid: branch
+    kind: 'yaml'
+    sourceid: 'branch'
     transformers:
       - addprefix: 'actions/checkout@'
     spec:
@@ -1992,8 +1990,8 @@ targets:
       - 'condition#branch:and'
     disableconditions: true
     name: 'deps(github): bump Action branch for updatecli/updatecli-action from v2 to {{ source "branch" }}'
-    kind: yaml
-    sourceid: branch
+    kind: 'yaml'
+    sourceid: 'branch'
     transformers:
       - addprefix: 'updatecli/updatecli-action@'
     spec:
@@ -2123,8 +2121,8 @@ targets:
       - 'condition#branch:and'
     disableconditions: true
     name: 'deps(github): bump Action branch for actions/checkout from v4 to {{ source "branch" }}'
-    kind: yaml
-    sourceid: branch
+    kind: 'yaml'
+    sourceid: 'branch'
     transformers:
       - addprefix: 'actions/checkout@'
     spec:
@@ -2243,8 +2241,8 @@ targets:
       - 'condition#branch:and'
     disableconditions: true
     name: 'deps(github): bump Action branch for actions/checkout from v4 to {{ source "branch" }}'
-    kind: yaml
-    sourceid: branch
+    kind: 'yaml'
+    sourceid: 'branch'
     transformers:
       - addprefix: 'actions/checkout@'
     spec:
@@ -2382,8 +2380,8 @@ targets:
       - 'condition#branch:and'
     disableconditions: true
     name: 'deps(github): bump Action branch for actions/checkout from v4 to {{ source "branch" }}'
-    kind: yaml
-    sourceid: branch
+    kind: 'yaml'
+    sourceid: 'branch'
     transformers:
       - addprefix: 'actions/checkout@'
     spec:

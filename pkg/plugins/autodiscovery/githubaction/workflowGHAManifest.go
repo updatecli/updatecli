@@ -116,20 +116,27 @@ func (g GitHubAction) getGitHubActionManifest(spec *githubActionManifestSpec) ([
 		branchVersionFilterPattern = `^\Q` + versionFilterRef + `\E$`
 	}
 
-	var tmpl *template.Template
+	var providerTemplate, gitUsername string
 	switch kind {
 	case kindGitHub:
-		tmpl, err = template.New("manifest").Parse(age.ManifestTemplate + workflowManifestGitHubTemplate)
-		if err != nil {
-			return nil, fmt.Errorf("parsing template: %s", err)
-		}
+		providerTemplate = workflowManifestGitHubTemplate
+		// GitHub accepts this username with both personal access tokens and app tokens
+		gitUsername = "x-access-token"
 	case kindGitea, kindForgejo:
-		tmpl, err = template.New("manifest").Parse(age.ManifestTemplate + workflowManifestGiteaTemplate)
-		if err != nil {
-			return nil, fmt.Errorf("parsing template: %s", err)
-		}
+		providerTemplate = workflowManifestGiteaTemplate
+		gitUsername = "oauth2"
 	default:
 		return nil, fmt.Errorf("unsupported git provider kind %q, skipping", kind)
+	}
+
+	// gittag and gitbranch skip authentication without a password, so drop the username too
+	if token == "" {
+		gitUsername = ""
+	}
+
+	tmpl, err := template.New("manifest").Parse(age.ManifestTemplate + workflowManifestActionPartials + providerTemplate)
+	if err != nil {
+		return nil, fmt.Errorf("parsing template: %s", err)
 	}
 
 	var targetKey string
@@ -139,29 +146,8 @@ func (g GitHubAction) getGitHubActionManifest(spec *githubActionManifestSpec) ([
 		targetKey = fmt.Sprintf(`$.jobs.%s.steps[%d].uses`, spec.JobID, spec.StepID)
 	}
 
-	params := struct {
-		ActionID   string
-		ActionName string
-		Reference  string
-		// CheckReference is the reference the conditions check and the version filters start from
-		CheckReference       string
-		File                 string
-		ImageName            string
-		URL                  string
-		Owner                string
-		Repository           string
-		VersionFilterKind    string
-		VersionFilterPattern string
-		VersionFilterRegex   string
-		// BranchVersionFilterKind and BranchVersionFilterPattern only apply to the branch source
-		BranchVersionFilterKind    string
-		BranchVersionFilterPattern string
-		TargetKey                  string
-		ScmID                      string
-		Token                      string
-		Digest                     bool
-		Age                        age.Spec
-	}{
+	params := actionManifestParams{
+		Kind:                       kind,
 		ActionID:                   g.actionID,
 		ActionName:                 actionName,
 		Reference:                  spec.Reference,
@@ -177,6 +163,7 @@ func (g GitHubAction) getGitHubActionManifest(spec *githubActionManifestSpec) ([
 		BranchVersionFilterPattern: branchVersionFilterPattern,
 		ScmID:                      g.scmID,
 		TargetKey:                  targetKey,
+		GitUsername:                gitUsername,
 		Token:                      token,
 		Digest:                     g.digest,
 		Age:                        g.spec.Age,
@@ -188,4 +175,82 @@ func (g GitHubAction) getGitHubActionManifest(spec *githubActionManifestSpec) ([
 	}
 
 	return manifest.Bytes(), nil
+}
+
+// actionManifestParams holds the values of the GitHub and Gitea action manifest templates
+type actionManifestParams struct {
+	// Kind is the git provider kind, such as "github" or "gitea"
+	Kind       string
+	ActionID   string
+	ActionName string
+	Reference  string
+	// CheckReference is the reference the conditions check and the version filters start from
+	CheckReference       string
+	File                 string
+	URL                  string
+	Owner                string
+	Repository           string
+	VersionFilterKind    string
+	VersionFilterPattern string
+	VersionFilterRegex   string
+	// BranchVersionFilterKind and BranchVersionFilterPattern only apply to the branch source
+	BranchVersionFilterKind    string
+	BranchVersionFilterPattern string
+	TargetKey                  string
+	ScmID                      string
+	// GitUsername is the basic auth username of the gittag and gitbranch resources
+	GitUsername string
+	Token       string
+	Digest      bool
+	Age         age.Spec
+}
+
+// actionSourceParams narrows actionManifestParams to one source, "release", "tag", or "branch",
+// and to the condition and target sharing its ID
+type actionSourceParams struct {
+	actionManifestParams
+	SourceID      string
+	FilterKind    string
+	FilterPattern string
+}
+
+// Source returns the template values of the source sourceID
+func (p actionManifestParams) Source(sourceID string) actionSourceParams {
+	s := actionSourceParams{
+		actionManifestParams: p,
+		SourceID:             sourceID,
+		FilterKind:           p.VersionFilterKind,
+		FilterPattern:        p.VersionFilterPattern,
+	}
+
+	if sourceID == "branch" {
+		s.FilterKind = p.BranchVersionFilterKind
+		s.FilterPattern = p.BranchVersionFilterPattern
+	}
+
+	return s
+}
+
+// GitKind returns the git resource kind listing the source references
+func (p actionSourceParams) GitKind() string {
+	if p.SourceID == "branch" {
+		return "gitbranch"
+	}
+	return "gittag"
+}
+
+// TargetSourceID returns the ID of the source whose value the target writes
+func (p actionSourceParams) TargetSourceID() string {
+	if p.Digest {
+		return p.SourceID + "_digest"
+	}
+	return p.SourceID
+}
+
+// TargetTitle returns the start of the target name
+func (p actionSourceParams) TargetTitle() string {
+	if p.Kind == kindGitHub {
+		return "deps(github): bump Action " + p.SourceID + " for " + p.ActionName
+	}
+	return "deps(gitea): bump " + p.ActionName
 }

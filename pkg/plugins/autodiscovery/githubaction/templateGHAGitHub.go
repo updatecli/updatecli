@@ -1,7 +1,8 @@
 package githubaction
 
 const (
-	// workflowManifestGitHubTemplate is the Go template used to generate GitHub action workflow manifests
+	// workflowManifestGitHubTemplate is the Go template used to generate GitHub action workflow manifests.
+	// It relies on the blocks defined in workflowManifestActionPartials.
 	workflowManifestGitHubTemplate string = `name: 'deps: bump {{ .ActionName }} GitHub workflow'
 {{- if .ActionID }}
 actions:
@@ -21,20 +22,13 @@ sources:
       url: '{{ .URL }}'
       token: '{{ .Token }}'
 {{- template "age" .Age }}
-      versionfilter:
-        kind: '{{ .VersionFilterKind }}'
-        {{- if ne .VersionFilterKind "latest" }}
-        pattern: '{{ .VersionFilterPattern }}'
-        {{- end }}
-        {{- if or (eq .VersionFilterKind "regex/semver") (eq .VersionFilterKind "regex/time") }}
-        regex: '{{ .VersionFilterRegex }}'
-        {{- end }}
+{{- template "versionfilter" (.Source "release") }}
 {{- if .Digest }}
 
   release_digest:
     dependson:
       - 'condition#release:and'
-    name: 'Get latest GitHub Release for {{ .ActionName }}'
+    name: 'Get commit for {{ .ActionName }} release'
     kind: 'githubrelease'
     spec:
       owner: '{{ .Owner }}'
@@ -45,90 +39,9 @@ sources:
       versionfilter:
         kind: 'regex'
         pattern: '^\Q{{ "{{" }} source "release" {{ "}}" }}\E$'
-
 {{- end }}
-
-  tag:
-    dependson:
-      - 'condition#tag:and'
-    name: 'Get latest tag for {{ .ActionName }}'
-    kind: 'gittag'
-    spec:
-      url: "{{ .URL }}/{{ .Owner }}/{{ .Repository }}.git"
-      username: '{{ if .Token }}x-access-token{{ end }}'
-      password: '{{ .Token }}'
-{{- if and .Age.IsZero (ne .VersionFilterKind "latest") }}
-      lsremote: true
-{{- end }}
-{{- template "age" .Age }}
-      versionfilter:
-        kind: '{{ .VersionFilterKind }}'
-        {{- if ne .VersionFilterKind "latest" }}
-        pattern: '{{ .VersionFilterPattern }}'
-        {{- end }}
-        {{- if or (eq .VersionFilterKind "regex/semver") (eq .VersionFilterKind "regex/time") }}
-        regex: '{{ .VersionFilterRegex }}'
-        {{- end }}
-
-{{- if .Digest }}
-
-  tag_digest:
-    dependson:
-      - 'condition#tag:and'
-    name: 'Get latest tag for {{ .ActionName }}'
-    kind: 'gittag'
-    spec:
-      url: "{{ .URL }}/{{ .Owner }}/{{ .Repository }}.git"
-      username: '{{ if .Token }}x-access-token{{ end }}'
-      password: '{{ .Token }}'
-      lsremote: true
-      key: 'hash'
-      versionfilter:
-        kind: 'regex'
-        pattern: '^\Q{{ "{{" }} source "tag" {{ "}}" }}\E$'
-
-{{- end }}
-
-  branch:
-    dependson:
-      - 'condition#branch:and'
-    name: 'Get latest branch for {{ .ActionName }}'
-    kind: 'gitbranch'
-    spec:
-      url: "{{ .URL }}/{{ .Owner }}/{{ .Repository }}.git"
-      username: '{{ if .Token }}x-access-token{{ end }}'
-      password: '{{ .Token }}'
-{{- if and .Age.IsZero (ne .BranchVersionFilterKind "latest") }}
-      lsremote: true
-{{- end }}
-{{- template "age" .Age }}
-      versionfilter:
-        kind: '{{ .BranchVersionFilterKind }}'
-        {{- if ne .BranchVersionFilterKind "latest" }}
-        pattern: '{{ .BranchVersionFilterPattern }}'
-        {{- end }}
-        {{- if or (eq .BranchVersionFilterKind "regex/semver") (eq .BranchVersionFilterKind "regex/time") }}
-        regex: '{{ .VersionFilterRegex }}'
-        {{- end }}
-
-{{- if .Digest }}
-
-  branch_digest:
-    dependson:
-      - 'condition#branch:and'
-    name: 'Get latest branch for {{ .ActionName }}'
-    kind: 'gitbranch'
-    spec:
-      url: "{{ .URL }}/{{ .Owner }}/{{ .Repository }}.git"
-      username: '{{ if .Token }}x-access-token{{ end }}'
-      password: '{{ .Token }}'
-      lsremote: true
-      key: 'hash'
-      versionfilter:
-        kind: 'regex'
-        pattern: '^\Q{{ "{{" }} source "branch" {{ "}}" }}\E$'
-
-{{- end }}
+{{- template "gitSource" (.Source "tag") }}
+{{- template "gitSource" (.Source "branch") }}
 
 conditions:
   release:
@@ -141,87 +54,11 @@ conditions:
       url: '{{ .URL }}'
       token: '{{ .Token }}'
       tag: '{{ .CheckReference }}'
-
-  tag:
-    name: 'Check if {{ .ActionName }}@{{ .CheckReference }} is a tag'
-    kind: 'gittag'
-    disablesourceinput: true
-    spec:
-      url: "{{ .URL }}/{{ .Owner }}/{{ .Repository }}.git"
-      username: '{{ if .Token }}x-access-token{{ end }}'
-      password: '{{ .Token }}'
-      lsremote: true
-      versionfilter:
-        kind: 'regex'
-        pattern: '^\Q{{ .CheckReference }}\E$'
-
-  branch:
-    name: 'Check if {{ .ActionName }}@{{ .CheckReference }} is a branch'
-    kind: 'gitbranch'
-    disablesourceinput: true
-    spec:
-      branch: '{{ .CheckReference }}'
-      url: "{{ .URL }}/{{ .Owner }}/{{ .Repository }}.git"
-      username: '{{ if .Token }}x-access-token{{ end }}'
-      password: '{{ .Token }}'
-      lsremote: true
+{{- template "gitConditions" . }}
 
 targets:
-  release:
-    dependson:
-      - 'condition#release:and'
-    disableconditions: true
-    name: 'deps(github): bump Action release for {{ .ActionName }} from {{ .Reference }} to {{ "{{" }} source "release{{if .Digest}}_digest{{end}}" {{ "}}" }}{{ if .Digest }} (Pinned from {{ "{{" }} source "release" {{ "}}" }}){{ end }}'
-    kind: 'yaml'
-    sourceid: 'release{{if .Digest}}_digest{{end}}'
-    transformers:
-      - addprefix: '{{ .ActionName }}@'
-{{- if .ScmID }}
-    scmid: '{{ .ScmID }}'
-{{ end }}
-    spec:
-      file: '{{ .File }}'
-      key: '{{ .TargetKey }}'
-{{- if .Digest }}
-      comment: '{{ "{{" }} source "release" {{ "}}" }}'
-{{- end }}
-
-  tag:
-    dependson:
-      - 'condition#tag:and'
-    disableconditions: true
-    name: 'deps(github): bump Action tag for {{ .ActionName }} from {{ .Reference }} to {{ "{{" }} source "tag{{if .Digest}}_digest{{end}}" {{ "}}" }}{{ if .Digest }} (Pinned from {{ "{{" }} source "tag" {{ "}}" }}){{ end }}'
-    kind: 'yaml'
-    sourceid: 'tag{{if .Digest}}_digest{{end}}'
-    transformers:
-      - addprefix: '{{ .ActionName }}@'
-{{- if .ScmID }}
-    scmid: '{{ .ScmID }}'
-{{ end }}
-    spec:
-      file: '{{ .File }}'
-      key: '{{ .TargetKey }}'
-{{- if .Digest }}
-      comment: '{{ "{{" }} source "tag" {{ "}}" }}'
-{{- end }}
-
-  branch:
-    dependson:
-      - 'condition#branch:and'
-    disableconditions: true
-    name: 'deps(github): bump Action branch for {{ .ActionName }} from {{ .Reference }} to {{ "{{" }} source "branch{{if .Digest}}_digest{{end}}" {{ "}}" }}{{ if .Digest }} (Pinned from {{ "{{" }} source "branch" {{ "}}" }}){{ end }}'
-    kind: yaml
-    sourceid: branch{{if .Digest}}_digest{{end}}
-    transformers:
-      - addprefix: '{{ .ActionName }}@'
-{{- if .ScmID }}
-    scmid: '{{ .ScmID }}'
-{{ end }}
-    spec:
-      file: '{{ .File }}'
-      key: '{{ .TargetKey }}'
-{{- if .Digest }}
-      comment: '{{ "{{" }} source "branch" {{ "}}" }}'
-{{- end }}
+{{- template "target" (.Source "release") }}
+{{ template "target" (.Source "tag") }}
+{{ template "target" (.Source "branch") }}
 `
 )
