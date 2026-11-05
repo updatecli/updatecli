@@ -30,7 +30,7 @@ sources:
 {{- template "gitSource" (.Source "branch") }}
 
 conditions:
-  release:
+  release: &release
     name: 'Check if {{ .ActionName }}@{{ .CheckReference }} is a Gitea release'
     kind: 'gitea/release'
     disablesourceinput: true

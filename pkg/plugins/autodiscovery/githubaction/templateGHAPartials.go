@@ -63,10 +63,16 @@ const workflowManifestActionPartials string = `
 {{- end }}
 {{- end }}
 
-{{- /* gitConditions checks whether the action reference is a tag or a branch */ -}}
+{{- /* gitConditions gives releases priority over tags, and tags over branches */ -}}
 {{- define "gitConditions" }}
 
-  tag:
+  not_release:
+    <<: *release
+    failwhen: true
+
+  tag: &tag
+    dependson:
+      - 'condition#not_release:and'
     name: 'Check if {{ .ActionName }}@{{ .CheckReference }} is a tag'
     kind: 'gittag'
     disablesourceinput: true
@@ -77,7 +83,13 @@ const workflowManifestActionPartials string = `
         kind: 'regex'
         pattern: '^\Q{{ .CheckReference }}\E$'
 
+  not_tag:
+    <<: *tag
+    failwhen: true
+
   branch:
+    dependson:
+      - 'condition#not_tag:and'
     name: 'Check if {{ .ActionName }}@{{ .CheckReference }} is a branch'
     kind: 'gitbranch'
     disablesourceinput: true

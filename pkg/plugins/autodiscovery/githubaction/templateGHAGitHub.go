@@ -44,7 +44,7 @@ sources:
 {{- template "gitSource" (.Source "branch") }}
 
 conditions:
-  release:
+  release: &release
     name: 'Check if {{ .ActionName }}@{{ .CheckReference }} is a GitHub release'
     kind: 'githubrelease'
     disablesourceinput: true
@@ -54,6 +54,9 @@ conditions:
       url: '{{ .URL }}'
       token: '{{ .Token }}'
       tag: '{{ .CheckReference }}'
+{{- /* An explicit type filter disables the fallback to Git tags. */}}
+      typefilter:
+        release: true
 {{- template "gitConditions" . }}
 
 targets:

@@ -143,7 +143,7 @@ sources:
         pattern: '*'
 
 conditions:
-  release:
+  release: &release
     name: 'Check if actions/checkout@v4 is a GitHub release'
     kind: 'githubrelease'
     disablesourceinput: true
@@ -153,8 +153,16 @@ conditions:
       url: 'https://github.com'
       token: 'xxx'
       tag: 'v4'
+      typefilter:
+        release: true
 
-  tag:
+  not_release:
+    <<: *release
+    failwhen: true
+
+  tag: &tag
+    dependson:
+      - 'condition#not_release:and'
     name: 'Check if actions/checkout@v4 is a tag'
     kind: 'gittag'
     disablesourceinput: true
@@ -167,7 +175,13 @@ conditions:
         kind: 'regex'
         pattern: '^\Qv4\E$'
 
+  not_tag:
+    <<: *tag
+    failwhen: true
+
   branch:
+    dependson:
+      - 'condition#not_tag:and'
     name: 'Check if actions/checkout@v4 is a branch'
     kind: 'gitbranch'
     disablesourceinput: true
@@ -320,7 +334,7 @@ sources:
         pattern: '^\Q{{ source "branch" }}\E$'
 
 conditions:
-  release:
+  release: &release
     name: 'Check if actions/checkout@v4 is a GitHub release'
     kind: 'githubrelease'
     disablesourceinput: true
@@ -330,8 +344,16 @@ conditions:
       url: 'https://github.com'
       token: 'xxx'
       tag: 'v4'
+      typefilter:
+        release: true
 
-  tag:
+  not_release:
+    <<: *release
+    failwhen: true
+
+  tag: &tag
+    dependson:
+      - 'condition#not_release:and'
     name: 'Check if actions/checkout@v4 is a tag'
     kind: 'gittag'
     disablesourceinput: true
@@ -344,7 +366,13 @@ conditions:
         kind: 'regex'
         pattern: '^\Qv4\E$'
 
+  not_tag:
+    <<: *tag
+    failwhen: true
+
   branch:
+    dependson:
+      - 'condition#not_tag:and'
     name: 'Check if actions/checkout@v4 is a branch'
     kind: 'gitbranch'
     disablesourceinput: true
@@ -488,7 +516,7 @@ sources:
         pattern: '^\Q{{ source "branch" }}\E$'
 
 conditions:
-  release:
+  release: &release
     name: 'Check if actions/checkout@v4.2.2 is a GitHub release'
     kind: 'githubrelease'
     disablesourceinput: true
@@ -498,8 +526,16 @@ conditions:
       url: 'https://github.com'
       token: 'xxx'
       tag: 'v4.2.2'
+      typefilter:
+        release: true
 
-  tag:
+  not_release:
+    <<: *release
+    failwhen: true
+
+  tag: &tag
+    dependson:
+      - 'condition#not_release:and'
     name: 'Check if actions/checkout@v4.2.2 is a tag'
     kind: 'gittag'
     disablesourceinput: true
@@ -512,7 +548,13 @@ conditions:
         kind: 'regex'
         pattern: '^\Qv4.2.2\E$'
 
+  not_tag:
+    <<: *tag
+    failwhen: true
+
   branch:
+    dependson:
+      - 'condition#not_tag:and'
     name: 'Check if actions/checkout@v4.2.2 is a branch'
     kind: 'gitbranch'
     disablesourceinput: true
@@ -653,7 +695,7 @@ sources:
         pattern: '^\Q{{ source "branch" }}\E$'
 
 conditions:
-  release:
+  release: &release
     name: 'Check if actions/checkout@main is a GitHub release'
     kind: 'githubrelease'
     disablesourceinput: true
@@ -663,8 +705,16 @@ conditions:
       url: 'https://github.com'
       token: 'xxx'
       tag: 'main'
+      typefilter:
+        release: true
 
-  tag:
+  not_release:
+    <<: *release
+    failwhen: true
+
+  tag: &tag
+    dependson:
+      - 'condition#not_release:and'
     name: 'Check if actions/checkout@main is a tag'
     kind: 'gittag'
     disablesourceinput: true
@@ -677,7 +727,13 @@ conditions:
         kind: 'regex'
         pattern: '^\Qmain\E$'
 
+  not_tag:
+    <<: *tag
+    failwhen: true
+
   branch:
+    dependson:
+      - 'condition#not_tag:and'
     name: 'Check if actions/checkout@main is a branch'
     kind: 'gitbranch'
     disablesourceinput: true
@@ -833,7 +889,7 @@ sources:
         pattern: '^\Q{{ source "branch" }}\E$'
 
 conditions:
-  release:
+  release: &release
     name: 'Check if https://gitea.com/actions/checkout@v4 is a Gitea release'
     kind: 'gitea/release'
     disablesourceinput: true
@@ -844,7 +900,13 @@ conditions:
       token: 'xxx'
       tag: 'v4'
 
-  tag:
+  not_release:
+    <<: *release
+    failwhen: true
+
+  tag: &tag
+    dependson:
+      - 'condition#not_release:and'
     name: 'Check if https://gitea.com/actions/checkout@v4 is a tag'
     kind: 'gittag'
     disablesourceinput: true
@@ -857,7 +919,13 @@ conditions:
         kind: 'regex'
         pattern: '^\Qv4\E$'
 
+  not_tag:
+    <<: *tag
+    failwhen: true
+
   branch:
+    dependson:
+      - 'condition#not_tag:and'
     name: 'Check if https://gitea.com/actions/checkout@v4 is a branch'
     kind: 'gitbranch'
     disablesourceinput: true
@@ -1001,7 +1069,7 @@ sources:
         pattern: '^\Q{{ source "branch" }}\E$'
 
 conditions:
-  release:
+  release: &release
     name: 'Check if https://gitea.com/actions/checkout@v4.2.2 is a Gitea release'
     kind: 'gitea/release'
     disablesourceinput: true
@@ -1012,7 +1080,13 @@ conditions:
       token: 'xxx'
       tag: 'v4.2.2'
 
-  tag:
+  not_release:
+    <<: *release
+    failwhen: true
+
+  tag: &tag
+    dependson:
+      - 'condition#not_release:and'
     name: 'Check if https://gitea.com/actions/checkout@v4.2.2 is a tag'
     kind: 'gittag'
     disablesourceinput: true
@@ -1025,7 +1099,13 @@ conditions:
         kind: 'regex'
         pattern: '^\Qv4.2.2\E$'
 
+  not_tag:
+    <<: *tag
+    failwhen: true
+
   branch:
+    dependson:
+      - 'condition#not_tag:and'
     name: 'Check if https://gitea.com/actions/checkout@v4.2.2 is a branch'
     kind: 'gitbranch'
     disablesourceinput: true
@@ -1135,7 +1215,7 @@ sources:
         pattern: '*'
 
 conditions:
-  release:
+  release: &release
     name: 'Check if https://gitea.com/actions/checkout@v4 is a Gitea release'
     kind: 'gitea/release'
     disablesourceinput: true
@@ -1146,7 +1226,13 @@ conditions:
       token: 'xxx'
       tag: 'v4'
 
-  tag:
+  not_release:
+    <<: *release
+    failwhen: true
+
+  tag: &tag
+    dependson:
+      - 'condition#not_release:and'
     name: 'Check if https://gitea.com/actions/checkout@v4 is a tag'
     kind: 'gittag'
     disablesourceinput: true
@@ -1159,7 +1245,13 @@ conditions:
         kind: 'regex'
         pattern: '^\Qv4\E$'
 
+  not_tag:
+    <<: *tag
+    failwhen: true
+
   branch:
+    dependson:
+      - 'condition#not_tag:and'
     name: 'Check if https://gitea.com/actions/checkout@v4 is a branch'
     kind: 'gitbranch'
     disablesourceinput: true
@@ -1252,7 +1344,7 @@ sources:
         pattern: '^\Q11bd71901bbe5b1630ceea73d27597364c9af683\E$'
 
 conditions:
-  release:
+  release: &release
     name: 'Check if https://gitea.com/actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 is a Gitea release'
     kind: 'gitea/release'
     disablesourceinput: true
@@ -1263,7 +1355,13 @@ conditions:
       token: 'xxx'
       tag: '11bd71901bbe5b1630ceea73d27597364c9af683'
 
-  tag:
+  not_release:
+    <<: *release
+    failwhen: true
+
+  tag: &tag
+    dependson:
+      - 'condition#not_release:and'
     name: 'Check if https://gitea.com/actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 is a tag'
     kind: 'gittag'
     disablesourceinput: true
@@ -1276,7 +1374,13 @@ conditions:
         kind: 'regex'
         pattern: '^\Q11bd71901bbe5b1630ceea73d27597364c9af683\E$'
 
+  not_tag:
+    <<: *tag
+    failwhen: true
+
   branch:
+    dependson:
+      - 'condition#not_tag:and'
     name: 'Check if https://gitea.com/actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 is a branch'
     kind: 'gitbranch'
     disablesourceinput: true
@@ -1429,7 +1533,7 @@ sources:
         pattern: '^\Q{{ source "branch" }}\E$'
 
 conditions:
-  release:
+  release: &release
     name: 'Check if https://git.example.org/actions/checkout@v4 is a Gitea release'
     kind: 'gitea/release'
     disablesourceinput: true
@@ -1440,7 +1544,13 @@ conditions:
       token: 'xxx'
       tag: 'v4'
 
-  tag:
+  not_release:
+    <<: *release
+    failwhen: true
+
+  tag: &tag
+    dependson:
+      - 'condition#not_release:and'
     name: 'Check if https://git.example.org/actions/checkout@v4 is a tag'
     kind: 'gittag'
     disablesourceinput: true
@@ -1453,7 +1563,13 @@ conditions:
         kind: 'regex'
         pattern: '^\Qv4\E$'
 
+  not_tag:
+    <<: *tag
+    failwhen: true
+
   branch:
+    dependson:
+      - 'condition#not_tag:and'
     name: 'Check if https://git.example.org/actions/checkout@v4 is a branch'
     kind: 'gitbranch'
     disablesourceinput: true
@@ -1563,7 +1679,7 @@ sources:
         pattern: '*'
 
 conditions:
-  release:
+  release: &release
     name: 'Check if tibdex/github-app-token@v2.1 is a GitHub release'
     kind: 'githubrelease'
     disablesourceinput: true
@@ -1573,8 +1689,16 @@ conditions:
       url: 'https://github.com'
       token: 'xxx'
       tag: 'v2.1'
+      typefilter:
+        release: true
 
-  tag:
+  not_release:
+    <<: *release
+    failwhen: true
+
+  tag: &tag
+    dependson:
+      - 'condition#not_release:and'
     name: 'Check if tibdex/github-app-token@v2.1 is a tag'
     kind: 'gittag'
     disablesourceinput: true
@@ -1587,7 +1711,13 @@ conditions:
         kind: 'regex'
         pattern: '^\Qv2.1\E$'
 
+  not_tag:
+    <<: *tag
+    failwhen: true
+
   branch:
+    dependson:
+      - 'condition#not_tag:and'
     name: 'Check if tibdex/github-app-token@v2.1 is a branch'
     kind: 'gitbranch'
     disablesourceinput: true
@@ -1683,7 +1813,7 @@ sources:
         pattern: '*'
 
 conditions:
-  release:
+  release: &release
     name: 'Check if tibdex/github-app-token@v2.1 is a GitHub release'
     kind: 'githubrelease'
     disablesourceinput: true
@@ -1693,8 +1823,16 @@ conditions:
       url: 'https://github.com'
       token: 'xxx'
       tag: 'v2.1'
+      typefilter:
+        release: true
 
-  tag:
+  not_release:
+    <<: *release
+    failwhen: true
+
+  tag: &tag
+    dependson:
+      - 'condition#not_release:and'
     name: 'Check if tibdex/github-app-token@v2.1 is a tag'
     kind: 'gittag'
     disablesourceinput: true
@@ -1707,7 +1845,13 @@ conditions:
         kind: 'regex'
         pattern: '^\Qv2.1\E$'
 
+  not_tag:
+    <<: *tag
+    failwhen: true
+
   branch:
+    dependson:
+      - 'condition#not_tag:and'
     name: 'Check if tibdex/github-app-token@v2.1 is a branch'
     kind: 'gitbranch'
     disablesourceinput: true
@@ -1803,7 +1947,7 @@ sources:
         pattern: '*'
 
 conditions:
-  release:
+  release: &release
     name: 'Check if actions/checkout@v4 is a GitHub release'
     kind: 'githubrelease'
     disablesourceinput: true
@@ -1813,8 +1957,16 @@ conditions:
       url: 'https://github.com'
       token: 'xxx'
       tag: 'v4'
+      typefilter:
+        release: true
 
-  tag:
+  not_release:
+    <<: *release
+    failwhen: true
+
+  tag: &tag
+    dependson:
+      - 'condition#not_release:and'
     name: 'Check if actions/checkout@v4 is a tag'
     kind: 'gittag'
     disablesourceinput: true
@@ -1827,7 +1979,13 @@ conditions:
         kind: 'regex'
         pattern: '^\Qv4\E$'
 
+  not_tag:
+    <<: *tag
+    failwhen: true
+
   branch:
+    dependson:
+      - 'condition#not_tag:and'
     name: 'Check if actions/checkout@v4 is a branch'
     kind: 'gitbranch'
     disablesourceinput: true
@@ -1923,7 +2081,7 @@ sources:
         pattern: '*'
 
 conditions:
-  release:
+  release: &release
     name: 'Check if updatecli/updatecli-action@v2 is a GitHub release'
     kind: 'githubrelease'
     disablesourceinput: true
@@ -1933,8 +2091,16 @@ conditions:
       url: 'https://github.com'
       token: 'xxx'
       tag: 'v2'
+      typefilter:
+        release: true
 
-  tag:
+  not_release:
+    <<: *release
+    failwhen: true
+
+  tag: &tag
+    dependson:
+      - 'condition#not_release:and'
     name: 'Check if updatecli/updatecli-action@v2 is a tag'
     kind: 'gittag'
     disablesourceinput: true
@@ -1947,7 +2113,13 @@ conditions:
         kind: 'regex'
         pattern: '^\Qv2\E$'
 
+  not_tag:
+    <<: *tag
+    failwhen: true
+
   branch:
+    dependson:
+      - 'condition#not_tag:and'
     name: 'Check if updatecli/updatecli-action@v2 is a branch'
     kind: 'gitbranch'
     disablesourceinput: true
@@ -2054,7 +2226,7 @@ sources:
         pattern: '*'
 
 conditions:
-  release:
+  release: &release
     name: 'Check if actions/checkout@v4 is a GitHub release'
     kind: 'githubrelease'
     disablesourceinput: true
@@ -2064,8 +2236,16 @@ conditions:
       url: 'https://github.com'
       token: 'xxx'
       tag: 'v4'
+      typefilter:
+        release: true
 
-  tag:
+  not_release:
+    <<: *release
+    failwhen: true
+
+  tag: &tag
+    dependson:
+      - 'condition#not_release:and'
     name: 'Check if actions/checkout@v4 is a tag'
     kind: 'gittag'
     disablesourceinput: true
@@ -2078,7 +2258,13 @@ conditions:
         kind: 'regex'
         pattern: '^\Qv4\E$'
 
+  not_tag:
+    <<: *tag
+    failwhen: true
+
   branch:
+    dependson:
+      - 'condition#not_tag:and'
     name: 'Check if actions/checkout@v4 is a branch'
     kind: 'gitbranch'
     disablesourceinput: true
@@ -2174,7 +2360,7 @@ sources:
         pattern: '*'
 
 conditions:
-  release:
+  release: &release
     name: 'Check if actions/checkout@v4 is a GitHub release'
     kind: 'githubrelease'
     disablesourceinput: true
@@ -2184,8 +2370,16 @@ conditions:
       url: 'https://github.com'
       token: 'xxx'
       tag: 'v4'
+      typefilter:
+        release: true
 
-  tag:
+  not_release:
+    <<: *release
+    failwhen: true
+
+  tag: &tag
+    dependson:
+      - 'condition#not_release:and'
     name: 'Check if actions/checkout@v4 is a tag'
     kind: 'gittag'
     disablesourceinput: true
@@ -2198,7 +2392,13 @@ conditions:
         kind: 'regex'
         pattern: '^\Qv4\E$'
 
+  not_tag:
+    <<: *tag
+    failwhen: true
+
   branch:
+    dependson:
+      - 'condition#not_tag:and'
     name: 'Check if actions/checkout@v4 is a branch'
     kind: 'gitbranch'
     disablesourceinput: true
@@ -2313,7 +2513,7 @@ sources:
         pattern: '*'
 
 conditions:
-  release:
+  release: &release
     name: 'Check if actions/checkout@v4 is a GitHub release'
     kind: 'githubrelease'
     disablesourceinput: true
@@ -2323,8 +2523,16 @@ conditions:
       url: 'https://github.com'
       token: 'xxx'
       tag: 'v4'
+      typefilter:
+        release: true
 
-  tag:
+  not_release:
+    <<: *release
+    failwhen: true
+
+  tag: &tag
+    dependson:
+      - 'condition#not_release:and'
     name: 'Check if actions/checkout@v4 is a tag'
     kind: 'gittag'
     disablesourceinput: true
@@ -2337,7 +2545,13 @@ conditions:
         kind: 'regex'
         pattern: '^\Qv4\E$'
 
+  not_tag:
+    <<: *tag
+    failwhen: true
+
   branch:
+    dependson:
+      - 'condition#not_tag:and'
     name: 'Check if actions/checkout@v4 is a branch'
     kind: 'gitbranch'
     disablesourceinput: true
