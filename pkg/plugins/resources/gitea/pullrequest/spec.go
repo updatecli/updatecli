@@ -27,6 +27,7 @@ type MergeSpec struct {
 	//   * settings are applied when target changes trigger the action. Runs without target changes only report an existing PR.
 	//   * configure required checks and branch protections on the repository. Merging may be immediate.
 	//   * an existing auto-merge schedule is left unchanged.
+	//   * auto-merge isn't requested on a draft pull request.
 	//
 	Strategy string `yaml:",omitempty"`
 }
@@ -85,6 +86,8 @@ type Spec struct {
 	//
 	// remark:
 	//   * setting the title in the action (option 2) is usually preferred.
+	//   * the title of an existing pull request is updated on each run.
+	//     A draft keeps its "WIP:" or "[WIP]" prefix. With any other draft prefix, the title isn't updated.
 	//
 	// example:
 	// ```
@@ -100,10 +103,13 @@ type Spec struct {
 	//
 	// default:
 	//   a body generated from the pipeline execution.
+	//   On an existing pull request, it's merged with the report in the current description.
+	//   A description without a report, such as one written by hand, is replaced.
 	//
 	// remark:
 	//   * unless you know what you are doing, do not set this value and rely on the default.
 	//   * it is useful to give reviewers additional information, such as a changelog url.
+	//   * when set, it also replaces the description of an existing pull request.
 	//
 	Body string `yaml:",inline,omitempty"`
 
@@ -123,6 +129,25 @@ type Spec struct {
 	// ```
 	//
 	Assignees []string `yaml:",omitempty"`
+	// "reviewers" defines the usernames to request a review from.
+	//
+	// default:
+	//   no review requests.
+	//
+	// remark:
+	//   * requests are added when target changes create or update a pull request.
+	//   * users who have already reviewed or been requested are left unchanged.
+	//   * removing a username does not remove its review or request.
+	//   * a failed review request stops the action before requesting auto-merge.
+	//
+	// example:
+	// ```
+	//   reviewers:
+	//     - alice
+	//     - bob
+	// ```
+	//
+	Reviewers []string `yaml:",omitempty"`
 	// "merge" defines how Updatecli merges the pull request.
 	//
 	// default:

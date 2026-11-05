@@ -1,0 +1,20 @@
+name: "Maven security updates using git scm"
+scms:
+  default:
+    kind: git
+    spec:
+      url: "https://github.com/updatecli-test/sortpom.git"
+      branch: "master"
+
+autodiscovery:
+  scmid: default
+  crawlers:
+    maven:
+      vulnerability:
+        minseverity: moderate
+      only:
+        - path: pom.xml
+          artifactids:
+            "slf4j-simple": ""
+          groupid:
+            "org.slf4j": ""

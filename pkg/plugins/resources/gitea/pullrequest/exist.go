@@ -19,7 +19,7 @@ func (g *Gitea) CheckActionExist(ctx context.Context, report *reports.Action) er
 		log.Debugf("GiTea pull request detected")
 
 		report.Title = pullrequest.Title
-		report.Link = pullrequest.URL
+		report.Link = pullrequest.HTMLURL
 		report.Description = pullrequest.Body
 		return nil
 	}

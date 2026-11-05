@@ -83,7 +83,7 @@ func readManifest(filename string) (map[int]*ArgoCDApplicationSpec, error) {
 		return nil, err
 	}
 
-	loader, err := goyaml.NewLoader(bytes.NewReader(content), goyaml.V4)
+	loader, err := goyaml.NewLoader(bytes.NewReader(content), goyaml.WithV4Defaults())
 	if err != nil {
 		return nil, fmt.Errorf("creating yaml loader: %w", err)
 	}

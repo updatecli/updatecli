@@ -111,3 +111,43 @@ func TestParsePEP508(t *testing.T) {
 		})
 	}
 }
+
+func TestDependencyGroupRequirements(t *testing.T) {
+	testdata := []struct {
+		name     string
+		input    interface{}
+		expected []string
+	}{
+		{
+			name:     "Only strings",
+			input:    []interface{}{"pytest>=8.0", "ruff"},
+			expected: []string{"pytest>=8.0", "ruff"},
+		},
+		{
+			name:     "include-group entries are skipped",
+			input:    []interface{}{map[string]interface{}{"include-group": "test"}, "ruff>=0.4"},
+			expected: []string{"ruff>=0.4"},
+		},
+		{
+			name:     "Empty group",
+			input:    []interface{}{},
+			expected: nil,
+		},
+		{
+			name:     "Array of tables only holding include-group entries",
+			input:    []map[string]interface{}{{"include-group": "test"}, {"include-group": "lint"}},
+			expected: nil,
+		},
+		{
+			name:     "Group that isn't an array is skipped",
+			input:    map[string]interface{}{"pytest": ">=8.0"},
+			expected: nil,
+		},
+	}
+
+	for _, tt := range testdata {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.expected, dependencyGroupRequirements(tt.input))
+		})
+	}
+}
