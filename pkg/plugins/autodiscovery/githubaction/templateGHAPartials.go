@@ -79,9 +79,7 @@ const workflowManifestActionPartials string = `
     spec:
 {{- template "gitAuth" . }}
       lsremote: true
-      versionfilter:
-        kind: 'regex'
-        pattern: '^\Q{{ .CheckReference }}\E$'
+      tag: '{{ .CheckReference }}'
 
   not_tag:
     <<: *tag

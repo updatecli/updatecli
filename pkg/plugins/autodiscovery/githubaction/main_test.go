@@ -171,9 +171,7 @@ conditions:
       username: 'x-access-token'
       password: 'xxx'
       lsremote: true
-      versionfilter:
-        kind: 'regex'
-        pattern: '^\Qv4\E$'
+      tag: 'v4'
 
   not_tag:
     <<: *tag
@@ -362,9 +360,7 @@ conditions:
       username: 'x-access-token'
       password: 'xxx'
       lsremote: true
-      versionfilter:
-        kind: 'regex'
-        pattern: '^\Qv4\E$'
+      tag: 'v4'
 
   not_tag:
     <<: *tag
@@ -544,9 +540,7 @@ conditions:
       username: 'x-access-token'
       password: 'xxx'
       lsremote: true
-      versionfilter:
-        kind: 'regex'
-        pattern: '^\Qv4.2.2\E$'
+      tag: 'v4.2.2'
 
   not_tag:
     <<: *tag
@@ -723,9 +717,7 @@ conditions:
       username: 'x-access-token'
       password: 'xxx'
       lsremote: true
-      versionfilter:
-        kind: 'regex'
-        pattern: '^\Qmain\E$'
+      tag: 'main'
 
   not_tag:
     <<: *tag
@@ -915,9 +907,7 @@ conditions:
       username: 'oauth2'
       password: 'xxx'
       lsremote: true
-      versionfilter:
-        kind: 'regex'
-        pattern: '^\Qv4\E$'
+      tag: 'v4'
 
   not_tag:
     <<: *tag
@@ -1095,9 +1085,7 @@ conditions:
       username: 'oauth2'
       password: 'xxx'
       lsremote: true
-      versionfilter:
-        kind: 'regex'
-        pattern: '^\Qv4.2.2\E$'
+      tag: 'v4.2.2'
 
   not_tag:
     <<: *tag
@@ -1241,9 +1229,7 @@ conditions:
       username: 'oauth2'
       password: 'xxx'
       lsremote: true
-      versionfilter:
-        kind: 'regex'
-        pattern: '^\Qv4\E$'
+      tag: 'v4'
 
   not_tag:
     <<: *tag
@@ -1370,9 +1356,7 @@ conditions:
       username: 'oauth2'
       password: 'xxx'
       lsremote: true
-      versionfilter:
-        kind: 'regex'
-        pattern: '^\Q11bd71901bbe5b1630ceea73d27597364c9af683\E$'
+      tag: '11bd71901bbe5b1630ceea73d27597364c9af683'
 
   not_tag:
     <<: *tag
@@ -1559,9 +1543,7 @@ conditions:
       username: 'oauth2'
       password: 'xxx'
       lsremote: true
-      versionfilter:
-        kind: 'regex'
-        pattern: '^\Qv4\E$'
+      tag: 'v4'
 
   not_tag:
     <<: *tag
@@ -1707,9 +1689,7 @@ conditions:
       username: 'x-access-token'
       password: 'xxx'
       lsremote: true
-      versionfilter:
-        kind: 'regex'
-        pattern: '^\Qv2.1\E$'
+      tag: 'v2.1'
 
   not_tag:
     <<: *tag
@@ -1841,9 +1821,7 @@ conditions:
       username: 'x-access-token'
       password: 'xxx'
       lsremote: true
-      versionfilter:
-        kind: 'regex'
-        pattern: '^\Qv2.1\E$'
+      tag: 'v2.1'
 
   not_tag:
     <<: *tag
@@ -1975,9 +1953,7 @@ conditions:
       username: 'x-access-token'
       password: 'xxx'
       lsremote: true
-      versionfilter:
-        kind: 'regex'
-        pattern: '^\Qv4\E$'
+      tag: 'v4'
 
   not_tag:
     <<: *tag
@@ -2109,9 +2085,7 @@ conditions:
       username: 'x-access-token'
       password: 'xxx'
       lsremote: true
-      versionfilter:
-        kind: 'regex'
-        pattern: '^\Qv2\E$'
+      tag: 'v2'
 
   not_tag:
     <<: *tag
@@ -2254,9 +2228,7 @@ conditions:
       username: 'x-access-token'
       password: 'xxx'
       lsremote: true
-      versionfilter:
-        kind: 'regex'
-        pattern: '^\Qv4\E$'
+      tag: 'v4'
 
   not_tag:
     <<: *tag
@@ -2388,9 +2360,7 @@ conditions:
       username: 'x-access-token'
       password: 'xxx'
       lsremote: true
-      versionfilter:
-        kind: 'regex'
-        pattern: '^\Qv4\E$'
+      tag: 'v4'
 
   not_tag:
     <<: *tag
@@ -2541,9 +2511,7 @@ conditions:
       username: 'x-access-token'
       password: 'xxx'
       lsremote: true
-      versionfilter:
-        kind: 'regex'
-        pattern: '^\Qv4\E$'
+      tag: 'v4'
 
   not_tag:
     <<: *tag
