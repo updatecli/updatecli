@@ -1331,6 +1331,186 @@ targets:
 `},
 		},
 		{
+			name:    "Scenario - Forgejo Action on a self hosted instance with digest",
+			rootDir: "testdata/forgejo",
+			credentials: map[string]gitProviderToken{
+				"git.example.org": {
+					Kind:  "forgejo",
+					Token: "xxx",
+				},
+			},
+			digest: true,
+			expectedPipelines: []string{`name: 'deps: bump https://git.example.org/actions/checkout Gitea workflow'
+
+sources:
+  release:
+    dependson:
+      - 'condition#release:and'
+    name: 'Get latest Gitea Release for https://git.example.org/actions/checkout'
+    kind: 'gitea/release'
+    spec:
+      owner: 'actions'
+      repository: 'checkout'
+      url: 'https://git.example.org'
+      token: 'xxx'
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
+
+  release_digest:
+    dependson:
+      - 'condition#release:and'
+    name: 'Get commit for https://git.example.org/actions/checkout release'
+    kind: 'gittag'
+    spec:
+      url: "https://git.example.org/actions/checkout.git"
+      username: 'oauth2'
+      password: 'xxx'
+      lsremote: true
+      key: 'hash'
+      versionfilter:
+        kind: 'regex'
+        pattern: '^\Q{{ source "release" }}\E$'
+
+  tag:
+    dependson:
+      - 'condition#tag:and'
+    name: 'Get latest tag for https://git.example.org/actions/checkout'
+    kind: 'gittag'
+    spec:
+      url: "https://git.example.org/actions/checkout.git"
+      username: 'oauth2'
+      password: 'xxx'
+      lsremote: true
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
+
+  tag_digest:
+    dependson:
+      - 'condition#tag:and'
+    name: 'Get commit for https://git.example.org/actions/checkout tag'
+    kind: 'gittag'
+    spec:
+      url: "https://git.example.org/actions/checkout.git"
+      username: 'oauth2'
+      password: 'xxx'
+      lsremote: true
+      key: 'hash'
+      versionfilter:
+        kind: 'regex'
+        pattern: '^\Q{{ source "tag" }}\E$'
+
+  branch:
+    dependson:
+      - 'condition#branch:and'
+    name: 'Get latest branch for https://git.example.org/actions/checkout'
+    kind: 'gitbranch'
+    spec:
+      url: "https://git.example.org/actions/checkout.git"
+      username: 'oauth2'
+      password: 'xxx'
+      lsremote: true
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
+
+  branch_digest:
+    dependson:
+      - 'condition#branch:and'
+    name: 'Get commit for https://git.example.org/actions/checkout branch'
+    kind: 'gitbranch'
+    spec:
+      url: "https://git.example.org/actions/checkout.git"
+      username: 'oauth2'
+      password: 'xxx'
+      lsremote: true
+      key: 'hash'
+      versionfilter:
+        kind: 'regex'
+        pattern: '^\Q{{ source "branch" }}\E$'
+
+conditions:
+  release:
+    name: 'Check if https://git.example.org/actions/checkout@v4 is a Gitea release'
+    kind: 'gitea/release'
+    disablesourceinput: true
+    spec:
+      owner: 'actions'
+      repository: 'checkout'
+      url: 'https://git.example.org'
+      token: 'xxx'
+      tag: 'v4'
+
+  tag:
+    name: 'Check if https://git.example.org/actions/checkout@v4 is a tag'
+    kind: 'gittag'
+    disablesourceinput: true
+    spec:
+      url: "https://git.example.org/actions/checkout.git"
+      username: 'oauth2'
+      password: 'xxx'
+      lsremote: true
+      versionfilter:
+        kind: 'regex'
+        pattern: '^\Qv4\E$'
+
+  branch:
+    name: 'Check if https://git.example.org/actions/checkout@v4 is a branch'
+    kind: 'gitbranch'
+    disablesourceinput: true
+    spec:
+      branch: 'v4'
+      url: "https://git.example.org/actions/checkout.git"
+      username: 'oauth2'
+      password: 'xxx'
+      lsremote: true
+
+targets:
+  release:
+    dependson:
+      - 'condition#release:and'
+    disableconditions: true
+    name: 'deps(gitea): bump https://git.example.org/actions/checkout from v4 to {{ source "release_digest" }} (Pinned from {{ source "release" }})'
+    kind: 'yaml'
+    sourceid: 'release_digest'
+    transformers:
+      - addprefix: 'https://git.example.org/actions/checkout@'
+    spec:
+      file: '.forgejo/workflows/updatecli.yaml'
+      key: '$.jobs.updatecli.steps[0].uses'
+      comment: '{{ source "release" }}'
+
+  tag:
+    dependson:
+      - 'condition#tag:and'
+    disableconditions: true
+    name: 'deps(gitea): bump https://git.example.org/actions/checkout from v4 to {{ source "tag_digest" }} (Pinned from {{ source "tag" }})'
+    kind: 'yaml'
+    sourceid: 'tag_digest'
+    transformers:
+      - addprefix: 'https://git.example.org/actions/checkout@'
+    spec:
+      file: '.forgejo/workflows/updatecli.yaml'
+      key: '$.jobs.updatecli.steps[0].uses'
+      comment: '{{ source "tag" }}'
+
+  branch:
+    dependson:
+      - 'condition#branch:and'
+    disableconditions: true
+    name: 'deps(gitea): bump https://git.example.org/actions/checkout from v4 to {{ source "branch_digest" }} (Pinned from {{ source "branch" }})'
+    kind: yaml
+    sourceid: branch_digest
+    transformers:
+      - addprefix: 'https://git.example.org/actions/checkout@'
+    spec:
+      file: '.forgejo/workflows/updatecli.yaml'
+      key: '$.jobs.updatecli.steps[0].uses'
+      comment: '{{ source "branch" }}'
+`},
+		},
+		{
 			name:    "Scenario - GitHub Action with duplicate_steps",
 			rootDir: "testdata/duplicate_steps",
 			credentials: map[string]gitProviderToken{
