@@ -261,3 +261,41 @@ func TestRunReportsFailedClone(t *testing.T) {
 	assert.Equal(t, result.FAILURE, failing.Report.Result)
 	assert.Equal(t, `scm "broken" failed to clone: authentication required`, failing.Report.Err)
 }
+
+// mockBranchScm is an scm whose url and branches identify a shared pull request.
+type mockBranchScm struct {
+	mockCloneScm
+}
+
+func (m *mockBranchScm) GetURL() string {
+	return "https://example.com/org/repo.git"
+}
+
+func (m *mockBranchScm) GetBranches() (string, string, string) {
+	return "main", "updatecli_main", "main"
+}
+
+func TestHandledCleanupKeysKeepsActionSharedWithFailedClonePipeline(t *testing.T) {
+	brokenSCM := scm.Scm{Handler: &mockBranchScm{mockCloneScm{directory: "/tmp/broken", cloneErr: errors.New("authentication required")}}}
+	healthySCM := scm.Scm{Handler: &mockBranchScm{mockCloneScm{directory: "/tmp/healthy"}}}
+
+	handler := &recordingActionHandler{}
+	failing := &pipeline.Pipeline{
+		Name:    "failing",
+		SCMs:    map[string]scm.Scm{"broken": brokenSCM},
+		Targets: map[string]target.Target{"t": {}},
+		Actions: map[string]action.Action{"pr": {Handler: handler, Scm: &brokenSCM, Config: action.Config{Kind: "github/pullrequest"}}},
+	}
+	healthy := &pipeline.Pipeline{
+		Name:    "healthy",
+		SCMs:    map[string]scm.Scm{"healthy": healthySCM},
+		Targets: map[string]target.Target{"t": {}},
+		Actions: map[string]action.Action{"pr": {Handler: handler, Scm: &healthySCM, Config: action.Config{Kind: "github/pullrequest"}}},
+	}
+
+	e := Engine{Pipelines: []*pipeline.Pipeline{failing, healthy}}
+	require.NoError(t, e.InitSCM())
+
+	require.NoError(t, healthy.RunCleanActions(context.Background(), e.handledCleanupKeys()))
+	assert.Zero(t, handler.cleaned, "a pull request shared with a pipeline whose scm failed to clone must not be cleaned up")
+}
