@@ -132,7 +132,7 @@ sources:
 
 conditions:
   release:
-    name: 'Check if {{ .ActionName }}@{{ if .Digest }}{{ .PinReference }}{{ else }}{{ .Reference }}{{ end }} is a GitHub release'
+    name: 'Check if {{ .ActionName }}@{{ .CheckReference }} is a GitHub release'
     kind: 'githubrelease'
     disablesourceinput: true
     spec:
@@ -140,10 +140,10 @@ conditions:
       repository: '{{ .Repository }}'
       url: '{{ .URL }}'
       token: '{{ .Token }}'
-      tag: '{{ if .Digest }}{{ .PinReference }}{{ else }}{{ .Reference }}{{ end }}'
+      tag: '{{ .CheckReference }}'
 
   tag:
-    name: 'Check if {{ .ActionName }}@{{ if .Digest }}{{ .PinReference }}{{ else }}{{ .Reference }}{{ end }} is a tag'
+    name: 'Check if {{ .ActionName }}@{{ .CheckReference }} is a tag'
     kind: 'gittag'
     disablesourceinput: true
     spec:
@@ -153,14 +153,14 @@ conditions:
       lsremote: true
       versionfilter:
         kind: 'regex'
-        pattern: '^\Q{{ if .Digest }}{{ .PinReference }}{{ else }}{{ .Reference }}{{ end }}\E$'
+        pattern: '^\Q{{ .CheckReference }}\E$'
 
   branch:
-    name: 'Check if {{ .ActionName }}@{{ if .Digest }}{{ .PinReference }}{{ else }}{{ .Reference }}{{ end }} is a branch'
+    name: 'Check if {{ .ActionName }}@{{ .CheckReference }} is a branch'
     kind: 'gitbranch'
     disablesourceinput: true
     spec:
-      branch: '{{ if .Digest }}{{ .PinReference }}{{ else }}{{ .Reference }}{{ end }}'
+      branch: '{{ .CheckReference }}'
       url: "{{ .URL }}/{{ .Owner }}/{{ .Repository }}.git"
       username: '{{ if .Token }}x-access-token{{ end }}'
       password: '{{ .Token }}'

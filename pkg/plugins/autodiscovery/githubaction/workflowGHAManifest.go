@@ -140,10 +140,11 @@ func (g GitHubAction) getGitHubActionManifest(spec *githubActionManifestSpec) ([
 	}
 
 	params := struct {
-		ActionID             string
-		ActionName           string
-		Reference            string
-		PinReference         string
+		ActionID   string
+		ActionName string
+		Reference  string
+		// CheckReference is the reference the conditions check and the version filters start from
+		CheckReference       string
 		File                 string
 		ImageName            string
 		URL                  string
@@ -164,7 +165,7 @@ func (g GitHubAction) getGitHubActionManifest(spec *githubActionManifestSpec) ([
 		ActionID:                   g.actionID,
 		ActionName:                 actionName,
 		Reference:                  spec.Reference,
-		PinReference:               pinReference,
+		CheckReference:             versionFilterRef,
 		File:                       spec.RelativeFoundFile,
 		URL:                        spec.URL,
 		Owner:                      spec.Owner,
