@@ -121,6 +121,7 @@ sources:
     kind: 'gittag'
     spec:
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
       versionfilter:
@@ -134,6 +135,7 @@ sources:
     kind: 'gitbranch'
     spec:
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
       versionfilter:
@@ -158,6 +160,7 @@ conditions:
     disablesourceinput: true
     spec:
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
       versionfilter:
@@ -171,6 +174,7 @@ conditions:
     spec:
       branch: 'v4'
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
 
@@ -264,6 +268,7 @@ sources:
     kind: 'gittag'
     spec:
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
       versionfilter:
@@ -277,6 +282,7 @@ sources:
     kind: 'gittag'
     spec:
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
       key: 'hash'
@@ -291,6 +297,7 @@ sources:
     kind: 'gitbranch'
     spec:
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
       versionfilter:
@@ -304,6 +311,7 @@ sources:
     kind: 'gitbranch'
     spec:
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
       key: 'hash'
@@ -329,6 +337,7 @@ conditions:
     disablesourceinput: true
     spec:
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
       versionfilter:
@@ -342,6 +351,7 @@ conditions:
     spec:
       branch: 'v4'
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
 
@@ -426,6 +436,7 @@ sources:
     kind: 'gittag'
     spec:
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
       versionfilter:
@@ -439,6 +450,7 @@ sources:
     kind: 'gittag'
     spec:
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
       key: 'hash'
@@ -453,6 +465,7 @@ sources:
     kind: 'gitbranch'
     spec:
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
       versionfilter:
@@ -466,6 +479,7 @@ sources:
     kind: 'gitbranch'
     spec:
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
       key: 'hash'
@@ -491,6 +505,7 @@ conditions:
     disablesourceinput: true
     spec:
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
       versionfilter:
@@ -504,6 +519,7 @@ conditions:
     spec:
       branch: 'v4.2.2'
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
 
@@ -587,6 +603,7 @@ sources:
     kind: 'gittag'
     spec:
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       versionfilter:
         kind: 'latest'
@@ -598,6 +615,7 @@ sources:
     kind: 'gittag'
     spec:
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
       key: 'hash'
@@ -612,6 +630,7 @@ sources:
     kind: 'gitbranch'
     spec:
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
       versionfilter:
@@ -625,6 +644,7 @@ sources:
     kind: 'gitbranch'
     spec:
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
       key: 'hash'
@@ -650,6 +670,7 @@ conditions:
     disablesourceinput: true
     spec:
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
       versionfilter:
@@ -663,6 +684,7 @@ conditions:
     spec:
       branch: 'main'
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
 
@@ -1091,6 +1113,7 @@ sources:
     kind: 'gittag'
     spec:
       url: "https://github.com/tibdex/github-app-token.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
       versionfilter:
@@ -1104,6 +1127,7 @@ sources:
     kind: 'gitbranch'
     spec:
       url: "https://github.com/tibdex/github-app-token.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
       versionfilter:
@@ -1128,6 +1152,7 @@ conditions:
     disablesourceinput: true
     spec:
       url: "https://github.com/tibdex/github-app-token.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
       versionfilter:
@@ -1141,6 +1166,7 @@ conditions:
     spec:
       branch: 'v2.1'
       url: "https://github.com/tibdex/github-app-token.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
 
@@ -1207,6 +1233,7 @@ sources:
     kind: 'gittag'
     spec:
       url: "https://github.com/tibdex/github-app-token.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
       versionfilter:
@@ -1220,6 +1247,7 @@ sources:
     kind: 'gitbranch'
     spec:
       url: "https://github.com/tibdex/github-app-token.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
       versionfilter:
@@ -1244,6 +1272,7 @@ conditions:
     disablesourceinput: true
     spec:
       url: "https://github.com/tibdex/github-app-token.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
       versionfilter:
@@ -1257,6 +1286,7 @@ conditions:
     spec:
       branch: 'v2.1'
       url: "https://github.com/tibdex/github-app-token.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
 
@@ -1323,6 +1353,7 @@ sources:
     kind: 'gittag'
     spec:
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
       versionfilter:
@@ -1336,6 +1367,7 @@ sources:
     kind: 'gitbranch'
     spec:
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
       versionfilter:
@@ -1360,6 +1392,7 @@ conditions:
     disablesourceinput: true
     spec:
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
       versionfilter:
@@ -1373,6 +1406,7 @@ conditions:
     spec:
       branch: 'v4'
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
 
@@ -1439,6 +1473,7 @@ sources:
     kind: 'gittag'
     spec:
       url: "https://github.com/updatecli/updatecli-action.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
       versionfilter:
@@ -1452,6 +1487,7 @@ sources:
     kind: 'gitbranch'
     spec:
       url: "https://github.com/updatecli/updatecli-action.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
       versionfilter:
@@ -1476,6 +1512,7 @@ conditions:
     disablesourceinput: true
     spec:
       url: "https://github.com/updatecli/updatecli-action.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
       versionfilter:
@@ -1489,6 +1526,7 @@ conditions:
     spec:
       branch: 'v2'
       url: "https://github.com/updatecli/updatecli-action.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
 
@@ -1566,6 +1604,7 @@ sources:
     kind: 'gittag'
     spec:
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
       versionfilter:
@@ -1579,6 +1618,7 @@ sources:
     kind: 'gitbranch'
     spec:
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
       versionfilter:
@@ -1603,6 +1643,7 @@ conditions:
     disablesourceinput: true
     spec:
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
       versionfilter:
@@ -1616,6 +1657,7 @@ conditions:
     spec:
       branch: 'v4'
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
 
@@ -1682,6 +1724,7 @@ sources:
     kind: 'gittag'
     spec:
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
       versionfilter:
@@ -1695,6 +1738,7 @@ sources:
     kind: 'gitbranch'
     spec:
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
       versionfilter:
@@ -1719,6 +1763,7 @@ conditions:
     disablesourceinput: true
     spec:
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
       versionfilter:
@@ -1732,6 +1777,7 @@ conditions:
     spec:
       branch: 'v4'
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
 
@@ -1813,6 +1859,7 @@ sources:
     kind: 'gittag'
     spec:
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       age:
         minimum: '7d'
@@ -1828,6 +1875,7 @@ sources:
     kind: 'gitbranch'
     spec:
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       age:
         minimum: '7d'
@@ -1854,6 +1902,7 @@ conditions:
     disablesourceinput: true
     spec:
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
       versionfilter:
@@ -1867,6 +1916,7 @@ conditions:
     spec:
       branch: 'v4'
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
 

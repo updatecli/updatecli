@@ -55,6 +55,7 @@ sources:
     kind: 'gittag'
     spec:
       url: "{{ .URL }}/{{ .Owner }}/{{ .Repository }}.git"
+      username: '{{ if .Token }}x-access-token{{ end }}'
       password: '{{ .Token }}'
 {{- if and .Age.IsZero (ne .VersionFilterKind "latest") }}
       lsremote: true
@@ -78,6 +79,7 @@ sources:
     kind: 'gittag'
     spec:
       url: "{{ .URL }}/{{ .Owner }}/{{ .Repository }}.git"
+      username: '{{ if .Token }}x-access-token{{ end }}'
       password: '{{ .Token }}'
       lsremote: true
       key: 'hash'
@@ -94,6 +96,7 @@ sources:
     kind: 'gitbranch'
     spec:
       url: "{{ .URL }}/{{ .Owner }}/{{ .Repository }}.git"
+      username: '{{ if .Token }}x-access-token{{ end }}'
       password: '{{ .Token }}'
 {{- if and .Age.IsZero (ne .BranchVersionFilterKind "latest") }}
       lsremote: true
@@ -117,6 +120,7 @@ sources:
     kind: 'gitbranch'
     spec:
       url: "{{ .URL }}/{{ .Owner }}/{{ .Repository }}.git"
+      username: '{{ if .Token }}x-access-token{{ end }}'
       password: '{{ .Token }}'
       lsremote: true
       key: 'hash'
@@ -144,6 +148,7 @@ conditions:
     disablesourceinput: true
     spec:
       url: "{{ .URL }}/{{ .Owner }}/{{ .Repository }}.git"
+      username: '{{ if .Token }}x-access-token{{ end }}'
       password: '{{ .Token }}'
       lsremote: true
       versionfilter:
@@ -157,6 +162,7 @@ conditions:
     spec:
       branch: '{{ if .Digest }}{{ .PinReference }}{{ else }}{{ .Reference }}{{ end }}'
       url: "{{ .URL }}/{{ .Owner }}/{{ .Repository }}.git"
+      username: '{{ if .Token }}x-access-token{{ end }}'
       password: '{{ .Token }}'
       lsremote: true
 
