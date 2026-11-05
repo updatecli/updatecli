@@ -153,7 +153,7 @@ func TestLoginDefaultsAPIEndpoint(t *testing.T) {
 
 	require.NoError(t, Login(server.URL, "", "udash_pat_valid"))
 
-	assert.Equal(t, "/api/whoami", path, "the API endpoint defaults to <url>/api")
+	assert.Equal(t, "/api/v1beta1/whoami", path, "the API endpoint defaults to <url>/api/v1beta1")
 }
 
 func TestLoginTokenFromEnv(t *testing.T) {

@@ -14,6 +14,9 @@ import (
 // TokenPagePath is the Udash frontend path where a user manages their API tokens.
 const TokenPagePath = "/profile/tokens"
 
+// DefaultAPIPath is where Udash serves its versioned API, relative to the service URL.
+const DefaultAPIPath = "/api/v1beta1"
+
 // Login stores an Udash API token in the Updatecli configuration file.
 //
 // Udash issues the token itself, so it does not expire and Updatecli never has to
@@ -44,7 +47,7 @@ func Login(udashEndpoint, udashAPIEndpoint, token string) error {
 	udashEndpoint = setDefaultHTTPSScheme(udashEndpoint)
 
 	if udashAPIEndpoint == "" {
-		udashAPIEndpoint = strings.TrimSuffix(udashEndpoint, "/") + "/api"
+		udashAPIEndpoint = strings.TrimSuffix(udashEndpoint, "/") + DefaultAPIPath
 	}
 	udashAPIEndpoint = setDefaultHTTPSScheme(udashAPIEndpoint)
 
