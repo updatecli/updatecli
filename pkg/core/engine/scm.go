@@ -9,6 +9,7 @@ import (
 
 	"github.com/mitchellh/hashstructure"
 	"github.com/updatecli/updatecli/pkg/core/log"
+	"github.com/updatecli/updatecli/pkg/core/pipeline"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
@@ -29,7 +30,7 @@ func (e *Engine) InitSCM() (err error) {
 			s := pipeline.SCMs[j]
 
 			if s.Handler != nil {
-				err = Clone(&s.Handler, channel, &hashes, &wg)
+				err = Clone(&s.Handler, channel, &hashes, &wg, e.failedSCMMap())
 				if err != nil {
 					return err
 				}
@@ -47,6 +48,7 @@ func Clone(
 	channel chan int,
 	hashes *[]uint64,
 	wg *sync.WaitGroup,
+	failed *sync.Map,
 ) error {
 	scmhandler := *s
 
@@ -71,11 +73,33 @@ func Clone(
 			_, err := s.Clone()
 			if err != nil {
 				log.Errorf("err - %s", err)
+				failed.Store(s.GetDirectory(), err)
 			}
 		}(scmhandler)
 		<-channel
 	}
 
+	return nil
+}
+
+// failedSCMMap returns the scm clone failures, creating the map on first use.
+func (e *Engine) failedSCMMap() *sync.Map {
+	if e.failedSCMs == nil {
+		e.failedSCMs = &sync.Map{}
+	}
+	return e.failedSCMs
+}
+
+// failedSCMError returns an error if the pipeline uses an scm that couldn't be cloned.
+func (e *Engine) failedSCMError(p *pipeline.Pipeline) error {
+	for id, s := range p.SCMs {
+		if s.Handler == nil {
+			continue
+		}
+		if err, ok := e.failedSCMMap().Load(s.Handler.GetDirectory()); ok {
+			return fmt.Errorf("scm %q failed to clone: %v", id, err)
+		}
+	}
 	return nil
 }
 
