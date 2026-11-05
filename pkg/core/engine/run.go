@@ -52,6 +52,7 @@ func (e *Engine) Run(ctx context.Context) (err error) {
 		err := e.failedSCMError(pipeline)
 		if err != nil {
 			pipeline.Report.Result = result.FAILURE
+			pipeline.Report.Err = err.Error()
 		} else {
 			err = pipeline.Run(ctx)
 		}

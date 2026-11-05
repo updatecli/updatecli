@@ -14,6 +14,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
 	"github.com/updatecli/updatecli/pkg/core/reports"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"go.opentelemetry.io/otel/trace/noop"
 )
 
 // mockPushScm implements the scm methods used while pushing pending git changes.
@@ -241,4 +242,22 @@ func TestRunActionsSkipsFailedClonePipeline(t *testing.T) {
 
 	require.NoError(t, e.runActions(context.Background()))
 	assert.Zero(t, handler.cleaned, "a pipeline whose scm failed to clone must not clean up or merge actions")
+}
+
+func TestRunReportsFailedClone(t *testing.T) {
+	failing := &pipeline.Pipeline{
+		Name: "failing",
+		SCMs: map[string]scm.Scm{
+			"broken": {Handler: &mockCloneScm{directory: "/tmp/broken", cloneErr: errors.New("authentication required")}},
+		},
+	}
+
+	e := Engine{Pipelines: []*pipeline.Pipeline{failing}}
+	e.Options.DisableUdashReport = true
+	e.SetTracer(noop.NewTracerProvider().Tracer("test"))
+	require.NoError(t, e.InitSCM())
+
+	require.Error(t, e.Run(context.Background()))
+	assert.Equal(t, result.FAILURE, failing.Report.Result)
+	assert.Equal(t, `scm "broken" failed to clone: authentication required`, failing.Report.Err)
 }
