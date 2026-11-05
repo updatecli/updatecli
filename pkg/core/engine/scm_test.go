@@ -1,14 +1,20 @@
 package engine
 
 import (
+	"context"
+	"errors"
+
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/pipeline"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/action"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
+	"github.com/updatecli/updatecli/pkg/core/reports"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"go.opentelemetry.io/otel/trace/noop"
 )
 
 // mockPushScm implements the scm methods used while pushing pending git changes.
@@ -173,4 +179,123 @@ func TestPruneSCMBranches(t *testing.T) {
 			assert.Equal(t, tt.expectedCleanWorkingBranchCounter, mockScm.cleanWorkingBranchCounter)
 		})
 	}
+}
+
+// mockCloneScm implements the scm methods used while cloning git repositories.
+type mockCloneScm struct {
+	scm.ScmHandler
+	directory string
+	cloneErr  error
+}
+
+func (m *mockCloneScm) GetDirectory() string {
+	return m.directory
+}
+
+func (m *mockCloneScm) Clone() (string, error) {
+	return m.directory, m.cloneErr
+}
+
+func TestInitSCMFailedClone(t *testing.T) {
+	failing := &pipeline.Pipeline{
+		Name: "failing",
+		SCMs: map[string]scm.Scm{
+			"broken": {Handler: &mockCloneScm{directory: "/tmp/broken", cloneErr: errors.New("authentication required")}},
+		},
+	}
+	working := &pipeline.Pipeline{
+		Name: "working",
+		SCMs: map[string]scm.Scm{
+			"default": {Handler: &mockCloneScm{directory: "/tmp/default"}},
+		},
+	}
+
+	e := Engine{Pipelines: []*pipeline.Pipeline{failing, working}}
+
+	require.NoError(t, e.InitSCM())
+
+	assert.EqualError(t, e.failedSCMError(failing), `scm "broken" failed to clone: authentication required`)
+	assert.NoError(t, e.failedSCMError(working))
+}
+
+type recordingActionHandler struct {
+	action.ActionHandler
+	cleaned int
+}
+
+func (h *recordingActionHandler) CleanAction(ctx context.Context, report *reports.Action) error {
+	h.cleaned++
+	return nil
+}
+
+func TestRunActionsSkipsFailedClonePipeline(t *testing.T) {
+	handler := &recordingActionHandler{}
+	failing := &pipeline.Pipeline{
+		Name:    "failing",
+		SCMs:    map[string]scm.Scm{"broken": {Handler: &mockCloneScm{directory: "/tmp/broken", cloneErr: errors.New("authentication required")}}},
+		Targets: map[string]target.Target{"t": {}},
+		Actions: map[string]action.Action{"pr": {Handler: handler}},
+	}
+
+	e := Engine{Pipelines: []*pipeline.Pipeline{failing}}
+	require.NoError(t, e.InitSCM())
+
+	require.NoError(t, e.runActions(context.Background()))
+	assert.Zero(t, handler.cleaned, "a pipeline whose scm failed to clone must not clean up or merge actions")
+}
+
+func TestRunReportsFailedClone(t *testing.T) {
+	failing := &pipeline.Pipeline{
+		Name: "failing",
+		SCMs: map[string]scm.Scm{
+			"broken": {Handler: &mockCloneScm{directory: "/tmp/broken", cloneErr: errors.New("authentication required")}},
+		},
+	}
+
+	e := Engine{Pipelines: []*pipeline.Pipeline{failing}}
+	e.Options.DisableUdashReport = true
+	e.SetTracer(noop.NewTracerProvider().Tracer("test"))
+	require.NoError(t, e.InitSCM())
+
+	require.Error(t, e.Run(context.Background()))
+	assert.Equal(t, result.FAILURE, failing.Report.Result)
+	assert.Equal(t, `scm "broken" failed to clone: authentication required`, failing.Report.Err)
+}
+
+// mockBranchScm is an scm whose url and branches identify a shared pull request.
+type mockBranchScm struct {
+	mockCloneScm
+}
+
+func (m *mockBranchScm) GetURL() string {
+	return "https://example.com/org/repo.git"
+}
+
+func (m *mockBranchScm) GetBranches() (string, string, string) {
+	return "main", "updatecli_main", "main"
+}
+
+func TestHandledCleanupKeysKeepsActionSharedWithFailedClonePipeline(t *testing.T) {
+	brokenSCM := scm.Scm{Handler: &mockBranchScm{mockCloneScm{directory: "/tmp/broken", cloneErr: errors.New("authentication required")}}}
+	healthySCM := scm.Scm{Handler: &mockBranchScm{mockCloneScm{directory: "/tmp/healthy"}}}
+
+	handler := &recordingActionHandler{}
+	failing := &pipeline.Pipeline{
+		Name:    "failing",
+		SCMs:    map[string]scm.Scm{"broken": brokenSCM},
+		Targets: map[string]target.Target{"t": {}},
+		Actions: map[string]action.Action{"pr": {Handler: handler, Scm: &brokenSCM, Config: action.Config{Kind: "github/pullrequest"}}},
+	}
+	healthy := &pipeline.Pipeline{
+		Name:    "healthy",
+		SCMs:    map[string]scm.Scm{"healthy": healthySCM},
+		Targets: map[string]target.Target{"t": {}},
+		Actions: map[string]action.Action{"pr": {Handler: handler, Scm: &healthySCM, Config: action.Config{Kind: "github/pullrequest"}}},
+	}
+
+	e := Engine{Pipelines: []*pipeline.Pipeline{failing, healthy}}
+	require.NoError(t, e.InitSCM())
+
+	require.NoError(t, healthy.RunCleanActions(context.Background(), e.handledCleanupKeys()))
+	assert.Zero(t, handler.cleaned, "a pull request shared with a pipeline whose scm failed to clone must not be cleaned up")
 }
