@@ -350,3 +350,69 @@ func TestPushSCMCommitsKeepsFailuresFromOtherCheckouts(t *testing.T) {
 	assert.Equal(t, result.SUCCESS, pushedResult.Result)
 	assert.Empty(t, pushedResult.Description)
 }
+
+// TestPushSCMCommitsRecoversLaterCheckouts checks that the branch publication
+// pass visits every checkout of a repository URL and working branch: if only
+// the first checkout were visited, a push error recorded by a later checkout
+// whose remote branch ends up up to date could never be cleared.
+func TestPushSCMCommitsRecoversLaterCheckouts(t *testing.T) {
+	refLockErr := errors.New("cannot lock ref 'refs/heads/updatecli_main': reference already exists")
+
+	// The first checkout has nothing to push, so it never records a failure.
+	idleScm := mockPushScm{
+		url:                  "https://github.com/updatecli/updatecli.git",
+		workingBranch:        "updatecli_main",
+		targetBranch:         "main",
+		directory:            "/checkouts/one",
+		remoteBranchUpToDate: true,
+	}
+	// The second checkout fails to push its target, but its remote branch
+	// already contains the local commits, so the failure must be cleared when
+	// that working copy is visited during the branch publication pass.
+	recoveredScm := mockPushScm{
+		url:                  "https://github.com/updatecli/updatecli.git",
+		workingBranch:        "updatecli_main",
+		targetBranch:         "main",
+		directory:            "/checkouts/two",
+		remoteBranchUpToDate: true,
+		pushErrors:           []error{refLockErr},
+	}
+
+	var idleHandler scm.ScmHandler = &idleScm
+	var recoveredHandler scm.ScmHandler = &recoveredScm
+
+	idleResult := &result.Target{Result: result.SUCCESS}
+	recoveredResult := &result.Target{Result: result.SUCCESS}
+
+	e := Engine{Pipelines: []*pipeline.Pipeline{
+		{
+			Name: "idle checkout",
+			Targets: map[string]target.Target{
+				"default": {
+					Scm:    &idleHandler,
+					Result: idleResult,
+				},
+			},
+		},
+		{
+			Name: "recovering checkout",
+			Targets: map[string]target.Target{
+				"default": {
+					Scm:    &recoveredHandler,
+					ToPush: true,
+					Result: recoveredResult,
+				},
+			},
+		},
+	}}
+
+	gotErr := e.pushSCMCommits()
+
+	require.NoError(t, gotErr)
+	// The failed push is recovered by the branch publication pass visiting the
+	// second checkout, so its target is restored to its previous result.
+	assert.Equal(t, result.SUCCESS, recoveredResult.Result)
+	assert.Empty(t, recoveredResult.Description)
+	assert.Equal(t, 1, recoveredScm.pushCounter)
+	assert.Equal(t, result.SUCCESS, idleResult.Result)
+}

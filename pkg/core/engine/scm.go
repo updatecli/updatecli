@@ -136,7 +136,11 @@ func (e *Engine) pushSCMCommits() error {
 
 	inconclusiveSCM := e.inconclusiveSCMBranches()
 
-	allScm := map[string]map[string]*scm.ScmHandler{}
+	// Handlers are kept per working copy (url, branch, directory): several
+	// SCM configurations may share a repository URL and a working branch from
+	// different checkouts, and each of them must be visited when publishing
+	// pending branches, otherwise only the first checkout would be recovered.
+	allScm := map[string]map[string]map[string]*scm.ScmHandler{}
 	log.Title("Pushing Git changes")
 
 	countScms := 0
@@ -161,18 +165,23 @@ func (e *Engine) pushSCMCommits() error {
 
 			url := scmHandler.GetURL()
 			_, branch, _ := scmHandler.GetBranches()
+			directory := scmHandler.GetDirectory()
 			pushKey := pushFailureKey{
 				url:       url,
 				branch:    branch,
-				directory: scmHandler.GetDirectory(),
+				directory: directory,
 			}
 
 			if _, ok := allScm[url]; !ok {
-				allScm[url] = map[string]*scm.ScmHandler{}
+				allScm[url] = map[string]map[string]*scm.ScmHandler{}
 			}
 
 			if _, ok := allScm[url][branch]; !ok {
-				allScm[url][branch] = &scmHandler
+				allScm[url][branch] = map[string]*scm.ScmHandler{}
+			}
+
+			if _, ok := allScm[url][branch][directory]; !ok {
+				allScm[url][branch][directory] = &scmHandler
 				countScms++
 			}
 
@@ -231,29 +240,31 @@ func (e *Engine) pushSCMCommits() error {
 
 	for url := range allScm {
 		for branch := range allScm[url] {
+			for directory := range allScm[url][branch] {
 
-			scmHandlerPtr := allScm[url][branch]
-			if scmHandlerPtr == nil {
-				continue
-			}
+				scmHandlerPtr := allScm[url][branch][directory]
+				if scmHandlerPtr == nil {
+					continue
+				}
 
-			stopCapture := e.captureSCMConsoleOutput(url, branch)
-			branchInconclusive := slices.Contains(inconclusiveSCM[url], branch)
-			pushKey := pushFailureKey{
-				url:       url,
-				branch:    branch,
-				directory: (*scmHandlerPtr).GetDirectory(),
+				stopCapture := e.captureSCMConsoleOutput(url, branch)
+				branchInconclusive := slices.Contains(inconclusiveSCM[url], branch)
+				pushKey := pushFailureKey{
+					url:       url,
+					branch:    branch,
+					directory: directory,
+				}
+				if err := pushSCMBranch(*scmHandlerPtr, url, branch, branchInconclusive); err != nil {
+					log.Errorf("%s", err)
+					errs = append(errs, err.Error())
+				} else if !branchInconclusive {
+					// The working branch has just been pushed, or the remote branch
+					// already contains the local commits, so earlier push errors for
+					// that working copy are no longer relevant.
+					clearPushFailure(pushKey)
+				}
+				stopCapture()
 			}
-			if err := pushSCMBranch(*scmHandlerPtr, url, branch, branchInconclusive); err != nil {
-				log.Errorf("%s", err)
-				errs = append(errs, err.Error())
-			} else if !branchInconclusive {
-				// The working branch has just been pushed, or the remote branch
-				// already contains the local commits, so earlier push errors for
-				// that working copy are no longer relevant.
-				clearPushFailure(pushKey)
-			}
-			stopCapture()
 		}
 	}
 
