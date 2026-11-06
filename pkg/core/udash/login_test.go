@@ -19,18 +19,27 @@ func clearUdashEnv(t *testing.T) {
 	t.Setenv(DefaultEnvVariableAccessToken, "")
 }
 
-// whoamiServer serves GET /whoami, recording the token it was called with.
+// whoamiServer serves a Udash API at the server root: GET /whoami answers with the
+// given status and body, recording the token it was called with, and GET
+// /pipeline/scms answers the API base probe.
 func whoamiServer(t *testing.T, status int, body string) (*httptest.Server, *string) {
 	t.Helper()
 
 	seen := new(string)
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		assert.Equal(t, "/whoami", r.URL.Path)
-		*seen = r.Header.Get("Authorization")
+		switch r.URL.Path {
+		case "/pipeline/scms":
+			_, _ = w.Write([]byte(`{"scms":[]}`))
+		case "/whoami":
+			*seen = r.Header.Get("Authorization")
 
-		w.WriteHeader(status)
-		if body != "" {
-			_, _ = w.Write([]byte(body))
+			w.WriteHeader(status)
+			if body != "" {
+				_, _ = w.Write([]byte(body))
+			}
+		default:
+			t.Errorf("unexpected request to %s", r.URL.Path)
+			w.WriteHeader(http.StatusNotFound)
 		}
 	}))
 	t.Cleanup(server.Close)
@@ -71,12 +80,55 @@ func TestLoginRejectedTokenIsNotPersisted(t *testing.T) {
 	assert.Empty(t, token)
 }
 
-func TestLoginAcceptsServiceWithoutWhoami(t *testing.T) {
+func TestLoginWithTokenAgainstServiceWithoutAuthentication(t *testing.T) {
 	useTempConfigDir(t)
 	clearUdashEnv(t)
 
-	// An older Udash has no /whoami endpoint.
+	// /whoami only exists when a mode is configured, so the token has no use there.
 	server, _ := whoamiServer(t, http.StatusNotFound, "")
+
+	require.NoError(t, Login(server.URL, server.URL, "udash_pat_valid"))
+
+	_, api, token, err := getConfigFromFile("")
+	require.NoError(t, err)
+	assert.Equal(t, server.URL, api)
+	assert.Empty(t, token, "a token is not stored for a service without authentication")
+}
+
+func TestLoginRejectsWrongAPIBase(t *testing.T) {
+	// The unversioned base answers 404 on every route, which must not pass for a
+	// service without authentication.
+	for _, token := range []string{"", "udash_pat_valid"} {
+		t.Run("token "+token, func(t *testing.T) {
+			useTempConfigDir(t)
+			clearUdashEnv(t)
+
+			server := httptest.NewServer(http.NotFoundHandler())
+			t.Cleanup(server.Close)
+
+			err := Login(server.URL, server.URL+"/api", token)
+			require.ErrorIs(t, err, ErrAPINotFound)
+			assert.ErrorContains(t, err, DefaultAPIPath)
+
+			_, _, _, err = getConfigFromFile("")
+			require.Error(t, err, "nothing must be stored for a wrong API base")
+		})
+	}
+}
+
+func TestLoginProbeAcceptsPrivateService(t *testing.T) {
+	useTempConfigDir(t)
+	clearUdashEnv(t)
+
+	// A private service refuses the anonymous probe: the API is still there.
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/whoami" && r.Header.Get("Authorization") == "Bearer udash_pat_valid" {
+			_, _ = w.Write([]byte(`{"subject":"user-1"}`))
+			return
+		}
+		w.WriteHeader(http.StatusUnauthorized)
+	}))
+	t.Cleanup(server.Close)
 
 	require.NoError(t, Login(server.URL, server.URL, "udash_pat_valid"))
 
@@ -115,16 +167,10 @@ func TestLoginAgainstServiceWithoutAuthentication(t *testing.T) {
 	// /whoami only exists when a mode is configured, so a 404 means the service is
 	// open. This is the default deployment and must be registrable with no token
 	// and no prompt.
-	calls := 0
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		calls++
-		assert.Empty(t, r.Header.Get("Authorization"))
-		w.WriteHeader(http.StatusNotFound)
-	}))
-	t.Cleanup(server.Close)
+	server, seen := whoamiServer(t, http.StatusNotFound, "")
 
 	require.NoError(t, Login(server.URL, server.URL, ""))
-	assert.Positive(t, calls)
+	assert.Empty(t, *seen)
 
 	url, api, token, err := getConfigFromFile("")
 	require.NoError(t, err)
@@ -144,16 +190,17 @@ func TestLoginDefaultsAPIEndpoint(t *testing.T) {
 	useTempConfigDir(t)
 	clearUdashEnv(t)
 
-	var path string
+	var paths []string
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		path = r.URL.Path
+		paths = append(paths, r.URL.Path)
 		_, _ = w.Write([]byte(`{"subject":"user-1"}`))
 	}))
 	t.Cleanup(server.Close)
 
 	require.NoError(t, Login(server.URL, "", "udash_pat_valid"))
 
-	assert.Equal(t, "/api/v1beta1/whoami", path, "the API endpoint defaults to <url>/api/v1beta1")
+	assert.Equal(t, []string{"/api/v1beta1/pipeline/scms", "/api/v1beta1/whoami"}, paths,
+		"the API endpoint defaults to <url>/api/v1beta1")
 }
 
 func TestLoginTokenFromEnv(t *testing.T) {

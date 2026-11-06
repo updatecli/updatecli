@@ -1,6 +1,7 @@
 package udash
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -51,6 +52,12 @@ func Login(udashEndpoint, udashAPIEndpoint, token string) error {
 	}
 	udashAPIEndpoint = setDefaultHTTPSScheme(udashAPIEndpoint)
 
+	// Without it, a wrong base answering 404 everywhere would pass for a service
+	// without authentication, and every publish would fail later on.
+	if err := checkAPIBase(udashAPIEndpoint); err != nil {
+		return fmt.Errorf("reaching %s: %w", udashAPIEndpoint, err)
+	}
+
 	if token == "" {
 		// A service running without authentication has no token to ask for, and
 		// that is the default deployment.
@@ -75,7 +82,14 @@ func Login(udashEndpoint, udashAPIEndpoint, token string) error {
 
 	// Fail here rather than silently later on, when a pipeline tries to publish.
 	identity, err := whoami(udashAPIEndpoint, token)
-	if err != nil {
+	switch {
+	case errors.Is(err, errNoAuthentication):
+		if token != "" {
+			log.Infof("%s does not require authentication, the token is not stored", udashEndpoint)
+			token = ""
+		}
+		identity = &whoamiResponse{}
+	case err != nil:
 		return fmt.Errorf("validating token: %w", err)
 	}
 

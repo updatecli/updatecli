@@ -12,7 +12,7 @@ func TestLogoutRemovesTheOnlyCredential(t *testing.T) {
 
 	require.NoError(t, updateConfigFile(authData{
 		URL:   "https://app.updatecli.io",
-		API:   "https://app.updatecli.io/api",
+		API:   "https://app.updatecli.io/api/v1beta1",
 		Token: "udash_pat_only",
 	}))
 
@@ -32,12 +32,12 @@ func TestLogoutKeepsOtherCredentials(t *testing.T) {
 
 	require.NoError(t, updateConfigFile(authData{
 		URL:   "https://app.updatecli.io",
-		API:   "https://app.updatecli.io/api",
+		API:   "https://app.updatecli.io/api/v1beta1",
 		Token: "udash_pat_first",
 	}))
 	require.NoError(t, updateConfigFile(authData{
 		URL:   "https://udash.example.com",
-		API:   "https://udash.example.com/api",
+		API:   "https://udash.example.com/api/v1beta1",
 		Token: "udash_pat_second",
 	}))
 
@@ -47,8 +47,8 @@ func TestLogoutKeepsOtherCredentials(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Len(t, got.Auths, 1)
-	assert.Equal(t, "udash_pat_first", got.Auths["app.updatecli.io/api"].Token)
-	assert.Equal(t, "app.updatecli.io/api", got.Default, "a remaining credential becomes the default")
+	assert.Equal(t, "udash_pat_first", got.Auths["app.updatecli.io/api/v1beta1"].Token)
+	assert.Equal(t, "app.updatecli.io/api/v1beta1", got.Default, "a remaining credential becomes the default")
 }
 
 func TestLogoutByAPIURL(t *testing.T) {
@@ -56,11 +56,11 @@ func TestLogoutByAPIURL(t *testing.T) {
 
 	require.NoError(t, updateConfigFile(authData{
 		URL:   "https://app.updatecli.io",
-		API:   "https://app.updatecli.io/api",
+		API:   "https://app.updatecli.io/api/v1beta1",
 		Token: "udash_pat_only",
 	}))
 
-	require.NoError(t, Logout("https://app.updatecli.io/api"))
+	require.NoError(t, Logout("https://app.updatecli.io/api/v1beta1"))
 
 	got, err := readConfigFile()
 	require.NoError(t, err)
