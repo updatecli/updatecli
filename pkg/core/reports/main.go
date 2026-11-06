@@ -1,87 +1,22 @@
 package reports
 
 import (
-	"bytes"
 	"slices"
 	"sort"
-	"strings"
-	"text/template"
 
 	"github.com/updatecli/updatecli/pkg/core/log"
 
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-const reportsTpl string = `{{ range . }}
-{{ if .Err }}
-{{- .Result }} {{ .Name -}}:{{"\n"}}
-{{- .PipelineID }}{{"\n"}}
-{{ "\t"}}Error: {{ .Err}}
-{{ else }}
-{{- .Result }} {{ .Name -}}:{{"\n"}}
-{{- if .Sources -}}
-{{- "\t"}}Source:
-{{ range $ID,$source := .Sources }}
-{{- "\t" }}{{"\t"}}{{- $source.Result }} [{{ $ID }}] {{ $source.Name }}{{"\n"}}
-
-{{- if $source.Scm.URL -}}
-{{- "\t" }}{{"\t"}}      * Repository: {{ $source.Scm.URL }} (branch: {{ $source.Scm.Branch.Target }}){{"\n"}}
-{{- end -}}
-
-{{- end -}}
-{{- end -}}
-
-{{- if .Conditions -}}
-{{- "\t" }}Condition:
-{{ range $ID, $condition := .Conditions }}
-{{- "\t" }}{{"\t"}}{{- $condition.Result }} [{{ $ID }}] {{ $condition.Name }}{{"\n"}}
-
-{{- if $condition.Scm.URL -}}
-{{- "\t" }}{{"\t"}}      * Repository: {{ $condition.Scm.URL }} (branch: {{ $condition.Scm.Branch.Target }}){{"\n"}}
-{{- end -}}
-
-{{- end -}}
-{{- end -}}
-{{- if .Targets -}}
-{{- "\t" -}}Target:
-{{ range $ID, $target := .Targets }}
-{{- "\t" }}{{"\t"}}{{- $target.Result }} [{{ $ID }}] {{ $target.Name }}{{"\n"}}
-
-{{- if $target.Scm.URL -}}
-{{- "\t" }}{{"\t"}}      * Repository: {{ $target.Scm.URL }} (branch: {{ $target.Scm.Branch.Target }}){{"\n"}}
-{{- end -}}
-
-{{- end }}
-{{ end }}
-{{- if .ReportURL }}
-{{- "\t"}}=> Report available on {{ .ReportURL -}}{{"\n"}}
-{{- end -}}
-{{- end -}}
-{{ end }}
-`
-
 // Reports contains a list of report
 type Reports []Report
 
-// Show return a small reports of what has been changed
+// Show logs a short summary of every pipeline report
 func (r *Reports) Show() error {
-	t := template.Must(template.New("reports").Parse(reportsTpl))
-
-	reports := ""
-
-	buffer := new(bytes.Buffer)
-
-	err := t.Execute(buffer, r)
-
-	reports = buffer.String()
-
-	if err != nil {
-		return err
-	}
-
 	log.Title("Summary")
 	// Banners own the spacing around the summary
-	log.Infof("%s", strings.Trim(reports, "\n")+"\n")
+	log.Infof("%s", r.render()+"\n")
 
 	return nil
 }

@@ -7,72 +7,10 @@ import (
 	"slices"
 	"strings"
 
-	"bytes"
-	"text/template"
-
 	"encoding/json"
-
-	"github.com/updatecli/updatecli/pkg/core/log"
 
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/ci"
-)
-
-const (
-	// CONDITIONREPORTTEMPLATE defines
-	CONDITIONREPORTTEMPLATE string = `
-{{- "\t" }}Condition:
-{{ range $ID, $condition := .Conditions }}
-{{- "\t" }}{{"\t"}}{{- $condition.Result }} [{{ $ID }}] {{ $condition.Name -}}({{- $condition.Kind -}}){{"\n"}}
-{{- end -}}
-`
-	// TARGETREPORTTEMPLATE ...
-	TARGETREPORTTEMPLATE string = `
-{{- "\t" -}}Target:
-{{ range $ID, $target := .Targets }}
-{{- "\t" }}{{"\t"}}{{- $target.Result }} [{{ $ID }}] {{ $target.Name -}}({{- $target.Kind -}}){{"\n"}}
-{{- end }}
-`
-	// SOURCEREPORTTEMPLATE ...
-	SOURCEREPORTTEMPLATE string = `
-{{- "\t"}}Source:
-{{ range $ID,$source := .Sources }}
-{{- "\t" }}{{"\t"}}{{- $source.Result }} [{{ $ID }}] {{ $source.Name -}}({{- $source.Kind -}}){{"\n"}}
-{{- end }}
-`
-
-	// REPORTTEMPLATE ...
-	REPORTTEMPLATE string = `
-=============================
-
-REPORTS:
-
-{{ if .Err }}
-{{- .Result }} {{ .Name -}}{{"\n"}}
-{{ "\t"}}Error: {{ .Err}}
-{{ else }}
-{{- .Result }} {{ .Name -}}{{"\n"}}
-{{- if .ReportURL }}
-Report available on {{ .ReportURL -}}{{"\n"}}
-{{- end }}
-{{- "\t"}}Source:
-{{ range $ID, $source := .Sources }}
-{{- "\t" }}{{"\t"}}{{- $source.Result }} [{{ $ID }}] {{ $source.Name }} (kind: {{ $source.Kind -}}){{"\n"}}
-{{- end }}
-
-{{- if .Conditions -}}
-{{- "\t" }}Condition:
-{{ range $ID, $condition := .Conditions }}
-{{- "\t" }}{{"\t"}}{{- $condition.Result }} [{{ $ID }}] {{ $condition.Name }} (kind: {{ $condition.Kind -}}){{"\n"}}
-{{- end -}}
-{{- end -}}
-
-{{- "\t" -}}Target:
-{{ range $ID,$target := .Targets }}
-{{- "\t" }}{{"\t"}}{{- $target.Result }} [{{ $ID}}] {{ $target.Name -}} (kind: {{ $target.Kind -}}){{"\n"}}
-{{- end }}
-{{ end }}
-`
 )
 
 // CIData contains information about the CI pipeline where the report is generated
@@ -105,36 +43,6 @@ type Report struct {
 	UpdatecliVersion string
 	// stableID holds the report ID frozen by FreezeID, before the configuration was rendered
 	stableID string
-}
-
-// String returns a report as a string
-func (r *Report) String(mode string) (report string, err error) {
-	t := &template.Template{}
-
-	switch mode {
-	case "conditions":
-		t = template.Must(template.New("reports").Parse(CONDITIONREPORTTEMPLATE))
-	case "sources":
-		t = template.Must(template.New("reports").Parse(SOURCEREPORTTEMPLATE))
-	case "targets":
-		t = template.Must(template.New("reports").Parse(TARGETREPORTTEMPLATE))
-	case "all":
-		t = template.Must(template.New("reports").Parse(REPORTTEMPLATE))
-	default:
-		log.Infof("Wrong report template provided")
-	}
-
-	buffer := new(bytes.Buffer)
-
-	err = t.Execute(buffer, r)
-
-	if err != nil {
-		return "", err
-	}
-
-	report = buffer.String()
-
-	return report, nil
 }
 
 // UpdateCIJob updates the report with CI job information if available
