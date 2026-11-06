@@ -1,11 +1,18 @@
 package engine
 
 import (
+	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/engine/manifest"
+	"github.com/updatecli/updatecli/pkg/plugins/scms/gitlab"
 )
 
 func TestLoadConfigurations(t *testing.T) {
@@ -123,6 +130,92 @@ func TestLoadConfigurations(t *testing.T) {
 				require.ErrorContains(t, gotErr, tt.expectedError)
 			} else {
 				require.NoError(t, gotErr)
+			}
+		})
+	}
+}
+
+func TestLoadConfigurationsSearch(t *testing.T) {
+	for _, tt := range []struct {
+		name  string
+		empty bool
+	}{
+		{name: "Two searches"},
+		{name: "No matching repositories", empty: true},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				switch {
+				case r.URL.Path == "/api/v4/groups/first/projects":
+					if tt.empty {
+						_, _ = w.Write([]byte(`[]`))
+					} else {
+						_, _ = w.Write([]byte(`[{"path_with_namespace":"first/one"},{"path_with_namespace":"first/two"}]`))
+					}
+				case r.URL.Path == "/api/v4/groups/second/projects":
+					_, _ = w.Write([]byte(`[{"path_with_namespace":"second/three"},{"path_with_namespace":"second/four"},{"path_with_namespace":"second/five"}]`))
+				case strings.HasSuffix(r.URL.Path, "/repository/branches"):
+					_, _ = w.Write([]byte(`[{"name":"main"}]`))
+				default:
+					t.Errorf("unexpected request: %s", r.URL)
+					w.WriteHeader(http.StatusNotFound)
+				}
+			}))
+			defer server.Close()
+
+			filename := filepath.Join(t.TempDir(), "updatecli.yaml")
+			require.NoError(t, os.WriteFile(filename, []byte(fmt.Sprintf(`name: Search expansion
+options:
+  relativepaths: manifest
+scms:
+  first:
+    kind: gitlabsearch
+    spec:
+      url: %s
+      group: first
+      directory: checkouts/first
+  second:
+    kind: gitlabsearch
+    spec:
+      url: %s
+      group: second
+      directory: checkouts/second
+`, server.URL, server.URL)), 0600))
+			e := Engine{Options: Options{Manifests: []manifest.Manifest{{Manifests: []string{filename}}}}}
+			err := e.LoadConfigurations()
+			if tt.empty {
+				require.EqualError(t, err, `no scm discovered for gitlabsearch scm "first"`)
+				assert.Empty(t, e.Pipelines)
+				return
+			}
+			require.NoError(t, err)
+			require.Len(t, e.Pipelines, 6)
+			require.Len(t, e.configurations, 6)
+			var pairs []string
+			for _, p := range e.Pipelines {
+				first := p.SCMs["first"].Handler.(*gitlab.Gitlab)
+				second := p.SCMs["second"].Handler.(*gitlab.Gitlab)
+				pairs = append(pairs, first.Spec.Repository+"/"+second.Spec.Repository)
+				assert.Equal(t, "main", first.Spec.Branch)
+				assert.Equal(t, "main", second.Spec.Branch)
+				assert.Equal(t, filepath.Join(filepath.Dir(filename), "checkouts", "first"), first.GetDirectory())
+				assert.Equal(t, filepath.Join(filepath.Dir(filename), "checkouts", "second"), second.GetDirectory())
+			}
+			assert.ElementsMatch(t, []string{
+				"one/three", "one/four", "one/five",
+				"two/three", "two/four", "two/five",
+			}, pairs)
+			for i, c := range e.configurations {
+				assert.Equal(t, filepath.Dir(filename), c.BaseDir())
+				assert.NotEmpty(t, c.ManifestID())
+				assert.Equal(t, e.configurations[0].ManifestID(), c.ManifestID())
+				scmConfig := c.Spec.SCMs["first"]
+				scmConfig.Kind = fmt.Sprintf("copy-%d", i)
+				c.Spec.SCMs["first"] = scmConfig
+			}
+			for i, c := range e.configurations {
+				assert.Equal(t, fmt.Sprintf("copy-%d", i), c.Spec.SCMs["first"].Kind)
 			}
 		})
 	}
