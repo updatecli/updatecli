@@ -176,7 +176,7 @@ type Spec struct {
 	//   true
 	//
 	// remark:
-	//   * digest pinning is supported for GitHub actions and Docker images, not yet for Gitea and Forgejo actions.
+	//   * digest pinning is supported for GitHub, Gitea and Forgejo actions, and Docker images.
 	//   * when false, actions referenced by "main", "master" or "latest" are skipped.
 	//
 	Digest *bool `yaml:",omitempty"`
