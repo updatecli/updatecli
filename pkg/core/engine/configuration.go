@@ -268,7 +268,15 @@ func expandSCMConfigurations[T any](configurations []config.Config, index int, s
 
 	for i, spec := range specs {
 		newPipeline := configuration
+		// Config.Update renders into these maps, so each pipeline needs its own.
 		newPipeline.Spec.SCMs = maps.Clone(configuration.Spec.SCMs)
+		newPipeline.Spec.Sources = maps.Clone(configuration.Spec.Sources)
+		newPipeline.Spec.Conditions = maps.Clone(configuration.Spec.Conditions)
+		newPipeline.Spec.Targets = maps.Clone(configuration.Spec.Targets)
+		newPipeline.Spec.Actions = maps.Clone(configuration.Spec.Actions)
+		newPipeline.Spec.PullRequests = maps.Clone(configuration.Spec.PullRequests)
+		newPipeline.Spec.Labels = maps.Clone(configuration.Spec.Labels)
+		newPipeline.Spec.AutoDiscovery.Crawlers = maps.Clone(configuration.Spec.AutoDiscovery.Crawlers)
 		newSCM := newPipeline.Spec.SCMs[scmID]
 		newSCM.Kind = kind
 		newSCM.Spec = spec

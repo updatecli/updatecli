@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/engine/manifest"
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/gitlab"
 )
 
@@ -181,6 +182,18 @@ scms:
       url: %s
       group: second
       directory: checkouts/second
+sources:
+  version:
+    kind: shell
+    spec:
+      command: echo unused
+targets:
+  version:
+    kind: file
+    sourceid: version
+    spec:
+      file: version.txt
+      content: '{{ source "version" }}'
 `, server.URL, server.URL)), 0600))
 			e := Engine{Options: Options{Manifests: []manifest.Manifest{{Manifests: []string{filename}}}}}
 			err := e.LoadConfigurations()
@@ -196,11 +209,19 @@ scms:
 			for _, p := range e.Pipelines {
 				first := p.SCMs["first"].Handler.(*gitlab.Gitlab)
 				second := p.SCMs["second"].Handler.(*gitlab.Gitlab)
-				pairs = append(pairs, first.Spec.Repository+"/"+second.Spec.Repository)
+				pair := first.Spec.Repository + "/" + second.Spec.Repository
+				pairs = append(pairs, pair)
 				assert.Equal(t, "main", first.Spec.Branch)
 				assert.Equal(t, "main", second.Spec.Branch)
 				assert.Equal(t, filepath.Join(filepath.Dir(filename), "checkouts", "first"), first.GetDirectory())
 				assert.Equal(t, filepath.Join(filepath.Dir(filename), "checkouts", "second"), second.GetDirectory())
+
+				version := p.Sources["version"]
+				version.Output = pair
+				version.Result.Result = result.SUCCESS
+				p.Sources["version"] = version
+				require.NoError(t, p.Update())
+				assert.Equal(t, map[string]any{"file": "version.txt", "content": pair}, p.Targets["version"].Config.Spec)
 			}
 			assert.ElementsMatch(t, []string{
 				"one/three", "one/four", "one/five",
