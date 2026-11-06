@@ -3,6 +3,7 @@ package udash
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -18,6 +19,9 @@ import (
 var (
 	// ErrNoUdashAPIURL is returned if we couldn't find an Updatecli report API
 	ErrNoUdashAPIURL error = fmt.Errorf("no Updatecli API defined")
+	// ErrAPINotFound is returned when no Udash API is served at the configured API URL,
+	// typically because it predates the versioned API
+	ErrAPINotFound error = errors.New("udash API not found")
 )
 
 // Publish publish a pipeline report to the updatecli api
@@ -95,7 +99,7 @@ func Publish(r *reports.Report) error {
 
 	if res.StatusCode >= 400 {
 		log.Debugf("response from %s:\n%s", u.String(), string(data))
-		return responseError(res.Status, res.StatusCode, data, envUdashURLString)
+		return responseError(res.Status, res.StatusCode, data, envUdashURLString, envUdashApiURLString)
 	}
 
 	d := struct {
@@ -119,7 +123,7 @@ func Publish(r *reports.Report) error {
 const maxErrorBodyLength = 512
 
 // responseError builds the error returned when Udash refuses a report.
-func responseError(status string, statusCode int, body []byte, udashURL string) error {
+func responseError(status string, statusCode int, body []byte, udashURL, apiURL string) error {
 	msg := strings.TrimSpace(string(body))
 	if len(msg) > maxErrorBodyLength {
 		msg = msg[:maxErrorBodyLength] + "..."
@@ -130,12 +134,19 @@ func responseError(status string, statusCode int, body []byte, udashURL string) 
 		err = fmt.Errorf("udash responded %s: %s", status, msg)
 	}
 
-	if statusCode == http.StatusUnauthorized || statusCode == http.StatusForbidden {
-		loginURL := udashURL
-		if loginURL == "" {
-			loginURL = "<url>"
-		}
+	loginURL := udashURL
+	if loginURL == "" {
+		loginURL = "<url>"
+	}
+
+	switch statusCode {
+	case http.StatusUnauthorized, http.StatusForbidden:
 		return fmt.Errorf("%w, run `updatecli udash login %s` to store a valid token", err, loginURL)
+	case http.StatusNotFound:
+		// Publishing only ever creates a report, so a 404 means the API is not served
+		// at that base, typically an API URL stored before Udash versioned its API.
+		return fmt.Errorf("%w: %w at %s, Udash serves it under <url>%s, run `updatecli udash login %s` again or set %s",
+			err, ErrAPINotFound, apiURL, DefaultAPIPath, loginURL, DefaultEnvVariableAPIURL)
 	}
 
 	return err
