@@ -1,10 +1,14 @@
 package cmd
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/spf13/cobra"
+
+	"github.com/updatecli/updatecli/pkg/core/engine/manifest"
 )
 
 func TestDisableVersionCheckFlagRegistration(t *testing.T) {
@@ -128,5 +132,39 @@ func TestSkipVersionCheckCommandsContainsExpectedCommands(t *testing.T) {
 		if !found {
 			t.Errorf("skipVersionCheckCommands missing %q", name)
 		}
+	}
+}
+
+func TestRunPrepareReturnsError(t *testing.T) {
+	invalidManifest := filepath.Join(t.TempDir(), "invalid.yaml")
+	if err := os.WriteFile(invalidManifest, []byte("sources: [\n"), 0o600); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	tests := []struct {
+		name    string
+		command string
+	}{
+		{
+			name:    "deprecated_prepare",
+			command: "prepare",
+		},
+		{
+			name:    "pipeline_prepare",
+			command: "pipeline/prepare",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			saved := e
+			t.Cleanup(func() { e = saved })
+
+			e.Options.Manifests = []manifest.Manifest{{Manifests: []string{invalidManifest}}}
+
+			if err := run(tt.command); err == nil {
+				t.Fatal("expected run to return the prepare error, got nil")
+			}
+		})
 	}
 }
