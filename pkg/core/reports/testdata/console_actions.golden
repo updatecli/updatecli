@@ -1,0 +1,9 @@
+⚠ Bump golang:
+	Target:
+		⚠ [gomod] Update go.mod
+		      * Repository: https://github.com/updatecli/updatecli.git (branch: updatecli_main_abc)
+	Action:
+		[default] deps: bump golang to 1.27
+		      * Link: https://github.com/updatecli/updatecli/pull/123
+		[dryrun] Bump golang
+		      * Not published (dry run)
