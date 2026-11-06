@@ -26,6 +26,7 @@ func TestSearchWorkflowFiles(t *testing.T) {
 		"testdata/docker/.github/workflows/docker-01.yaml",
 		"testdata/docker/.github/workflows/docker-02.yaml",
 		"testdata/duplicate_steps/.github/workflows/updatecli.yaml",
+		"testdata/forgejo/.forgejo/workflows/updatecli.yaml",
 		"testdata/gitea/.gitea/workflows/updatecli.yaml",
 		"testdata/updatecli/.github/workflows/updatecli.yaml",
 	}

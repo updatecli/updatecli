@@ -228,6 +228,7 @@ func run(command string) error {
 		err := e.Prepare(ctx)
 		if err != nil {
 			log.Errorf("%s %s", result.FAILURE, err)
+			return err
 		}
 
 	case "manifest/init":
