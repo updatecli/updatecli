@@ -45,6 +45,11 @@ func (g GitHubSearch) ScmsGenerator(ctx context.Context) (results []github.Spec,
 
 	results = make([]github.Spec, 0)
 
+	re, err := regexp.Compile(g.branch)
+	if err != nil {
+		return nil, fmt.Errorf("invalid branch regex %q: %w", g.branch, err)
+	}
+
 	repositories, err := g.cachedQuery("search\x00"+g.search, func() ([]string, error) {
 		return github.SearchRepositories(g.client, g.search, 0, ctx)
 	})
@@ -63,10 +68,12 @@ func (g GitHubSearch) ScmsGenerator(ctx context.Context) (results []github.Spec,
 		branches, err := g.cachedQuery("branches\x00"+repo, func() ([]string, error) {
 			return github.ListBranches(g.client, repositoryParts[0], repositoryParts[1], 0, ctx)
 		})
+		if err != nil {
+			return nil, fmt.Errorf("failed generating GitHub scm: %w", err)
+		}
 
 		for _, b := range branches {
 
-			re := regexp.MustCompile(g.branch)
 			if !re.MatchString(b) {
 				continue
 			}
@@ -97,10 +104,6 @@ func (g GitHubSearch) ScmsGenerator(ctx context.Context) (results []github.Spec,
 			if g.limit > 0 && len(results) >= g.limit {
 				return results, nil
 			}
-		}
-
-		if err != nil {
-			return nil, fmt.Errorf("failed generating GitHub scm: %w", err)
 		}
 	}
 

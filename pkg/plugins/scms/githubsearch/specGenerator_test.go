@@ -42,6 +42,16 @@ func (m *mockClient) Mutate(ctx context.Context, mutation interface{}, input git
 }
 
 func TestScmsGeneratorDiscoversOnce(t *testing.T) {
+	queryResultsLock.Lock()
+	previousResults := queryResults
+	queryResults = map[string][]string{}
+	queryResultsLock.Unlock()
+	t.Cleanup(func() {
+		queryResultsLock.Lock()
+		queryResults = previousResults
+		queryResultsLock.Unlock()
+	})
+
 	client := &mockClient{repositories: []string{"updatecli/updatecli", "updatecli/website"}}
 
 	newSearch := func(search string) GitHubSearch {
@@ -73,4 +83,16 @@ func TestScmsGeneratorDiscoversOnce(t *testing.T) {
 	_, err := newSearch("org:updatecli archived:false").ScmsGenerator(context.Background())
 	require.NoError(t, err)
 	assert.Equal(t, 4, client.queries, "another search should only rerun the search, not the branch listings")
+}
+
+func TestScmsGeneratorInvalidBranch(t *testing.T) {
+	client := &mockClient{repositories: []string{"updatecli/updatecli"}}
+	search := GitHubSearch{
+		branch: "[",
+		client: client,
+	}
+
+	_, err := search.ScmsGenerator(context.Background())
+	require.ErrorContains(t, err, `invalid branch regex "["`)
+	assert.Zero(t, client.queries)
 }
