@@ -64,6 +64,21 @@ func TestRender(t *testing.T) {
 			},
 		},
 		{
+			name: "actions_escaped",
+			reports: Reports{
+				{
+					Name:   "Escaped action",
+					Result: result.ATTENTION,
+					Actions: map[string]*Action{
+						"default": {
+							Title: "deps: bump\n\tSUCCESS fake line \x1b[31mred\x1b[0m é",
+							Link:  "https://example.com/pull/1\r\n\u202e",
+						},
+					},
+				},
+			},
+		},
+		{
 			name: "actions",
 			reports: Reports{
 				{

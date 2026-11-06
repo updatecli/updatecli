@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"maps"
 	"slices"
+	"strconv"
 	"strings"
+	"unicode"
 
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
@@ -102,13 +104,28 @@ func writeActions(b *strings.Builder, actions map[string]*Action) {
 		if title == "" {
 			title = action.PipelineTitle
 		}
-		fmt.Fprintf(b, "\t\t[%s] %s\n", id, title)
+		fmt.Fprintf(b, "\t\t[%s] %s\n", id, escapeConsole(title))
 
 		switch {
 		case action.Link != "":
-			fmt.Fprintf(b, "\t\t      * Link: %s\n", action.Link)
+			fmt.Fprintf(b, "\t\t      * Link: %s\n", escapeConsole(action.Link))
 		case action.DryRun:
 			fmt.Fprintf(b, "\t\t      * Not published (dry run)\n")
 		}
 	}
+}
+
+// escapeConsole keeps printable text as is and escapes any other character,
+// such as a new line or a terminal control sequence, the way Go quotes it
+func escapeConsole(s string) string {
+	b := &strings.Builder{}
+	for _, r := range s {
+		if unicode.IsPrint(r) {
+			b.WriteRune(r)
+			continue
+		}
+		quoted := strconv.QuoteRune(r)
+		b.WriteString(quoted[1 : len(quoted)-1])
+	}
+	return b.String()
 }
