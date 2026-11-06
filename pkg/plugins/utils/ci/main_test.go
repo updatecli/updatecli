@@ -72,7 +72,7 @@ func TestGiteaActionsURL(t *testing.T) {
 	t.Setenv("GITHUB_REPOSITORY", "updatecli/updatecli")
 	t.Setenv("GITHUB_RUN_NUMBER", "42")
 
-	assert.Equal(t, "https://gitea.example.com/updatecli/updatecli/actions/runs/42", GiteaActions{}.URL())
+	assert.Equal(t, "https://gitea.example.com/updatecli/updatecli/actions/runs/42?by_index=1", GiteaActions{}.URL())
 }
 
 func TestIsDebug(t *testing.T) {
