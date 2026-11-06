@@ -45,10 +45,10 @@ func (gr GitHubRelease) Condition(ctx context.Context, source string, scm scm.Sc
 				return false, "", fmt.Errorf("looking for GitHub release tag: %w", err)
 			}
 			if len(versions) == 0 {
-				return false, "", fmt.Errorf("no GitHub release or git tags found")
+				return false, "no GitHub release or git tags found", nil
 			}
 		case false:
-			return false, "", fmt.Errorf("no GitHub release found")
+			return false, "no GitHub release found", nil
 		}
 	}
 

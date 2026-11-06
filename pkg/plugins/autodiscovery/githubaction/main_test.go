@@ -121,6 +121,7 @@ sources:
     kind: 'gittag'
     spec:
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
       versionfilter:
@@ -134,6 +135,7 @@ sources:
     kind: 'gitbranch'
     spec:
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
       versionfilter:
@@ -141,7 +143,7 @@ sources:
         pattern: '*'
 
 conditions:
-  release:
+  release: &release
     name: 'Check if actions/checkout@v4 is a GitHub release'
     kind: 'githubrelease'
     disablesourceinput: true
@@ -151,26 +153,40 @@ conditions:
       url: 'https://github.com'
       token: 'xxx'
       tag: 'v4'
+      typefilter:
+        release: true
 
-  tag:
+  not_release:
+    <<: *release
+    failwhen: true
+
+  tag: &tag
+    dependson:
+      - 'condition#not_release:and'
     name: 'Check if actions/checkout@v4 is a tag'
     kind: 'gittag'
     disablesourceinput: true
     spec:
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
-      versionfilter:
-        kind: 'regex'
-        pattern: '^v4$'
+      tag: 'v4'
+
+  not_tag:
+    <<: *tag
+    failwhen: true
 
   branch:
+    dependson:
+      - 'condition#not_tag:and'
     name: 'Check if actions/checkout@v4 is a branch'
     kind: 'gitbranch'
     disablesourceinput: true
     spec:
       branch: 'v4'
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
 
@@ -206,8 +222,8 @@ targets:
       - 'condition#branch:and'
     disableconditions: true
     name: 'deps(github): bump Action branch for actions/checkout from v4 to {{ source "branch" }}'
-    kind: yaml
-    sourceid: branch
+    kind: 'yaml'
+    sourceid: 'branch'
     transformers:
       - addprefix: 'actions/checkout@'
     spec:
@@ -245,7 +261,7 @@ sources:
   release_digest:
     dependson:
       - 'condition#release:and'
-    name: 'Get latest GitHub Release for actions/checkout'
+    name: 'Get commit for actions/checkout release'
     kind: 'githubrelease'
     spec:
       owner: 'actions'
@@ -255,7 +271,7 @@ sources:
       key: 'taghash'
       versionfilter:
         kind: 'regex'
-        pattern: '{{ source "release" }}'
+        pattern: '^\Q{{ source "release" }}\E$'
 
   tag:
     dependson:
@@ -264,6 +280,7 @@ sources:
     kind: 'gittag'
     spec:
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
       versionfilter:
@@ -273,16 +290,17 @@ sources:
   tag_digest:
     dependson:
       - 'condition#tag:and'
-    name: 'Get latest tag for actions/checkout'
+    name: 'Get commit for actions/checkout tag'
     kind: 'gittag'
     spec:
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
       key: 'hash'
       versionfilter:
         kind: 'regex'
-        pattern: '{{ source "tag" }}'
+        pattern: '^\Q{{ source "tag" }}\E$'
 
   branch:
     dependson:
@@ -291,6 +309,7 @@ sources:
     kind: 'gitbranch'
     spec:
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
       versionfilter:
@@ -300,19 +319,20 @@ sources:
   branch_digest:
     dependson:
       - 'condition#branch:and'
-    name: 'Get latest branch for actions/checkout'
+    name: 'Get commit for actions/checkout branch'
     kind: 'gitbranch'
     spec:
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
       key: 'hash'
       versionfilter:
         kind: 'regex'
-        pattern: '{{ source "branch" }}'
+        pattern: '^\Q{{ source "branch" }}\E$'
 
 conditions:
-  release:
+  release: &release
     name: 'Check if actions/checkout@v4 is a GitHub release'
     kind: 'githubrelease'
     disablesourceinput: true
@@ -322,26 +342,40 @@ conditions:
       url: 'https://github.com'
       token: 'xxx'
       tag: 'v4'
+      typefilter:
+        release: true
 
-  tag:
+  not_release:
+    <<: *release
+    failwhen: true
+
+  tag: &tag
+    dependson:
+      - 'condition#not_release:and'
     name: 'Check if actions/checkout@v4 is a tag'
     kind: 'gittag'
     disablesourceinput: true
     spec:
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
-      versionfilter:
-        kind: 'regex'
-        pattern: '^v4$'
+      tag: 'v4'
+
+  not_tag:
+    <<: *tag
+    failwhen: true
 
   branch:
+    dependson:
+      - 'condition#not_tag:and'
     name: 'Check if actions/checkout@v4 is a branch'
     kind: 'gitbranch'
     disablesourceinput: true
     spec:
       branch: 'v4'
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
 
@@ -379,8 +413,8 @@ targets:
       - 'condition#branch:and'
     disableconditions: true
     name: 'deps(github): bump Action branch for actions/checkout from v4 to {{ source "branch_digest" }} (Pinned from {{ source "branch" }})'
-    kind: yaml
-    sourceid: branch_digest
+    kind: 'yaml'
+    sourceid: 'branch_digest'
     transformers:
       - addprefix: 'actions/checkout@'
     spec:
@@ -407,7 +441,7 @@ sources:
   release_digest:
     dependson:
       - 'condition#release:and'
-    name: 'Get latest GitHub Release for actions/checkout'
+    name: 'Get commit for actions/checkout release'
     kind: 'githubrelease'
     spec:
       owner: 'actions'
@@ -417,7 +451,7 @@ sources:
       key: 'taghash'
       versionfilter:
         kind: 'regex'
-        pattern: '{{ source "release" }}'
+        pattern: '^\Q{{ source "release" }}\E$'
 
   tag:
     dependson:
@@ -426,6 +460,7 @@ sources:
     kind: 'gittag'
     spec:
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
       versionfilter:
@@ -435,16 +470,17 @@ sources:
   tag_digest:
     dependson:
       - 'condition#tag:and'
-    name: 'Get latest tag for actions/checkout'
+    name: 'Get commit for actions/checkout tag'
     kind: 'gittag'
     spec:
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
       key: 'hash'
       versionfilter:
         kind: 'regex'
-        pattern: '{{ source "tag" }}'
+        pattern: '^\Q{{ source "tag" }}\E$'
 
   branch:
     dependson:
@@ -453,6 +489,7 @@ sources:
     kind: 'gitbranch'
     spec:
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
       versionfilter:
@@ -462,19 +499,20 @@ sources:
   branch_digest:
     dependson:
       - 'condition#branch:and'
-    name: 'Get latest branch for actions/checkout'
+    name: 'Get commit for actions/checkout branch'
     kind: 'gitbranch'
     spec:
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
       key: 'hash'
       versionfilter:
         kind: 'regex'
-        pattern: '{{ source "branch" }}'
+        pattern: '^\Q{{ source "branch" }}\E$'
 
 conditions:
-  release:
+  release: &release
     name: 'Check if actions/checkout@v4.2.2 is a GitHub release'
     kind: 'githubrelease'
     disablesourceinput: true
@@ -484,26 +522,40 @@ conditions:
       url: 'https://github.com'
       token: 'xxx'
       tag: 'v4.2.2'
+      typefilter:
+        release: true
 
-  tag:
+  not_release:
+    <<: *release
+    failwhen: true
+
+  tag: &tag
+    dependson:
+      - 'condition#not_release:and'
     name: 'Check if actions/checkout@v4.2.2 is a tag'
     kind: 'gittag'
     disablesourceinput: true
     spec:
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
-      versionfilter:
-        kind: 'regex'
-        pattern: '^v4.2.2$'
+      tag: 'v4.2.2'
+
+  not_tag:
+    <<: *tag
+    failwhen: true
 
   branch:
+    dependson:
+      - 'condition#not_tag:and'
     name: 'Check if actions/checkout@v4.2.2 is a branch'
     kind: 'gitbranch'
     disablesourceinput: true
     spec:
       branch: 'v4.2.2'
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
 
@@ -541,8 +593,8 @@ targets:
       - 'condition#branch:and'
     disableconditions: true
     name: 'deps(github): bump Action branch for actions/checkout from 11bd71901bbe5b1630ceea73d27597364c9af683 to {{ source "branch_digest" }} (Pinned from {{ source "branch" }})'
-    kind: yaml
-    sourceid: branch_digest
+    kind: 'yaml'
+    sourceid: 'branch_digest'
     transformers:
       - addprefix: 'actions/checkout@'
     spec:
@@ -568,7 +620,7 @@ sources:
   release_digest:
     dependson:
       - 'condition#release:and'
-    name: 'Get latest GitHub Release for actions/checkout'
+    name: 'Get commit for actions/checkout release'
     kind: 'githubrelease'
     spec:
       owner: 'actions'
@@ -578,7 +630,7 @@ sources:
       key: 'taghash'
       versionfilter:
         kind: 'regex'
-        pattern: '{{ source "release" }}'
+        pattern: '^\Q{{ source "release" }}\E$'
 
   tag:
     dependson:
@@ -587,6 +639,7 @@ sources:
     kind: 'gittag'
     spec:
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       versionfilter:
         kind: 'latest'
@@ -594,16 +647,17 @@ sources:
   tag_digest:
     dependson:
       - 'condition#tag:and'
-    name: 'Get latest tag for actions/checkout'
+    name: 'Get commit for actions/checkout tag'
     kind: 'gittag'
     spec:
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
       key: 'hash'
       versionfilter:
         kind: 'regex'
-        pattern: '{{ source "tag" }}'
+        pattern: '^\Q{{ source "tag" }}\E$'
 
   branch:
     dependson:
@@ -612,26 +666,30 @@ sources:
     kind: 'gitbranch'
     spec:
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
+      lsremote: true
       versionfilter:
-        kind: 'latest'
+        kind: 'regex'
+        pattern: '^\Qmain\E$'
 
   branch_digest:
     dependson:
       - 'condition#branch:and'
-    name: 'Get latest branch for actions/checkout'
+    name: 'Get commit for actions/checkout branch'
     kind: 'gitbranch'
     spec:
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
       key: 'hash'
       versionfilter:
         kind: 'regex'
-        pattern: '{{ source "branch" }}'
+        pattern: '^\Q{{ source "branch" }}\E$'
 
 conditions:
-  release:
+  release: &release
     name: 'Check if actions/checkout@main is a GitHub release'
     kind: 'githubrelease'
     disablesourceinput: true
@@ -641,26 +699,40 @@ conditions:
       url: 'https://github.com'
       token: 'xxx'
       tag: 'main'
+      typefilter:
+        release: true
 
-  tag:
+  not_release:
+    <<: *release
+    failwhen: true
+
+  tag: &tag
+    dependson:
+      - 'condition#not_release:and'
     name: 'Check if actions/checkout@main is a tag'
     kind: 'gittag'
     disablesourceinput: true
     spec:
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
-      versionfilter:
-        kind: 'regex'
-        pattern: '^main$'
+      tag: 'main'
+
+  not_tag:
+    <<: *tag
+    failwhen: true
 
   branch:
+    dependson:
+      - 'condition#not_tag:and'
     name: 'Check if actions/checkout@main is a branch'
     kind: 'gitbranch'
     disablesourceinput: true
     spec:
       branch: 'main'
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
 
@@ -698,8 +770,8 @@ targets:
       - 'condition#branch:and'
     disableconditions: true
     name: 'deps(github): bump Action branch for actions/checkout from main to {{ source "branch_digest" }} (Pinned from {{ source "branch" }})'
-    kind: yaml
-    sourceid: branch_digest
+    kind: 'yaml'
+    sourceid: 'branch_digest'
     transformers:
       - addprefix: 'actions/checkout@'
     spec:
@@ -709,7 +781,7 @@ targets:
 `},
 		},
 		{
-			name:    "Scenario - Gitea Action with a single workflow file",
+			name:    "Scenario - Gitea Action with a single workflow file and digest",
 			rootDir: "testdata/gitea",
 			credentials: map[string]gitProviderToken{
 				"gitea.com": {
@@ -735,6 +807,21 @@ sources:
         kind: 'semver'
         pattern: '*'
 
+  release_digest:
+    dependson:
+      - 'condition#release:and'
+    name: 'Get commit for https://gitea.com/actions/checkout release'
+    kind: 'gittag'
+    spec:
+      url: "https://gitea.com/actions/checkout.git"
+      username: 'oauth2'
+      password: 'xxx'
+      lsremote: true
+      key: 'hash'
+      versionfilter:
+        kind: 'regex'
+        pattern: '^\Q{{ source "release" }}\E$'
+
   tag:
     dependson:
       - 'condition#tag:and'
@@ -742,6 +829,359 @@ sources:
     kind: 'gittag'
     spec:
       url: "https://gitea.com/actions/checkout.git"
+      username: 'oauth2'
+      password: 'xxx'
+      lsremote: true
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
+
+  tag_digest:
+    dependson:
+      - 'condition#tag:and'
+    name: 'Get commit for https://gitea.com/actions/checkout tag'
+    kind: 'gittag'
+    spec:
+      url: "https://gitea.com/actions/checkout.git"
+      username: 'oauth2'
+      password: 'xxx'
+      lsremote: true
+      key: 'hash'
+      versionfilter:
+        kind: 'regex'
+        pattern: '^\Q{{ source "tag" }}\E$'
+
+  branch:
+    dependson:
+      - 'condition#branch:and'
+    name: 'Get latest branch for https://gitea.com/actions/checkout'
+    kind: 'gitbranch'
+    spec:
+      url: "https://gitea.com/actions/checkout.git"
+      username: 'oauth2'
+      password: 'xxx'
+      lsremote: true
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
+
+  branch_digest:
+    dependson:
+      - 'condition#branch:and'
+    name: 'Get commit for https://gitea.com/actions/checkout branch'
+    kind: 'gitbranch'
+    spec:
+      url: "https://gitea.com/actions/checkout.git"
+      username: 'oauth2'
+      password: 'xxx'
+      lsremote: true
+      key: 'hash'
+      versionfilter:
+        kind: 'regex'
+        pattern: '^\Q{{ source "branch" }}\E$'
+
+conditions:
+  release: &release
+    name: 'Check if https://gitea.com/actions/checkout@v4 is a Gitea release'
+    kind: 'gitea/release'
+    disablesourceinput: true
+    spec:
+      owner: 'actions'
+      repository: 'checkout'
+      url: 'https://gitea.com'
+      token: 'xxx'
+      tag: 'v4'
+
+  not_release:
+    <<: *release
+    failwhen: true
+
+  tag: &tag
+    dependson:
+      - 'condition#not_release:and'
+    name: 'Check if https://gitea.com/actions/checkout@v4 is a tag'
+    kind: 'gittag'
+    disablesourceinput: true
+    spec:
+      url: "https://gitea.com/actions/checkout.git"
+      username: 'oauth2'
+      password: 'xxx'
+      lsremote: true
+      tag: 'v4'
+
+  not_tag:
+    <<: *tag
+    failwhen: true
+
+  branch:
+    dependson:
+      - 'condition#not_tag:and'
+    name: 'Check if https://gitea.com/actions/checkout@v4 is a branch'
+    kind: 'gitbranch'
+    disablesourceinput: true
+    spec:
+      branch: 'v4'
+      url: "https://gitea.com/actions/checkout.git"
+      username: 'oauth2'
+      password: 'xxx'
+      lsremote: true
+
+targets:
+  release:
+    dependson:
+      - 'condition#release:and'
+    disableconditions: true
+    name: 'deps(gitea): bump https://gitea.com/actions/checkout from v4 to {{ source "release_digest" }} (Pinned from {{ source "release" }})'
+    kind: 'yaml'
+    sourceid: 'release_digest'
+    transformers:
+      - addprefix: 'https://gitea.com/actions/checkout@'
+    spec:
+      file: '.gitea/workflows/updatecli.yaml'
+      key: '$.jobs.updatecli.steps[0].uses'
+      comment: '{{ source "release" }}'
+
+  tag:
+    dependson:
+      - 'condition#tag:and'
+    disableconditions: true
+    name: 'deps(gitea): bump https://gitea.com/actions/checkout from v4 to {{ source "tag_digest" }} (Pinned from {{ source "tag" }})'
+    kind: 'yaml'
+    sourceid: 'tag_digest'
+    transformers:
+      - addprefix: 'https://gitea.com/actions/checkout@'
+    spec:
+      file: '.gitea/workflows/updatecli.yaml'
+      key: '$.jobs.updatecli.steps[0].uses'
+      comment: '{{ source "tag" }}'
+
+  branch:
+    dependson:
+      - 'condition#branch:and'
+    disableconditions: true
+    name: 'deps(gitea): bump https://gitea.com/actions/checkout from v4 to {{ source "branch_digest" }} (Pinned from {{ source "branch" }})'
+    kind: 'yaml'
+    sourceid: 'branch_digest'
+    transformers:
+      - addprefix: 'https://gitea.com/actions/checkout@'
+    spec:
+      file: '.gitea/workflows/updatecli.yaml'
+      key: '$.jobs.updatecli.steps[0].uses'
+      comment: '{{ source "branch" }}'
+`, `name: 'deps: bump https://gitea.com/actions/checkout Gitea workflow'
+
+sources:
+  release:
+    dependson:
+      - 'condition#release:and'
+    name: 'Get latest Gitea Release for https://gitea.com/actions/checkout'
+    kind: 'gitea/release'
+    spec:
+      owner: 'actions'
+      repository: 'checkout'
+      url: 'https://gitea.com'
+      token: 'xxx'
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
+
+  release_digest:
+    dependson:
+      - 'condition#release:and'
+    name: 'Get commit for https://gitea.com/actions/checkout release'
+    kind: 'gittag'
+    spec:
+      url: "https://gitea.com/actions/checkout.git"
+      username: 'oauth2'
+      password: 'xxx'
+      lsremote: true
+      key: 'hash'
+      versionfilter:
+        kind: 'regex'
+        pattern: '^\Q{{ source "release" }}\E$'
+
+  tag:
+    dependson:
+      - 'condition#tag:and'
+    name: 'Get latest tag for https://gitea.com/actions/checkout'
+    kind: 'gittag'
+    spec:
+      url: "https://gitea.com/actions/checkout.git"
+      username: 'oauth2'
+      password: 'xxx'
+      lsremote: true
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
+
+  tag_digest:
+    dependson:
+      - 'condition#tag:and'
+    name: 'Get commit for https://gitea.com/actions/checkout tag'
+    kind: 'gittag'
+    spec:
+      url: "https://gitea.com/actions/checkout.git"
+      username: 'oauth2'
+      password: 'xxx'
+      lsremote: true
+      key: 'hash'
+      versionfilter:
+        kind: 'regex'
+        pattern: '^\Q{{ source "tag" }}\E$'
+
+  branch:
+    dependson:
+      - 'condition#branch:and'
+    name: 'Get latest branch for https://gitea.com/actions/checkout'
+    kind: 'gitbranch'
+    spec:
+      url: "https://gitea.com/actions/checkout.git"
+      username: 'oauth2'
+      password: 'xxx'
+      lsremote: true
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
+
+  branch_digest:
+    dependson:
+      - 'condition#branch:and'
+    name: 'Get commit for https://gitea.com/actions/checkout branch'
+    kind: 'gitbranch'
+    spec:
+      url: "https://gitea.com/actions/checkout.git"
+      username: 'oauth2'
+      password: 'xxx'
+      lsremote: true
+      key: 'hash'
+      versionfilter:
+        kind: 'regex'
+        pattern: '^\Q{{ source "branch" }}\E$'
+
+conditions:
+  release: &release
+    name: 'Check if https://gitea.com/actions/checkout@v4.2.2 is a Gitea release'
+    kind: 'gitea/release'
+    disablesourceinput: true
+    spec:
+      owner: 'actions'
+      repository: 'checkout'
+      url: 'https://gitea.com'
+      token: 'xxx'
+      tag: 'v4.2.2'
+
+  not_release:
+    <<: *release
+    failwhen: true
+
+  tag: &tag
+    dependson:
+      - 'condition#not_release:and'
+    name: 'Check if https://gitea.com/actions/checkout@v4.2.2 is a tag'
+    kind: 'gittag'
+    disablesourceinput: true
+    spec:
+      url: "https://gitea.com/actions/checkout.git"
+      username: 'oauth2'
+      password: 'xxx'
+      lsremote: true
+      tag: 'v4.2.2'
+
+  not_tag:
+    <<: *tag
+    failwhen: true
+
+  branch:
+    dependson:
+      - 'condition#not_tag:and'
+    name: 'Check if https://gitea.com/actions/checkout@v4.2.2 is a branch'
+    kind: 'gitbranch'
+    disablesourceinput: true
+    spec:
+      branch: 'v4.2.2'
+      url: "https://gitea.com/actions/checkout.git"
+      username: 'oauth2'
+      password: 'xxx'
+      lsremote: true
+
+targets:
+  release:
+    dependson:
+      - 'condition#release:and'
+    disableconditions: true
+    name: 'deps(gitea): bump https://gitea.com/actions/checkout from 11bd71901bbe5b1630ceea73d27597364c9af683 to {{ source "release_digest" }} (Pinned from {{ source "release" }})'
+    kind: 'yaml'
+    sourceid: 'release_digest'
+    transformers:
+      - addprefix: 'https://gitea.com/actions/checkout@'
+    spec:
+      file: '.gitea/workflows/updatecli.yaml'
+      key: '$.jobs.updatecli.steps[1].uses'
+      comment: '{{ source "release" }}'
+
+  tag:
+    dependson:
+      - 'condition#tag:and'
+    disableconditions: true
+    name: 'deps(gitea): bump https://gitea.com/actions/checkout from 11bd71901bbe5b1630ceea73d27597364c9af683 to {{ source "tag_digest" }} (Pinned from {{ source "tag" }})'
+    kind: 'yaml'
+    sourceid: 'tag_digest'
+    transformers:
+      - addprefix: 'https://gitea.com/actions/checkout@'
+    spec:
+      file: '.gitea/workflows/updatecli.yaml'
+      key: '$.jobs.updatecli.steps[1].uses'
+      comment: '{{ source "tag" }}'
+
+  branch:
+    dependson:
+      - 'condition#branch:and'
+    disableconditions: true
+    name: 'deps(gitea): bump https://gitea.com/actions/checkout from 11bd71901bbe5b1630ceea73d27597364c9af683 to {{ source "branch_digest" }} (Pinned from {{ source "branch" }})'
+    kind: 'yaml'
+    sourceid: 'branch_digest'
+    transformers:
+      - addprefix: 'https://gitea.com/actions/checkout@'
+    spec:
+      file: '.gitea/workflows/updatecli.yaml'
+      key: '$.jobs.updatecli.steps[1].uses'
+      comment: '{{ source "branch" }}'
+`},
+		},
+		{
+			name:    "Scenario - Gitea Action with a single workflow file",
+			rootDir: "testdata/gitea",
+			credentials: map[string]gitProviderToken{
+				"gitea.com": {
+					Kind:  "gitea",
+					Token: "xxx",
+				},
+			},
+			expectedPipelines: []string{`name: 'deps: bump https://gitea.com/actions/checkout Gitea workflow'
+
+sources:
+  release:
+    dependson:
+      - 'condition#release:and'
+    name: 'Get latest Gitea Release for https://gitea.com/actions/checkout'
+    kind: 'gitea/release'
+    spec:
+      owner: 'actions'
+      repository: 'checkout'
+      url: 'https://gitea.com'
+      token: 'xxx'
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
+
+  tag:
+    dependson:
+      - 'condition#tag:and'
+    name: 'Get latest tag for https://gitea.com/actions/checkout'
+    kind: 'gittag'
+    spec:
+      url: "https://gitea.com/actions/checkout.git"
+      username: 'oauth2'
       password: 'xxx'
       lsremote: true
       versionfilter:
@@ -755,6 +1195,7 @@ sources:
     kind: 'gitbranch'
     spec:
       url: "https://gitea.com/actions/checkout.git"
+      username: 'oauth2'
       password: 'xxx'
       lsremote: true
       versionfilter:
@@ -762,7 +1203,7 @@ sources:
         pattern: '*'
 
 conditions:
-  release:
+  release: &release
     name: 'Check if https://gitea.com/actions/checkout@v4 is a Gitea release'
     kind: 'gitea/release'
     disablesourceinput: true
@@ -773,25 +1214,37 @@ conditions:
       token: 'xxx'
       tag: 'v4'
 
-  tag:
+  not_release:
+    <<: *release
+    failwhen: true
+
+  tag: &tag
+    dependson:
+      - 'condition#not_release:and'
     name: 'Check if https://gitea.com/actions/checkout@v4 is a tag'
     kind: 'gittag'
     disablesourceinput: true
     spec:
       url: "https://gitea.com/actions/checkout.git"
+      username: 'oauth2'
       password: 'xxx'
       lsremote: true
-      versionfilter:
-        kind: 'regex'
-        pattern: '^v4$'
+      tag: 'v4'
+
+  not_tag:
+    <<: *tag
+    failwhen: true
 
   branch:
+    dependson:
+      - 'condition#not_tag:and'
     name: 'Check if https://gitea.com/actions/checkout@v4 is a branch'
     kind: 'gitbranch'
     disablesourceinput: true
     spec:
       branch: 'v4'
       url: "https://gitea.com/actions/checkout.git"
+      username: 'oauth2'
       password: 'xxx'
       lsremote: true
 
@@ -827,13 +1280,330 @@ targets:
       - 'condition#branch:and'
     disableconditions: true
     name: 'deps(gitea): bump https://gitea.com/actions/checkout from v4 to {{ source "branch" }}'
-    kind: yaml
-    sourceid: branch
+    kind: 'yaml'
+    sourceid: 'branch'
     transformers:
       - addprefix: 'https://gitea.com/actions/checkout@'
     spec:
       file: '.gitea/workflows/updatecli.yaml'
       key: '$.jobs.updatecli.steps[0].uses'
+`, `name: 'deps: bump https://gitea.com/actions/checkout Gitea workflow'
+
+sources:
+  release:
+    dependson:
+      - 'condition#release:and'
+    name: 'Get latest Gitea Release for https://gitea.com/actions/checkout'
+    kind: 'gitea/release'
+    spec:
+      owner: 'actions'
+      repository: 'checkout'
+      url: 'https://gitea.com'
+      token: 'xxx'
+      versionfilter:
+        kind: 'latest'
+
+  tag:
+    dependson:
+      - 'condition#tag:and'
+    name: 'Get latest tag for https://gitea.com/actions/checkout'
+    kind: 'gittag'
+    spec:
+      url: "https://gitea.com/actions/checkout.git"
+      username: 'oauth2'
+      password: 'xxx'
+      versionfilter:
+        kind: 'latest'
+
+  branch:
+    dependson:
+      - 'condition#branch:and'
+    name: 'Get latest branch for https://gitea.com/actions/checkout'
+    kind: 'gitbranch'
+    spec:
+      url: "https://gitea.com/actions/checkout.git"
+      username: 'oauth2'
+      password: 'xxx'
+      lsremote: true
+      versionfilter:
+        kind: 'regex'
+        pattern: '^\Q11bd71901bbe5b1630ceea73d27597364c9af683\E$'
+
+conditions:
+  release: &release
+    name: 'Check if https://gitea.com/actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 is a Gitea release'
+    kind: 'gitea/release'
+    disablesourceinput: true
+    spec:
+      owner: 'actions'
+      repository: 'checkout'
+      url: 'https://gitea.com'
+      token: 'xxx'
+      tag: '11bd71901bbe5b1630ceea73d27597364c9af683'
+
+  not_release:
+    <<: *release
+    failwhen: true
+
+  tag: &tag
+    dependson:
+      - 'condition#not_release:and'
+    name: 'Check if https://gitea.com/actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 is a tag'
+    kind: 'gittag'
+    disablesourceinput: true
+    spec:
+      url: "https://gitea.com/actions/checkout.git"
+      username: 'oauth2'
+      password: 'xxx'
+      lsremote: true
+      tag: '11bd71901bbe5b1630ceea73d27597364c9af683'
+
+  not_tag:
+    <<: *tag
+    failwhen: true
+
+  branch:
+    dependson:
+      - 'condition#not_tag:and'
+    name: 'Check if https://gitea.com/actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 is a branch'
+    kind: 'gitbranch'
+    disablesourceinput: true
+    spec:
+      branch: '11bd71901bbe5b1630ceea73d27597364c9af683'
+      url: "https://gitea.com/actions/checkout.git"
+      username: 'oauth2'
+      password: 'xxx'
+      lsremote: true
+
+targets:
+  release:
+    dependson:
+      - 'condition#release:and'
+    disableconditions: true
+    name: 'deps(gitea): bump https://gitea.com/actions/checkout from 11bd71901bbe5b1630ceea73d27597364c9af683 to {{ source "release" }}'
+    kind: 'yaml'
+    sourceid: 'release'
+    transformers:
+      - addprefix: 'https://gitea.com/actions/checkout@'
+    spec:
+      file: '.gitea/workflows/updatecli.yaml'
+      key: '$.jobs.updatecli.steps[1].uses'
+
+  tag:
+    dependson:
+      - 'condition#tag:and'
+    disableconditions: true
+    name: 'deps(gitea): bump https://gitea.com/actions/checkout from 11bd71901bbe5b1630ceea73d27597364c9af683 to {{ source "tag" }}'
+    kind: 'yaml'
+    sourceid: 'tag'
+    transformers:
+      - addprefix: 'https://gitea.com/actions/checkout@'
+    spec:
+      file: '.gitea/workflows/updatecli.yaml'
+      key: '$.jobs.updatecli.steps[1].uses'
+
+  branch:
+    dependson:
+      - 'condition#branch:and'
+    disableconditions: true
+    name: 'deps(gitea): bump https://gitea.com/actions/checkout from 11bd71901bbe5b1630ceea73d27597364c9af683 to {{ source "branch" }}'
+    kind: 'yaml'
+    sourceid: 'branch'
+    transformers:
+      - addprefix: 'https://gitea.com/actions/checkout@'
+    spec:
+      file: '.gitea/workflows/updatecli.yaml'
+      key: '$.jobs.updatecli.steps[1].uses'
+`},
+		},
+		{
+			name:    "Scenario - Forgejo Action on a self hosted instance with digest",
+			rootDir: "testdata/forgejo",
+			credentials: map[string]gitProviderToken{
+				"git.example.org": {
+					Kind:  "forgejo",
+					Token: "xxx",
+				},
+			},
+			digest: true,
+			expectedPipelines: []string{`name: 'deps: bump https://git.example.org/actions/checkout Gitea workflow'
+
+sources:
+  release:
+    dependson:
+      - 'condition#release:and'
+    name: 'Get latest Gitea Release for https://git.example.org/actions/checkout'
+    kind: 'gitea/release'
+    spec:
+      owner: 'actions'
+      repository: 'checkout'
+      url: 'https://git.example.org'
+      token: 'xxx'
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
+
+  release_digest:
+    dependson:
+      - 'condition#release:and'
+    name: 'Get commit for https://git.example.org/actions/checkout release'
+    kind: 'gittag'
+    spec:
+      url: "https://git.example.org/actions/checkout.git"
+      username: 'oauth2'
+      password: 'xxx'
+      lsremote: true
+      key: 'hash'
+      versionfilter:
+        kind: 'regex'
+        pattern: '^\Q{{ source "release" }}\E$'
+
+  tag:
+    dependson:
+      - 'condition#tag:and'
+    name: 'Get latest tag for https://git.example.org/actions/checkout'
+    kind: 'gittag'
+    spec:
+      url: "https://git.example.org/actions/checkout.git"
+      username: 'oauth2'
+      password: 'xxx'
+      lsremote: true
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
+
+  tag_digest:
+    dependson:
+      - 'condition#tag:and'
+    name: 'Get commit for https://git.example.org/actions/checkout tag'
+    kind: 'gittag'
+    spec:
+      url: "https://git.example.org/actions/checkout.git"
+      username: 'oauth2'
+      password: 'xxx'
+      lsremote: true
+      key: 'hash'
+      versionfilter:
+        kind: 'regex'
+        pattern: '^\Q{{ source "tag" }}\E$'
+
+  branch:
+    dependson:
+      - 'condition#branch:and'
+    name: 'Get latest branch for https://git.example.org/actions/checkout'
+    kind: 'gitbranch'
+    spec:
+      url: "https://git.example.org/actions/checkout.git"
+      username: 'oauth2'
+      password: 'xxx'
+      lsremote: true
+      versionfilter:
+        kind: 'semver'
+        pattern: '*'
+
+  branch_digest:
+    dependson:
+      - 'condition#branch:and'
+    name: 'Get commit for https://git.example.org/actions/checkout branch'
+    kind: 'gitbranch'
+    spec:
+      url: "https://git.example.org/actions/checkout.git"
+      username: 'oauth2'
+      password: 'xxx'
+      lsremote: true
+      key: 'hash'
+      versionfilter:
+        kind: 'regex'
+        pattern: '^\Q{{ source "branch" }}\E$'
+
+conditions:
+  release: &release
+    name: 'Check if https://git.example.org/actions/checkout@v4 is a Gitea release'
+    kind: 'gitea/release'
+    disablesourceinput: true
+    spec:
+      owner: 'actions'
+      repository: 'checkout'
+      url: 'https://git.example.org'
+      token: 'xxx'
+      tag: 'v4'
+
+  not_release:
+    <<: *release
+    failwhen: true
+
+  tag: &tag
+    dependson:
+      - 'condition#not_release:and'
+    name: 'Check if https://git.example.org/actions/checkout@v4 is a tag'
+    kind: 'gittag'
+    disablesourceinput: true
+    spec:
+      url: "https://git.example.org/actions/checkout.git"
+      username: 'oauth2'
+      password: 'xxx'
+      lsremote: true
+      tag: 'v4'
+
+  not_tag:
+    <<: *tag
+    failwhen: true
+
+  branch:
+    dependson:
+      - 'condition#not_tag:and'
+    name: 'Check if https://git.example.org/actions/checkout@v4 is a branch'
+    kind: 'gitbranch'
+    disablesourceinput: true
+    spec:
+      branch: 'v4'
+      url: "https://git.example.org/actions/checkout.git"
+      username: 'oauth2'
+      password: 'xxx'
+      lsremote: true
+
+targets:
+  release:
+    dependson:
+      - 'condition#release:and'
+    disableconditions: true
+    name: 'deps(gitea): bump https://git.example.org/actions/checkout from v4 to {{ source "release_digest" }} (Pinned from {{ source "release" }})'
+    kind: 'yaml'
+    sourceid: 'release_digest'
+    transformers:
+      - addprefix: 'https://git.example.org/actions/checkout@'
+    spec:
+      file: '.forgejo/workflows/updatecli.yaml'
+      key: '$.jobs.updatecli.steps[0].uses'
+      comment: '{{ source "release" }}'
+
+  tag:
+    dependson:
+      - 'condition#tag:and'
+    disableconditions: true
+    name: 'deps(gitea): bump https://git.example.org/actions/checkout from v4 to {{ source "tag_digest" }} (Pinned from {{ source "tag" }})'
+    kind: 'yaml'
+    sourceid: 'tag_digest'
+    transformers:
+      - addprefix: 'https://git.example.org/actions/checkout@'
+    spec:
+      file: '.forgejo/workflows/updatecli.yaml'
+      key: '$.jobs.updatecli.steps[0].uses'
+      comment: '{{ source "tag" }}'
+
+  branch:
+    dependson:
+      - 'condition#branch:and'
+    disableconditions: true
+    name: 'deps(gitea): bump https://git.example.org/actions/checkout from v4 to {{ source "branch_digest" }} (Pinned from {{ source "branch" }})'
+    kind: 'yaml'
+    sourceid: 'branch_digest'
+    transformers:
+      - addprefix: 'https://git.example.org/actions/checkout@'
+    spec:
+      file: '.forgejo/workflows/updatecli.yaml'
+      key: '$.jobs.updatecli.steps[0].uses'
+      comment: '{{ source "branch" }}'
 `},
 		},
 		{
@@ -869,6 +1639,7 @@ sources:
     kind: 'gittag'
     spec:
       url: "https://github.com/tibdex/github-app-token.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
       versionfilter:
@@ -882,6 +1653,7 @@ sources:
     kind: 'gitbranch'
     spec:
       url: "https://github.com/tibdex/github-app-token.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
       versionfilter:
@@ -889,7 +1661,7 @@ sources:
         pattern: '*'
 
 conditions:
-  release:
+  release: &release
     name: 'Check if tibdex/github-app-token@v2.1 is a GitHub release'
     kind: 'githubrelease'
     disablesourceinput: true
@@ -899,26 +1671,40 @@ conditions:
       url: 'https://github.com'
       token: 'xxx'
       tag: 'v2.1'
+      typefilter:
+        release: true
 
-  tag:
+  not_release:
+    <<: *release
+    failwhen: true
+
+  tag: &tag
+    dependson:
+      - 'condition#not_release:and'
     name: 'Check if tibdex/github-app-token@v2.1 is a tag'
     kind: 'gittag'
     disablesourceinput: true
     spec:
       url: "https://github.com/tibdex/github-app-token.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
-      versionfilter:
-        kind: 'regex'
-        pattern: '^v2.1$'
+      tag: 'v2.1'
+
+  not_tag:
+    <<: *tag
+    failwhen: true
 
   branch:
+    dependson:
+      - 'condition#not_tag:and'
     name: 'Check if tibdex/github-app-token@v2.1 is a branch'
     kind: 'gitbranch'
     disablesourceinput: true
     spec:
       branch: 'v2.1'
       url: "https://github.com/tibdex/github-app-token.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
 
@@ -954,8 +1740,8 @@ targets:
       - 'condition#branch:and'
     disableconditions: true
     name: 'deps(github): bump Action branch for tibdex/github-app-token from v2.1 to {{ source "branch" }}'
-    kind: yaml
-    sourceid: branch
+    kind: 'yaml'
+    sourceid: 'branch'
     transformers:
       - addprefix: 'tibdex/github-app-token@'
     spec:
@@ -985,6 +1771,7 @@ sources:
     kind: 'gittag'
     spec:
       url: "https://github.com/tibdex/github-app-token.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
       versionfilter:
@@ -998,6 +1785,7 @@ sources:
     kind: 'gitbranch'
     spec:
       url: "https://github.com/tibdex/github-app-token.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
       versionfilter:
@@ -1005,7 +1793,7 @@ sources:
         pattern: '*'
 
 conditions:
-  release:
+  release: &release
     name: 'Check if tibdex/github-app-token@v2.1 is a GitHub release'
     kind: 'githubrelease'
     disablesourceinput: true
@@ -1015,26 +1803,40 @@ conditions:
       url: 'https://github.com'
       token: 'xxx'
       tag: 'v2.1'
+      typefilter:
+        release: true
 
-  tag:
+  not_release:
+    <<: *release
+    failwhen: true
+
+  tag: &tag
+    dependson:
+      - 'condition#not_release:and'
     name: 'Check if tibdex/github-app-token@v2.1 is a tag'
     kind: 'gittag'
     disablesourceinput: true
     spec:
       url: "https://github.com/tibdex/github-app-token.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
-      versionfilter:
-        kind: 'regex'
-        pattern: '^v2.1$'
+      tag: 'v2.1'
+
+  not_tag:
+    <<: *tag
+    failwhen: true
 
   branch:
+    dependson:
+      - 'condition#not_tag:and'
     name: 'Check if tibdex/github-app-token@v2.1 is a branch'
     kind: 'gitbranch'
     disablesourceinput: true
     spec:
       branch: 'v2.1'
       url: "https://github.com/tibdex/github-app-token.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
 
@@ -1070,8 +1872,8 @@ targets:
       - 'condition#branch:and'
     disableconditions: true
     name: 'deps(github): bump Action branch for tibdex/github-app-token from v2.1 to {{ source "branch" }}'
-    kind: yaml
-    sourceid: branch
+    kind: 'yaml'
+    sourceid: 'branch'
     transformers:
       - addprefix: 'tibdex/github-app-token@'
     spec:
@@ -1101,6 +1903,7 @@ sources:
     kind: 'gittag'
     spec:
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
       versionfilter:
@@ -1114,6 +1917,7 @@ sources:
     kind: 'gitbranch'
     spec:
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
       versionfilter:
@@ -1121,7 +1925,7 @@ sources:
         pattern: '*'
 
 conditions:
-  release:
+  release: &release
     name: 'Check if actions/checkout@v4 is a GitHub release'
     kind: 'githubrelease'
     disablesourceinput: true
@@ -1131,26 +1935,40 @@ conditions:
       url: 'https://github.com'
       token: 'xxx'
       tag: 'v4'
+      typefilter:
+        release: true
 
-  tag:
+  not_release:
+    <<: *release
+    failwhen: true
+
+  tag: &tag
+    dependson:
+      - 'condition#not_release:and'
     name: 'Check if actions/checkout@v4 is a tag'
     kind: 'gittag'
     disablesourceinput: true
     spec:
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
-      versionfilter:
-        kind: 'regex'
-        pattern: '^v4$'
+      tag: 'v4'
+
+  not_tag:
+    <<: *tag
+    failwhen: true
 
   branch:
+    dependson:
+      - 'condition#not_tag:and'
     name: 'Check if actions/checkout@v4 is a branch'
     kind: 'gitbranch'
     disablesourceinput: true
     spec:
       branch: 'v4'
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
 
@@ -1186,8 +2004,8 @@ targets:
       - 'condition#branch:and'
     disableconditions: true
     name: 'deps(github): bump Action branch for actions/checkout from v4 to {{ source "branch" }}'
-    kind: yaml
-    sourceid: branch
+    kind: 'yaml'
+    sourceid: 'branch'
     transformers:
       - addprefix: 'actions/checkout@'
     spec:
@@ -1217,6 +2035,7 @@ sources:
     kind: 'gittag'
     spec:
       url: "https://github.com/updatecli/updatecli-action.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
       versionfilter:
@@ -1230,6 +2049,7 @@ sources:
     kind: 'gitbranch'
     spec:
       url: "https://github.com/updatecli/updatecli-action.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
       versionfilter:
@@ -1237,7 +2057,7 @@ sources:
         pattern: '*'
 
 conditions:
-  release:
+  release: &release
     name: 'Check if updatecli/updatecli-action@v2 is a GitHub release'
     kind: 'githubrelease'
     disablesourceinput: true
@@ -1247,26 +2067,40 @@ conditions:
       url: 'https://github.com'
       token: 'xxx'
       tag: 'v2'
+      typefilter:
+        release: true
 
-  tag:
+  not_release:
+    <<: *release
+    failwhen: true
+
+  tag: &tag
+    dependson:
+      - 'condition#not_release:and'
     name: 'Check if updatecli/updatecli-action@v2 is a tag'
     kind: 'gittag'
     disablesourceinput: true
     spec:
       url: "https://github.com/updatecli/updatecli-action.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
-      versionfilter:
-        kind: 'regex'
-        pattern: '^v2$'
+      tag: 'v2'
+
+  not_tag:
+    <<: *tag
+    failwhen: true
 
   branch:
+    dependson:
+      - 'condition#not_tag:and'
     name: 'Check if updatecli/updatecli-action@v2 is a branch'
     kind: 'gitbranch'
     disablesourceinput: true
     spec:
       branch: 'v2'
       url: "https://github.com/updatecli/updatecli-action.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
 
@@ -1302,8 +2136,8 @@ targets:
       - 'condition#branch:and'
     disableconditions: true
     name: 'deps(github): bump Action branch for updatecli/updatecli-action from v2 to {{ source "branch" }}'
-    kind: yaml
-    sourceid: branch
+    kind: 'yaml'
+    sourceid: 'branch'
     transformers:
       - addprefix: 'updatecli/updatecli-action@'
     spec:
@@ -1344,6 +2178,7 @@ sources:
     kind: 'gittag'
     spec:
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
       versionfilter:
@@ -1357,6 +2192,7 @@ sources:
     kind: 'gitbranch'
     spec:
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
       versionfilter:
@@ -1364,7 +2200,7 @@ sources:
         pattern: '*'
 
 conditions:
-  release:
+  release: &release
     name: 'Check if actions/checkout@v4 is a GitHub release'
     kind: 'githubrelease'
     disablesourceinput: true
@@ -1374,26 +2210,40 @@ conditions:
       url: 'https://github.com'
       token: 'xxx'
       tag: 'v4'
+      typefilter:
+        release: true
 
-  tag:
+  not_release:
+    <<: *release
+    failwhen: true
+
+  tag: &tag
+    dependson:
+      - 'condition#not_release:and'
     name: 'Check if actions/checkout@v4 is a tag'
     kind: 'gittag'
     disablesourceinput: true
     spec:
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
-      versionfilter:
-        kind: 'regex'
-        pattern: '^v4$'
+      tag: 'v4'
+
+  not_tag:
+    <<: *tag
+    failwhen: true
 
   branch:
+    dependson:
+      - 'condition#not_tag:and'
     name: 'Check if actions/checkout@v4 is a branch'
     kind: 'gitbranch'
     disablesourceinput: true
     spec:
       branch: 'v4'
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
 
@@ -1429,8 +2279,8 @@ targets:
       - 'condition#branch:and'
     disableconditions: true
     name: 'deps(github): bump Action branch for actions/checkout from v4 to {{ source "branch" }}'
-    kind: yaml
-    sourceid: branch
+    kind: 'yaml'
+    sourceid: 'branch'
     transformers:
       - addprefix: 'actions/checkout@'
     spec:
@@ -1460,6 +2310,7 @@ sources:
     kind: 'gittag'
     spec:
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
       versionfilter:
@@ -1473,6 +2324,7 @@ sources:
     kind: 'gitbranch'
     spec:
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
       versionfilter:
@@ -1480,7 +2332,7 @@ sources:
         pattern: '*'
 
 conditions:
-  release:
+  release: &release
     name: 'Check if actions/checkout@v4 is a GitHub release'
     kind: 'githubrelease'
     disablesourceinput: true
@@ -1490,26 +2342,40 @@ conditions:
       url: 'https://github.com'
       token: 'xxx'
       tag: 'v4'
+      typefilter:
+        release: true
 
-  tag:
+  not_release:
+    <<: *release
+    failwhen: true
+
+  tag: &tag
+    dependson:
+      - 'condition#not_release:and'
     name: 'Check if actions/checkout@v4 is a tag'
     kind: 'gittag'
     disablesourceinput: true
     spec:
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
-      versionfilter:
-        kind: 'regex'
-        pattern: '^v4$'
+      tag: 'v4'
+
+  not_tag:
+    <<: *tag
+    failwhen: true
 
   branch:
+    dependson:
+      - 'condition#not_tag:and'
     name: 'Check if actions/checkout@v4 is a branch'
     kind: 'gitbranch'
     disablesourceinput: true
     spec:
       branch: 'v4'
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
 
@@ -1545,8 +2411,8 @@ targets:
       - 'condition#branch:and'
     disableconditions: true
     name: 'deps(github): bump Action branch for actions/checkout from v4 to {{ source "branch" }}'
-    kind: yaml
-    sourceid: branch
+    kind: 'yaml'
+    sourceid: 'branch'
     transformers:
       - addprefix: 'actions/checkout@'
     spec:
@@ -1591,6 +2457,7 @@ sources:
     kind: 'gittag'
     spec:
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       age:
         minimum: '7d'
@@ -1606,6 +2473,7 @@ sources:
     kind: 'gitbranch'
     spec:
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       age:
         minimum: '7d'
@@ -1615,7 +2483,7 @@ sources:
         pattern: '*'
 
 conditions:
-  release:
+  release: &release
     name: 'Check if actions/checkout@v4 is a GitHub release'
     kind: 'githubrelease'
     disablesourceinput: true
@@ -1625,26 +2493,40 @@ conditions:
       url: 'https://github.com'
       token: 'xxx'
       tag: 'v4'
+      typefilter:
+        release: true
 
-  tag:
+  not_release:
+    <<: *release
+    failwhen: true
+
+  tag: &tag
+    dependson:
+      - 'condition#not_release:and'
     name: 'Check if actions/checkout@v4 is a tag'
     kind: 'gittag'
     disablesourceinput: true
     spec:
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
-      versionfilter:
-        kind: 'regex'
-        pattern: '^v4$'
+      tag: 'v4'
+
+  not_tag:
+    <<: *tag
+    failwhen: true
 
   branch:
+    dependson:
+      - 'condition#not_tag:and'
     name: 'Check if actions/checkout@v4 is a branch'
     kind: 'gitbranch'
     disablesourceinput: true
     spec:
       branch: 'v4'
       url: "https://github.com/actions/checkout.git"
+      username: 'x-access-token'
       password: 'xxx'
       lsremote: true
 
@@ -1680,8 +2562,8 @@ targets:
       - 'condition#branch:and'
     disableconditions: true
     name: 'deps(github): bump Action branch for actions/checkout from v4 to {{ source "branch" }}'
-    kind: yaml
-    sourceid: branch
+    kind: 'yaml'
+    sourceid: 'branch'
     transformers:
       - addprefix: 'actions/checkout@'
     spec:
