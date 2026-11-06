@@ -1,7 +1,8 @@
 package githubaction
 
 const (
-	// workflowManifestGiteaTemplate is the Go template used to generate Gitea action workflow manifests
+	// workflowManifestGiteaTemplate is the Go template used to generate Gitea action workflow manifests.
+	// It relies on the blocks defined in workflowManifestActionPartials.
 	workflowManifestGiteaTemplate string = `name: 'deps: bump {{ .ActionName }} Gitea workflow'
 {{- if .ActionID }}
 actions:
@@ -21,54 +22,16 @@ sources:
       url: '{{ .URL }}'
       token: '{{ .Token }}'
 {{- template "age" .Age }}
-      versionfilter:
-        kind: '{{ .VersionFilterKind }}'
-        pattern: '{{ .VersionFilterPattern }}'
-        {{- if or (eq .VersionFilterKind "regex/semver") (eq .VersionFilterKind "regex/time") }}
-        regex: '{{ .VersionFilterRegex }}'
-        {{- end }}
-
-  tag:
-    dependson:
-      - 'condition#tag:and'
-    name: 'Get latest tag for {{ .ActionName }}'
-    kind: 'gittag'
-    spec:
-      url: "{{ .URL }}/{{ .Owner }}/{{ .Repository }}.git"
-      password: '{{ .Token }}'
-{{- if and .Age.IsZero (ne .VersionFilterKind "latest") }}
-      lsremote: true
+{{- template "versionfilter" (.Source "release") }}
+{{- if .Digest }}
+{{- template "gitDigestSource" (.Source "release") }}
 {{- end }}
-{{- template "age" .Age }}
-      versionfilter:
-        kind: '{{ .VersionFilterKind }}'
-        pattern: '{{ .VersionFilterPattern }}'
-        {{- if or (eq .VersionFilterKind "regex/semver") (eq .VersionFilterKind "regex/time") }}
-        regex: '{{ .VersionFilterRegex }}'
-        {{- end }}
-
-  branch:
-    dependson:
-      - 'condition#branch:and'
-    name: 'Get latest branch for {{ .ActionName }}'
-    kind: 'gitbranch'
-    spec:
-      url: "{{ .URL }}/{{ .Owner }}/{{ .Repository }}.git"
-      password: '{{ .Token }}'
-{{- if and .Age.IsZero (ne .VersionFilterKind "latest") }}
-      lsremote: true
-{{- end }}
-{{- template "age" .Age }}
-      versionfilter:
-        kind: '{{ .VersionFilterKind }}'
-        pattern: '{{ .VersionFilterPattern }}'
-        {{- if or (eq .VersionFilterKind "regex/semver") (eq .VersionFilterKind "regex/time") }}
-        regex: '{{ .VersionFilterRegex }}'
-        {{- end }}
+{{- template "gitSource" (.Source "tag") }}
+{{- template "gitSource" (.Source "branch") }}
 
 conditions:
-  release:
-    name: 'Check if {{ .ActionName }}@{{ .Reference }} is a Gitea release'
+  release: &release
+    name: 'Check if {{ .ActionName }}@{{ .CheckReference }} is a Gitea release'
     kind: 'gitea/release'
     disablesourceinput: true
     spec:
@@ -76,77 +39,12 @@ conditions:
       repository: '{{ .Repository }}'
       url: '{{ .URL }}'
       token: '{{ .Token }}'
-      tag: '{{ .Reference }}'
-
-  tag:
-    name: 'Check if {{ .ActionName }}@{{ .Reference }} is a tag'
-    kind: 'gittag'
-    disablesourceinput: true
-    spec:
-      url: "{{ .URL }}/{{ .Owner }}/{{ .Repository }}.git"
-      password: '{{ .Token }}'
-      lsremote: true
-      versionfilter:
-        kind: 'regex'
-        pattern: '^{{ .Reference }}$'
-
-  branch:
-    name: 'Check if {{ .ActionName }}@{{ .Reference }} is a branch'
-    kind: 'gitbranch'
-    disablesourceinput: true
-    spec:
-      branch: '{{ .Reference }}'
-      url: "{{ .URL }}/{{ .Owner }}/{{ .Repository }}.git"
-      password: '{{ .Token }}'
-      lsremote: true
+      tag: '{{ .CheckReference }}'
+{{- template "gitConditions" . }}
 
 targets:
-  release:
-    dependson:
-      - 'condition#release:and'
-    disableconditions: true
-    name: 'deps(gitea): bump {{ .ActionName }} from {{ .Reference }} to {{ "{{" }} source "release" {{ "}}" }}'
-    kind: 'yaml'
-    sourceid: 'release'
-    transformers:
-      - addprefix: '{{ .ActionName }}@'
-{{- if .ScmID }}
-    scmid: '{{ .ScmID }}'
-{{ end }}
-    spec:
-      file: '{{ .File }}'
-      key: '{{ .TargetKey }}'
-
-  tag:
-    dependson:
-      - 'condition#tag:and'
-    disableconditions: true
-    name: 'deps(gitea): bump {{ .ActionName }} from {{ .Reference }} to {{ "{{" }} source "tag" {{ "}}" }}'
-    kind: 'yaml'
-    sourceid: 'tag'
-    transformers:
-      - addprefix: '{{ .ActionName }}@'
-{{- if .ScmID }}
-    scmid: '{{ .ScmID }}'
-{{ end }}
-    spec:
-      file: '{{ .File }}'
-      key: '{{ .TargetKey }}'
-
-  branch:
-    dependson:
-      - 'condition#branch:and'
-    disableconditions: true
-    name: 'deps(gitea): bump {{ .ActionName }} from {{ .Reference }} to {{ "{{" }} source "branch" {{ "}}" }}'
-    kind: yaml
-    sourceid: branch
-    transformers:
-      - addprefix: '{{ .ActionName }}@'
-{{- if .ScmID }}
-    scmid: '{{ .ScmID }}'
-{{ end }}
-    spec:
-      file: '{{ .File }}'
-      key: '{{ .TargetKey }}'
+{{- template "target" (.Source "release") }}
+{{ template "target" (.Source "tag") }}
+{{ template "target" (.Source "branch") }}
 `
 )

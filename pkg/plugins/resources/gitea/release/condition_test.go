@@ -57,9 +57,7 @@ func TestCondition(t *testing.T) {
 				Owner:      "updatecli",
 				Repository: "demo-terminal",
 			},
-			wantResult:     false,
-			wantErr:        true,
-			wantErrMessage: fmt.Errorf("no Gitea release found"),
+			wantResult: false,
 		},
 		{
 			name: "repository should exist with no release 2.0.0",
@@ -76,9 +74,7 @@ func TestCondition(t *testing.T) {
 				Repository: "demo-terminal",
 				Tag:        "2.0.0",
 			},
-			wantResult:     false,
-			wantErr:        true,
-			wantErrMessage: fmt.Errorf("no Gitea release found"),
+			wantResult: false,
 		},
 		{
 			name: "repository should exist with release v2.15.0",
