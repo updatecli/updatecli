@@ -29,6 +29,8 @@ type Action struct {
 	PipelineURL *PipelineURL `xml:"a,omitempty" json:"pipelineURL,omitempty"`
 	// Link is the URL of the action
 	Link string `xml:"link,omitempty" json:"actionUrl,omitempty"`
+	// DryRun is true when the action was not published because Updatecli ran without pushing changes
+	DryRun bool `xml:"-" json:"-"`
 }
 
 // ActionTargetChangelog is a struct used to store a target changelog

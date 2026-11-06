@@ -8,6 +8,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/cache"
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
 	"github.com/updatecli/updatecli/pkg/core/log"
+	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/telemetry"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -48,7 +49,13 @@ func (e *Engine) Run(ctx context.Context) (err error) {
 			Total:    len(e.Pipelines),
 		})
 		start := time.Now()
-		err := pipeline.Run(ctx)
+		err := e.failedSCMError(pipeline)
+		if err != nil {
+			pipeline.Report.Result = result.FAILURE
+			pipeline.Report.Err = err.Error()
+		} else {
+			err = pipeline.Run(ctx)
+		}
 		if err != nil {
 			errs = append(errs, fmt.Errorf("pipeline %q failed: %w", pipeline.Name, err))
 			span.AddEvent("pipeline.failed", trace.WithAttributes(

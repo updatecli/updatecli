@@ -17,10 +17,10 @@ import (
 
 func (y *Yaml) goYamlPathTarget(valueToWrite string, resultTarget *result.Target, dryRun bool) (notChanged int, ignoredFiles int, err error) {
 	var buf bytes.Buffer
-	e := yaml.NewEncoder(&buf)
-	defer e.Close()
+	e := yaml.NewEncoder(&buf) //nolint:forbidigo // yamlpath only accepts go.yaml.in/yaml/v3 nodes
+	defer e.Close()            //nolint:forbidigo // yamlpath only accepts go.yaml.in/yaml/v3 nodes
 
-	e.SetIndent(2)
+	e.SetIndent(2) //nolint:forbidigo // yamlpath only accepts go.yaml.in/yaml/v3 nodes
 
 	keys := y.spec.getKeys()
 
@@ -33,11 +33,11 @@ func (y *Yaml) goYamlPathTarget(valueToWrite string, resultTarget *result.Target
 		fileKeysProcessed := 0
 
 		// Decode the file into one or more YAML document nodes
-		var docs []*yaml.Node
-		dec := yaml.NewDecoder(strings.NewReader(y.files[filePath].content))
+		var docs []*yaml.Node                                                //nolint:forbidigo // yamlpath only accepts go.yaml.in/yaml/v3 nodes
+		dec := yaml.NewDecoder(strings.NewReader(y.files[filePath].content)) //nolint:forbidigo // yamlpath only accepts go.yaml.in/yaml/v3 nodes
 		for {
-			var doc yaml.Node
-			if derr := dec.Decode(&doc); derr != nil {
+			var doc yaml.Node                          //nolint:forbidigo // yamlpath only accepts go.yaml.in/yaml/v3 nodes
+			if derr := dec.Decode(&doc); derr != nil { //nolint:forbidigo // yamlpath only accepts go.yaml.in/yaml/v3 nodes
 				if derr == io.EOF {
 					break
 				}
@@ -88,7 +88,7 @@ func (y *Yaml) goYamlPathTarget(valueToWrite string, resultTarget *result.Target
 				var oldVersion string
 				var notChangedNode int
 				for _, node := range nodes {
-					oldVersion = node.Value
+					oldVersion = node.Value //nolint:forbidigo // yamlpath only accepts go.yaml.in/yaml/v3 nodes
 					resultTarget.Information = oldVersion
 
 					if oldVersion == valueToWrite {
@@ -102,9 +102,9 @@ func (y *Yaml) goYamlPathTarget(valueToWrite string, resultTarget *result.Target
 						continue
 					}
 
-					node.Value = valueToWrite
+					node.Value = valueToWrite //nolint:forbidigo // yamlpath only accepts go.yaml.in/yaml/v3 nodes
 					if y.spec.Comment != "" {
-						node.LineComment = y.spec.Comment
+						node.LineComment = y.spec.Comment //nolint:forbidigo // yamlpath only accepts go.yaml.in/yaml/v3 nodes
 					}
 
 					if _, ok := resultTargetFilesMap[filePath]; !ok {
@@ -166,7 +166,7 @@ func (y *Yaml) goYamlPathTarget(valueToWrite string, resultTarget *result.Target
 		// Re-encode all documents back into buffer
 		buf = bytes.Buffer{}
 		for _, doc := range docs {
-			if err := e.Encode(doc); err != nil {
+			if err := e.Encode(doc); err != nil { //nolint:forbidigo // yamlpath only accepts go.yaml.in/yaml/v3 nodes
 				return 0, ignoredFiles, fmt.Errorf("unable to marshal the yaml file: %w", err)
 			}
 		}

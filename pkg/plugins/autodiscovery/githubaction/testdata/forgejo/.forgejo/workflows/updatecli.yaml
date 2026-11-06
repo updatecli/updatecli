@@ -1,0 +1,11 @@
+name: updatecli
+on:
+  push:
+    branches: [main]
+
+jobs:
+  updatecli:
+    runs-on: docker
+    steps:
+      - name: "Checkout"
+        uses: "https://git.example.org/actions/checkout@v4"

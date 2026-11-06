@@ -29,7 +29,7 @@ func (g *Gitea) Condition(ctx context.Context, source string, scm scm.ScmHandler
 	}
 
 	if len(releases) == 0 {
-		return false, "", fmt.Errorf("no Gitea release found")
+		return false, "no Gitea release found", nil
 	}
 
 	for _, r := range releases {

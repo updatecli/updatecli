@@ -1,12 +1,15 @@
 package maven
 
 import (
+	"errors"
 	"fmt"
 	"path"
 
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/updatecli/updatecli/pkg/core/log"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/vulnerability"
 )
 
 /*
@@ -61,6 +64,52 @@ type Spec struct {
 	//   ```
 	//
 	VersionFilter version.Filter `yaml:",omitempty"`
+	// "age" defines the minimum or maximum age of a release to be considered valid.
+	//
+	// remark:
+	//   * it accepts a duration string, such as "24h", "7d", "3w" or "1y".
+	//   * it is propagated to the generated maven sources.
+	//   * a release's age is the Last-Modified date the repository reports for its pom file.
+	//     On a repository reporting none, the generated sources are skipped.
+	//   * when the most recent release is too recent, an older one is suggested, which can be lower
+	//     than the version in pom.xml. Combine it with a "versionfilter" to bound the versions.
+	//   * security fixes don't wait for it, see "vulnerability".
+	//
+	// example:
+	//   ```
+	//   age:
+	//     minimum: 7d
+	//   ```
+	//
+	Age age.Spec `yaml:",omitempty"`
+	// "vulnerability" switches the autodiscovery to security updates, based on the OSV database (https://osv.dev).
+	//
+	// A Maven artifact is only updated when its current version has known vulnerabilities,
+	// to the lowest version without any.
+	//
+	// remark:
+	//   * only security updates are generated, routine updates require a separate manifest.
+	//   * it cannot be combined with:
+	//     * "age", as a fixed version is suggested as soon as it is known.
+	//     * "versionfilter", as the version is the lowest one without known vulnerabilities.
+	//   * dependencies, managed dependencies and the parent pom are covered.
+	//   * the current version is the version written in pom.xml. When it is a property, such as
+	//     "${log4j.version}", defined in the same pom.xml, the property is updated instead.
+	//     Artifacts relying on a property defined elsewhere, or on a version range, such as "[1.0,2.0)", are ignored.
+	//   * several artifacts sharing a property each get their own manifest updating that property.
+	//     Once one manifest updates it, the others are skipped, and the next run checks the new version.
+	//   * BOM imports are ignored, as OSV knows about the artifacts they manage, not the BOM itself.
+	//   * labels, such as "security", are set on the action used by the manifest.
+	//
+	// example:
+	//   ```
+	//   vulnerability:
+	//     minseverity: high
+	//     ignore:
+	//       - CVE-2021-44228
+	//   ```
+	//
+	Vulnerability *vulnerability.Spec `yaml:",omitempty"`
 }
 
 // Maven hold all information needed to generate helm manifest.
@@ -96,6 +145,14 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Maven, error) {
 		return Maven{}, fmt.Errorf("invalid only spec: %w", err)
 	}
 
+	if err := s.validateVulnerability(); err != nil {
+		return Maven{}, err
+	}
+
+	if err := s.Age.Validate(); err != nil {
+		return Maven{}, fmt.Errorf("wrong age spec: %w", err)
+	}
+
 	dir := rootDir
 	if path.IsAbs(s.RootDir) {
 		if scmID != "" {
@@ -123,6 +180,27 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Maven, error) {
 		versionFilter: newFilter,
 	}, nil
 
+}
+
+// validateVulnerability checks the vulnerability spec and the settings it can't be combined with.
+func (s Spec) validateVulnerability() error {
+	if s.Vulnerability == nil {
+		return nil
+	}
+
+	if err := s.Vulnerability.Validate(); err != nil {
+		return fmt.Errorf("invalid vulnerability spec: %w", err)
+	}
+
+	if !s.Age.IsZero() {
+		return errors.New("age can't be combined with vulnerability, use a separate manifest for routine updates")
+	}
+
+	if !s.VersionFilter.IsZero() {
+		return errors.New("versionfilter can't be combined with vulnerability, the version is the lowest one without known vulnerabilities")
+	}
+
+	return nil
 }
 
 func (m Maven) DiscoverManifests() ([][]byte, error) {

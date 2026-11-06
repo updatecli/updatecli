@@ -11,7 +11,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/log"
 
 	"github.com/updatecli/updatecli/pkg/core/compose"
-	goyaml "go.yaml.in/yaml/v3"
+	goyaml "go.yaml.in/yaml/v4"
 )
 
 // searchUpdatecliComposeFiles search, recursively, for every Updatecli compose files starting from a root directory.

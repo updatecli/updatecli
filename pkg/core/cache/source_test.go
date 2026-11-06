@@ -9,7 +9,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/shell"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/shell/success/exitcode"
-	"go.yaml.in/yaml/v3"
+	"go.yaml.in/yaml/v4"
 )
 
 func TestNewSourceCache(t *testing.T) {

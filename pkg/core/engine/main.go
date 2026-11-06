@@ -2,6 +2,7 @@ package engine
 
 import (
 	"errors"
+	"sync"
 
 	"github.com/updatecli/updatecli/pkg/core/cache"
 	"github.com/updatecli/updatecli/pkg/core/config"
@@ -25,6 +26,8 @@ type Engine struct {
 	tracer         trace.Tracer
 	sourceCache    *cache.SourceCache
 	publishErr     error
+	// failedSCMs maps the directory of each scm that couldn't be cloned to its error
+	failedSCMs *sync.Map
 }
 
 // SetTracer configures the tracer used for OTel instrumentation across all engine operations.

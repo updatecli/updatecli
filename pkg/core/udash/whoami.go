@@ -2,6 +2,7 @@ package udash
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -59,12 +60,49 @@ func callWhoami(apiURL, token string) (*whoamiResponse, int, error) {
 	return &data, resp.StatusCode, nil
 }
 
+// errNoAuthentication is returned by whoami when the service runs without
+// authentication, so it has no use for a token.
+var errNoAuthentication = errors.New("service does not require authentication")
+
+// checkAPIBase makes sure a Udash API is served at apiURL.
+//
+// The /whoami answers are only meaningful once the base is known to be right: on a
+// wrong base, such as the unversioned <url>/api, every route answers 404, which would
+// otherwise read as a service without authentication. The probed route exists
+// whatever the authentication mode, so only a 404 means the base is wrong.
+func checkAPIBase(apiURL string) error {
+	u, err := url.Parse(setDefaultHTTPSScheme(apiURL))
+	if err != nil {
+		return fmt.Errorf("parsing API URL %q: %w", apiURL, err)
+	}
+
+	probe := u.JoinPath("pipeline", "scms")
+	probe.RawQuery = url.Values{"limit": []string{"1"}}.Encode()
+
+	req, err := http.NewRequest("GET", probe.String(), nil)
+	if err != nil {
+		return err
+	}
+
+	resp, err := httpclient.NewRetryClient().Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusNotFound {
+		return fmt.Errorf("no Udash API found at %s, Udash serves it under <url>%s: %w", apiURL, DefaultAPIPath, ErrAPINotFound)
+	}
+
+	return nil
+}
+
 // requiresToken reports whether a Udash service authenticates its callers.
 //
 // The endpoint only exists when a mode is configured, so its absence means the
 // service is open and Updatecli has nothing to log in with. Without this check
 // the default deployment, which runs without authentication, could not be
-// registered at all.
+// registered at all. The API base must have been checked with checkAPIBase first.
 func requiresToken(apiURL string) (bool, error) {
 	_, status, err := callWhoami(apiURL, "")
 	if err != nil {
@@ -75,6 +113,7 @@ func requiresToken(apiURL string) (bool, error) {
 }
 
 // whoami validates a token against a Udash API and returns the identity behind it.
+// The API base must have been checked with checkAPIBase first.
 func whoami(apiURL, token string) (*whoamiResponse, error) {
 	identity, status, err := callWhoami(apiURL, token)
 	if err != nil {
@@ -85,9 +124,8 @@ func whoami(apiURL, token string) (*whoamiResponse, error) {
 	case status == http.StatusUnauthorized || status == http.StatusForbidden:
 		return nil, fmt.Errorf("token rejected by %s", apiURL)
 	case status == http.StatusNotFound:
-		// An older Udash has no /whoami endpoint: accept the token rather than
-		// refusing to log in to a service which may otherwise work fine.
-		return &whoamiResponse{}, nil
+		// /whoami only exists when an authentication mode is configured.
+		return nil, errNoAuthentication
 	case status >= 400:
 		return nil, fmt.Errorf("unexpected response %d from %s", status, apiURL)
 	}

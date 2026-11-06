@@ -18,7 +18,8 @@ func (e *Engine) runActions(ctx context.Context) error {
 
 	for id := range e.Pipelines {
 		pipeline := e.Pipelines[id]
-		if len(pipeline.Actions) > 0 {
+		// A pipeline rejected because its scm failed to clone never ran, so it must not publish or merge anything.
+		if len(pipeline.Actions) > 0 && e.failedSCMError(pipeline) == nil {
 			stopCapture := pipeline.CaptureConsoleOutput()
 			if err := pipeline.RunActions(ctx); err != nil {
 				errs = append(errs, err.Error())
@@ -31,20 +32,11 @@ func (e *Engine) runActions(ctx context.Context) error {
 
 	log.Infof("Cleaning up actions published by previous executions")
 
-	// Pipelines sharing a working branch share one pull request, so it's cleaned once,
-	// and never when any of them published to it during this execution.
-	handled := map[string]bool{}
-	for _, pipeline := range e.Pipelines {
-		for _, a := range pipeline.Actions {
-			if key := a.CleanupKey(); a.Published && key != "" {
-				handled[key] = true
-			}
-		}
-	}
+	handled := e.handledCleanupKeys()
 
 	for id := range e.Pipelines {
 		pipeline := e.Pipelines[id]
-		if len(pipeline.Actions) > 0 {
+		if len(pipeline.Actions) > 0 && e.failedSCMError(pipeline) == nil {
 			stopCapture := pipeline.CaptureConsoleOutput()
 			if err := pipeline.RunCleanActions(ctx, handled); err != nil {
 				errs = append(errs, "cleaning: "+err.Error())
@@ -62,4 +54,25 @@ func (e *Engine) runActions(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+/*
+handledCleanupKeys returns the cleanup keys of the actions which must not be cleaned up.
+
+Pipelines sharing a working branch share one pull request, so it's cleaned once,
+and never when any of them published to it during this execution.
+It's also kept when one of them was rejected because its scm failed to clone,
+as Updatecli doesn't know what that pipeline would have published.
+*/
+func (e *Engine) handledCleanupKeys() map[string]bool {
+	handled := map[string]bool{}
+	for _, pipeline := range e.Pipelines {
+		rejected := e.failedSCMError(pipeline) != nil
+		for _, a := range pipeline.Actions {
+			if key := a.CleanupKey(); key != "" && (a.Published || rejected) {
+				handled[key] = true
+			}
+		}
+	}
+	return handled
 }

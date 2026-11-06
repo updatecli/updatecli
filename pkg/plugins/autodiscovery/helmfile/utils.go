@@ -8,7 +8,7 @@ import (
 
 	"github.com/updatecli/updatecli/pkg/core/log"
 
-	goyaml "go.yaml.in/yaml/v3"
+	goyaml "go.yaml.in/yaml/v4"
 )
 
 // searchHelmfileFiles search, recursively, for every Helmfile files starting from a root directory.
