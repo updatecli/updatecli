@@ -47,7 +47,7 @@ var (
 
 func init() {
 	udashLoginCmd.Flags().StringVar(&udashAccessToken, "token", "", "token defines the Udash API token. Without it, Updatecli prompts for one")
-	udashLoginCmd.Flags().StringVar(&udashEndpointAPIURL, "api-url", "", "api-url defines the udash API URL")
+	udashLoginCmd.Flags().StringVar(&udashEndpointAPIURL, "api-url", "", "api-url defines the udash API URL, <url>/api/v1beta1 by default")
 
 	udashCmd.AddCommand(udashLoginCmd)
 }

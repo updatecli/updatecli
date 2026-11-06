@@ -1,0 +1,10 @@
+✔ Bump golang:
+	Source:
+		✔ [alpha] Get alpha
+		      * Repository: https://github.com/updatecli/updatecli.git (branch: updatecli_main_abc)
+		✔ [latest] Get latest golang
+	Condition:
+		✔ [exists] Check image
+	Target:
+		✔ [gomod] Update go.mod
+		      * Repository: https://github.com/updatecli/updatecli.git (branch: updatecli_main_abc)

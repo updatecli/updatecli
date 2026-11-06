@@ -46,14 +46,14 @@ func TestPublishSuccess(t *testing.T) {
 	clearUdashEnv(t)
 
 	server, seen := publishServer(t, http.StatusCreated, `{"ReportID":"abc"}`)
-	t.Setenv(DefaultEnvVariableAPIURL, server.URL+"/api")
+	t.Setenv(DefaultEnvVariableAPIURL, server.URL+DefaultAPIPath)
 	t.Setenv(DefaultEnvVariableURL, "https://udash.example.com")
 	t.Setenv(DefaultEnvVariableAccessToken, "udash_pat_valid")
 
 	r := reports.Report{Name: "pipeline"}
 	require.NoError(t, Publish(&r))
 
-	assert.Equal(t, "/api/pipeline/reports", seen.path)
+	assert.Equal(t, "/api/v1beta1/pipeline/reports", seen.path)
 	assert.Equal(t, "Bearer udash_pat_valid", seen.authorization)
 	assert.Contains(t, seen.body, "UpdatecliVersion")
 	assert.Equal(t, "https://udash.example.com/pipeline/reports/abc", r.ReportURL)
@@ -85,6 +85,13 @@ func TestPublishErrors(t *testing.T) {
 			status:   http.StatusUnauthorized,
 			body:     "invalid token",
 			contains: []string{"401", "invalid token", "updatecli udash login https://udash.example.com"},
+		},
+		{
+			// An API URL stored before Udash versioned its API.
+			name:     "unversioned API URL",
+			status:   http.StatusNotFound,
+			body:     "404 page not found",
+			contains: []string{"404", "udash API not found", DefaultAPIPath, "updatecli udash login https://udash.example.com", DefaultEnvVariableAPIURL},
 		},
 		{
 			name:     "server error",
@@ -158,7 +165,7 @@ func TestIsConfigured(t *testing.T) {
 	t.Run("environment variable", func(t *testing.T) {
 		useTempConfigDir(t)
 		clearUdashEnv(t)
-		t.Setenv(DefaultEnvVariableAPIURL, "https://udash.example.com/api")
+		t.Setenv(DefaultEnvVariableAPIURL, "https://udash.example.com/api/v1beta1")
 		assert.True(t, IsConfigured())
 	})
 
@@ -167,7 +174,7 @@ func TestIsConfigured(t *testing.T) {
 		clearUdashEnv(t)
 		require.NoError(t, updateConfigFile(authData{
 			URL: "https://udash.example.com",
-			API: "https://udash.example.com/api",
+			API: "https://udash.example.com/api/v1beta1",
 		}))
 		assert.True(t, IsConfigured())
 	})

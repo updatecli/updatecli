@@ -1,0 +1,9 @@
+✗ Broken pipeline:
+broken
+	Error: something went wrong
+
+⚠ Reported pipeline:
+	Target:
+		⚠ [file] Update file
+
+	=> Report available on https://udash.example.com/pipeline/reports/abc

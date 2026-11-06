@@ -202,19 +202,15 @@ func (p *Pipeline) RunActions(ctx context.Context) error {
 		if p.Options.Target.DryRun || !p.Options.Target.Push {
 			if len(attentionTargetIDs) > 0 {
 				log.Infof("An action of kind %q is expected.", action.Config.Kind)
-
-				actionDebugOutput := fmt.Sprintf("The expected action would have the following information:\n\n##Title:\n%s\n##Report:\n\n%s\n\n=====\n",
-					action.Title,
-					action.Report.String())
-				log.Debugf("%s", strings.ReplaceAll(actionDebugOutput, "\n", "\n\t|\t"))
 			}
 
-			actionOutput := fmt.Sprintf("The expected action would have the following information:\n\n##Title:\n%s\n\n\n##Report:\n\n%s\n\n=====\n",
+			actionOutput := fmt.Sprintf("The expected action would have the following information:\n\n## Title:\n%s\n\n\n## Report:\n\n%s\n\n=====\n",
 				action.Title,
 				action.Report.String())
 			log.Debugf("%s", strings.ReplaceAll(actionOutput, "\n", "\n\t|\t"))
 
 			action.Report.Description = actionOutput
+			action.Report.DryRun = true
 
 			p.Report.Actions[id] = &action.Report
 
