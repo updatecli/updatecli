@@ -10,8 +10,18 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
+// isLocalCheckout is scm.IsLocal: inside Target, the scm parameter hides the scm package.
+var isLocalCheckout = scm.IsLocal
+
 // Target creates and pushes a git tag based on the SCM configuration
 func (gb *GitBranch) Target(_ context.Context, source string, scm scm.ScmHandler, pathResolver pathresolver.Resolver, dryRun bool, resultTarget *result.Target) (err error) {
+
+	// Creating a branch checks out the repository with force, which would discard the
+	// uncommitted work of a local checkout, then pushes it. The branch is only reported.
+	if scm != nil && isLocalCheckout(scm) {
+		log.Infof("running against the local checkout %q: the git branch is reported, not created", scm.GetDirectory())
+		dryRun = true
+	}
 
 	if gb.spec.Path != "" && scm != nil {
 		log.Warningf("Path setting value %q is overriding the scm configuration (value %q)",

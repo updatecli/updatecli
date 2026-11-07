@@ -17,6 +17,9 @@ import (
 func (e *Engine) Prepare(ctx context.Context) (err error) {
 	log.Title("Prepare")
 
+	// Applied before any pipeline is built, so the engine never tries to push either.
+	e.enforceLocalScm()
+
 	tracer := e.tracer
 	ctx, span := tracer.Start(ctx, "updatecli.prepare")
 	defer span.End()
