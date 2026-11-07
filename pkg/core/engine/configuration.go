@@ -12,7 +12,6 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/config"
 	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/pipeline"
-	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/reports"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/azuredevops"
@@ -63,8 +62,6 @@ func (e *Engine) detectManifests(i int) bool {
 }
 
 // LoadConfigurations loads every configuration files and initialize the pipelines
-//
-//nolint:funlen
 func (e *Engine) LoadConfigurations() error {
 	// Checked once here so that a bad command line value is reported once, instead of once
 	// for every manifest it is merged into.
@@ -142,14 +139,9 @@ func (e *Engine) LoadConfigurations() error {
 				continue
 			}
 
-			// Load special scm configuration such as githubsearch that can generate multiple scm configurations
-			// the generated scm configured must be ready before Updatecli start doing any operation such as
-			// clone git repositories, using the autoddiscovery to detect potienial updates.
-			// for id, loadedConfiguration := range loadedConfigurations {
+			// Expand search SCMs before initializing pipelines.
+			// Appended configurations may contain other searches, so visit them too.
 			for i := 0; i < len(loadedConfigurations); i++ {
-
-				loadedConfiguration := loadedConfigurations[i]
-
 				for scmID, scmConfig := range loadedConfigurations[i].Spec.SCMs {
 					switch scmConfig.Kind {
 					case githubsearch.Kind:
@@ -166,30 +158,11 @@ func (e *Engine) LoadConfigurations() error {
 							return fmt.Errorf("unable to generate scm specs for githubsearch scm %q: %w", scmID, err)
 						}
 
-						if len(discoveredSCms) == 0 {
-							// We need to trigger an error if the github search didn't discovered SCMs
-							// Otherwise Updatecli will not know how to handle this kind of scm later.
-							return fmt.Errorf("no scm discovered for githubsearch scm %q", scmID)
+						loadedConfigurations, err = expandSCMConfigurations(loadedConfigurations, i, scmID, github.Kind, discoveredSCms)
+						if err != nil {
+							return err
 						}
-
-						scmConfig.Kind = github.Kind
-						scmConfig.Spec = discoveredSCms[0]
-
-						loadedConfigurations[i].Spec.SCMs[scmID] = scmConfig
-
 						for _, spec := range discoveredSCms[1:] {
-							newPipeline := loadedConfiguration
-
-							newPipeline.Spec.SCMs = make(map[string]scm.Config, len(loadedConfiguration.Spec.SCMs))
-							maps.Copy(newPipeline.Spec.SCMs, loadedConfiguration.Spec.SCMs)
-
-							newSCM := newPipeline.Spec.SCMs[scmID]
-							newSCM.Kind = github.Kind
-							newSCM.Spec = spec
-
-							newPipeline.Spec.SCMs[scmID] = newSCM
-
-							loadedConfigurations = append(loadedConfigurations, newPipeline)
 							log.Debugf("githubsearch scm %q added new pipeline configuration for repository %s/%s", scmID, spec.Owner, spec.Repository)
 						}
 
@@ -207,28 +180,9 @@ func (e *Engine) LoadConfigurations() error {
 							return fmt.Errorf("unable to generate scm specs for azuredevopssearch scm %q: %w", scmID, err)
 						}
 
-						if len(discoveredAzureDevOpsSCms) == 0 {
-							return fmt.Errorf("no scm discovered for azuredevopssearch scm %q", scmID)
-						}
-
-						scmConfig.Kind = azuredevops.Kind
-						scmConfig.Spec = discoveredAzureDevOpsSCms[0]
-
-						loadedConfigurations[i].Spec.SCMs[scmID] = scmConfig
-
-						for _, spec := range discoveredAzureDevOpsSCms[1:] {
-							newPipeline := loadedConfiguration
-
-							newPipeline.Spec.SCMs = make(map[string]scm.Config, len(loadedConfiguration.Spec.SCMs))
-							maps.Copy(newPipeline.Spec.SCMs, loadedConfiguration.Spec.SCMs)
-
-							newSCM := newPipeline.Spec.SCMs[scmID]
-							newSCM.Kind = azuredevops.Kind
-							newSCM.Spec = spec
-
-							newPipeline.Spec.SCMs[scmID] = newSCM
-
-							loadedConfigurations = append(loadedConfigurations, newPipeline)
+						loadedConfigurations, err = expandSCMConfigurations(loadedConfigurations, i, scmID, azuredevops.Kind, discoveredAzureDevOpsSCms)
+						if err != nil {
+							return err
 						}
 
 					case gitlabsearch.Kind:
@@ -245,30 +199,11 @@ func (e *Engine) LoadConfigurations() error {
 							return fmt.Errorf("unable to generate scm specs for gitlabsearch scm %q: %w", scmID, err)
 						}
 
-						if len(discoveredGitLabSCms) == 0 {
-							// We need to trigger an error if the gitlab search did not discover any SCMs.
-							// Otherwise Updatecli will not know how to handle this kind of scm later.
-							return fmt.Errorf("no scm discovered for gitlabsearch scm %q", scmID)
+						loadedConfigurations, err = expandSCMConfigurations(loadedConfigurations, i, scmID, gitlab.Kind, discoveredGitLabSCms)
+						if err != nil {
+							return err
 						}
-
-						scmConfig.Kind = gitlab.Kind
-						scmConfig.Spec = discoveredGitLabSCms[0]
-
-						loadedConfigurations[i].Spec.SCMs[scmID] = scmConfig
-
 						for _, spec := range discoveredGitLabSCms[1:] {
-							newPipeline := loadedConfiguration
-
-							newPipeline.Spec.SCMs = make(map[string]scm.Config, len(loadedConfiguration.Spec.SCMs))
-							maps.Copy(newPipeline.Spec.SCMs, loadedConfiguration.Spec.SCMs)
-
-							newSCM := newPipeline.Spec.SCMs[scmID]
-							newSCM.Kind = gitlab.Kind
-							newSCM.Spec = spec
-
-							newPipeline.Spec.SCMs[scmID] = newSCM
-
-							loadedConfigurations = append(loadedConfigurations, newPipeline)
 							log.Debugf("gitlabsearch scm %q added new pipeline configuration for repository %s/%s", scmID, spec.Owner, spec.Repository)
 						}
 					}
@@ -322,4 +257,36 @@ func (e *Engine) LoadConfigurations() error {
 	}
 
 	return nil
+}
+
+// expandSCMConfigurations replaces a search SCM and copies its pipeline for each additional result.
+func expandSCMConfigurations[T any](configurations []config.Config, index int, scmID, kind string, specs []T) ([]config.Config, error) {
+	configuration := configurations[index]
+	if len(specs) == 0 {
+		return configurations, fmt.Errorf("no scm discovered for %s scm %q", configuration.Spec.SCMs[scmID].Kind, scmID)
+	}
+
+	for i, spec := range specs {
+		newPipeline := configuration
+		// Config.Update renders into these maps, so each pipeline needs its own.
+		newPipeline.Spec.SCMs = maps.Clone(configuration.Spec.SCMs)
+		newPipeline.Spec.Sources = maps.Clone(configuration.Spec.Sources)
+		newPipeline.Spec.Conditions = maps.Clone(configuration.Spec.Conditions)
+		newPipeline.Spec.Targets = maps.Clone(configuration.Spec.Targets)
+		newPipeline.Spec.Actions = maps.Clone(configuration.Spec.Actions)
+		newPipeline.Spec.PullRequests = maps.Clone(configuration.Spec.PullRequests)
+		newPipeline.Spec.Labels = maps.Clone(configuration.Spec.Labels)
+		newPipeline.Spec.AutoDiscovery.Crawlers = maps.Clone(configuration.Spec.AutoDiscovery.Crawlers)
+		newSCM := newPipeline.Spec.SCMs[scmID]
+		newSCM.Kind = kind
+		newSCM.Spec = spec
+		newPipeline.Spec.SCMs[scmID] = newSCM
+
+		if i == 0 {
+			configurations[index] = newPipeline
+		} else {
+			configurations = append(configurations, newPipeline)
+		}
+	}
+	return configurations, nil
 }
