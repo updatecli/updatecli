@@ -538,7 +538,7 @@ func (g *GoGit) checkout(username, password, basedBranch, newBranch, gitReposito
 		if _, pulled := pulledBranches.Load(pulledKey); pulled {
 			err = git.NoErrAlreadyUpToDate
 		} else {
-			err = worktree.Pull(&pullOptions)
+			err = pullCheckedOutBranch(repository, worktree, &pullOptions, newBranch)
 		}
 		if b.String() != "" {
 			log.Debugln(b.String())
@@ -576,6 +576,69 @@ func (g *GoGit) checkout(username, password, basedBranch, newBranch, gitReposito
 	}
 
 	return nil
+}
+
+// pullCheckedOutBranch pulls the checked out branch from the remote.
+//
+// Without a reference name, a pull resolves the remote HEAD, which is the default branch of the
+// remote. A single branch clone doesn't fetch the default branch if it isn't the configured one,
+// so the pull would fail to find its latest commit. Single branch clones therefore pull the
+// branch itself, temporarily added to the fetched references, like Pull does.
+// Regular clones keep pulling the remote HEAD.
+func pullCheckedOutBranch(repository *git.Repository, worktree *git.Worktree, pullOptions *git.PullOptions, branch string) error {
+	singleBranch, err := isSingleBranchClone(repository)
+	if err != nil {
+		return err
+	}
+
+	if !singleBranch {
+		return worktree.Pull(pullOptions)
+	}
+
+	restore, err := trackBranch(repository, branch)
+	if err != nil {
+		return err
+	}
+	defer restore()
+
+	// go-git fetches the references configured on the remote, which now include the branch,
+	// then resolves this reference name among them.
+	pullOptions.ReferenceName = plumbing.NewBranchReferenceName(branch)
+
+	err = worktree.Pull(pullOptions)
+	if errors.Is(err, git.NoMatchingRefSpecError{}) {
+		// A fetched reference doesn't exist on the remote and go-git aborts the whole fetch.
+		// This is usually the branch, which was never pushed, so there is nothing to pull.
+		// It can also be the configured branch of the clone if it was deleted from the remote.
+		log.Warningf("a reference to fetch for branch %q doesn't exist on the remote, nothing to pull: %s", branch, err)
+		return git.NoErrAlreadyUpToDate
+	}
+	return err
+}
+
+// isSingleBranchClone reports whether the origin remote only fetches specific branches,
+// as configured by a clone done with "singleBranch", instead of every branch.
+//
+// It's detected from the repository configuration rather than from the scm configuration, so it
+// also matches a repository cloned by a previous execution.
+func isSingleBranchClone(repository *git.Repository) (bool, error) {
+	cfg, err := repository.Config()
+	if err != nil {
+		return false, fmt.Errorf("getting repository configuration: %w", err)
+	}
+
+	remote, ok := cfg.Remotes[DefaultRemoteReferenceName]
+	if !ok {
+		return false, nil
+	}
+
+	for _, refSpec := range remote.Fetch {
+		if refSpec.IsWildcard() {
+			return false, nil
+		}
+	}
+
+	return len(remote.Fetch) > 0, nil
 }
 
 func (g *GoGit) IsForceReset() bool {
@@ -718,6 +781,12 @@ func (g GoGit) Clone(username, password, URL, workingDir string, withSubmodules 
 
 		if !isAuthEmpty(&auth) {
 			pullOptions.Auth = &auth
+		}
+
+		// Without a reference name, the remote HEAD is pulled, but a single branch clone
+		// doesn't fetch it if the configured branch isn't the default branch of the remote.
+		if singleBranch && branch != "" {
+			pullOptions.ReferenceName = plumbing.NewBranchReferenceName(branch)
 		}
 
 		err = w.Pull(&pullOptions)
