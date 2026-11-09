@@ -483,3 +483,44 @@ func TestPushSCMCommitsKeepsCheckoutFailures(t *testing.T) {
 		})
 	}
 }
+
+// TestPushSCMCommitsRecoveredTargetKeepsBranchReset checks that a target whose
+// push failed, and which is recovered by the branch publication pass pushing
+// its working branch, reports what that push did to the branch: actions rely
+// on BranchReset to know that the pull request content was reset.
+func TestPushSCMCommitsRecoveredTargetKeepsBranchReset(t *testing.T) {
+	refLockErr := errors.New("cannot lock ref 'refs/heads/updatecli_main': reference already exists")
+
+	mockScm := mockPushScm{
+		url:                  "https://github.com/updatecli/updatecli.git",
+		workingBranch:        "updatecli_main",
+		targetBranch:         "main",
+		remoteBranchUpToDate: false,
+		// The target push fails, then the branch publication push succeeds
+		// and reports a branch reset.
+		pushErrors: []error{refLockErr, nil},
+	}
+
+	var scmHandler scm.ScmHandler = &mockScm
+	targetResult := &result.Target{Result: result.ATTENTION}
+
+	e := Engine{Pipelines: []*pipeline.Pipeline{
+		{
+			Name: "test",
+			Targets: map[string]target.Target{
+				"default": {
+					Scm:    &scmHandler,
+					ToPush: true,
+					Result: targetResult,
+				},
+			},
+		},
+	}}
+
+	gotErr := e.pushSCMCommits()
+
+	require.NoError(t, gotErr)
+	assert.Equal(t, 2, mockScm.pushCounter)
+	assert.Equal(t, result.ATTENTION, targetResult.Result)
+	assert.True(t, targetResult.Scm.BranchReset)
+}

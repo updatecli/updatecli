@@ -148,13 +148,21 @@ func (e *Engine) pushSCMCommits() error {
 	// cleared by an actual push and never by finding the remote branch up to date.
 	checkoutFailed := map[string]map[string]bool{}
 
-	clearPushFailure := func(url, branch string) {
+	// clearPushFailure forgets the failures of a working branch and restores its
+	// failed targets. When the recovery comes from a push, pushed is true and
+	// branchReset is what that push reported: the restored results must carry
+	// it, as actions rely on it to know that the working branch was reset,
+	// while the saved results predate any push of this execution.
+	clearPushFailure := func(url, branch string, pushed, branchReset bool) {
 		delete(pushErrs[url], branch)
 		delete(checkoutFailed[url], branch)
 
 		for _, failed := range pushFailedTargets[url][branch] {
 			if failed.result != nil {
 				*failed.result = failed.before
+				if pushed {
+					failed.result.Scm.BranchReset = branchReset
+				}
 			}
 		}
 		delete(pushFailedTargets[url], branch)
@@ -235,7 +243,7 @@ func (e *Engine) pushSCMCommits() error {
 				}
 				// The shared working branch has been pushed, so errors reported
 				// by previous targets for that branch are no longer relevant.
-				clearPushFailure(url, branch)
+				clearPushFailure(url, branch, true, target.Result.Scm.BranchReset)
 				log.Debugf("Pushed to URL: %q on branch: %q", redact.URL(url), branch)
 
 				if _, ok := changedSCM[url]; !ok {
@@ -266,7 +274,7 @@ func (e *Engine) pushSCMCommits() error {
 
 			stopCapture := e.captureSCMConsoleOutput(url, branch)
 			branchInconclusive := slices.Contains(inconclusiveSCM[url], branch)
-			pushed, err := pushSCMBranch(*scmHandlerPtr, url, branch, branchInconclusive)
+			pushed, branchReset, err := pushSCMBranch(*scmHandlerPtr, url, branch, branchInconclusive)
 			switch {
 			case err != nil:
 				log.Errorf("%s", err)
@@ -277,7 +285,7 @@ func (e *Engine) pushSCMCommits() error {
 				// The working branch has just been pushed, or the remote branch
 				// already contains the local commits, so earlier push errors for
 				// that branch are no longer relevant.
-				clearPushFailure(url, branch)
+				clearPushFailure(url, branch, pushed, branchReset)
 			}
 			stopCapture()
 		}
@@ -303,38 +311,39 @@ func (e *Engine) pushSCMCommits() error {
 }
 
 // pushSCMBranch pushes the commits of a working branch, unless one of its targets didn't run.
-// It reports whether a push was performed: false means the branch was found up to date,
-// or was not checked at all because it is inconclusive.
-func pushSCMBranch(scmHandler scm.ScmHandler, url, branch string, inconclusive bool) (pushed bool, err error) {
+// It reports whether a push was performed, false meaning the branch was found up to date
+// or was not checked at all because it is inconclusive, and, when it was, whether the
+// push reset the working branch.
+func pushSCMBranch(scmHandler scm.ScmHandler, url, branch string, inconclusive bool) (pushed, branchReset bool, err error) {
 	if inconclusive {
 		log.Debugf("Not publishing branch %q to %q as at least one of its target(s) didn't run during this execution\n", branch, redact.URL(url))
-		return false, nil
+		return false, false, nil
 	}
 
 	isRemoteBranchUpToDate, err := scmHandler.IsRemoteBranchUpToDate()
 	if err != nil {
-		return false, fmt.Errorf("checking remote branch status for %q on branch %q: %s", redact.URL(url), branch, err.Error())
+		return false, false, fmt.Errorf("checking remote branch status for %q on branch %q: %s", redact.URL(url), branch, err.Error())
 	}
 
 	if isRemoteBranchUpToDate {
 		log.Debugf("No changes to push to %q on branch %q\n", redact.URL(url), branch)
-		return false, nil
+		return false, false, nil
 	}
 
 	log.Infof("\n\u26A0 According to the git history, some commits must be pushed to %q %q\n", redact.URL(url), branch)
 
 	err = scmHandler.Checkout()
 	if err != nil {
-		return false, fmt.Errorf("checking out git repository: %v", err)
+		return false, false, fmt.Errorf("checking out git repository: %v", err)
 	}
 
 	isPushed, err := scmHandler.Push()
 	if err != nil {
-		return false, fmt.Errorf("pushing commits to %q on branch %q: %s", redact.URL(url), branch, err.Error())
+		return false, false, fmt.Errorf("pushing commits to %q on branch %q: %s", redact.URL(url), branch, err.Error())
 	}
 	log.Debugf("Pushed changes to %q on branch %q: %t\n", redact.URL(url), branch, isPushed)
 
-	return true, nil
+	return true, isPushed, nil
 }
 
 // pruneSCMBranches removes all working branches from the SCM.
