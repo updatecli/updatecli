@@ -171,3 +171,54 @@ func TestSingleBranchNonDefaultBaseBranchLocalOnlyWorkingBranch(t *testing.T) {
 	assert.Equal(t, local, hash, "the local commit of the working branch should be kept")
 	assert.Equal(t, refSpecs, remoteFetchRefSpecs(t, dir), "remote configuration should be restored after checkout")
 }
+
+// TestSingleBranchNonDefaultBaseBranchPull checks that Pull, used after a commit is created
+// remotely with the GitHub API, works with a single branch clone of a branch that isn't the
+// default branch of the remote.
+func TestSingleBranchNonDefaultBaseBranchPull(t *testing.T) {
+	one := 1
+
+	tests := []struct {
+		name  string
+		depth *int
+	}{
+		{name: "full history"},
+		{name: "depth 1", depth: &one},
+	}
+
+	for _, tt := range tests {
+		for _, existsRemotely := range []bool{false, true} {
+			name := tt.name + "/working branch does not exist yet"
+			if existsRemotely {
+				name = tt.name + "/working branch already exists"
+			}
+
+			t.Run(name, func(t *testing.T) {
+				r := newNonDefaultBaseRemote(t)
+				if existsRemotely {
+					gitCmd(t, r.seed, "checkout", "-q", baseBranch)
+					r.commit(workingBranch, "wb-1")
+				}
+
+				dir := filepath.Join(t.TempDir(), "clone")
+				g := &GoGit{}
+
+				require.NoError(t, g.Clone("", "", r.url, dir, nil, tt.depth, baseBranch, true))
+				require.NoError(t, g.Checkout("", "", baseBranch, workingBranch, dir, true, tt.depth))
+
+				// Another actor, the GitHub API, creates a commit on the working branch.
+				gitCmd(t, r.seed, "checkout", "-q", baseBranch)
+				r.commit(workingBranch, "wb-api")
+
+				refSpecs := remoteFetchRefSpecs(t, dir)
+
+				require.NoError(t, g.Pull("", "", dir, workingBranch, true, true, tt.depth))
+
+				hash, err := g.GetLatestCommitHash(dir)
+				require.NoError(t, err)
+				assert.Equal(t, r.head(workingBranch), hash, "the commit created remotely should be pulled")
+				assert.Equal(t, refSpecs, remoteFetchRefSpecs(t, dir), "remote configuration should be restored after pull")
+			})
+		}
+	}
+}
