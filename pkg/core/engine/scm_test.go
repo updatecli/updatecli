@@ -30,7 +30,12 @@ type mockPushScm struct {
 	// A nil entry makes the corresponding Push call succeed.
 	pushErrors []error
 
+	// checkoutErrors holds the error returned by each successive Checkout call, if any.
+	// A nil entry makes the corresponding Checkout call succeed.
+	checkoutErrors []error
+
 	pushCounter               int
+	checkoutCounter           int
 	cleanWorkingBranchCounter int
 }
 
@@ -52,6 +57,10 @@ func (m *mockPushScm) IsRemoteBranchUpToDate() (bool, error) {
 }
 
 func (m *mockPushScm) Checkout() error {
+	m.checkoutCounter++
+	if m.checkoutCounter <= len(m.checkoutErrors) {
+		return m.checkoutErrors[m.checkoutCounter-1]
+	}
 	return nil
 }
 
@@ -400,6 +409,75 @@ func TestPushSCMCommitsRecoversFromPushErrors(t *testing.T) {
 					assert.Equal(t, result.SUCCESS, targetResult.Result)
 					assert.Empty(t, targetResult.Description)
 				}
+			}
+			assert.Equal(t, tt.expectedPushCounter, mockScm.pushCounter)
+		})
+	}
+}
+
+// TestPushSCMCommitsKeepsCheckoutFailures checks that a checkout failure is not
+// cleared because the remote branch is reported up to date. The remote branch
+// status check also reports a branch as up to date when the local working
+// branch does not exist, which a failed checkout may leave behind, so only an
+// actual push proves that the target's changes have been published.
+func TestPushSCMCommitsKeepsCheckoutFailures(t *testing.T) {
+	checkoutErr := errors.New("creating working branch \"updatecli_main\"")
+
+	testdata := []struct {
+		name                 string
+		remoteBranchUpToDate bool
+		expectedError        bool
+		expectedPushCounter  int
+	}{
+		{
+			name:                 "a checkout failure is kept when the remote branch is reported up to date",
+			remoteBranchUpToDate: true,
+			expectedError:        true,
+			expectedPushCounter:  0,
+		},
+		{
+			name:                 "a checkout failure is cleared when the branch is pushed",
+			remoteBranchUpToDate: false,
+			expectedError:        false,
+			expectedPushCounter:  1,
+		},
+	}
+
+	for _, tt := range testdata {
+		t.Run(tt.name, func(t *testing.T) {
+			mockScm := mockPushScm{
+				url:                  "https://github.com/updatecli/updatecli.git",
+				workingBranch:        "updatecli_main",
+				targetBranch:         "main",
+				remoteBranchUpToDate: tt.remoteBranchUpToDate,
+				checkoutErrors:       []error{checkoutErr},
+			}
+
+			var scmHandler scm.ScmHandler = &mockScm
+			targetResult := &result.Target{Result: result.ATTENTION}
+
+			e := Engine{Pipelines: []*pipeline.Pipeline{
+				{
+					Name: "test",
+					Targets: map[string]target.Target{
+						"default": {
+							Scm:    &scmHandler,
+							ToPush: true,
+							Result: targetResult,
+						},
+					},
+				},
+			}}
+
+			gotErr := e.pushSCMCommits()
+
+			if tt.expectedError {
+				require.Error(t, gotErr)
+				assert.Contains(t, gotErr.Error(), checkoutErr.Error())
+				assert.Equal(t, result.FAILURE, targetResult.Result)
+			} else {
+				require.NoError(t, gotErr)
+				assert.Equal(t, result.ATTENTION, targetResult.Result)
 			}
 			assert.Equal(t, tt.expectedPushCounter, mockScm.pushCounter)
 		})
