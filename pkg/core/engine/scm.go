@@ -3,6 +3,7 @@ package engine
 import (
 	"fmt"
 	"io"
+	"maps"
 	"slices"
 	"strings"
 	"sync"
@@ -112,12 +113,15 @@ func (e *Engine) pushSCMCommits() error {
 	// reported while pushing one target must be cleared as soon as another
 	// target, or the branch publication below, manages to push that branch or
 	// finds it up to date.
-	pushErrs := map[string]map[string]string{}
+	// Every message is kept, not only the last one: two targets sharing a working
+	// branch may fail for different reasons, and dropping the earlier cause would
+	// hide it from the returned error.
+	pushErrs := map[string]map[string][]string{}
 	recordPushErr := func(url, branch, msg string) {
 		if _, ok := pushErrs[url]; !ok {
-			pushErrs[url] = map[string]string{}
+			pushErrs[url] = map[string][]string{}
 		}
-		pushErrs[url][branch] = msg
+		pushErrs[url][branch] = append(pushErrs[url][branch], msg)
 	}
 
 	// pushFailedTargets records, per repository URL and working branch, the
@@ -235,7 +239,8 @@ func (e *Engine) pushSCMCommits() error {
 				resultBeforePush := *target.Result
 				err = target.PushCommits()
 				if err != nil {
-					msg := fmt.Sprintf("pushing commits for target %q: %s", target.Config.Name, err.Error())
+					// PushCommits already names the target in its error.
+					msg := err.Error()
 					log.Errorf("%s", msg)
 					recordPushErr(url, branch, msg)
 					recordFailedTarget(url, branch, target.Result, resultBeforePush)
@@ -264,9 +269,10 @@ func (e *Engine) pushSCMCommits() error {
 		log.Infof("Pushed changes to %d of %d SCM repositories", countPushedScms, countScms)
 	}
 
-	for url := range allScm {
-		for branch := range allScm[url] {
-
+	// Repositories and branches are visited in a stable order, so that the
+	// output and the returned error do not depend on map iteration.
+	for _, url := range slices.Sorted(maps.Keys(allScm)) {
+		for _, branch := range slices.Sorted(maps.Keys(allScm[url])) {
 			scmHandlerPtr := allScm[url][branch]
 			if scmHandlerPtr == nil {
 				continue
@@ -293,11 +299,9 @@ func (e *Engine) pushSCMCommits() error {
 
 	// Only keep push errors that no later push of the same working branch managed
 	// to recover from.
-	for url := range allScm {
-		for branch := range allScm[url] {
-			if msg, ok := pushErrs[url][branch]; ok {
-				errs = append(errs, msg)
-			}
+	for _, url := range slices.Sorted(maps.Keys(allScm)) {
+		for _, branch := range slices.Sorted(maps.Keys(allScm[url])) {
+			errs = append(errs, pushErrs[url][branch]...)
 		}
 	}
 

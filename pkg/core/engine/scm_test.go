@@ -4,12 +4,14 @@ import (
 	"context"
 	"errors"
 
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/core/pipeline"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/action"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/resource"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/target"
 	"github.com/updatecli/updatecli/pkg/core/reports"
@@ -523,4 +525,84 @@ func TestPushSCMCommitsRecoveredTargetKeepsBranchReset(t *testing.T) {
 	assert.Equal(t, 2, mockScm.pushCounter)
 	assert.Equal(t, result.ATTENTION, targetResult.Result)
 	assert.True(t, targetResult.Scm.BranchReset)
+}
+
+// TestPushSCMCommitsReportsFailuresInStableOrder checks that every push
+// failure left is reported, ordered by repository, and that the target is only
+// named once per message.
+func TestPushSCMCommitsReportsFailuresInStableOrder(t *testing.T) {
+	refLockErr := errors.New("cannot lock ref 'refs/heads/updatecli_main': reference already exists")
+
+	for range 20 {
+		pipelines := []*pipeline.Pipeline{}
+		for _, url := range []string{"https://example.com/c.git", "https://example.com/a.git", "https://example.com/b.git"} {
+			var handler scm.ScmHandler = &mockPushScm{
+				url:           url,
+				workingBranch: "updatecli_main",
+				targetBranch:  "main",
+				pushErrors:    []error{refLockErr, refLockErr},
+			}
+			pipelines = append(pipelines, &pipeline.Pipeline{
+				Name: url,
+				Targets: map[string]target.Target{
+					"default": {
+						Config: target.Config{ResourceConfig: resource.ResourceConfig{Name: url}},
+						Scm:    &handler,
+						ToPush: true,
+						Result: &result.Target{Result: result.ATTENTION},
+					},
+				},
+			})
+		}
+
+		e := Engine{Pipelines: pipelines}
+
+		gotErr := e.pushSCMCommits()
+
+		require.Error(t, gotErr)
+		assert.Equal(t, 3, strings.Count(gotErr.Error(), "pushing commits for target"))
+
+		a := strings.Index(gotErr.Error(), "a.git")
+		b := strings.Index(gotErr.Error(), "b.git")
+		c := strings.Index(gotErr.Error(), "c.git")
+		assert.True(t, a < b && b < c, "failures must be ordered by repository: %s", gotErr)
+	}
+}
+
+// TestPushSCMCommitsKeepsEveryFailureMessage checks that two targets sharing a
+// working branch and failing for different reasons are both reported.
+func TestPushSCMCommitsKeepsEveryFailureMessage(t *testing.T) {
+	checkoutErr := errors.New("creating working branch")
+	refLockErr := errors.New("cannot lock ref 'refs/heads/updatecli_main': reference already exists")
+
+	mockScm := mockPushScm{
+		url:            "https://github.com/updatecli/updatecli.git",
+		workingBranch:  "updatecli_main",
+		targetBranch:   "main",
+		checkoutErrors: []error{checkoutErr},
+		pushErrors:     []error{refLockErr, refLockErr},
+	}
+
+	var scmHandler scm.ScmHandler = &mockScm
+
+	e := Engine{Pipelines: []*pipeline.Pipeline{
+		{
+			Name: "first",
+			Targets: map[string]target.Target{
+				"default": {Scm: &scmHandler, ToPush: true, Result: &result.Target{Result: result.ATTENTION}},
+			},
+		},
+		{
+			Name: "second",
+			Targets: map[string]target.Target{
+				"default": {Scm: &scmHandler, ToPush: true, Result: &result.Target{Result: result.ATTENTION}},
+			},
+		},
+	}}
+
+	gotErr := e.pushSCMCommits()
+
+	require.Error(t, gotErr)
+	assert.Contains(t, gotErr.Error(), checkoutErr.Error())
+	assert.Contains(t, gotErr.Error(), refLockErr.Error())
 }
