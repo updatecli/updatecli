@@ -251,6 +251,9 @@ func (e *Engine) pushSCMCommits() error {
 					msg := err.Error()
 					log.Errorf("%s", msg)
 					recordPushFailure(pushKey, msg, target.Result, resultBeforePush)
+					// PushCommits already marks the target failed, but the
+					// result must not depend on how it reports the error.
+					target.Result.Result = result.FAILURE
 					continue
 				}
 				// The shared working branch has been pushed, so errors reported
