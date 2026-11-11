@@ -3,6 +3,4 @@ repos:
     rev: main
     hooks:
       - id: updatecli-validate
-        language: golang
-        additional_dependencies: []
         args: [--strict, --config, updatecli/updatecli.d/, --values, updatecli/values.d/scm.yaml]
