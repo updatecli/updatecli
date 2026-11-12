@@ -24,6 +24,11 @@ func New() (ci CIEngine, err error) {
 		return GitLabCi{}, nil
 	}
 
+	// Gitea Actions also exposes GitHub Actions variables so it must be detected first
+	if os.Getenv("GITEA_ACTIONS") != "" {
+		return GiteaActions{}, nil
+	}
+
 	if os.Getenv("GITHUB_ACTION") != "" {
 		return GitHubActions{}, nil
 	}

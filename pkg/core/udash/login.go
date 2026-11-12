@@ -1,6 +1,7 @@
 package udash
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -13,6 +14,9 @@ import (
 
 // TokenPagePath is the Udash frontend path where a user manages their API tokens.
 const TokenPagePath = "/profile/tokens"
+
+// DefaultAPIPath is where Udash serves its versioned API, relative to the service URL.
+const DefaultAPIPath = "/api/v1beta1"
 
 // Login stores an Udash API token in the Updatecli configuration file.
 //
@@ -44,9 +48,15 @@ func Login(udashEndpoint, udashAPIEndpoint, token string) error {
 	udashEndpoint = setDefaultHTTPSScheme(udashEndpoint)
 
 	if udashAPIEndpoint == "" {
-		udashAPIEndpoint = strings.TrimSuffix(udashEndpoint, "/") + "/api"
+		udashAPIEndpoint = strings.TrimSuffix(udashEndpoint, "/") + DefaultAPIPath
 	}
 	udashAPIEndpoint = setDefaultHTTPSScheme(udashAPIEndpoint)
+
+	// Without it, a wrong base answering 404 everywhere would pass for a service
+	// without authentication, and every publish would fail later on.
+	if err := checkAPIBase(udashAPIEndpoint); err != nil {
+		return fmt.Errorf("reaching %s: %w", udashAPIEndpoint, err)
+	}
 
 	if token == "" {
 		// A service running without authentication has no token to ask for, and
@@ -72,7 +82,14 @@ func Login(udashEndpoint, udashAPIEndpoint, token string) error {
 
 	// Fail here rather than silently later on, when a pipeline tries to publish.
 	identity, err := whoami(udashAPIEndpoint, token)
-	if err != nil {
+	switch {
+	case errors.Is(err, errNoAuthentication):
+		if token != "" {
+			log.Infof("%s does not require authentication, the token is not stored", udashEndpoint)
+			token = ""
+		}
+		identity = &whoamiResponse{}
+	case err != nil:
 		return fmt.Errorf("validating token: %w", err)
 	}
 
