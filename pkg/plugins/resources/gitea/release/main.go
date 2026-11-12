@@ -223,15 +223,39 @@ func (g *Gitea) SearchReleases(ctx context.Context, releaseAge age.Spec) ([]stri
 // published release tag, so that callers can tell a release still cooling down from a
 // version filter matching no release.
 func (g *Gitea) searchReleases(ctx context.Context, releaseAge age.Spec) ([]string, []string, error) {
+	releases, err := g.listReleases(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	results := []string{}
 	published := []string{}
-	page := 0
+	// The API returns newest first. Reverse all pages together so version filters
+	// receive the oldest releases first.
+	for i := len(releases) - 1; i >= 0; i-- {
+		if releases[i].Draft {
+			continue
+		}
+		published = append(published, releases[i].Tag)
+		date := releaseDate(releases[i])
+		if !releaseAge.Matches(date) {
+			log.Debugf("ignoring release %q, dated %s, as outside of the age window", releases[i].Tag, date)
+			continue
+		}
+		results = append(results, releases[i].Tag)
+	}
+
+	return results, published, nil
+}
+
+// listReleases retrieves release metadata without applying source filters.
+func (g *Gitea) listReleases(ctx context.Context) ([]*scm.Release, error) {
+	var results []*scm.Release
+	page := 1
 	for {
-		// Timeout api query after 30sec
-		ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
-		defer cancel()
+		pageCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
 		releases, resp, err := g.client.Releases.List(
-			ctx,
+			pageCtx,
 			strings.Join([]string{g.spec.Owner, g.spec.Repository}, "/"),
 			scm.ReleaseListOptions{
 				Page:   page,
@@ -240,36 +264,17 @@ func (g *Gitea) searchReleases(ctx context.Context, releaseAge age.Spec) ([]stri
 				Closed: true,
 			},
 		)
-
+		cancel()
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 
-		if resp.Status > 400 {
-			log.Debugf("Gitea Api Response:\n%+v", resp)
+		results = append(results, releases...)
+		if resp.Page.Next == 0 {
+			return results, nil
 		}
-
-		for i := len(releases) - 1; i >= 0; i-- {
-			if releases[i].Draft {
-				continue
-			}
-			published = append(published, releases[i].Tag)
-			date := releaseDate(releases[i])
-			if !releaseAge.Matches(date) {
-				log.Debugf("ignoring release %q, dated %s, as outside of the age window", releases[i].Tag, date)
-				continue
-			}
-			results = append(results, releases[i].Tag)
-		}
-
-		if page >= resp.Page.Last {
-			break
-		}
-		page++
-
+		page = resp.Page.Next
 	}
-
-	return results, published, nil
 }
 
 // releaseDate returns the date at which a release became public.
