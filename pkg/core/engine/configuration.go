@@ -184,6 +184,9 @@ func (e *Engine) LoadConfigurations() error {
 						if err != nil {
 							return err
 						}
+						for _, spec := range discoveredAzureDevOpsSCms[1:] {
+							log.Debugf("azuredevopssearch scm %q added new pipeline configuration for repository %s/%s", scmID, spec.Project, spec.Repository)
+						}
 
 					case gitlabsearch.Kind:
 
