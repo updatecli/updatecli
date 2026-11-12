@@ -6,12 +6,15 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/core/config"
 	"github.com/updatecli/updatecli/pkg/core/engine/manifest"
+	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/gitlab"
 )
@@ -239,6 +242,58 @@ targets:
 				assert.Equal(t, fmt.Sprintf("copy-%d", i), c.Spec.SCMs["first"].Kind)
 			}
 		})
+	}
+}
+
+func TestExpandSCMConfigurationsClonesEveryMap(t *testing.T) {
+	original := config.Config{}
+	fillMaps(reflect.ValueOf(&original.Spec).Elem())
+	original.Spec.SCMs = map[string]scm.Config{"search": {Kind: "githubsearch"}}
+
+	got, err := expandSCMConfigurations([]config.Config{original}, 0, "search", "github", []string{"a", "b"})
+	require.NoError(t, err)
+	require.Len(t, got, 2)
+
+	for _, c := range got {
+		assertNoSharedMaps(t, reflect.ValueOf(original.Spec), reflect.ValueOf(c.Spec), "Spec")
+	}
+}
+
+// fillMaps sets every nil map to an empty one so each map has an identity to compare.
+func fillMaps(v reflect.Value) {
+	for i := 0; i < v.NumField(); i++ {
+		f := v.Field(i)
+		if !f.CanSet() {
+			continue
+		}
+		switch f.Kind() {
+		case reflect.Map:
+			if f.IsNil() {
+				f.Set(reflect.MakeMap(f.Type()))
+			}
+		case reflect.Struct:
+			fillMaps(f)
+		}
+	}
+}
+
+// assertNoSharedMaps fails when an expanded configuration reuses a map of the original.
+func assertNoSharedMaps(t *testing.T, original, expanded reflect.Value, path string) {
+	t.Helper()
+	for i := 0; i < original.NumField(); i++ {
+		field := original.Type().Field(i)
+		if !field.IsExported() {
+			continue
+		}
+		o, e := original.Field(i), expanded.Field(i)
+		name := path + "." + field.Name
+		switch o.Kind() {
+		case reflect.Map:
+			assert.NotEqual(t, o.Pointer(), e.Pointer(),
+				"%s is shared between expanded pipelines, clone it in expandSCMConfigurations", name)
+		case reflect.Struct:
+			assertNoSharedMaps(t, o, e, name)
+		}
 	}
 }
 
