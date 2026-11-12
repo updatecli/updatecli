@@ -141,8 +141,8 @@ func (e *Engine) LoadConfigurations() error {
 
 			// Expand search SCMs before initializing pipelines.
 			// Appended configurations may contain other searches, so visit them too.
-			for i := 0; i < len(loadedConfigurations); i++ {
-				for scmID, scmConfig := range loadedConfigurations[i].Spec.SCMs {
+			for j := 0; j < len(loadedConfigurations); j++ {
+				for scmID, scmConfig := range loadedConfigurations[j].Spec.SCMs {
 					switch scmConfig.Kind {
 					case githubsearch.Kind:
 
@@ -158,7 +158,7 @@ func (e *Engine) LoadConfigurations() error {
 							return fmt.Errorf("unable to generate scm specs for githubsearch scm %q: %w", scmID, err)
 						}
 
-						loadedConfigurations, err = expandSCMConfigurations(loadedConfigurations, i, scmID, github.Kind, discoveredSCms)
+						loadedConfigurations, err = expandSCMConfigurations(loadedConfigurations, j, scmID, github.Kind, discoveredSCms)
 						if err != nil {
 							return err
 						}
@@ -180,7 +180,7 @@ func (e *Engine) LoadConfigurations() error {
 							return fmt.Errorf("unable to generate scm specs for azuredevopssearch scm %q: %w", scmID, err)
 						}
 
-						loadedConfigurations, err = expandSCMConfigurations(loadedConfigurations, i, scmID, azuredevops.Kind, discoveredAzureDevOpsSCms)
+						loadedConfigurations, err = expandSCMConfigurations(loadedConfigurations, j, scmID, azuredevops.Kind, discoveredAzureDevOpsSCms)
 						if err != nil {
 							return err
 						}
@@ -202,7 +202,7 @@ func (e *Engine) LoadConfigurations() error {
 							return fmt.Errorf("unable to generate scm specs for gitlabsearch scm %q: %w", scmID, err)
 						}
 
-						loadedConfigurations, err = expandSCMConfigurations(loadedConfigurations, i, scmID, gitlab.Kind, discoveredGitLabSCms)
+						loadedConfigurations, err = expandSCMConfigurations(loadedConfigurations, j, scmID, gitlab.Kind, discoveredGitLabSCms)
 						if err != nil {
 							return err
 						}
