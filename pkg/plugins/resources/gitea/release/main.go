@@ -215,18 +215,46 @@ func New(spec interface{}) (*Gitea, error) {
 // SearchReleases retrieves the release tags from a remote gitea repository,
 // keeping only the ones published inside the provided age window.
 func (g *Gitea) SearchReleases(ctx context.Context, releaseAge age.Spec) ([]string, error) {
+	releases, err := g.listReleases(ctx)
+	if err != nil {
+		return nil, err
+	}
 
 	results := []string{}
 	// Tracks whether the repository publishes releases at all, so that a running
 	// cooldown isn't reported as a repository without any release.
 	foundRelease := false
-	page := 0
+	// The API returns newest first. Reverse all pages together so version filters
+	// receive the oldest releases first.
+	for i := len(releases) - 1; i >= 0; i-- {
+		if releases[i].Draft {
+			continue
+		}
+		foundRelease = true
+		date := releaseDate(releases[i])
+		if !releaseAge.Matches(date) {
+			log.Debugf("ignoring release %q, dated %s, as outside of the age window", releases[i].Tag, date)
+			continue
+		}
+		results = append(results, releases[i].Tag)
+	}
+
+	// No releases match the age filter. Skip this source.
+	if foundRelease && len(results) == 0 {
+		return nil, fmt.Errorf("%w for the Gitea releases of %s/%s", age.ErrNoVersionMatchingAge, g.spec.Owner, g.spec.Repository)
+	}
+
+	return results, nil
+}
+
+// listReleases retrieves release metadata without applying source filters.
+func (g *Gitea) listReleases(ctx context.Context) ([]*scm.Release, error) {
+	var results []*scm.Release
+	page := 1
 	for {
-		// Timeout api query after 30sec
-		ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
-		defer cancel()
+		pageCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
 		releases, resp, err := g.client.Releases.List(
-			ctx,
+			pageCtx,
 			strings.Join([]string{g.spec.Owner, g.spec.Repository}, "/"),
 			scm.ReleaseListOptions{
 				Page:   page,
@@ -235,46 +263,17 @@ func (g *Gitea) SearchReleases(ctx context.Context, releaseAge age.Spec) ([]stri
 				Closed: true,
 			},
 		)
-
+		cancel()
 		if err != nil {
 			return nil, err
 		}
 
-		if resp.Status > 400 {
-			log.Debugf("Gitea Api Response:\n%+v", resp)
+		results = append(results, releases...)
+		if resp.Page.Next == 0 {
+			return results, nil
 		}
-
-		for i := len(releases) - 1; i >= 0; i-- {
-			if releases[i].Draft {
-				continue
-			}
-			foundRelease = true
-			date := releaseDate(releases[i])
-			if !releaseAge.Matches(date) {
-				log.Debugf("ignoring release %q, dated %s, as outside of the age window", releases[i].Tag, date)
-				continue
-			}
-			results = append(results, releases[i].Tag)
-		}
-
-		if page >= resp.Page.Last {
-			break
-		}
-		page++
-
+		page = resp.Page.Next
 	}
-
-	/*
-		The repository does publish releases but the age filter discarded every one of
-		them, which means the release we would have returned is still cooling down.
-		That's not a lookup failure, so the sentinel lets the caller skip rather than
-		fail.
-	*/
-	if foundRelease && len(results) == 0 {
-		return nil, fmt.Errorf("%w for the Gitea releases of %s/%s", age.ErrNoVersionMatchingAge, g.spec.Owner, g.spec.Repository)
-	}
-
-	return results, nil
 }
 
 // releaseDate returns the date at which a release became public.
