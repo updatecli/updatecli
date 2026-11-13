@@ -2,6 +2,7 @@ package gitgeneric
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"errors"
 	"fmt"
 	"path/filepath"
@@ -9,6 +10,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode/utf8"
 
 	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/scms/git/sign"
@@ -896,8 +898,9 @@ func (g GoGit) Push(username string, password string, workingDir string, force b
 	return false, err
 }
 
-// SanitizeBranchName replace wrong character in the branch name
+// SanitizeBranchName replaces unsupported characters in the branch name.
 func (g GoGit) SanitizeBranchName(branch string) string {
+	original := branch
 	removedCharacter := []string{
 		":", "=", "+", "$", "&", "#", "!", "@", "*", " ",
 	}
@@ -915,11 +918,20 @@ func (g GoGit) SanitizeBranchName(branch string) string {
 
 	branch = strings.TrimPrefix(branch, "/")
 
-	if len(branch) > 255 {
-		return branch[0:255]
+	if branch == original && len(branch) <= 255 {
+		return branch
 	}
 
-	return branch
+	// Hash the original name to distinguish branches that sanitize to the same name.
+	suffix := fmt.Sprintf("_%x", sha256.Sum256([]byte(original)))
+	limit := 255 - len(suffix)
+	if len(branch) > limit {
+		for limit > 0 && !utf8.RuneStart(branch[limit]) {
+			limit--
+		}
+		branch = branch[:limit]
+	}
+	return branch + suffix
 }
 
 // TagHashes returns a list of the commit hashes for git tags ordered by creation time
