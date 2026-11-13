@@ -43,7 +43,7 @@ func getTeamID(ctx context.Context, c client.Client, org string, team string, re
 			log.Debugln(rateLimit)
 			if retry < client.MaxRetry {
 				log.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
-				rateLimit.Pause()
+				rateLimit.Pause(ctx)
 				return getTeamID(ctx, c, org, team, retry+1)
 			}
 			return "", errors.New(ErrAPIRateLimitExceededFinalAttempt)

@@ -93,7 +93,7 @@ func (g *Github) getRepositoryLabels(ctx context.Context, retry int) ([]reposito
 				log.Debugln(rateLimit)
 				if retry < client.MaxRetry {
 					log.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
-					rateLimit.Pause()
+					rateLimit.Pause(ctx)
 					return g.getRepositoryLabels(ctx, retry+1)
 				}
 				return nil, errors.New(ErrAPIRateLimitExceededFinalAttempt)

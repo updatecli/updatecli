@@ -482,7 +482,7 @@ func (g *Github) queryRepository(ctx context.Context, sourceBranch string, worki
 		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
 			if retry < client.MaxRetry {
 				log.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
-				rateLimit.Pause()
+				rateLimit.Pause(ctx)
 				return g.queryRepository(ctx, sourceBranch, workingBranch, retry+1)
 			}
 			return nil, errors.New(ErrAPIRateLimitExceededFinalAttempt)
@@ -547,7 +547,7 @@ func (g *Github) queryRepository(ctx context.Context, sourceBranch string, worki
 		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
 			if retry < client.MaxRetry {
 				log.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
-				query.RateLimit.Pause()
+				query.RateLimit.Pause(ctx)
 				return g.queryRepository(ctx, sourceBranch, workingBranch, retry+1)
 			}
 			return nil, errors.New(ErrAPIRateLimitExceededFinalAttempt)
@@ -591,7 +591,7 @@ func (g *Github) queryHeadOid(ctx context.Context, workingBranch string, retry i
 		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
 			if retry < client.MaxRetry {
 				log.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
-				rateLimit.Pause()
+				rateLimit.Pause(ctx)
 				return g.queryHeadOid(ctx, workingBranch, retry+1)
 			}
 			return nil, errors.New(ErrAPIRateLimitExceededFinalAttempt)
@@ -635,7 +635,7 @@ func (g *Github) queryHeadOid(ctx context.Context, workingBranch string, retry i
 		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
 			if retry < client.MaxRetry {
 				log.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
-				query.RateLimit.Pause()
+				query.RateLimit.Pause(ctx)
 				return g.queryHeadOid(ctx, workingBranch, retry+1)
 			}
 			return nil, errors.New(ErrAPIRateLimitExceededFinalAttempt)
@@ -679,7 +679,7 @@ func (g *Github) createBranch(ctx context.Context, branchName string, repository
 		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
 			if retry < client.MaxRetry {
 				log.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
-				rateLimit.Pause()
+				rateLimit.Pause(ctx)
 				return g.createBranch(ctx, branchName, repositoryId, headOid, retry+1)
 			}
 			return errors.New(ErrAPIRateLimitExceededFinalAttempt)

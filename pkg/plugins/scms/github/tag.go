@@ -90,7 +90,7 @@ func (g *Github) SearchTags(ctx context.Context, retry int) (tags []string, err 
 
 				if retry < client.MaxRetry {
 					log.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
-					rateLimit.Pause()
+					rateLimit.Pause(ctx)
 					return g.SearchTags(ctx, retry+1)
 				}
 				return nil, errors.New(ErrAPIRateLimitExceededFinalAttempt)

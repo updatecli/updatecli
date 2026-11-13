@@ -515,7 +515,7 @@ func (p *PullRequest) closePullRequest(ctx context.Context, retry int) error {
 			log.Debugln(rateLimit)
 			if retry < client.MaxRetry {
 				log.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
-				rateLimit.Pause()
+				rateLimit.Pause(ctx)
 				return p.closePullRequest(ctx, retry+1)
 			}
 			return errors.New(ErrAPIRateLimitExceededFinalAttempt)
@@ -583,7 +583,7 @@ func (p *PullRequest) updatePullRequest(ctx context.Context, retry int) error {
 			log.Debugln(rateLimit)
 			if retry < client.MaxRetry {
 				log.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
-				rateLimit.Pause()
+				rateLimit.Pause(ctx)
 				return p.updatePullRequest(ctx, retry+1)
 			}
 			return errors.New(ErrAPIRateLimitExceededFinalAttempt)
@@ -711,7 +711,7 @@ func (p *PullRequest) EnablePullRequestAutoMerge(ctx context.Context, retry int)
 			log.Debugln(rateLimit)
 			if retry < client.MaxRetry {
 				log.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
-				rateLimit.Pause()
+				rateLimit.Pause(ctx)
 				return p.EnablePullRequestAutoMerge(ctx, retry+1)
 			}
 			return errors.New(ErrAPIRateLimitExceededFinalAttempt)
@@ -767,7 +767,9 @@ func (p *PullRequest) EnablePullRequestAutoMerge(ctx context.Context, retry int)
 // The merge will fail if the pull request is not in a mergeable state (e.g. has unresolved conflicts or pending required checks).
 func (p *PullRequest) MergePullRequest(retry int) error {
 
-	rateLimit, err := queryRateLimit(p.gh.client, context.Background())
+	ctx := context.Background()
+
+	rateLimit, err := queryRateLimit(p.gh.client, ctx)
 	if err != nil {
 		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
 			if rateLimit != nil {
@@ -776,7 +778,7 @@ func (p *PullRequest) MergePullRequest(retry int) error {
 			if retry < client.MaxRetry {
 				log.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
 				if rateLimit != nil {
-					rateLimit.Pause()
+					rateLimit.Pause(ctx)
 				}
 				return p.MergePullRequest(retry + 1)
 			}
@@ -829,7 +831,7 @@ func (p *PullRequest) OpenPullRequest(ctx context.Context, retry int) error {
 			log.Debugln(rateLimit)
 			if retry < client.MaxRetry {
 				log.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
-				rateLimit.Pause()
+				rateLimit.Pause(ctx)
 				return p.OpenPullRequest(ctx, retry+1)
 			}
 			return errors.New(ErrAPIRateLimitExceededFinalAttempt)
@@ -947,7 +949,7 @@ func (p *PullRequest) isAutoMergedEnabledOnRepository(ctx context.Context, retry
 			log.Debugln(rateLimit)
 			if retry < client.MaxRetry {
 				log.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
-				rateLimit.Pause()
+				rateLimit.Pause(ctx)
 				return p.isAutoMergedEnabledOnRepository(ctx, retry+1)
 			}
 			return false, errors.New(ErrAPIRateLimitExceededFinalAttempt)
@@ -1029,7 +1031,7 @@ func (p *PullRequest) queryRemotePullRequest(ctx context.Context, retry int) (Pu
 			log.Debugln(rateLimit)
 			if retry < client.MaxRetry {
 				log.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
-				rateLimit.Pause()
+				rateLimit.Pause(ctx)
 				return p.queryRemotePullRequest(ctx, retry+1)
 			}
 			return PullRequestApi{}, errors.New(ErrAPIRateLimitExceededFinalAttempt)
@@ -1164,7 +1166,7 @@ func (p *PullRequest) GetPullRequestLabelsInformation(ctx context.Context, retry
 				log.Debugln(rateLimit)
 				if retry < client.MaxRetry {
 					log.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
-					rateLimit.Pause()
+					rateLimit.Pause(ctx)
 					return p.GetPullRequestLabelsInformation(ctx, retry+1)
 				}
 				return nil, errors.New(ErrAPIRateLimitExceededFinalAttempt)

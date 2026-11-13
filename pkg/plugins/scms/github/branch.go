@@ -51,7 +51,7 @@ func ListBranches(c client.Client, owner, repo string, retry int, ctx context.Co
 				log.Debugln(rateLimit)
 				if retry < client.MaxRetry {
 					log.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
-					rateLimit.Pause()
+					rateLimit.Pause(ctx)
 					return ListBranches(c, owner, repo, retry+1, ctx)
 				}
 				return nil, errors.New(ErrAPIRateLimitExceededFinalAttempt)

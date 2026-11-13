@@ -24,7 +24,7 @@ func (p *PullRequest) addComment(ctx context.Context, body string, retry int) er
 			log.Debugln(rateLimit)
 			if retry < client.MaxRetry {
 				log.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
-				rateLimit.Pause()
+				rateLimit.Pause(ctx)
 				return p.addComment(ctx, body, retry+1)
 			}
 			return errors.New(ErrAPIRateLimitExceededFinalAttempt)

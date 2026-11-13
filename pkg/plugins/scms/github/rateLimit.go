@@ -33,10 +33,11 @@ func (a RateLimit) String() string {
 		a.Cost, a.Remaining, a.ResetAt)
 }
 
-// Pause pauses the execution if the rate limit is reached until the reset time
-func (a RateLimit) Pause() {
+// Pause pauses the execution if the rate limit is reached until the reset time,
+// or until ctx is done. It does nothing when a is nil, as the reset time is unknown.
+func (a *RateLimit) Pause(ctx context.Context) {
 
-	if a.isEmpty() {
+	if a == nil || a.isEmpty() {
 		log.Debug("GitHub RateLimit is empty, skipping Pause()")
 		return
 	}
@@ -54,7 +55,12 @@ func (a RateLimit) Pause() {
 			int(sleepDuration.Minutes()),
 			resetAtTime.UTC().Format("2006-01-02 15:04:05 UTC"))
 
-		time.Sleep(sleepDuration)
+		timer := time.NewTimer(sleepDuration)
+		defer timer.Stop()
+		select {
+		case <-timer.C:
+		case <-ctx.Done():
+		}
 		return
 	}
 
@@ -68,16 +74,37 @@ func (a RateLimit) isEmpty() bool {
 }
 
 // queryRateLimit queries the GitHub API rate limit information
-func queryRateLimit(client client.Client, ctx context.Context) (*RateLimit, error) {
+func queryRateLimit(c client.Client, ctx context.Context) (*RateLimit, error) {
 
 	query := struct {
 		RateLimit RateLimit
 	}{}
 
-	err := client.Query(ctx, &query, nil)
+	err := c.Query(ctx, &query, nil)
 	if err != nil {
-		return nil, fmt.Errorf("querying GitHub API: %w", err)
+		// GitHub may refuse the rateLimit query too once the rate limit is
+		// exceeded, so fall back to the rate limit headers of that response.
+		return rateLimitFromHeaders(c), fmt.Errorf("querying GitHub API: %w", err)
 	}
 
 	return &query.RateLimit, nil
+}
+
+// rateLimitFromHeaders returns the rate limit GitHub sent in the headers of
+// the last response to c, or nil if c doesn't record them or saw none yet.
+func rateLimitFromHeaders(c client.Client) *RateLimit {
+	reporter, ok := c.(client.RateLimitReporter)
+	if !ok {
+		return nil
+	}
+
+	remaining, resetAt, ok := reporter.LastRateLimit()
+	if !ok {
+		return nil
+	}
+
+	return &RateLimit{
+		Remaining: remaining,
+		ResetAt:   resetAt.UTC().Format(time.RFC3339),
+	}
 }

@@ -126,7 +126,7 @@ func (g *Github) SearchReleases(ctx context.Context, releaseType ReleaseType, re
 
 				if retry < client.MaxRetry {
 					log.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
-					rateLimit.Pause()
+					rateLimit.Pause(ctx)
 					return g.SearchReleases(ctx, releaseType, retry+1)
 				}
 				return nil, errors.New(ErrAPIRateLimitExceededFinalAttempt)

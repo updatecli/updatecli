@@ -20,7 +20,7 @@ func (p *PullRequest) addPullrequestReviewers(ctx context.Context, prID string, 
 			log.Debugln(rateLimit)
 			if retry < client.MaxRetry {
 				log.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
-				rateLimit.Pause()
+				rateLimit.Pause(ctx)
 				return p.addPullrequestReviewers(ctx, prID, retry+1)
 			}
 			return errors.New(ErrAPIRateLimitExceededFinalAttempt)
