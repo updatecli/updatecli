@@ -2,6 +2,7 @@ package maven
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -349,6 +350,44 @@ func TestDiscoverManifestsSkipsVersionRanges(t *testing.T) {
 	for _, manifest := range manifests {
 		assert.NotContains(t, string(manifest), "commons-collections")
 	}
+}
+
+// TestDiscoverManifestsSkipsTemplateSyntax checks that values read from a pom.xml can't inject
+// Go template actions, as a generated manifest is executed as a template at runtime.
+func TestDiscoverManifestsSkipsTemplateSyntax(t *testing.T) {
+	maven, err := New(Spec{}, "testdata/templatesyntax", "", "")
+	require.NoError(t, err)
+
+	manifests, err := maven.DiscoverManifests()
+	require.NoError(t, err)
+
+	// Only log4j-core is left, the parent pom and the other dependencies contain template syntax
+	require.Len(t, manifests, 1)
+	assert.Contains(t, string(manifests[0]), "log4j-core")
+	assert.NotContains(t, string(manifests[0]), "{{ .Name }}")
+	assert.NotContains(t, string(manifests[0]), "pipeline")
+	// Only the repository URL with template syntax is dropped
+	assert.Contains(t, string(manifests[0]), "https://repo.example.com/maven2")
+	assert.NotContains(t, string(manifests[0]), "attacker.example.com")
+}
+
+// TestDiscoverManifestsSkipsTemplateSyntaxInPath checks that a pom.xml path can't inject Go
+// template actions either, as the manifest references it.
+func TestDiscoverManifestsSkipsTemplateSyntaxInPath(t *testing.T) {
+	pom, err := os.ReadFile("testdata/default/pom.xml")
+	require.NoError(t, err)
+
+	rootDir := t.TempDir()
+	pomDir := filepath.Join(rootDir, `{{ pipeline "Name" }}`)
+	require.NoError(t, os.MkdirAll(pomDir, 0o755))
+	require.NoError(t, os.WriteFile(filepath.Join(pomDir, "pom.xml"), pom, 0o600)) //nolint:gosec // G703 false positive: pomDir is under t.TempDir()
+
+	maven, err := New(Spec{}, rootDir, "", "")
+	require.NoError(t, err)
+
+	manifests, err := maven.DiscoverManifests()
+	require.NoError(t, err)
+	assert.Empty(t, manifests)
 }
 
 // TestDiscoverManifestsAgeCondition checks that a routine update waits for the current version to
