@@ -1,6 +1,7 @@
 package npm
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -146,4 +147,38 @@ func TestConvertVersionConstraintToVersion(t *testing.T) {
 			assert.Equal(t, d.expectedResult, gotResult)
 		})
 	}
+}
+
+func TestGetTargetCommandExactVersion(t *testing.T) {
+	// The yarn command depends on the installed npm version, so only the exact flag is checked for it
+	testdata := []struct {
+		name          string
+		cmd           string
+		exact         bool
+		expectedFlags []string
+		absentFlags   []string
+	}{
+		{name: "npm exact", cmd: npmIdentifier, exact: true, expectedFlags: []string{"--save-exact"}},
+		{name: "npm range", cmd: npmIdentifier, exact: false, absentFlags: []string{"--save-exact"}},
+		{name: "pnpm exact", cmd: "pnpm", exact: true, expectedFlags: []string{"--save-exact"}},
+		{name: "pnpm range", cmd: "pnpm", exact: false, absentFlags: []string{"--save-exact"}},
+		{name: "yarn range", cmd: "yarn", exact: false, absentFlags: []string{"--save-exact", "--exact"}},
+	}
+
+	for _, d := range testdata {
+		t.Run(d.name, func(t *testing.T) {
+			got := getTargetCommand(d.cmd, "axios", d.exact)
+			for _, flag := range d.expectedFlags {
+				assert.Contains(t, got, " "+flag+" ")
+			}
+			for _, flag := range d.absentFlags {
+				assert.NotContains(t, got, flag)
+			}
+		})
+	}
+
+	yarnCommand := getTargetCommand("yarn", "axios", true)
+	assert.True(t,
+		strings.Contains(yarnCommand, " --save-exact ") || strings.Contains(yarnCommand, " --exact "),
+		"yarn command %q must keep an exact version exact", yarnCommand)
 }
