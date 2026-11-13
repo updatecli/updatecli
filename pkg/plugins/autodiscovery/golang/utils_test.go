@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
@@ -247,13 +248,40 @@ func TestModuleVersionPattern(t *testing.T) {
 		version         string
 		expectedKind    string
 		expectedPattern string
+		allowDowngrade  bool
+		withoutAge      bool
 	}{
+		{
+			// Without an age filter, nothing holds back the newest versions, so the pattern is left as it was
+			name:            "release with patch pattern without age filter",
+			filter:          version.Filter{Kind: "semver", Pattern: "patch"},
+			version:         "v1.2.3",
+			withoutAge:      true,
+			expectedKind:    "semver",
+			expectedPattern: "1.2.x",
+		},
+		{
+			name:            "release with minor pattern allowing a downgrade",
+			filter:          version.Filter{Kind: "semver", Pattern: "minor"},
+			version:         "v1.2.3",
+			allowDowngrade:  true,
+			expectedKind:    "semver",
+			expectedPattern: "1.x",
+		},
+		{
+			name:            "pseudo version stays bounded when a downgrade is allowed",
+			filter:          version.Filter{Kind: "semver", Pattern: "minor"},
+			version:         pseudoVersion,
+			allowDowngrade:  true,
+			expectedKind:    "semver",
+			expectedPattern: ">=1.2.4-0.20230215024106-420ad0987b9b, 1.x.x-0",
+		},
 		{
 			name:            "release with patch pattern",
 			filter:          version.Filter{Kind: "semver", Pattern: "patch"},
 			version:         "v1.2.3",
 			expectedKind:    "semver",
-			expectedPattern: "1.2.x",
+			expectedPattern: ">=1.2.3, 1.2.x",
 		},
 		{
 			name:            "zero pseudo version with default pattern",
@@ -336,7 +364,15 @@ func TestModuleVersionPattern(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			g := Golang{versionFilter: tt.filter}
+			releaseAge := age.AutodiscoverySpec{Spec: age.Spec{Minimum: "7d"}, AllowDowngrade: &tt.allowDowngrade}
+			if tt.withoutAge {
+				releaseAge = age.AutodiscoverySpec{}
+			}
+
+			g := Golang{
+				versionFilter: tt.filter,
+				spec:          Spec{Age: releaseAge},
+			}
 
 			gotKind, gotPattern, err := g.moduleVersionPattern(tt.version)
 			require.NoError(t, err)

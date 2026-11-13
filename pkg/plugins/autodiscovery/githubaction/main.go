@@ -121,6 +121,10 @@ type Spec struct {
 	//
 	// remark:
 	//   * it accepts a duration string, such as "24h", "7d", "3w" or "1y".
+	//   * a semver reference such as "v4.2.1" is never updated to a lower version, unless the
+	//     "versionfilter" kind isn't semver, such as "latest". While every newer release is
+	//     too recent, the update is skipped. Set "allowdowngrade" to true to fall back to the
+	//     newest release old enough instead.
 	//   * the age filter is not applied to the Docker images referenced by a workflow.
 	//
 	// example:
@@ -132,7 +136,7 @@ type Spec struct {
 	//           minimum: '7d'
 	//   ```
 	//
-	Age age.Spec `yaml:",omitempty"`
+	Age age.AutodiscoverySpec `yaml:",omitempty"`
 	// "credentials" defines the credentials used to authenticate with each git provider, keyed by git provider domain.
 	//
 	// remark:

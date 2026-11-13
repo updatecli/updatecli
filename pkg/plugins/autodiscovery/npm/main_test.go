@@ -44,7 +44,7 @@ sources:
         minimum: '3d'
       versionfilter:
         kind: 'semver'
-        pattern: '1.0.0 || >1.0 < 2'
+        pattern: '1.2.6 || >1.2 < 2'
 targets:
   package-lock.json:
     name: 'Bump "axios" package version to {{ source "npm" }}'
@@ -71,10 +71,10 @@ targets:
 			rootDir: "testdata/npmlockfile",
 			spec: Spec{
 				IgnoreVersionConstraints: boolPtr(true),
-				Age: &age.Spec{
+				Age: &age.AutodiscoverySpec{Spec: age.Spec{
 					Minimum: "7d",
 					Maximum: "1y",
-				},
+				}},
 			},
 			expectedPipelines: []string{`name: 'Bump "axios" package version'
 sources:
@@ -88,7 +88,7 @@ sources:
         maximum: '1y'
       versionfilter:
         kind: 'semver'
-        pattern: '*'
+        pattern: '>=1.2.6'
 targets:
   package-lock.json:
     name: 'Bump "axios" package version to {{ source "npm" }}'
@@ -115,7 +115,7 @@ targets:
 			rootDir: "testdata/npmlockfile",
 			spec: Spec{
 				IgnoreVersionConstraints: boolPtr(true),
-				Age:                      &age.Spec{},
+				Age:                      &age.AutodiscoverySpec{},
 			},
 			expectedPipelines: []string{`name: 'Bump "axios" package version'
 sources:
@@ -153,7 +153,7 @@ targets:
 			rootDir: "testdata/npmlockfile",
 			spec: Spec{
 				IgnoreVersionConstraints: boolPtr(true),
-				Age:                      &age.Spec{Maximum: "1y"},
+				Age:                      &age.AutodiscoverySpec{Spec: age.Spec{Maximum: "1y"}},
 			},
 			expectedPipelines: []string{`name: 'Bump "axios" package version'
 sources:
@@ -166,7 +166,7 @@ sources:
         maximum: '1y'
       versionfilter:
         kind: 'semver'
-        pattern: '*'
+        pattern: '>=1.2.6'
 targets:
   package-lock.json:
     name: 'Bump "axios" package version to {{ source "npm" }}'
@@ -205,7 +205,7 @@ sources:
         minimum: '3d'
       versionfilter:
         kind: 'semver'
-        pattern: '*'
+        pattern: '>=1.2.6'
 targets:
   package-lock.json:
     name: 'Bump "axios" package version to {{ source "npm" }}'
@@ -244,7 +244,7 @@ sources:
         minimum: '3d'
       versionfilter:
         kind: 'semver'
-        pattern: '^1.0.0'
+        pattern: '>=1.2.6, ^1.0.0'
 targets:
   package-lock.json:
     name: 'Bump "axios" package version to {{ source "npm" }}'
@@ -405,6 +405,9 @@ func TestNew_WithResourceConfig(t *testing.T) {
 }
 
 func TestNewReleaseAge(t *testing.T) {
+	allowDowngrade := true
+	noDowngrade := false
+
 	tests := []struct {
 		name               string
 		spec               Spec
@@ -418,22 +421,33 @@ func TestNewReleaseAge(t *testing.T) {
 		},
 		{
 			name:               "An empty age disables the default minimum release age",
-			spec:               Spec{Age: &age.Spec{}},
+			spec:               Spec{Age: &age.AutodiscoverySpec{Spec: age.Spec{}}},
 			expectedReleaseAge: age.Spec{},
 		},
 		{
 			name:               "A specified minimum age overrides the default one",
-			spec:               Spec{Age: &age.Spec{Minimum: "7d"}},
+			spec:               Spec{Age: &age.AutodiscoverySpec{Spec: age.Spec{Minimum: "7d"}}},
 			expectedReleaseAge: age.Spec{Minimum: "7d"},
 		},
 		{
 			name:               "A specified maximum age doesn't reintroduce the default minimum one",
-			spec:               Spec{Age: &age.Spec{Maximum: "1y"}},
+			spec:               Spec{Age: &age.AutodiscoverySpec{Spec: age.Spec{Maximum: "1y"}}},
 			expectedReleaseAge: age.Spec{Maximum: "1y"},
 		},
 		{
+			name:               "Allowing a downgrade keeps the default minimum release age",
+			spec:               Spec{Age: &age.AutodiscoverySpec{AllowDowngrade: &allowDowngrade}},
+			expectedReleaseAge: age.Spec{Minimum: "3d"},
+		},
+		{
+			// Unlike "age: {}", which disables it
+			name:               "Disallowing a downgrade keeps the default minimum release age",
+			spec:               Spec{Age: &age.AutodiscoverySpec{AllowDowngrade: &noDowngrade}},
+			expectedReleaseAge: age.Spec{Minimum: "3d"},
+		},
+		{
 			name:          "An invalid age is reported",
-			spec:          Spec{Age: &age.Spec{Minimum: "notaduration"}},
+			spec:          Spec{Age: &age.AutodiscoverySpec{Spec: age.Spec{Minimum: "notaduration"}}},
 			expectedError: true,
 		},
 	}
@@ -447,7 +461,7 @@ func TestNewReleaseAge(t *testing.T) {
 			}
 			require.NoError(t, err)
 
-			assert.Equal(t, tt.expectedReleaseAge, npm.releaseAge)
+			assert.Equal(t, tt.expectedReleaseAge, npm.ageFilter.Spec)
 		})
 	}
 }

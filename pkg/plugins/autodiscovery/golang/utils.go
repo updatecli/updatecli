@@ -1,7 +1,6 @@
 package golang
 
 import (
-	"fmt"
 	"io/fs"
 	"os"
 	"os/exec"
@@ -9,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/updatecli/updatecli/pkg/core/log"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 
 	"golang.org/x/mod/modfile"
 	"golang.org/x/mod/module"
@@ -158,25 +158,22 @@ func isPseudoVersion(version string) bool {
 }
 
 // moduleVersionPattern returns the version filter kind and pattern used to look for a version newer than the provided one.
-func (g Golang) moduleVersionPattern(version string) (kind, pattern string, err error) {
+func (g Golang) moduleVersionPattern(currentVersion string) (kind, pattern string, err error) {
 	kind = g.versionFilter.Kind
 
-	pattern, err = g.versionFilter.GreaterThanPattern(version)
-	if err != nil {
-		return "", "", err
-	}
-
-	if !isPseudoVersion(version) || kind != "semver" {
+	if !isPseudoVersion(currentVersion) || kind != "semver" {
+		pattern, err = g.spec.Age.GreaterThanPattern(&g.versionFilter, currentVersion)
+		if err != nil {
+			return "", "", err
+		}
 		return kind, pattern, nil
 	}
 
-	/*
-		A pseudo version is a semver prerelease, so patterns such as "patch" ("1.2.x-0")
-		or a custom constraint such as "~1.2" accept tags older than the pseudo version.
-		Each group of the constraint gets the pseudo version as lower bound, unless it
-		already starts from it, so that no tag can downgrade the module.
-	*/
-	lowerBound := strings.TrimPrefix(version, "v")
+	// The pseudo version bound below replaces the one GreaterThanPattern would add
+	pattern, err = g.versionFilter.GreaterThanPatternAllowingDowngrade(currentVersion)
+	if err != nil {
+		return "", "", err
+	}
 
 	/*
 		For a prerelease, GreaterThanPattern turns "majoronly" into "any version newer
@@ -184,18 +181,14 @@ func (g Golang) moduleVersionPattern(version string) (kind, pattern string, err 
 		Requiring a greater major version keeps the update major only.
 	*/
 	if g.versionFilter.Pattern == "majoronly" {
-		pattern = ">" + strings.TrimPrefix(semver.Major(version), "v")
+		pattern = ">" + strings.TrimPrefix(semver.Major(currentVersion), "v")
 	}
 
-	groups := strings.Split(pattern, "||")
-	for i, group := range groups {
-		group = strings.TrimSpace(group)
-		if !strings.Contains(group, lowerBound) {
-			group = fmt.Sprintf(">=%s, %s", lowerBound, group)
-		}
-		groups[i] = group
-	}
-	pattern = strings.Join(groups, " || ")
-
-	return kind, pattern, nil
+	/*
+		A pseudo version is a semver prerelease, so a custom constraint such as "~1.2"
+		accepts tags older than the pseudo version. Bounding it at the pseudo version
+		ensures no tag can downgrade the module, even when a downgrade is allowed, and
+		accepts the prerelease tags newer than it.
+	*/
+	return kind, version.BoundPatternAcceptingPrereleases(pattern, currentVersion), nil
 }
