@@ -10,10 +10,12 @@ import (
 )
 
 const (
-	// ErrAPIRateLimitExceeded is returned when the API rate limit is exceeded
+	// ErrAPIRateLimitExceeded is part of the message GitHub returns when the
+	// primary rate limit was already exceeded. Use client.IsRateLimitError to
+	// detect any rate limit error, a secondary one included.
 	ErrAPIRateLimitExceeded = "API rate limit already exceeded"
 	// ErrAPIRateLimitExceededFinalAttempt is returned when the API rate limit is exceeded and no more retry is possible
-	ErrAPIRateLimitExceededFinalAttempt = "API rate limit exceeded, final attempt failed"
+	ErrAPIRateLimitExceededFinalAttempt = client.ErrRateLimitFinalAttempt
 )
 
 // RateLimit is a struct that contains GitHub Api limit information

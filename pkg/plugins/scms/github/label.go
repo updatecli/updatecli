@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/shurcooL/githubv4"
 	"github.com/updatecli/updatecli/pkg/core/log"
@@ -84,7 +83,7 @@ func (g *Github) getRepositoryLabels(ctx context.Context, retry int) ([]reposito
 		err := g.client.Query(ctx, &query, variables)
 
 		if err != nil {
-			if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
+			if client.IsRateLimitError(err) {
 				rateLimit, err := queryRateLimit(g.client, ctx)
 				if err != nil {
 					log.Errorf("Error querying GitHub API rate limit: %s", err)

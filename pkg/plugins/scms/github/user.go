@@ -3,7 +3,6 @@ package github
 import (
 	"context"
 	"errors"
-	"strings"
 
 	"github.com/shurcooL/githubv4"
 	"github.com/updatecli/updatecli/pkg/core/log"
@@ -34,7 +33,7 @@ func getUserInfo(ctx context.Context, c client.Client, login string, retry int) 
 	err := c.Query(ctx, &query, variables)
 
 	if err != nil {
-		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
+		if client.IsRateLimitError(err) {
 			// If the query failed because we reached the rate limit,
 			// then we need to re-requery the rate limit to get the latest information
 			rateLimit, err := queryRateLimit(c, ctx)

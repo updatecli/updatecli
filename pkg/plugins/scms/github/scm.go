@@ -324,7 +324,7 @@ func (g *Github) CreateCommit(ctx context.Context, workingDir string, commitMess
 	rateLimit, err := queryRateLimit(g.client, ctx)
 	log.Debugln(rateLimit)
 	if err != nil {
-		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
+		if client.IsRateLimitError(err) {
 			if retry < client.MaxRetry {
 				log.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
 				rateLimit.Pause(ctx)

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/shurcooL/githubv4"
 	"github.com/updatecli/updatecli/pkg/core/log"
@@ -78,7 +77,7 @@ func (g *Github) SearchTags(ctx context.Context, retry int) (tags []string, err 
 	for {
 		err = g.client.Query(ctx, &query, variables)
 		if err != nil {
-			if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
+			if client.IsRateLimitError(err) {
 				// If the query failed because we reached the rate limit,
 				// then we need to re-requery the rate limit to get the latest information
 				rateLimit, err := queryRateLimit(g.client, ctx)

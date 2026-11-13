@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/shurcooL/githubv4"
@@ -115,7 +114,7 @@ func (g *Github) SearchReleases(ctx context.Context, releaseType ReleaseType, re
 	for {
 		err := g.client.Query(ctx, &query, variables)
 		if err != nil {
-			if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
+			if client.IsRateLimitError(err) {
 
 				rateLimit, err := queryRateLimit(g.client, ctx)
 				if err != nil {
