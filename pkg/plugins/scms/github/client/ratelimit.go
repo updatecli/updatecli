@@ -26,10 +26,10 @@ var (
 	SecondaryRateLimitWait = time.Minute
 )
 
-// maxRateLimitHold bounds how long requests are held after a refusal. GitHub
+// MaxRateLimitHold bounds how long requests are held after a refusal. GitHub
 // resets its rate limit every hour, so a longer delay comes from a broken or
 // hostile server and would otherwise stall the run, or overflow.
-const maxRateLimitHold = time.Hour
+const MaxRateLimitHold = time.Hour
 
 // IsRateLimitError reports whether err means GitHub refused a request for
 // exceeding its primary or a secondary rate limit.
@@ -62,72 +62,96 @@ type RateLimitReporter interface {
 	LastRateLimit() (remaining int, resetAt time.Time, ok bool)
 }
 
-// rateLimitRecorder holds the rate limit read from the last response headers,
-// and the time before which no request may be sent after GitHub refused one
-// for exceeding a rate limit.
-type rateLimitRecorder struct {
-	mu sync.Mutex
-
+// rateLimitHeaders holds the rate limit headers of one response.
+type rateLimitHeaders struct {
+	// retryAfter is when the response allows the next request through its
+	// Retry-After header, zero if it had none.
+	retryAfter time.Time
 	// remaining and resetAt come from the X-RateLimit headers, which GitHub
-	// sends on every response, a refused request included, when a rateLimit
-	// query can't be answered either. ok is false until a response carried them.
+	// sends on every response, a refused request included. ok is false when
+	// the response had none.
 	remaining int
 	resetAt   time.Time
 	ok        bool
-
-	// retryAfter is when the last response allowed the next request through
-	// its Retry-After header, zero if it had none.
-	retryAfter time.Time
-
-	// holdUntil is when requests may be sent again after a refusal.
-	holdUntil time.Time
-	// secondaryRefusals counts the secondary rate limit refusals in a row.
-	secondaryRefusals int
 }
 
-func (r *rateLimitRecorder) record(header http.Header, now time.Time) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
+func parseRateLimitHeaders(header http.Header, now time.Time) rateLimitHeaders {
+	var h rateLimitHeaders
 
-	r.retryAfter = time.Time{}
 	if v := strings.TrimSpace(header.Get("Retry-After")); v != "" {
 		if seconds, err := strconv.ParseInt(v, 10, 64); err == nil && seconds >= 0 {
-			r.retryAfter = now.Add(time.Duration(min(seconds, int64(maxRateLimitHold/time.Second))) * time.Second)
+			h.retryAfter = now.Add(time.Duration(min(seconds, int64(MaxRateLimitHold/time.Second))) * time.Second)
 		} else if date, err := http.ParseTime(v); err == nil {
-			r.retryAfter = date
+			h.retryAfter = date
 		}
 	}
 
 	remaining, err := strconv.Atoi(strings.TrimSpace(header.Get("X-RateLimit-Remaining")))
 	if err != nil {
-		return
+		return h
 	}
 	reset, err := strconv.ParseInt(strings.TrimSpace(header.Get("X-RateLimit-Reset")), 10, 64)
 	if err != nil {
+		return h
+	}
+
+	h.remaining = remaining
+	h.resetAt = time.Unix(reset, 0)
+	h.ok = true
+	return h
+}
+
+// responseSlotKey is the context key of the *rateLimitHeaders that receives
+// the rate limit headers of the response to a single call, so a refusal is
+// judged by its own response even when calls run in parallel.
+type responseSlotKey struct{}
+
+// rateLimitRecorder holds the rate limit of the last response, and the time
+// before which no request may be sent after GitHub refused one for exceeding
+// a rate limit.
+type rateLimitRecorder struct {
+	mu sync.Mutex
+
+	// last holds the headers of the last response with rate limit headers,
+	// whatever call it answered, for queryRateLimit to fall back on.
+	last rateLimitHeaders
+
+	// holdUntil is when requests may be sent again after a refusal.
+	holdUntil time.Time
+	// lastRefusal is when GitHub last refused a request for a rate limit.
+	lastRefusal time.Time
+	// secondaryRefusals counts the secondary rate limit refusals in a row.
+	secondaryRefusals int
+}
+
+func (r *rateLimitRecorder) record(h rateLimitHeaders) {
+	if !h.ok {
 		return
 	}
 
-	r.remaining = remaining
-	r.resetAt = time.Unix(reset, 0)
-	r.ok = true
-}
-
-func (r *rateLimitRecorder) last() (int, time.Time, bool) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	return r.remaining, r.resetAt, r.ok
+	r.last = h
 }
 
-// observe sets how long to hold the next request after one ended with err,
-// following GitHub's guidance: wait as long as Retry-After says, or else until
-// the rate limit reset when no credit is left, or else, after a secondary
-// rate limit, at least a minute, doubled with each refusal in a row.
-func (r *rateLimitRecorder) observe(err error, now time.Time) {
+func (r *rateLimitRecorder) lastRateLimit() (int, time.Time, bool) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return r.last.remaining, r.last.resetAt, r.last.ok
+}
+
+// observe sets how long to hold the next requests after a call sent at sent
+// ended with err and a response carrying h, following GitHub's guidance: wait
+// as long as Retry-After says, or else until the rate limit reset when no
+// credit is left, or else, after a secondary rate limit, at least a minute,
+// doubled with each refusal in a row.
+func (r *rateLimitRecorder) observe(err error, h rateLimitHeaders, sent, now time.Time) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
 	if !IsRateLimitError(err) {
-		if err == nil {
+		// Only a success sent after the last refusal shows the limit is lifted.
+		if err == nil && !sent.Before(r.lastRefusal) {
 			r.secondaryRefusals = 0
 		}
 		return
@@ -135,10 +159,10 @@ func (r *rateLimitRecorder) observe(err error, now time.Time) {
 
 	var until time.Time
 	switch {
-	case !r.retryAfter.IsZero():
-		until = r.retryAfter
-	case r.ok && r.remaining == 0 && r.resetAt.After(now):
-		until = r.resetAt
+	case h.retryAfter.After(now):
+		until = h.retryAfter
+	case h.ok && h.remaining == 0 && h.resetAt.After(now):
+		until = h.resetAt
 	case isSecondaryRateLimitError(err):
 		until = now.Add(SecondaryRateLimitWait << min(r.secondaryRefusals, 5))
 	}
@@ -146,8 +170,9 @@ func (r *rateLimitRecorder) observe(err error, now time.Time) {
 	if isSecondaryRateLimitError(err) {
 		r.secondaryRefusals++
 	}
+	r.lastRefusal = now
 
-	until = minTime(until, now.Add(maxRateLimitHold))
+	until = minTime(until, now.Add(MaxRateLimitHold))
 	if until.After(r.holdUntil) {
 		r.holdUntil = until
 	}
@@ -160,29 +185,31 @@ func minTime(a, b time.Time) time.Time {
 	return b
 }
 
-// wait blocks until requests may be sent again, or until ctx is done.
+// wait blocks until requests may be sent again, or until ctx is done. It
+// waits again if the hold was extended in the meantime.
 func (r *rateLimitRecorder) wait(ctx context.Context) error {
-	r.mu.Lock()
-	until := r.holdUntil
-	r.mu.Unlock()
+	for {
+		r.mu.Lock()
+		until := r.holdUntil
+		r.mu.Unlock()
 
-	d := time.Until(until)
-	if d <= 0 {
-		return nil
-	}
+		d := time.Until(until)
+		if d <= 0 {
+			return nil
+		}
 
-	log.Warningf(
-		"GitHub API rate limit reached, on hold for %s until %s. The process will resume automatically.\n",
-		d.Round(time.Second),
-		until.UTC().Format("2006-01-02 15:04:05 UTC"))
+		log.Warningf(
+			"GitHub API rate limit reached, on hold for %s until %s. The process will resume automatically.\n",
+			d.Round(time.Second),
+			until.UTC().Format("2006-01-02 15:04:05 UTC"))
 
-	timer := time.NewTimer(d)
-	defer timer.Stop()
-	select {
-	case <-timer.C:
-		return nil
-	case <-ctx.Done():
-		return ctx.Err()
+		timer := time.NewTimer(d)
+		select {
+		case <-timer.C:
+		case <-ctx.Done():
+			timer.Stop()
+			return ctx.Err()
+		}
 	}
 }
 
@@ -195,7 +222,11 @@ type rateLimitTransport struct {
 func (t *rateLimitTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	resp, err := t.transport.RoundTrip(req)
 	if resp != nil {
-		t.recorder.record(resp.Header, time.Now())
+		h := parseRateLimitHeaders(resp.Header, time.Now())
+		t.recorder.record(h)
+		if slot, ok := req.Context().Value(responseSlotKey{}).(*rateLimitHeaders); ok {
+			*slot = h
+		}
 	}
 	return resp, err
 }
@@ -210,27 +241,35 @@ type rateLimitClient struct {
 
 // Query implements Client.
 func (c *rateLimitClient) Query(ctx context.Context, q interface{}, variables map[string]interface{}) error {
-	if err := c.recorder.wait(ctx); err != nil {
-		return err
-	}
-	err := c.client.Query(ctx, q, variables)
-	c.recorder.observe(err, time.Now())
-	return err
+	return c.do(ctx, func(ctx context.Context) error {
+		return c.client.Query(ctx, q, variables)
+	})
 }
 
 // Mutate implements Client.
 func (c *rateLimitClient) Mutate(ctx context.Context, m interface{}, input githubv4.Input, variables map[string]interface{}) error {
+	return c.do(ctx, func(ctx context.Context) error {
+		return c.client.Mutate(ctx, m, input, variables)
+	})
+}
+
+// do waits until requests may be sent, sends one with send, and sets how long
+// to hold the next ones from its outcome and its own response headers.
+func (c *rateLimitClient) do(ctx context.Context, send func(context.Context) error) error {
 	if err := c.recorder.wait(ctx); err != nil {
 		return err
 	}
-	err := c.client.Mutate(ctx, m, input, variables)
-	c.recorder.observe(err, time.Now())
+
+	var h rateLimitHeaders
+	sent := time.Now()
+	err := send(context.WithValue(ctx, responseSlotKey{}, &h))
+	c.recorder.observe(err, h, sent, time.Now())
 	return err
 }
 
 // LastRateLimit implements RateLimitReporter.
 func (c *rateLimitClient) LastRateLimit() (int, time.Time, bool) {
-	return c.recorder.last()
+	return c.recorder.lastRateLimit()
 }
 
 // newRateLimitClient returns a GitHub GraphQL client sending its requests

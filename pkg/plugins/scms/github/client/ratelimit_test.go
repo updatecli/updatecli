@@ -96,6 +96,12 @@ func TestObserve(t *testing.T) {
 			want:   now.Add(time.Hour),
 		},
 		{
+			name:   "a past Retry-After falls back to the reset",
+			header: header(map[string]string{"Retry-After": now.Add(-time.Minute).Format(http.TimeFormat), "X-RateLimit-Remaining": "0", "X-RateLimit-Reset": fmt.Sprint(now.Add(time.Hour).Unix())}),
+			errs:   []error{primary},
+			want:   now.Add(time.Hour),
+		},
+		{
 			name:   "other errors don't hold requests",
 			header: header(map[string]string{"X-RateLimit-Remaining": "0", "X-RateLimit-Reset": fmt.Sprint(now.Add(time.Hour).Unix())}),
 			errs:   []error{errors.New("Could not resolve to a Repository")},
@@ -105,10 +111,10 @@ func TestObserve(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &rateLimitRecorder{}
-			r.record(tt.header, now)
+			h := parseRateLimitHeaders(tt.header, now)
 			for _, err := range tt.errs {
 				r.holdUntil = time.Time{}
-				r.observe(err, now)
+				r.observe(err, h, now, now)
 			}
 			assert.True(t, tt.want.Equal(r.holdUntil), "want %s, got %s", tt.want, r.holdUntil)
 		})
@@ -157,4 +163,70 @@ func TestWaitStopsWhenContextIsDone(t *testing.T) {
 	defer cancel()
 
 	assert.ErrorIs(t, r.wait(ctx), context.DeadlineExceeded)
+}
+
+// TestObserveKeepsBackoffAfterStaleSuccess checks that a success sent before
+// the last refusal, by a call running in parallel, doesn't reset the backoff.
+func TestObserveKeepsBackoffAfterStaleSuccess(t *testing.T) {
+	now := time.Date(2026, 11, 13, 10, 0, 0, 0, time.UTC)
+	secondary := errors.New("You have exceeded a secondary rate limit.")
+
+	r := &rateLimitRecorder{}
+	r.observe(secondary, rateLimitHeaders{}, now, now)
+	r.observe(nil, rateLimitHeaders{}, now.Add(-time.Second), now)
+	r.observe(secondary, rateLimitHeaders{}, now, now)
+
+	assert.True(t, now.Add(2*time.Minute).Equal(r.holdUntil), "got %s", r.holdUntil)
+}
+
+// TestTransportFillsTheSlotOfItsOwnCall checks that each call gets the
+// headers of its own response, whatever response the recorder saw last.
+func TestTransportFillsTheSlotOfItsOwnCall(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/refused" {
+			w.Header().Set("Retry-After", "300")
+			w.WriteHeader(http.StatusForbidden)
+			return
+		}
+		w.Header().Set("X-RateLimit-Remaining", "4000")
+		w.Header().Set("X-RateLimit-Reset", "2000000000")
+	}))
+	defer srv.Close()
+
+	recorder := &rateLimitRecorder{}
+	transport := &rateLimitTransport{transport: httpclient.UncachedTransport(), recorder: recorder}
+
+	send := func(ctx context.Context, path string) {
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, srv.URL+path, nil)
+		require.NoError(t, err)
+		resp, err := transport.RoundTrip(req)
+		require.NoError(t, err)
+		require.NoError(t, resp.Body.Close())
+	}
+
+	var refused rateLimitHeaders
+	start := time.Now()
+	send(context.WithValue(context.Background(), responseSlotKey{}, &refused), "/refused")
+	// A parallel call answered after the refusal.
+	send(context.Background(), "/ok")
+
+	assert.WithinDuration(t, start.Add(300*time.Second), refused.retryAfter, 5*time.Second)
+	remaining, _, ok := recorder.lastRateLimit()
+	assert.True(t, ok)
+	assert.Equal(t, 4000, remaining)
+}
+
+func TestWaitHonoursAnExtendedHold(t *testing.T) {
+	r := &rateLimitRecorder{holdUntil: time.Now().Add(100 * time.Millisecond)}
+	extended := time.Now().Add(400 * time.Millisecond)
+
+	go func() {
+		time.Sleep(20 * time.Millisecond)
+		r.mu.Lock()
+		r.holdUntil = extended
+		r.mu.Unlock()
+	}()
+
+	require.NoError(t, r.wait(context.Background()))
+	assert.False(t, time.Now().Before(extended))
 }

@@ -50,12 +50,12 @@ func (a *RateLimit) Pause(ctx context.Context) {
 			log.Errorf("Parsing GitHub API rate limit reset time: %s", err)
 			return
 		}
-		sleepDuration := time.Until(resetAtTime)
+		sleepDuration := min(time.Until(resetAtTime), client.MaxRateLimitHold)
 
 		log.Warningf(
 			"GitHub API rate limit reached, on hold for %d minute(s) until %s. The process will resume automatically.\n",
 			int(sleepDuration.Minutes()),
-			resetAtTime.UTC().Format("2006-01-02 15:04:05 UTC"))
+			time.Now().Add(sleepDuration).UTC().Format("2006-01-02 15:04:05 UTC"))
 
 		timer := time.NewTimer(sleepDuration)
 		defer timer.Stop()
