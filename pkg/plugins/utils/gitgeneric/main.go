@@ -50,6 +50,7 @@ type GitHandler interface {
 	PushTag(tag string, username string, password string, workingDir string, force bool) error
 	PushBranch(branch string, username string, password string, workingDir string, force bool) error
 	RemoteURLs(workingDir string) (map[string]string, error)
+	RepositoryRoot(path string) (string, error)
 	SanitizeBranchName(branch string) string
 	SquashCommit(repoDir, baseBranch, featureBranch string, options SquashCommitOptions) error
 	Tags(workingDir string) (tags []string, err error)
@@ -1118,7 +1119,8 @@ func (g GoGit) PushTag(tag string, username string, password string, workingDir 
 func (g GoGit) RemoteURLs(workingDir string) (map[string]string, error) {
 	remoteList := make(map[string]string)
 
-	gitRepository, err := git.PlainOpenWithOptions(workingDir, &git.PlainOpenOptions{DetectDotGit: true})
+	// The common directory holds the config, and so the remotes, of a linked worktree.
+	gitRepository, err := git.PlainOpenWithOptions(workingDir, &git.PlainOpenOptions{DetectDotGit: true, EnableDotGitCommonDir: true})
 	if err != nil {
 		return remoteList, fmt.Errorf("opening %q git directory: %w", workingDir, err)
 	}
@@ -1129,10 +1131,34 @@ func (g GoGit) RemoteURLs(workingDir string) (map[string]string, error) {
 	}
 
 	for _, r := range list {
+		// A remote section can lack a url, such as one only holding a fetch refspec.
+		if len(r.Config().URLs) == 0 {
+			continue
+		}
 		remoteList[r.Config().Name] = r.Config().URLs[0]
 	}
 
 	return remoteList, nil
+}
+
+// RepositoryRoot returns the root of the git repository containing path.
+func (g GoGit) RepositoryRoot(path string) (string, error) {
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return "", fmt.Errorf("resolving %q: %w", path, err)
+	}
+
+	gitRepository, err := git.PlainOpenWithOptions(absPath, &git.PlainOpenOptions{DetectDotGit: true})
+	if err != nil {
+		return "", fmt.Errorf("%q is not inside a git repository: %w", absPath, err)
+	}
+
+	gitWorktree, err := gitRepository.Worktree()
+	if err != nil {
+		return "", fmt.Errorf("opening the git worktree of %q: %w", absPath, err)
+	}
+
+	return gitWorktree.Filesystem.Root(), nil
 }
 
 // isAuthEmpty return true if no username/password are defined

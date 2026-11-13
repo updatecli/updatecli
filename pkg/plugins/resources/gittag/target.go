@@ -12,9 +12,19 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
+// isLocalCheckout is scm.IsLocal: inside Target, the scm parameter hides the scm package.
+var isLocalCheckout = scm.IsLocal
+
 // Target creates a tag if needed from a local git repository, without pushing the tag
 func (gt *GitTag) Target(_ context.Context, source string, scm scm.ScmHandler, pathResolver pathresolver.Resolver, dryRun bool, resultTarget *result.Target) error {
 	var err error
+
+	// Creating a tag checks out the repository with force, which would discard the
+	// uncommitted work of a local checkout, then pushes it. The tag is only reported.
+	if scm != nil && isLocalCheckout(scm) {
+		log.Infof("running against the local checkout %q: the git tag is reported, not created", scm.GetDirectory())
+		dryRun = true
+	}
 
 	if gt.spec.Path != "" && scm != nil {
 		log.Warningf("path setting value %q is overriding the scm configuration (value %q)",

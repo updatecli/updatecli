@@ -68,6 +68,7 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 	}
 	p.unrenderedName = p.Name
 
+	options.EnforceLocalScm()
 	p.Options = options
 
 	p.ID = config.Spec.PipelineID
@@ -99,36 +100,14 @@ func (p *Pipeline) Init(config *config.Config, options Options) error {
 		// Init Sources[id]
 		var err error
 
-		p.SCMs[id], err = newScm(scmConfig, baseDir, config.Spec.PipelineID)
+		p.SCMs[id], err = p.buildScm(scmConfig, baseDir)
 		if err != nil {
 			return err
 		}
 	}
 
-	// Init actions
-	for id, actionConfig := range config.Spec.Actions {
-		var err error
-
-		// avoid gosec G601: Reassign the loop iteration variable to a local variable so the pointer address is correct
-		actionConfig := actionConfig
-
-		SCM, ok := p.SCMs[actionConfig.ScmID]
-
-		// Validate that scm ID exists
-		if !ok {
-			return fmt.Errorf("scms ID %q referenced by the action id %q does not exist",
-				actionConfig.ScmID,
-				id)
-		}
-
-		p.Actions[id], err = action.New(
-			&actionConfig,
-			&SCM)
-
-		if err != nil {
-			return err
-		}
-
+	if err := p.initActions(config); err != nil {
+		return err
 	}
 
 	// Resources whose report config can't be computed before their spec is rendered are
@@ -723,29 +702,16 @@ func (p *Pipeline) Update() error {
 	for id, scmConfig := range p.Config.Spec.SCMs {
 		var err error
 
-		p.SCMs[id], err = newScm(scmConfig, p.Config.BaseDir(), p.Config.Spec.PipelineID)
+		p.SCMs[id], err = p.buildScm(scmConfig, p.Config.BaseDir())
 		if err != nil {
 			return err
 		}
 	}
 
-	// Update scm pointer for each actions
-	for id := range p.Config.Spec.Actions {
-		action := p.Actions[id]
-
-		action.Title = p.Config.Spec.Actions[id].Title
-		action.Config = p.Config.Spec.Actions[id]
-
-		if len(p.Config.Spec.Actions[id].ScmID) > 0 {
-			sc, ok := p.SCMs[p.Config.Spec.Actions[id].ScmID]
-			if !ok {
-				return fmt.Errorf("scm id %q doesn't exist", p.Config.Spec.Actions[id].ScmID)
-			}
-
-			action.Scm = &sc
-		}
-		p.Actions[id] = action
+	if err := p.updateActions(); err != nil {
+		return err
 	}
+
 	// Update scm pointer for each condition
 	for id := range p.Config.Spec.Conditions {
 		condition := p.Conditions[id]

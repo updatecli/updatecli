@@ -42,6 +42,8 @@ type Scm struct {
 var ErrWrongConfig = errors.New("wrong scm configuration")
 
 // ScmHandler is an interface offering common functions for a source control manager like git or github
+//
+// A new method also needs a behavior against a local checkout, in local.go.
 type ScmHandler interface {
 	Add(files []string) error
 	CleanWorkingBranch() (bool, error)
