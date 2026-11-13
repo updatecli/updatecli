@@ -52,16 +52,12 @@ func (g *GitLabSearch) ScmsGenerator(ctx context.Context) ([]gitlabscm.Spec, err
 			owner := project.PathWithNamespace[:lastSlash]
 			repository := project.PathWithNamespace[lastSlash+1:]
 
-			branches, err := g.listBranches(ctx, glClient, project.PathWithNamespace)
+			branches, err := g.listBranches(ctx, glClient, project.PathWithNamespace, re, g.limit-len(results))
 			if err != nil {
 				return nil, fmt.Errorf("failed to list branches for %s: %w", project.PathWithNamespace, err)
 			}
 
 			for _, branchName := range branches {
-				if !re.MatchString(branchName) {
-					continue
-				}
-
 				spec := gitlabscm.Spec{
 					Branch:                 branchName,
 					CommitMessage:          g.spec.CommitMessage,
@@ -97,8 +93,8 @@ func (g *GitLabSearch) ScmsGenerator(ctx context.Context) ([]gitlabscm.Spec, err
 	return results, nil
 }
 
-// listBranches returns all branch names for the given project path.
-func (g *GitLabSearch) listBranches(ctx context.Context, glClient *gitlab.Client, projectPath string) ([]string, error) {
+// listBranches returns matching branch names, stopping when a positive limit is reached.
+func (g *GitLabSearch) listBranches(ctx context.Context, glClient *gitlab.Client, projectPath string, re *regexp.Regexp, limit int) ([]string, error) {
 	var branches []string
 
 	branchOpt := &gitlab.ListBranchesOptions{
@@ -112,7 +108,13 @@ func (g *GitLabSearch) listBranches(ctx context.Context, glClient *gitlab.Client
 		}
 
 		for _, b := range result {
+			if !re.MatchString(b.Name) {
+				continue
+			}
 			branches = append(branches, b.Name)
+			if limit > 0 && len(branches) >= limit {
+				return branches, nil
+			}
 		}
 
 		if resp.NextPage == 0 {
