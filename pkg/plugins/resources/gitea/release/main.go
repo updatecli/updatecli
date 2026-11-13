@@ -215,11 +215,16 @@ func New(spec interface{}) (*Gitea, error) {
 // SearchReleases retrieves the release tags from a remote gitea repository,
 // keeping only the ones published inside the provided age window.
 func (g *Gitea) SearchReleases(ctx context.Context, releaseAge age.Spec) ([]string, error) {
+	results, _, err := g.searchReleases(ctx, releaseAge)
+	return results, err
+}
 
+// searchReleases returns both the release tags published inside the age window and every
+// published release tag, so that callers can tell a release still cooling down from a
+// version filter matching no release.
+func (g *Gitea) searchReleases(ctx context.Context, releaseAge age.Spec) ([]string, []string, error) {
 	results := []string{}
-	// Tracks whether the repository publishes releases at all, so that a running
-	// cooldown isn't reported as a repository without any release.
-	foundRelease := false
+	published := []string{}
 	page := 0
 	for {
 		// Timeout api query after 30sec
@@ -237,7 +242,7 @@ func (g *Gitea) SearchReleases(ctx context.Context, releaseAge age.Spec) ([]stri
 		)
 
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		if resp.Status > 400 {
@@ -248,7 +253,7 @@ func (g *Gitea) SearchReleases(ctx context.Context, releaseAge age.Spec) ([]stri
 			if releases[i].Draft {
 				continue
 			}
-			foundRelease = true
+			published = append(published, releases[i].Tag)
 			date := releaseDate(releases[i])
 			if !releaseAge.Matches(date) {
 				log.Debugf("ignoring release %q, dated %s, as outside of the age window", releases[i].Tag, date)
@@ -264,17 +269,7 @@ func (g *Gitea) SearchReleases(ctx context.Context, releaseAge age.Spec) ([]stri
 
 	}
 
-	/*
-		The repository does publish releases but the age filter discarded every one of
-		them, which means the release we would have returned is still cooling down.
-		That's not a lookup failure, so the sentinel lets the caller skip rather than
-		fail.
-	*/
-	if foundRelease && len(results) == 0 {
-		return nil, fmt.Errorf("%w for the Gitea releases of %s/%s", age.ErrNoVersionMatchingAge, g.spec.Owner, g.spec.Repository)
-	}
-
-	return results, nil
+	return results, published, nil
 }
 
 // releaseDate returns the date at which a release became public.

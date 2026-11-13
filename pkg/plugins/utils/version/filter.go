@@ -205,6 +205,18 @@ func (f *Filter) applyReplaceAll(version string) (string, error) {
 func (f *Filter) Search(versions []string) (Version, error) {
 	log.Infof("Searching for version matching pattern %q", f.Pattern)
 
+	return f.search(versions)
+}
+
+// Matches returns true if one of versions matches the filter. Unlike Search, it doesn't log
+// the pattern it searches for.
+func (f *Filter) Matches(versions []string) bool {
+	_, err := f.search(versions)
+	return err == nil
+}
+
+// search returns the version matching the filter among versions.
+func (f *Filter) search(versions []string) (Version, error) {
 	foundVersion := Version{}
 
 	if len(versions) == 0 {

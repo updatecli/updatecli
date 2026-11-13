@@ -57,6 +57,7 @@ func (g *GoModule) versions(ctx context.Context) (v string, err error) {
 	// Tracks proxies which serve that module but nothing newer than the pseudo version,
 	// as another proxy listed in GOPROXY may already serve a newer one.
 	noVersionNewerThanPseudo := false
+	noReleaseDate := false
 
 	for _, proxy := range strings.Split(GOPROXY, ",") {
 		proxy = strings.TrimSpace(proxy)
@@ -64,7 +65,7 @@ func (g *GoModule) versions(ctx context.Context) (v string, err error) {
 			continue
 		}
 
-		publishedVersions, matchingVersions, err := getVersionsFromProxy(ctx, g.webClient, proxy, g.Spec.Module, g.Spec.Age)
+		publishedVersions, matchingVersions, discardedByAge, err := getVersionsFromProxy(ctx, g.webClient, proxy, g.Spec.Module, g.Spec.Age)
 		if err != nil {
 			log.Debugf("skipping proxy %q due to %v\n", proxy, err)
 			continue
@@ -117,11 +118,13 @@ func (g *GoModule) versions(ctx context.Context) (v string, err error) {
 			return latestVersion.Version, nil
 		}
 
-		// The module publishes versions but the age filter discarded every one of them,
-		// which means the version we would have returned is still cooling down.
-		if len(matchingVersions) == 0 {
-			log.Debugf("every version published for module %q on proxy %q is filtered out by the age filter\n", g.Spec.Module, proxy)
-			heldBackByAge = true
+		/*
+			The proxy lists versions but couldn't date any of them, such as when rate limited,
+			so the age filter can't be applied. Another proxy may serve the dates.
+		*/
+		if len(matchingVersions) == 0 && len(discardedByAge) == 0 {
+			log.Debugf("no release date retrieved for any version of module %q on proxy %q\n", g.Spec.Module, proxy)
+			noReleaseDate = true
 			continue
 		}
 
@@ -148,9 +151,38 @@ func (g *GoModule) versions(ctx context.Context) (v string, err error) {
 		semver.Sort(versions)
 		g.Version, err = g.searchVersion(versions, pseudoVersion)
 		if err != nil {
+			/*
+				Every version the version filter accepts may be outside the age window, such as
+				with a filter starting from the current version while that version is too recent.
+				That's an age hold rather than a missing version, so the source is skipped.
+			*/
+			if age.HeldBack(&g.versionFilter, discardedByAge) {
+				log.Debugf("every version of module %q on proxy %q matching the version filter is filtered out by the age filter\n", g.Spec.Module, proxy)
+				heldBackByAge = true
+				continue
+			}
+
+			/*
+				While no version passes the age filter, a version the filter matches may only
+				lack a release date, such as when the proxy rate limits its requests, so the age
+				filter can't check it. Another proxy may serve the date, otherwise the source is
+				skipped, as when no version is dated.
+			*/
+			if len(versions) == 0 && age.MatchesUndated(&g.versionFilter, publishedVersions, discardedByAge) {
+				log.Debugf("no release date retrieved for the versions of module %q on proxy %q matching the version filter\n", g.Spec.Module, proxy)
+				noReleaseDate = true
+				continue
+			}
+
 			if errors.Is(err, ErrNoVersionNewerThanPseudo) {
 				log.Debugf("no version newer than %q for module %q on proxy %q\n", pseudoVersion, g.Spec.Module, proxy)
 				noVersionNewerThanPseudo = true
+				continue
+			}
+
+			// A previous proxy already holds back a version the filter matches, so it isn't missing
+			if heldBackByAge {
+				log.Debugf("skipping proxy %q due to %v\n", proxy, err)
 				continue
 			}
 			return "", err
@@ -166,6 +198,11 @@ func (g *GoModule) versions(ctx context.Context) (v string, err error) {
 
 	if noVersionNewerThanPseudo {
 		return "", fmt.Errorf("%w %q for GO module %q", ErrNoVersionNewerThanPseudo, pseudoVersion, g.Spec.Module)
+	}
+
+	// Like a cooldown, missing release dates skip rather than fail, as they did before
+	if noReleaseDate {
+		return "", fmt.Errorf("%w for GO module %q: no release date retrieved for any version, so the age filter can't be applied", age.ErrNoVersionMatchingAge, g.Spec.Module)
 	}
 
 	return "", fmt.Errorf("GO module %q not found on proxy %q", g.Spec.Module, GOPROXY)
@@ -282,19 +319,22 @@ func getFromProxy(ctx context.Context, client httpclient.HTTPClient, proxy, modu
 // It returns both every published version and the subset matching the age filter, as
 // telling "this module doesn't publish any version" from "every published version is
 // still cooling down" requires very different handling from the caller.
+// discardedByAge holds the versions with a known release date outside the age window.
+// A version whose release date can't be retrieved isn't one of them, as the age filter
+// can't be what discarded it.
 // The matching subset carries release dates because the goproxy protocol doesn't
 // guarantee any ordering of the published versions.
-func getVersionsFromProxy(ctx context.Context, client httpclient.HTTPClient, proxy, module string, releaseAge age.Spec) (publishedVersions []string, matchingVersions []versionInfo, err error) {
+func getVersionsFromProxy(ctx context.Context, client httpclient.HTTPClient, proxy, module string, releaseAge age.Spec) (publishedVersions []string, matchingVersions []versionInfo, discardedByAge []string, err error) {
 	data, err := getFromProxy(ctx, client, proxy, module, "@v", "list")
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	// The response should be a list of version separated by \n
 	// as explained on https://go.dev/ref/mod#goproxy-protocol
 	dataStr := strings.TrimSpace(string(data))
 	if dataStr == "" {
-		return nil, nil, nil
+		return nil, nil, nil, nil
 	}
 
 	publishedVersions = strings.Split(dataStr, "\n")
@@ -306,7 +346,7 @@ func getVersionsFromProxy(ctx context.Context, client httpclient.HTTPClient, pro
 			matchingVersions = append(matchingVersions, versionInfo{Version: v})
 		}
 
-		return publishedVersions, matchingVersions, nil
+		return publishedVersions, matchingVersions, nil, nil
 	}
 
 	for _, v := range publishedVersions {
@@ -317,13 +357,16 @@ func getVersionsFromProxy(ctx context.Context, client httpclient.HTTPClient, pro
 		}
 
 		if !isVersionMatchingAge(vInfo, releaseAge) {
+			if releaseDateIsValid(vInfo) {
+				discardedByAge = append(discardedByAge, vInfo.Version)
+			}
 			continue
 		}
 
 		matchingVersions = append(matchingVersions, vInfo)
 	}
 
-	return publishedVersions, matchingVersions, nil
+	return publishedVersions, matchingVersions, discardedByAge, nil
 }
 
 // getLatestVersionFromProxy returns the latest version of a Golang module from a proxy
@@ -383,6 +426,12 @@ func isLatestVersionFilter(versionfilter version.Filter) bool {
 func isNewestVersionFilter(versionfilter version.Filter) bool {
 	return versionfilter.Kind == version.LATESTVERSIONKIND &&
 		versionfilter.Pattern == version.LATESTVERSIONKIND
+}
+
+// releaseDateIsValid returns true if the release date reported by the proxy can be parsed.
+func releaseDateIsValid(v versionInfo) bool {
+	_, err := time.Parse(time.RFC3339, v.Time)
+	return err == nil
 }
 
 // isVersionMatchingAge returns true if a version falls inside the age window.
