@@ -11,6 +11,9 @@ on:
   schedule:
     # Run full test once a day
     - cron: "0 0 * * *"
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 permissions: {}
 jobs:
   build:
