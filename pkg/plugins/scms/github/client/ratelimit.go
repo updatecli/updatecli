@@ -26,6 +26,11 @@ var (
 	SecondaryRateLimitWait = time.Minute
 )
 
+// maxRateLimitHold bounds how long requests are held after a refusal. GitHub
+// resets its rate limit every hour, so a longer delay comes from a broken or
+// hostile server and would otherwise stall the run, or overflow.
+const maxRateLimitHold = time.Hour
+
 // IsRateLimitError reports whether err means GitHub refused a request for
 // exceeding its primary or a secondary rate limit.
 func IsRateLimitError(err error) bool {
@@ -87,7 +92,7 @@ func (r *rateLimitRecorder) record(header http.Header, now time.Time) {
 	r.retryAfter = time.Time{}
 	if v := strings.TrimSpace(header.Get("Retry-After")); v != "" {
 		if seconds, err := strconv.ParseInt(v, 10, 64); err == nil && seconds >= 0 {
-			r.retryAfter = now.Add(time.Duration(seconds) * time.Second)
+			r.retryAfter = now.Add(time.Duration(min(seconds, int64(maxRateLimitHold/time.Second))) * time.Second)
 		} else if date, err := http.ParseTime(v); err == nil {
 			r.retryAfter = date
 		}
@@ -142,9 +147,17 @@ func (r *rateLimitRecorder) observe(err error, now time.Time) {
 		r.secondaryRefusals++
 	}
 
+	until = minTime(until, now.Add(maxRateLimitHold))
 	if until.After(r.holdUntil) {
 		r.holdUntil = until
 	}
+}
+
+func minTime(a, b time.Time) time.Time {
+	if a.Before(b) {
+		return a
+	}
+	return b
 }
 
 // wait blocks until requests may be sent again, or until ctx is done.

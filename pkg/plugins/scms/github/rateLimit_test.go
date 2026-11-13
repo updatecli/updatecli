@@ -51,8 +51,10 @@ func newRateLimitedServer(t *testing.T, reset time.Time, refuse func(w http.Resp
 }
 
 func TestSearchTagsWaitsForTheRateLimit(t *testing.T) {
-	t.Setenv("GITHUB_TOKEN", "")
-	t.Setenv("UPDATECLI_GITHUB_TOKEN", "")
+	// Keep credentials from the environment away from the fake server.
+	for _, name := range []string{"GITHUB_TOKEN", "UPDATECLI_GITHUB_TOKEN", "UPDATECLI_GITHUB_APP_CLIENT_ID", "UPDATECLI_GITHUB_APP_PRIVATE_KEY", "UPDATECLI_GITHUB_APP_PRIVATE_KEY_PATH", "UPDATECLI_GITHUB_APP_INSTALLATION_ID"} {
+		t.Setenv(name, "")
+	}
 
 	defaultWait := client.SecondaryRateLimitWait
 	client.SecondaryRateLimitWait = time.Second

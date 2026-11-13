@@ -84,6 +84,18 @@ func TestObserve(t *testing.T) {
 			want:   now.Add(time.Minute),
 		},
 		{
+			name:   "a delay beyond an hour is capped",
+			header: header(map[string]string{"Retry-After": "99999999999999"}),
+			errs:   []error{secondary},
+			want:   now.Add(time.Hour),
+		},
+		{
+			name:   "a reset beyond an hour is capped",
+			header: header(map[string]string{"X-RateLimit-Remaining": "0", "X-RateLimit-Reset": fmt.Sprint(now.Add(48 * time.Hour).Unix())}),
+			errs:   []error{primary},
+			want:   now.Add(time.Hour),
+		},
+		{
 			name:   "other errors don't hold requests",
 			header: header(map[string]string{"X-RateLimit-Remaining": "0", "X-RateLimit-Reset": fmt.Sprint(now.Add(time.Hour).Unix())}),
 			errs:   []error{errors.New("Could not resolve to a Repository")},
