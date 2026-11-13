@@ -1,6 +1,6 @@
 module github.com/updatecli/updatecli
 
-go 1.27.3
+go 1.27.4
 
 retract v0.999.0 // Published accidentally.
 
