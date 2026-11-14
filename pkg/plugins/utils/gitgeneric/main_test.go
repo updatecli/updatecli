@@ -3,6 +3,7 @@ package gitgeneric
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -80,31 +81,67 @@ func TestSanitizeBranchName(t *testing.T) {
 		},
 		{
 			branch:   "master+",
-			expected: "master",
+			expected: "master_cc04da33a81fe331803ca1f1cd5cdfd963f4f1e04e467f11480a633f4cced003",
 		},
 		{
 			branch:   "mas:ter",
-			expected: "master",
+			expected: "master_05ef7708208c5918a3e64e7ec5e3d0dcd3797343768093d456496ae91ace415a",
 		},
 		{
 			branch:   "ma*ster+",
-			expected: "master",
+			expected: "master_0ebbd72ba6189c8cbd3cca110d81c7462d384b086c39e41698c4987c388ca1b0",
 		},
 		{
 			branch:   "m:a*ster+",
-			expected: "master",
+			expected: "master_e2dae9cccecaf7aa10959d3496c25647ba56f44fe2219a5246615e6eab0b3619",
 		},
 		{
 			branch:   "m:a*st  er+",
-			expected: "master",
+			expected: "master_4e3c17615bfe313eb80c25572c362d0ee21b9c01390aa065806fd14b57ad36b2",
 		},
 		{
-			branch:   "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-			expected: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+			branch:   strings.Repeat("a", 255),
+			expected: strings.Repeat("a", 255),
 		},
 		{
-			branch:   "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbb",
-			expected: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+			branch:   strings.Repeat("a", 254) + "+",
+			expected: strings.Repeat("a", 190) + "_f496626d3405726ec9be384284f8742913b14bfbc2dbd529199ae9acad05eef1",
+		},
+		{
+			branch:   strings.Repeat("a", 255) + "bbb",
+			expected: strings.Repeat("a", 190) + "_cf09e931ae8bac274929c6ff633a8fdd8dd19f0d7f723af1f86227eb53cbb548",
+		},
+		{
+			branch:   strings.Repeat("a", 255) + "ccc",
+			expected: strings.Repeat("a", 190) + "_22f109b028d0ee7d1d608ded9d670d71147d5e1ab4a32d1f2137e49fb0d48b85",
+		},
+		{
+			branch:   "updatecli_release+1_dependencies",
+			expected: "updatecli_release1_dependencies_41656c7604d017869bf9096e4b7b4468a32eaa98d3395416491d1be63c7ade90",
+		},
+		{
+			branch:   "updatecli_release1_dependencies",
+			expected: "updatecli_release1_dependencies",
+		},
+		{
+			branch:   "updatecli_release{1}_dependencies",
+			expected: "updatecli_release_1__dependencies_7d31fd438a021bb1f89bacf7cfb0040d6e99da23c14d6a1cadffd3fdf06fe98a",
+		},
+		{
+			branch:   "updatecli_release_1__dependencies",
+			expected: "updatecli_release_1__dependencies",
+		},
+		{
+			branch:   "/updatecli_main_dependencies",
+			expected: "updatecli_main_dependencies_1d2198a5d46e487ff069d53d58db76438ef23ec923a540521e619c8fde66016e",
+		},
+		{
+			branch:   "updatecli_release/1.x_dependencies",
+			expected: "updatecli_release/1.x_dependencies",
+		},
+		{
+			branch:   strings.Repeat("a", 189) + "\u00e9" + strings.Repeat("b", 65),
+			expected: strings.Repeat("a", 189) + "_0c81f0710be09e36ae00000e5b823cc4e16e884c4c3a491f06b56ec991cdcd7e",
 		},
 	}
 	g := GoGit{}
