@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/shurcooL/githubv4"
 	"github.com/updatecli/updatecli/pkg/core/log"
@@ -43,7 +42,7 @@ func ListBranches(c client.Client, owner, repo string, retry int, ctx context.Co
 
 		err := c.Query(ctx, &q, vars)
 		if err != nil {
-			if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) && retry < client.MaxRetry {
+			if client.IsRateLimitError(err) && retry < client.MaxRetry {
 				rateLimit, err := queryRateLimit(c, ctx)
 				if err != nil {
 					log.Errorf("Error querying GitHub API rate limit: %s", err)
@@ -51,7 +50,7 @@ func ListBranches(c client.Client, owner, repo string, retry int, ctx context.Co
 				log.Debugln(rateLimit)
 				if retry < client.MaxRetry {
 					log.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
-					rateLimit.Pause()
+					rateLimit.Pause(ctx)
 					return ListBranches(c, owner, repo, retry+1, ctx)
 				}
 				return nil, errors.New(ErrAPIRateLimitExceededFinalAttempt)

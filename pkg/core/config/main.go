@@ -67,6 +67,9 @@ type Config struct {
 	gitHandler gitgeneric.GitHandler
 }
 
+// Search SCM expansion copies Spec for each discovered repository, and every map field
+// must be cloned there. See expandSCMConfigurations in pkg/core/engine.
+
 // Spec contains pipeline configuration
 type Spec struct {
 	// "name" defines a pipeline name
