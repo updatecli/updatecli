@@ -152,12 +152,8 @@ func (s *Scm) GenerateSCM() error {
 		}
 
 		s.Handler = g
-	case githubsearch.Kind:
-		// githubsearch scm kind is handled during engine preparation step
-	case azuredevopssearch.Kind:
-		// azuredevopssearch scm kind is handled during engine preparation step
-	case gitlabsearch.Kind:
-		// gitlabsearch scm kind is handled during engine preparation step
+	case githubsearch.Kind, azuredevopssearch.Kind, gitlabsearch.Kind:
+		// Search SCMs are expanded by the engine before pipeline initialization.
 	default:
 		return fmt.Errorf("scm of kind %q is not supported", s.Config.Kind)
 	}
