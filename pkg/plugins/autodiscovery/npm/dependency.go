@@ -187,6 +187,8 @@ func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 					dependencyName,
 					dependencyVersion)
 
+				exact := isExactVersion(dependencyVersion)
+
 				params := manifestTemplateParams{
 					ManifestName:    fmt.Sprintf("Bump %q package version", dependencyName),
 					SourceID:        npmIdentifier,
@@ -205,9 +207,9 @@ func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 					TargetNPMCleanupEnabled:  lockSupport.npm,
 					TargetWorkdir:            filepath.Dir(relativeFoundFile),
 					TargetLockFilePrefix:     lockFilePrefix,
-					TargetNPMCommand:         getTargetCommand(npmIdentifier, dependencyName),
-					TargetYarnCommand:        getTargetCommand("yarn", dependencyName),
-					TargetPnpmCommand:        getTargetCommand("pnpm", dependencyName),
+					TargetNPMCommand:         getTargetCommand(npmIdentifier, dependencyName, exact),
+					TargetYarnCommand:        getTargetCommand("yarn", dependencyName, exact),
+					TargetPnpmCommand:        getTargetCommand("pnpm", dependencyName, exact),
 					File:                     relativeFoundFile,
 					ScmID:                    n.scmID,
 				}

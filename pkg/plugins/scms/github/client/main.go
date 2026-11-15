@@ -45,6 +45,17 @@ func New(configUsername, configToken string, configApp *app.Spec, configURL stri
 		URL = "https://" + URL
 	}
 
+	// An empty graphqlURL targets github.com.
+	graphqlURL := ""
+	if !strings.HasSuffix(URL, "github.com") {
+		// For GH enterprise the GraphQL API path is /api/graphql
+		// Cf https://docs.github.com/en/enterprise-cloud@latest/graphql/guides/managing-enterprise-accounts#3-setting-up-insomnia-to-use-the-github-graphql-api-with-enterprise-accounts
+		graphqlURL, err = url.JoinPath(URL, "/api/graphql")
+		if err != nil {
+			return nil, fmt.Errorf("parsing GitHub Enterprise GraphQL URL: %w", err)
+		}
+	}
+
 	// We first try to get a token source from the environment variable
 	username, tokenSource, err := token.GetTokenSourceFromEnv()
 	if err != nil {
@@ -74,23 +85,9 @@ func New(configUsername, configToken string, configApp *app.Spec, configURL stri
 	Please refer to the documentation for more information:
 	->  https://www.updatecli.io/docs/plugins/scm/github/
 `)
-		httpClient := httpclient.NewUncachedGraphQLClient()
-
-		var newClient Client
-
-		if strings.HasSuffix(URL, "github.com") {
-			newClient = githubv4.NewClient(httpClient)
-		} else {
-			graphqlURL, err := url.JoinPath(URL, "/api/graphql")
-			if err != nil {
-				return nil, fmt.Errorf("parsing GitHub Enterprise GraphQL URL: %w", err)
-			}
-			newClient = githubv4.NewEnterpriseClient(graphqlURL, httpClient)
-		}
-
 		return &ClientConfig{
 			Username: username,
-			Client:   newClient,
+			Client:   newRateLimitClient(httpclient.NewUncachedGraphQLClient(), graphqlURL),
 			URL:      URL,
 		}, nil
 	}
@@ -102,25 +99,9 @@ func New(configUsername, configToken string, configApp *app.Spec, configURL stri
 		oauth2.HTTPClient,
 		httpclient.NewUncachedGraphQLClient())
 
-	httpClient := oauth2.NewClient(clientContext, tokenSource)
-
-	var newClient Client
-
-	if strings.HasSuffix(URL, "github.com") {
-		newClient = githubv4.NewClient(httpClient)
-	} else {
-		// For GH enterprise the GraphQL API path is /api/graphql
-		// Cf https://docs.github.com/en/enterprise-cloud@latest/graphql/guides/managing-enterprise-accounts#3-setting-up-insomnia-to-use-the-github-graphql-api-with-enterprise-accounts
-		graphqlURL, err := url.JoinPath(URL, "/api/graphql")
-		if err != nil {
-			return nil, fmt.Errorf("parsing GitHub Enterprise GraphQL URL: %w", err)
-		}
-		newClient = githubv4.NewEnterpriseClient(graphqlURL, httpClient)
-	}
-
 	return &ClientConfig{
 		Username:    username,
-		Client:      newClient,
+		Client:      newRateLimitClient(oauth2.NewClient(clientContext, tokenSource), graphqlURL),
 		TokenSource: tokenSource,
 		URL:         URL,
 	}, nil

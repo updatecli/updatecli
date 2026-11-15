@@ -3,7 +3,6 @@ package github
 import (
 	"context"
 	"errors"
-	"strings"
 
 	"github.com/shurcooL/githubv4"
 	"github.com/updatecli/updatecli/pkg/core/log"
@@ -58,7 +57,7 @@ func SearchRepositories(c client.Client, queryStr string, retry int, ctx context
 
 		err := c.Query(ctx, &query, variables)
 		if err != nil {
-			if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) && retry < client.MaxRetry {
+			if client.IsRateLimitError(err) && retry < client.MaxRetry {
 				rateLimit, err := queryRateLimit(c, ctx)
 				if err != nil {
 					log.Errorf("Error querying GitHub API rate limit: %s", err)
@@ -66,7 +65,7 @@ func SearchRepositories(c client.Client, queryStr string, retry int, ctx context
 				log.Debugln(rateLimit)
 				if retry < client.MaxRetry {
 					log.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
-					rateLimit.Pause()
+					rateLimit.Pause(ctx)
 					return SearchRepositories(c, queryStr, retry+1, ctx)
 				}
 				return nil, errors.New(ErrAPIRateLimitExceededFinalAttempt)

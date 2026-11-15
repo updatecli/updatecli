@@ -315,7 +315,7 @@ targets:
     kind: shell
     spec:
       command: |-
-        pnpm add --lockfile-only @mdi/font@{{ source "npm" }}
+        pnpm add --lockfile-only --save-exact @mdi/font@{{ source "npm" }}
       changedif:
         kind: file/checksum
         spec:

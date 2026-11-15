@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/shurcooL/githubv4"
 	"github.com/updatecli/updatecli/pkg/core/log"
@@ -20,11 +19,11 @@ func (p *PullRequest) addComment(ctx context.Context, body string, retry int) er
 
 	rateLimit, err := queryRateLimit(p.gh.client, ctx)
 	if err != nil {
-		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
+		if client.IsRateLimitError(err) {
 			log.Debugln(rateLimit)
 			if retry < client.MaxRetry {
 				log.Warningf("GitHub API rate limit exceeded. Retrying... (%d/%d)", retry+1, client.MaxRetry)
-				rateLimit.Pause()
+				rateLimit.Pause(ctx)
 				return p.addComment(ctx, body, retry+1)
 			}
 			return errors.New(ErrAPIRateLimitExceededFinalAttempt)
@@ -62,7 +61,7 @@ func (p *PullRequest) addComment(ctx context.Context, body string, retry int) er
 
 	err = p.gh.client.Mutate(ctx, &mutation, input, nil)
 	if err != nil {
-		if strings.Contains(err.Error(), ErrAPIRateLimitExceeded) {
+		if client.IsRateLimitError(err) {
 			if retry < client.MaxRetry {
 				return p.addComment(ctx, body, retry+1)
 			}

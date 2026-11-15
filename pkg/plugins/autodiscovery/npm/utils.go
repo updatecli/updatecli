@@ -223,24 +223,41 @@ func isLockFileDetected(lockfile string) bool {
 	return err == nil
 }
 
-func getTargetCommand(cmd, dependencyName string) string {
+// isExactVersion reports whether a package.json dependency version pins a single version.
+// Only a strict semantic version counts, any other notation is left to the package manager.
+func isExactVersion(version string) bool {
+	_, err := semver.StrictNewVersion(version)
+	return err == nil
+}
+
+// getTargetCommand returns the command updating the lock file of a dependency to the source version.
+// An exact dependency version must stay exact, as package managers otherwise save the new version
+// with their default range prefix, such as "^", which loosens the dependency.
+func getTargetCommand(cmd, dependencyName string, exact bool) string {
 	dryRunVariable := "$DRY_RUN"
 	if runtime.GOOS == "windows" {
 		dryRunVariable = "$env:DRY_RUN"
 	}
 
+	npmExactFlag := ""
+	yarnExactFlag := ""
+	if exact {
+		npmExactFlag = " --save-exact"
+		yarnExactFlag = " --exact"
+	}
+
 	switch cmd {
 	case npmIdentifier:
-		return fmt.Sprintf("npm install --package-lock-only --dry-run=%s %s@{{ source %q }}", dryRunVariable, dependencyName, npmIdentifier)
+		return fmt.Sprintf("npm install --package-lock-only%s --dry-run=%s %s@{{ source %q }}", npmExactFlag, dryRunVariable, dependencyName, npmIdentifier)
 	case "yarn":
 		if isNpmSupportYarnUpdate() {
-			return fmt.Sprintf("npm install --package-lock-only --dry-run=%s %s@{{ source %q }}", dryRunVariable, dependencyName, npmIdentifier)
+			return fmt.Sprintf("npm install --package-lock-only%s --dry-run=%s %s@{{ source %q }}", npmExactFlag, dryRunVariable, dependencyName, npmIdentifier)
 		}
 		log.Infof("In the current state, yarn package update do not support dry-run mode")
-		return fmt.Sprintf("yarn add --mode update-lockfile %s@{{ source %q }}", dependencyName, npmIdentifier)
+		return fmt.Sprintf("yarn add --mode update-lockfile%s %s@{{ source %q }}", yarnExactFlag, dependencyName, npmIdentifier)
 	case "pnpm":
 		log.Infof("In the current state, pnpm package update does not support dry-run mode")
-		return fmt.Sprintf("pnpm add --lockfile-only %s@{{ source %q }}", dependencyName, npmIdentifier)
+		return fmt.Sprintf("pnpm add --lockfile-only%s %s@{{ source %q }}", npmExactFlag, dependencyName, npmIdentifier)
 	}
 
 	return "false"
