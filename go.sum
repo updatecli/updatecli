@@ -529,8 +529,8 @@ github.com/invopop/jsonschema v0.14.0 h1:MHQqLhvpNUZfw+hM3AZDYK7jxO8FZoQeQM77g8i
 github.com/invopop/jsonschema v0.14.0/go.mod h1:ygm6C2EaVNMBDPpaPlnOA2pFAxBnxGjFlMZABxm9n2I=
 github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 h1:BQSFePA1RWJOlocH6Fxy8MmwDt+yVQYULKfN0RoTN8A=
 github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99/go.mod h1:1lJo3i6rXxKeerYnT8Nvf0QmHCRC1n8sfWVwXF2Frvo=
-github.com/jferrl/go-githubauth v1.9.1 h1:gDBgNgPxU4gL0yWKf6FOwKCdLb3ICHPVMQrPEq+xq0I=
-github.com/jferrl/go-githubauth v1.9.1/go.mod h1:HkuzaWMeDf+S09Dq/5wlBwPeho9ZZm3MixLdD2WTqO0=
+github.com/jferrl/go-githubauth v1.12.0 h1:bQjksWyThmv7sEtaz2EsDZnlJBThtg8oI8ORiUUJhrM=
+github.com/jferrl/go-githubauth v1.12.0/go.mod h1:HkuzaWMeDf+S09Dq/5wlBwPeho9ZZm3MixLdD2WTqO0=
 github.com/jmoiron/sqlx v1.4.0 h1:1PLqN7S1UYp5t4SrVVnt4nUVNemrDAtxlulVe+Qgm3o=
 github.com/jmoiron/sqlx v1.4.0/go.mod h1:ZrZ7UsYB/weZdl2Bxg6jCRO9c3YHl8r3ahlKmRT4JLY=
 github.com/joho/godotenv v1.5.1 h1:7eLL/+HRGLY0ldzfGMeQkb7vMd0as4CfYvUVzLqw0N0=
