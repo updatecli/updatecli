@@ -4,6 +4,7 @@ import (
 	"os"
 	"os/exec"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -282,4 +283,27 @@ func TestLockToken(t *testing.T) {
 
 	t.Setenv("GH_HOST", "tenant.ghe.com")
 	assert.Empty(t, g.lockToken(), "a github.com token would override the gh login of another host")
+}
+
+func TestRunGHProbe(t *testing.T) {
+	if _, err := exec.LookPath("sh"); err != nil {
+		t.Skip("sh not available")
+	}
+
+	dir := t.TempDir()
+	// A fake gh succeeds, fails or hangs depending on its first argument
+	script := "#!/bin/sh\ncase \"$1\" in\n  ok) exit 0 ;;\n  hang) sleep 10 ;;\n  *) exit 1 ;;\nesac\n"
+	require.NoError(t, os.WriteFile(dir+"/gh", []byte(script), 0o700)) //nolint:gosec // test helper script
+	t.Setenv("PATH", dir+":"+os.Getenv("PATH"))
+
+	previous := ghProbeTimeout
+	ghProbeTimeout = 200 * time.Millisecond
+	t.Cleanup(func() { ghProbeTimeout = previous })
+
+	assert.True(t, runGHProbe("ok"))
+	assert.False(t, runGHProbe("fail"))
+
+	start := time.Now()
+	assert.False(t, runGHProbe("hang"), "a probe still running at the deadline fails")
+	assert.Less(t, time.Since(start), 5*time.Second, "the probe is killed at the deadline")
 }

@@ -1,6 +1,7 @@
 package githubaction
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -10,6 +11,7 @@ import (
 	"runtime"
 	"strings"
 	"sync"
+	"time"
 
 	yaml "github.com/goccy/go-yaml"
 	"github.com/updatecli/updatecli/pkg/core/log"
@@ -23,6 +25,10 @@ const (
 )
 
 var (
+	// ghProbeTimeout bounds each gh command run to check whether "gh actions-lock" can run.
+	// It is a variable so tests can shorten it.
+	ghProbeTimeout = 30 * time.Second
+
 	// lockEnvironmentNames lists the environment variables the "gh actions-lock" command may use
 	lockEnvironmentNames = []string{
 		"PATH", "HOME", "USER", "TMPDIR", "LANG", "LC_ALL",
@@ -41,7 +47,7 @@ var (
 		if runtime.GOOS == "windows" {
 			return false
 		}
-		return exec.Command("gh", "actions-lock", "--help").Run() == nil
+		return runGHProbe("actions-lock", "--help")
 	})
 
 	// isGHAuthenticated reports whether gh has credentials for its host, GH_HOST or github.com.
@@ -51,9 +57,24 @@ var (
 		if host == "" {
 			host = gitHubHostname
 		}
-		return exec.Command("gh", "auth", "status", "--hostname", host).Run() == nil
+		return runGHProbe("auth", "status", "--hostname", host)
 	})
 )
+
+// runGHProbe reports whether the gh command with args succeeds within ghProbeTimeout.
+// A command still running at the deadline is killed and counts as a failure.
+func runGHProbe(args ...string) bool {
+	ctx, cancel := context.WithTimeout(context.Background(), ghProbeTimeout)
+	defer cancel()
+
+	err := exec.CommandContext(ctx, "gh", args...).Run() //nolint:gosec // no shell is involved, args are fixed probe arguments and the GH_HOST hostname
+	if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+		log.Debugf("\"gh %s\" didn't finish within %s", strings.Join(args, " "), ghProbeTimeout)
+		return false
+	}
+
+	return err == nil
+}
 
 // actionsLock holds the part of the GitHub Actions workflow lockfile the crawler reads
 type actionsLock struct {
