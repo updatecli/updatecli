@@ -2,6 +2,7 @@ package githubaction
 
 import (
 	"fmt"
+	"path"
 	"path/filepath"
 
 	"github.com/Masterminds/semver/v3"
@@ -125,6 +126,22 @@ func (g GitHubAction) discoverManifests() [][]byte {
 			continue
 		}
 
+		// A workflow onboarded in the lockfile only runs the actions the lockfile records, so its
+		// actions are only bumped when "gh actions-lock" can update the lockfile too.
+		// An unreadable lockfile may lock any workflow it sits next to.
+		relativeWorkflow := filepath.ToSlash(relateFoundFile)
+		lockWorkflow := g.lockedWorkflows[relativeWorkflow]
+		skipActions := (lockWorkflow && !g.lockAvailable) ||
+			(g.lockfileInvalid && path.Dir(relativeWorkflow) == path.Dir(actionsLockFile))
+		switch {
+		case lockWorkflow && !g.lockAvailable:
+			log.Warningf("skipping the actions of %q: the workflow is locked in %q but \"gh actions-lock\" can't update it",
+				relateFoundFile, actionsLockFile)
+		case skipActions:
+			log.Warningf("skipping the actions of %q: the workflow may be locked in %q, which can't be read",
+				relateFoundFile, actionsLockFile)
+		}
+
 		for jobID, job := range data.Jobs {
 
 			if job.Container.Image != "" {
@@ -180,6 +197,10 @@ func (g GitHubAction) discoverManifests() [][]byte {
 					}
 
 				case ACTIONKINDDEFAULT:
+					if skipActions {
+						continue
+					}
+
 					u := githubActionManifestSpec{
 						URL:               URL,
 						Owner:             owner,
@@ -190,6 +211,7 @@ func (g GitHubAction) discoverManifests() [][]byte {
 						CommentDigest:     step.CommentDigest,
 						JobID:             jobID,
 						StepID:            stepID,
+						LockWorkflow:      lockWorkflow,
 					}
 
 					manifest, err := g.getGitHubActionManifest(&u)

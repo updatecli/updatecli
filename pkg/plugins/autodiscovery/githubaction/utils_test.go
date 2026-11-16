@@ -28,6 +28,10 @@ func TestSearchWorkflowFiles(t *testing.T) {
 		"testdata/duplicate_steps/.github/workflows/updatecli.yaml",
 		"testdata/forgejo/.forgejo/workflows/updatecli.yaml",
 		"testdata/gitea/.gitea/workflows/updatecli.yaml",
+		"testdata/lockfile/.github/workflows/ci.yaml",
+		"testdata/lockfile/.github/workflows/other.yaml",
+		"testdata/lockfile/.github/workflows/pinned.yaml",
+		"testdata/lockfile_invalid/.github/workflows/ci.yaml",
 		"testdata/updatecli/.github/workflows/updatecli.yaml",
 	}
 

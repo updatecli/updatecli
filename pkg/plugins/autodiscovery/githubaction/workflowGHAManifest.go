@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"net/url"
+	"path/filepath"
 	"slices"
 	"strings"
 	"text/template"
@@ -23,6 +24,8 @@ type githubActionManifestSpec struct {
 	JobID             string
 	Composite         bool
 	StepID            int
+	// LockWorkflow reports whether the workflow is onboarded in the GitHub Actions lockfile
+	LockWorkflow bool
 }
 
 func (g GitHubAction) getGitHubActionManifest(spec *githubActionManifestSpec) ([]byte, error) {
@@ -30,7 +33,15 @@ func (g GitHubAction) getGitHubActionManifest(spec *githubActionManifestSpec) ([
 	var err error
 
 	pinReference := parseActionDigestComment(spec.CommentDigest)
-	if g.digest {
+
+	// The lockfile records the commit of each action, so a locked workflow keeps readable
+	// references by default. A step already pinned to a digest stays pinned.
+	digest := g.digest
+	if spec.LockWorkflow && g.spec.Digest == nil && pinReference == "" {
+		digest = false
+	}
+
+	if digest {
 		if pinReference == "" {
 			// First time we pin a ref
 			pinReference = spec.Reference
@@ -40,7 +51,7 @@ func (g GitHubAction) getGitHubActionManifest(spec *githubActionManifestSpec) ([
 	case "":
 		return nil, nil
 	case "main", "master":
-		if !g.digest {
+		if !digest {
 			return nil, nil
 		}
 	}
@@ -79,7 +90,7 @@ func (g GitHubAction) getGitHubActionManifest(spec *githubActionManifestSpec) ([
 		}
 	}
 
-	if !g.digest && slices.Contains([]string{latestVersionIdentifier, "master", "main"}, spec.Reference) {
+	if !digest && slices.Contains([]string{latestVersionIdentifier, "master", "main"}, spec.Reference) {
 		log.Debugf("Ignoring GitHub Action %q as it uses the reference %q \n",
 			actionName,
 			spec.Reference,
@@ -87,8 +98,19 @@ func (g GitHubAction) getGitHubActionManifest(spec *githubActionManifestSpec) ([
 		return nil, nil
 	}
 
+	// Only the GitHub manifest updates the lockfile, and gh actions-lock doesn't support GitHub
+	// Enterprise Server, so other actions of a locked workflow are left as is
+	if spec.LockWorkflow {
+		actionURL, err := url.Parse(spec.URL)
+		if err != nil || kind != kindGitHub || !isLockableActionHost(actionURL.Hostname()) {
+			log.Warningf("skipping action %q of %q: the workflow is locked in %q and \"gh actions-lock\" can't lock it",
+				actionName, spec.RelativeFoundFile, actionsLockFile)
+			return nil, nil
+		}
+	}
+
 	versionFilterRef := spec.Reference
-	if g.digest {
+	if digest {
 		versionFilterRef = pinReference
 	}
 
@@ -134,7 +156,7 @@ func (g GitHubAction) getGitHubActionManifest(spec *githubActionManifestSpec) ([
 		gitUsername = ""
 	}
 
-	tmpl, err := template.New("manifest").Parse(age.ManifestTemplate + workflowManifestActionPartials + providerTemplate)
+	tmpl, err := template.New("manifest").Funcs(template.FuncMap{"yamlquote": yamlQuote}).Parse(age.ManifestTemplate + workflowManifestActionPartials + providerTemplate)
 	if err != nil {
 		return nil, fmt.Errorf("parsing template: %s", err)
 	}
@@ -165,8 +187,12 @@ func (g GitHubAction) getGitHubActionManifest(spec *githubActionManifestSpec) ([
 		TargetKey:                  targetKey,
 		GitUsername:                gitUsername,
 		Token:                      token,
-		Digest:                     g.digest,
+		Digest:                     digest,
 		Age:                        g.spec.Age.Spec,
+		LockWorkflow:               spec.LockWorkflow,
+		LockFile:                   actionsLockFile,
+		LockCommand:                lockCommand(filepath.ToSlash(spec.RelativeFoundFile)),
+		LockEnvironments:           g.lockEnvironments,
 	}
 
 	manifest := bytes.Buffer{}
@@ -203,6 +229,11 @@ type actionManifestParams struct {
 	Token       string
 	Digest      bool
 	Age         age.Spec
+	// LockWorkflow adds a target running "gh actions-lock" once the workflow is updated
+	LockWorkflow     bool
+	LockFile         string
+	LockCommand      string
+	LockEnvironments []lockEnvironment
 }
 
 // actionSourceParams narrows actionManifestParams to one source, "release", "tag", or "branch",
