@@ -41,7 +41,7 @@ require (
 	github.com/heimdalr/dag v1.5.1
 	github.com/hexops/gotextdiff v1.0.3
 	github.com/invopop/jsonschema v0.14.0
-	github.com/jferrl/go-githubauth v1.9.1
+	github.com/jferrl/go-githubauth v1.12.0
 	github.com/joho/godotenv v1.5.1
 	github.com/lithammer/dedent v1.1.0
 	github.com/microsoft/azure-devops-go-api/azuredevops/v7 v7.1.0
@@ -67,7 +67,7 @@ require (
 	github.com/tomwright/dasel/v3 v3.11.2
 	github.com/vmware-labs/yaml-jsonpath v0.3.2
 	github.com/yuin/goldmark v1.8.6
-	github.com/zclconf/go-cty v1.19.0
+	github.com/zclconf/go-cty v1.20.0
 	gitlab.com/gitlab-org/api/client-go v1.46.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.71.0
 	go.opentelemetry.io/otel v1.46.0
