@@ -31,6 +31,13 @@ var (
 "github/action" defines the specification for the GitHub Action autodiscovery crawler.
 It searches workflow files and composite actions, and generates manifests to update the actions and Docker images they use.
 The "gitea/action" crawler uses the same specification.
+
+When the GitHub Actions lockfile ".github/workflows/actions.lock" lists a workflow, the manifests
+updating the actions of that workflow also run "gh actions-lock" to update the lockfile. The command
+uses the GitHub token Updatecli resolves, so "UPDATECLI_GITHUB_TOKEN" and the GitHub App settings take
+precedence over the gh login. When the "gh actions-lock" extension isn't installed, the actions of
+locked workflows are skipped, since bumping them without updating the lockfile would stop the workflow
+from running.
 */
 type Spec struct {
 	// "files" defines the workflow file name patterns the crawler searches for.
@@ -182,6 +189,8 @@ type Spec struct {
 	// remark:
 	//   * digest pinning is supported for GitHub, Gitea and Forgejo actions, and Docker images.
 	//   * when false, actions referenced by "main", "master" or "latest" are skipped.
+	//   * when unset, the actions of a workflow listed in ".github/workflows/actions.lock" are not
+	//     pinned, since the lockfile records their commit. An action already pinned stays pinned.
 	//
 	Digest *bool `yaml:",omitempty"`
 }
@@ -210,6 +219,14 @@ type GitHubAction struct {
 	compositeActionFiles []string
 	// digest holds the value of the digest parameter
 	digest bool
+	// lockedWorkflows holds the workflows onboarded in the GitHub Actions lockfile, nil without lockfile
+	lockedWorkflows map[string]bool
+	// lockfileInvalid reports whether the GitHub Actions lockfile exists but can't be read
+	lockfileInvalid bool
+	// lockAvailable reports whether "gh actions-lock" can update the lockfile
+	lockAvailable bool
+	// lockEnvironments holds the environment variables of the "gh actions-lock" command
+	lockEnvironments []lockEnvironment
 }
 
 // gitProviderToken defines the credentials used to authenticate with a git provider.
@@ -335,6 +352,18 @@ func (g GitHubAction) DiscoverManifests() ([][]byte, error) {
 	err = g.searchCompositeActionFiles(searchFromDir)
 	if err != nil {
 		return nil, err
+	}
+
+	g.lockedWorkflows, err = lockedWorkflows(g.rootDir)
+	if err != nil {
+		// Without a readable lockfile, any workflow next to it may be locked, so none of their actions is bumped
+		log.Warningf("skipping the actions of the workflows in %q: %s", path.Dir(actionsLockFile), err)
+		g.lockfileInvalid = true
+		err = nil
+	}
+
+	if len(g.lockedWorkflows) > 0 {
+		g.lockAvailable, g.lockEnvironments = g.lockSetup()
 	}
 
 	manifests := g.discoverManifests()

@@ -1,0 +1,17 @@
+name: ci
+on:
+  push:
+    branches: [main]
+
+permissions: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout"
+        uses: "actions/checkout@v4"
+      - name: "Gitea action"
+        uses: "https://gitea.com/actions/checkout@v4"
+      - name: "GitHub Enterprise Server action"
+        uses: "https://ghes.example.com/org/action@v1"
