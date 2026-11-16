@@ -2,10 +2,12 @@ package language
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
@@ -32,7 +34,11 @@ func (l *Language) Condition(ctx context.Context, source string, scm scm.ScmHand
 		}
 	case false:
 		versions, err = l.getTagsFromRepository()
-		if err != nil {
+		/*
+			A cooldown still running means the version may not be usable yet, which the loop
+			below already reports as an unmet condition, so it isn't surfaced as an error.
+		*/
+		if err != nil && !errors.Is(err, age.ErrNoVersionMatchingAge) {
 			return false, "", fmt.Errorf("searching golang version: %w", err)
 		}
 	}

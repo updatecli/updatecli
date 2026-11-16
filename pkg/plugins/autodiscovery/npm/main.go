@@ -116,9 +116,14 @@ type Spec struct {
 	//   * it is propagated to the generated npm sources.
 	//   * the default keeps Updatecli from suggesting a package version published less than three days ago.
 	//   * an empty "age: {}" disables the default.
+	//   * with a semver "versionfilter", the default, a version lower than the installed one
+	//     is never suggested. While every newer release is too recent, the update is skipped.
+	//     For a version constraint, such as "^1.2.0", the installed version is read from the
+	//     lock file. Set "allowdowngrade" to true to fall back to the newest release old enough
+	//     instead. Other kinds, such as "latest", can't exclude lower versions.
 	//   * it cannot be combined with "vulnerability".
 	//
-	Age *age.Spec `yaml:",omitempty"`
+	Age *age.AutodiscoverySpec `yaml:",omitempty"`
 	// "vulnerability" switches the autodiscovery to security updates, based on the OSV database (https://osv.dev).
 	//
 	// A package is only updated when its current version has known vulnerabilities,
@@ -164,8 +169,9 @@ type Npm struct {
 	url string
 	// registryToken holds the registry token to propagate to generated manifests
 	registryToken string
-	// releaseAge holds the release age filter to propagate to generated manifests
-	releaseAge age.Spec
+	// ageFilter holds the release age filter propagated to generated manifests, with whether
+	// an update can lower the installed version
+	ageFilter age.AutodiscoverySpec
 }
 
 // New return a new valid object.
@@ -194,8 +200,9 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Npm, error) {
 	// By default, wait for a release to be old enough before suggesting it
 	releaseAge := age.Spec{Minimum: defaultMinimumReleaseAge}
 	switch {
-	case s.Age != nil:
-		releaseAge = *s.Age
+	// "age: {}" disables the default, while "allowdowngrade" alone keeps it
+	case s.Age != nil && (!s.Age.Spec.IsZero() || s.Age.AllowDowngrade == nil):
+		releaseAge = s.Age.Spec
 	case s.Vulnerability != nil:
 		// A fixed version is suggested as soon as it is known
 		releaseAge = age.Spec{}
@@ -242,7 +249,7 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Npm, error) {
 		npmrcPath:               s.NpmrcPath,
 		url:                     s.URL,
 		registryToken:           s.RegistryToken,
-		releaseAge:              releaseAge,
+		ageFilter:               age.AutodiscoverySpec{Spec: releaseAge, AllowDowngrade: allowDowngrade(s.Age)},
 	}, nil
 
 }
@@ -283,4 +290,12 @@ func (n Npm) DiscoverManifests() ([][]byte, error) {
 	}
 
 	return manifests, nil
+}
+
+// allowDowngrade returns the "allowdowngrade" setting of releaseAge, if any.
+func allowDowngrade(releaseAge *age.AutodiscoverySpec) *bool {
+	if releaseAge == nil {
+		return nil
+	}
+	return releaseAge.AllowDowngrade
 }

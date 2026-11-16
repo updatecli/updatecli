@@ -94,9 +94,13 @@ type Spec struct {
 	//
 	// remark:
 	//   * it accepts a duration string, such as "24h", "7d" or "1w".
+	//   * with a semver "versionfilter", the default, a version lower than the one in go.mod
+	//     is never suggested. While every newer release is too recent, the update is skipped.
+	//     Set "allowdowngrade" to true to fall back to the newest release old enough instead.
+	//     Other kinds, such as "latest", can't exclude lower versions.
 	//   * it cannot be combined with "vulnerability".
 	//
-	Age age.Spec `yaml:",omitempty"`
+	Age age.AutodiscoverySpec `yaml:",omitempty"`
 	// "vulnerability" switches the autodiscovery to security updates, based on the OSV database (https://osv.dev).
 	//
 	// Each Go module is updated to the lowest version without known vulnerabilities,
@@ -213,7 +217,7 @@ func (s Spec) validateVulnerability() error {
 		return fmt.Errorf("invalid vulnerability spec: %w", err)
 	}
 
-	if s.Age.Minimum != "" || s.Age.Maximum != "" {
+	if !s.Age.IsZero() {
 		return errors.New("age can't be combined with vulnerability, use a separate manifest for routine updates")
 	}
 

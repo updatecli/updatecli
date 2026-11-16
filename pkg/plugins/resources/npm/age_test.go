@@ -175,3 +175,13 @@ func TestLatestVersionMatchingAge(t *testing.T) {
 		})
 	}
 }
+
+func TestDatedVersions(t *testing.T) {
+	publishDates := map[string]string{
+		"1.0.0": "2024-01-01T00:00:00.000Z",
+		"1.1.0": "not a date",
+	}
+
+	// A version without a valid release date can't be told apart from one still cooling down
+	assert.Equal(t, []string{"1.0.0"}, datedVersions([]string{"1.0.0", "1.1.0", "1.2.0"}, publishDates))
+}

@@ -1,6 +1,7 @@
 package language
 
 import (
+	"errors"
 	"path"
 	"sort"
 	"strings"
@@ -11,6 +12,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/tmp"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 )
 
 const (
@@ -62,7 +64,7 @@ func (l *Language) getTagsFromRepository() ([]string, error) {
 		return nil, err
 	}
 
-	tags := []*semver.Version{}
+	tags := []datedVersion{}
 
 	err = refs.ForEach(func(ref *plumbing.Reference) error {
 		if !ref.Name().IsTag() {
@@ -83,23 +85,13 @@ func (l *Language) getTagsFromRepository() ([]string, error) {
 			return nil
 		}
 
-		if l.Spec.Age.Minimum != "" && l.Spec.Age.IsOlderThan(commit.Committer.When, nil) {
-			log.Debugf("ignoring version %q from repository because its age is below %q (released on %s)\n", tagName, l.Spec.Age.Minimum, commit.Committer.When)
-			return nil
-		}
-
-		if l.Spec.Age.Maximum != "" && l.Spec.Age.IsNewerThan(commit.Committer.When, nil) {
-			log.Debugf("ignoring version %q from repository because its age is above %q (released on %s)\n", tagName, l.Spec.Age.Maximum, commit.Committer.When)
-			return nil
-		}
-
 		version, err := semver.StrictNewVersion(strings.TrimPrefix(tagName, "go"))
 		if err != nil {
 			log.Debugf("ignoring version %q from repository due to invalid semantic version format: %q\n", tagName, err)
 			return nil
 		}
 
-		tags = append(tags, version)
+		tags = append(tags, datedVersion{version: version, releaseDate: commit.Committer.When})
 
 		return nil
 	})
@@ -108,15 +100,45 @@ func (l *Language) getTagsFromRepository() ([]string, error) {
 		return nil, err
 	}
 
-	sort.Sort(semver.Collection(tags))
+	return l.searchDatedVersions(tags)
+}
 
+// datedVersion is a Golang version with the date of the commit it was tagged on.
+type datedVersion struct {
+	version     *semver.Version
+	releaseDate time.Time
+}
+
+// searchDatedVersions sets the version matching both the version filter and the age filter,
+// and returns the versions matching the age filter.
+//
+// When the age filter discards every version matching the version filter, it returns these
+// versions along with age.ErrNoVersionMatchingAge, so that callers can skip rather than fail.
+func (l *Language) searchDatedVersions(tags []datedVersion) ([]string, error) {
+	sort.Slice(tags, func(i, j int) bool {
+		return tags[i].version.LessThan(tags[j].version)
+	})
+
+	// published holds every version, versions the ones within the age window
+	published := []string{}
 	versions := []string{}
 	for _, tag := range tags {
-		versions = append(versions, tag.Original())
+		published = append(published, tag.version.Original())
+
+		if !l.Spec.Age.Matches(tag.releaseDate) {
+			log.Debugf("ignoring version %q from repository because it doesn't match the age filter (released on %s)\n", tag.version.Original(), tag.releaseDate)
+			continue
+		}
+
+		versions = append(versions, tag.version.Original())
 	}
 
-	l.Version, err = l.versionFilter.Search(versions)
+	var err error
+	l.Version, err = age.Search(&l.versionFilter, published, versions)
 	if err != nil {
+		if errors.Is(err, age.ErrNoVersionMatchingAge) {
+			return versions, err
+		}
 		return nil, err
 	}
 

@@ -6,6 +6,8 @@ import (
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/updatecli/updatecli/pkg/core/log"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
 const (
@@ -208,11 +210,21 @@ func (g GitHubAction) discoverManifests() [][]byte {
 	return manifests
 }
 
-// detectVersionFilter tries to identify the kind of versionfilter
-func detectVersionFilter(reference string) (string, string) {
+// detectVersionFilter tries to identify the kind of versionfilter.
+// With an age filter that doesn't allow a downgrade, a semver reference is used as lower bound,
+// so that a release filtered out by the age filter never makes the source fall back to an older
+// one. A prerelease reference, such as "v2.0.0-rc.2", keeps accepting the newer prereleases.
+func detectVersionFilter(reference string, releaseAge age.AutodiscoverySpec) (string, string) {
 
 	if _, err := semver.NewVersion(reference); err == nil {
-		return "semver", "*"
+		switch {
+		case releaseAge.NeverDowngrade():
+			return version.SEMVERVERSIONKIND, version.BoundPatternAcceptingPrereleases("*", reference)
+		case releaseAge.MayDowngrade():
+			return version.SEMVERVERSIONKIND, version.UnboundedPattern(reference)
+		default:
+			return version.SEMVERVERSIONKIND, "*"
+		}
 	}
 
 	return latestVersionIdentifier, latestVersionIdentifier

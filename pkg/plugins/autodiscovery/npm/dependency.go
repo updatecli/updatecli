@@ -12,6 +12,7 @@ import (
 	"github.com/Masterminds/semver/v3"
 	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/vulnerability"
 )
 
@@ -232,65 +233,15 @@ func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 					params.Vulnerability = n.spec.Vulnerability
 					params.CurrentVersion = currentVersion
 				} else {
-					sourceVersionFilterKind := "semver"
-					sourceVersionFilterPattern := dependencyVersion
-					sourceVersionFilterRegex := "*"
-
-					if isVersionConstraint && n.ignoreVersionConstraint {
-						sourceVersionFilterPattern = "*"
-
-						if !n.spec.VersionFilter.IsZero() && dependencyVersion != "latest" {
-							guessedVersion, err := convertSemverVersionConstraintToVersion(dependencyVersion)
-							if err != nil {
-								log.Debugf("converting version constraint to version: %s", err)
-								guessedVersion = ""
-							}
-							sourceVersionFilterKind = n.versionFilter.Kind
-							sourceVersionFilterPattern, err = n.versionFilter.GreaterThanPattern(guessedVersion)
-							sourceVersionFilterRegex = n.versionFilter.Regex
-							if err != nil {
-								log.Debugf("building version filter pattern: %s", err)
-								sourceVersionFilterPattern = "*"
-							}
-						}
-					}
-
-					if isVersionConstraint && !n.ignoreVersionConstraint && !n.spec.VersionFilter.IsZero() {
-						// User want to respect the version constraint defined in package.json
-						// but also want to apply a version filter on top of it.
-						// This is not supported at this time as we don't have a clear use case.
-						log.Warningf("NPM package %q from %q: Ignoring version filter as version constraint %q is defined and ignoreVersionConstraints is set to false", dependencyName, relativeFoundFile, dependencyVersion)
-						log.Warningf("NPM package %q from %q: If you want to apply a version filter, please set ignoreVersionConstraints to true", dependencyName, relativeFoundFile)
-					}
-
-					/*
-						Pattern order
-							1. Reuse version constraint defined from package.json
-							2. If no version constraint defined then convert the version to ">=x.y.z"
-							3. If no version constraint defined but versionfilter defined in the manifest
-							   then we use that version filter kind and pattern
-					*/
-
-					if !isVersionConstraint {
-						sourceVersionFilterPattern = ">=" + dependencyVersion
-
-						if !n.spec.VersionFilter.IsZero() {
-							sourceVersionFilterKind = n.versionFilter.Kind
-							sourceVersionFilterPattern, err = n.versionFilter.GreaterThanPattern(dependencyVersion)
-							sourceVersionFilterRegex = n.versionFilter.Regex
-							if err != nil {
-								log.Debugf("building version filter pattern: %s", err)
-								sourceVersionFilterPattern = "*"
-							}
-						}
-					}
+					sourceVersionFilterKind, sourceVersionFilterPattern, sourceVersionFilterRegex := n.routineVersionFilter(
+						dependencyName, dependencyVersion, relativeFoundFile, isVersionConstraint, locked)
 
 					params.SourceVersionFilterKind = sourceVersionFilterKind
 					params.SourceVersionFilterPattern = sourceVersionFilterPattern
 					params.SourceVersionFilterRegex = sourceVersionFilterRegex
 					params.SourceURL = n.url
 					params.SourceRegistryToken = n.registryToken
-					params.SourceAge = n.releaseAge
+					params.SourceAge = n.ageFilter.Spec
 				}
 
 				tmpl, err := template.New("manifest").Parse(age.ManifestTemplate + vulnerability.ManifestTemplate + manifestTemplate)
@@ -321,4 +272,134 @@ func (n Npm) discoverDependencyManifests() ([][]byte, error) {
 	log.Printf("%v manifests identified", len(manifests))
 
 	return manifests, nil
+}
+
+// lowerBound returns pattern without any version lower than installedVersion, when an age
+// filter is defined and doesn't allow a downgrade.
+func (n Npm) lowerBound(pattern, installedVersion string) string {
+	switch {
+	case n.ageFilter.NeverDowngrade():
+		return version.BoundPattern(pattern, installedVersion)
+	case n.ageFilter.MayDowngrade() && (pattern == "" || pattern == "*"):
+		return version.UnboundedPattern(installedVersion)
+	default:
+		return pattern
+	}
+}
+
+// routineVersionFilter returns the version filter of the source looking for a newer version of a
+// dependency, outside security updates. Unless the age filter allows a downgrade, the filter never
+// accepts a version lower than the installed one when it's known, so a source whose newer versions
+// are filtered out, such as by an age filter, finds nothing rather than a downgrade.
+func (n Npm) routineVersionFilter(dependencyName, dependencyVersion, relativeFoundFile string, isVersionConstraint bool, locked lockedVersions) (sourceVersionFilterKind, sourceVersionFilterPattern, sourceVersionFilterRegex string) {
+	var err error
+
+	sourceVersionFilterKind = "semver"
+	sourceVersionFilterPattern = dependencyVersion
+	sourceVersionFilterRegex = "*"
+
+	// lockedVersion is the version installed for a version constraint, when a lock file resolves it.
+	// It bounds the search, so a source whose newer versions are filtered out, such as by
+	// an age filter, never falls back to a version older than the installed one.
+	lockedVersion := ""
+	if isVersionConstraint {
+		v := locked.version(dependencyName, dependencyVersion)
+		if _, err := semver.StrictNewVersion(v); err == nil {
+			lockedVersion = v
+		}
+	}
+
+	if isVersionConstraint && !n.ignoreVersionConstraint {
+		/*
+			A lock file out of sync with package.json, such as "1.3.0" for "~1.2.0", would leave
+			no version to match, so the constraint is then kept as is.
+		*/
+		bound := lockedVersion
+		if !satisfiesConstraint(dependencyVersion, lockedVersion) {
+			bound = ""
+		}
+		sourceVersionFilterPattern = n.lowerBound(dependencyVersion, bound)
+	}
+
+	if isVersionConstraint && n.ignoreVersionConstraint {
+		sourceVersionFilterPattern = n.lowerBound("*", lockedVersion)
+
+		if !n.spec.VersionFilter.IsZero() && dependencyVersion != "latest" {
+			// Without an age filter, the version is guessed from the constraint, as it was before
+			guessedVersion := ""
+			if !n.ageFilter.Spec.IsZero() {
+				guessedVersion = lockedVersion
+			}
+			if guessedVersion == "" {
+				guessedVersion, err = convertSemverVersionConstraintToVersion(dependencyVersion)
+				if err != nil {
+					log.Debugf("converting version constraint to version: %s", err)
+					guessedVersion = ""
+				}
+			}
+			sourceVersionFilterKind = n.versionFilter.Kind
+			sourceVersionFilterPattern, err = n.ageFilter.GreaterThanPattern(&n.versionFilter, guessedVersion)
+			sourceVersionFilterRegex = n.versionFilter.Regex
+			if err != nil {
+				log.Debugf("building version filter pattern: %s", err)
+				sourceVersionFilterPattern = n.lowerBound("*", lockedVersion)
+			}
+		}
+	}
+
+	if isVersionConstraint && !n.ignoreVersionConstraint && !n.spec.VersionFilter.IsZero() {
+		// User want to respect the version constraint defined in package.json
+		// but also want to apply a version filter on top of it.
+		// This is not supported at this time as we don't have a clear use case.
+		log.Warningf("NPM package %q from %q: Ignoring version filter as version constraint %q is defined and ignoreVersionConstraints is set to false", dependencyName, relativeFoundFile, dependencyVersion)
+		log.Warningf("NPM package %q from %q: If you want to apply a version filter, please set ignoreVersionConstraints to true", dependencyName, relativeFoundFile)
+	}
+
+	/*
+		Pattern order
+			1. Reuse version constraint defined from package.json
+			2. If no version constraint defined then convert the version to ">=x.y.z"
+			3. If no version constraint defined but versionfilter defined in the manifest
+			   then we use that version filter kind and pattern
+	*/
+
+	if !isVersionConstraint {
+		sourceVersionFilterPattern = ">=" + dependencyVersion
+		if n.ageFilter.MayDowngrade() {
+			sourceVersionFilterPattern = version.UnboundedPattern(dependencyVersion)
+		}
+
+		if !n.spec.VersionFilter.IsZero() {
+			sourceVersionFilterKind = n.versionFilter.Kind
+			sourceVersionFilterPattern, err = n.ageFilter.GreaterThanPattern(&n.versionFilter, dependencyVersion)
+			sourceVersionFilterRegex = n.versionFilter.Regex
+			if err != nil {
+				log.Debugf("building version filter pattern: %s", err)
+				sourceVersionFilterPattern = n.lowerBound("*", dependencyVersion)
+			}
+		}
+	}
+
+	return sourceVersionFilterKind, sourceVersionFilterPattern, sourceVersionFilterRegex
+}
+
+// satisfiesConstraint returns true if v, or its release without any prerelease, satisfies the
+// constraint. A prerelease is also compared as its release, since a constraint without
+// prerelease, such as "^1.2.0", rejects every prerelease.
+func satisfiesConstraint(constraint, v string) bool {
+	c, err := semver.NewConstraint(constraint)
+	if err != nil {
+		return false
+	}
+
+	parsed, err := semver.NewVersion(v)
+	if err != nil {
+		return false
+	}
+
+	if c.Check(parsed) {
+		return true
+	}
+
+	return c.Check(semver.New(parsed.Major(), parsed.Minor(), parsed.Patch(), "", ""))
 }

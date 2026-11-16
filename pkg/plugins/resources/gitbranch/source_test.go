@@ -36,11 +36,13 @@ func TestGitBranch_Source(t *testing.T) {
 	}
 
 	tests := []struct {
-		name        string
-		spec        Spec
-		wantValue   string
-		wantSkipped bool
-		wantErr     bool
+		name string
+		spec Spec
+		// versionFilter defaults to the latest branch
+		versionFilter version.Filter
+		wantValue     string
+		wantSkipped   bool
+		wantErr       bool
 	}{
 		{
 			name:      "no age filter returns the latest branch",
@@ -62,13 +64,38 @@ func TestGitBranch_Source(t *testing.T) {
 			spec:        Spec{Age: age.Spec{Minimum: "60d"}},
 			wantSkipped: true,
 		},
+		{
+			// The autodiscovery bounds the filter at the branch in use, so while that branch
+			// is too recent, only older branches are left
+			name:          "the source is skipped while every branch matching the version filter is in cooldown",
+			spec:          Spec{Age: age.Spec{Minimum: "15d"}},
+			versionFilter: version.Filter{Kind: "semver", Pattern: ">=2.0.0"},
+			wantSkipped:   true,
+		},
+		{
+			name:          "a version filter matching no branch still fails",
+			spec:          Spec{Age: age.Spec{Minimum: "15d"}},
+			versionFilter: version.Filter{Kind: "semver", Pattern: ">=4.0.0"},
+			wantErr:       true,
+		},
+		{
+			name:          "a version filter matching no branch still fails while every branch is in cooldown",
+			spec:          Spec{Age: age.Spec{Minimum: "60d"}},
+			versionFilter: version.Filter{Kind: "semver", Pattern: ">=4.0.0"},
+			wantErr:       true,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			versionFilter := tt.versionFilter
+			if versionFilter.Kind == "" {
+				versionFilter = version.Filter{Kind: "latest", Pattern: "latest"}
+			}
+
 			gb := &GitBranch{
 				spec:             tt.spec,
-				versionFilter:    version.Filter{Kind: "latest", Pattern: "latest"},
+				versionFilter:    versionFilter,
 				nativeGitHandler: &mockNativeGitHandler{branchRefs: branches},
 			}
 

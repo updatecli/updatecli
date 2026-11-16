@@ -92,11 +92,11 @@ func (g GitHubAction) getGitHubActionManifest(spec *githubActionManifestSpec) ([
 		versionFilterRef = pinReference
 	}
 
-	versionFilterKind, versionFilterPattern := detectVersionFilter(versionFilterRef)
+	versionFilterKind, versionFilterPattern := detectVersionFilter(versionFilterRef, g.spec.Age)
 	versionFilterRegex := "*"
 	if !g.spec.VersionFilter.IsZero() {
 		versionFilterKind = g.versionFilter.Kind
-		versionFilterPattern, err = g.versionFilter.GreaterThanPattern(versionFilterRef)
+		versionFilterPattern, err = g.spec.Age.GreaterThanPattern(&g.versionFilter, versionFilterRef)
 		versionFilterRegex = g.versionFilter.Regex
 		if err != nil {
 			log.Debugf("building version filter pattern: %s", err)
@@ -166,7 +166,7 @@ func (g GitHubAction) getGitHubActionManifest(spec *githubActionManifestSpec) ([
 		GitUsername:                gitUsername,
 		Token:                      token,
 		Digest:                     g.digest,
-		Age:                        g.spec.Age,
+		Age:                        g.spec.Age.Spec,
 	}
 
 	manifest := bytes.Buffer{}

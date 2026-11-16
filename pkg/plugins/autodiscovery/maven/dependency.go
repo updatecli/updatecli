@@ -38,6 +38,11 @@ func (m Maven) discoverDependencyManifests(kind string) ([][]byte, error) {
 			continue
 		}
 
+		if hasTemplateSyntax(relativePomFile) {
+			log.Warningf("Skipping %q as its path contains template syntax", relativePomFile)
+			continue
+		}
+
 		log.Debugf("parsing file %q", relativePomFile)
 
 		doc := etree.NewDocument()
@@ -83,6 +88,11 @@ func (m Maven) discoverDependencyManifests(kind string) ([][]byte, error) {
 						targetXMLPath = "/project/properties/" + name
 					}
 				}
+			}
+
+			if hasTemplateSyntax(dependency.GroupID, dependency.ArtifactID, dependency.Version) {
+				log.Warningf("Skipping dependency %q in %q as it contains template syntax", dependency.ArtifactID, relativePomFile)
+				continue
 			}
 
 			if isPropertyVersion(dependency.Version) {
