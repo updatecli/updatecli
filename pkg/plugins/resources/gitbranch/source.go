@@ -2,6 +2,7 @@ package gitbranch
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/updatecli/updatecli/pkg/core/log"
@@ -35,8 +36,10 @@ func (gb *GitBranch) Source(_ context.Context, pathResolver pathresolver.Resolve
 		return fmt.Errorf("retrieving branches: %w", err)
 	}
 
-	values := []string{}
+	// published holds every branch, values the ones within the age window
+	var published, values []string
 	for _, ref := range refs {
+		published = append(published, ref.Name)
 		if !gb.spec.Age.Matches(ref.When) {
 			log.Debugf("ignoring branch %q, dated %s, as outside of the age window", ref.Name, ref.When)
 			continue
@@ -44,20 +47,19 @@ func (gb *GitBranch) Source(_ context.Context, pathResolver pathresolver.Resolve
 		values = append(values, ref.Name)
 	}
 
-	/*
-		The repository does publish branches but the age filter discarded every one of
-		them, which is an expected state of the filter rather than a failure, so the
-		source is skipped instead.
-	*/
-	if len(refs) > 0 && len(values) == 0 {
-		log.Debugf("%s", age.ErrNoVersionMatchingAge)
-		resultSource.Result = result.SKIPPED
-		resultSource.Description = "no git branch matches the age filter yet"
-		return nil
-	}
-
-	gb.foundVersion, err = gb.versionFilter.Search(values)
+	gb.foundVersion, err = age.Search(&gb.versionFilter, published, values)
 	if err != nil {
+		/*
+			Every branch matching the version filter is still cooling down, which is an
+			expected state of the age filter rather than a failure, so the source is skipped
+			instead.
+		*/
+		if errors.Is(err, age.ErrNoVersionMatchingAge) {
+			log.Debugf("%s", err)
+			resultSource.Result = result.SKIPPED
+			resultSource.Description = "no git branch matching the version filter matches the age filter yet"
+			return nil
+		}
 		return fmt.Errorf("filtering branches: %w", err)
 	}
 	value := gb.foundVersion.GetVersion()

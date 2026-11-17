@@ -55,7 +55,7 @@ func TestListRemoteURLTagsMatchesClonedTags(t *testing.T) {
 
 	remoteTags, remoteHashes, err := gt.listRemoteURLTags()
 	require.NoError(t, err)
-	clonedTags, clonedHashes, err := gt.listRemoteDirectoryTags("", age.Spec{}, pathresolver.Resolver{})
+	clonedTags, clonedHashes, _, err := gt.listRemoteDirectoryTags("", age.Spec{}, pathresolver.Resolver{})
 	require.NoError(t, err)
 
 	assert.ElementsMatch(t, clonedTags, remoteTags)

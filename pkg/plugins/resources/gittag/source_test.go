@@ -468,6 +468,74 @@ func TestGitTag_Source(t *testing.T) {
 			wantSkipped: true,
 		},
 		{
+			// The autodiscovery bounds the filter at the version in use, so while that version
+			// is too recent, only older tags are left
+			name:       "the source is skipped while every tag matching the version filter is in cooldown",
+			workingDir: "github.com/updatecli/updatecli",
+			mockedNativeGitHandler: &mockNativeGitHandler{
+				tagRefs: []gitgeneric.DatedTag{
+					{Name: "v1.0.0", Hash: "abc123", When: tagDaysAgo(30)},
+					{Name: "v2.0.0", Hash: "def456", When: tagDaysAgo(2)},
+					{Name: "v2.1.0", Hash: "ghi789", When: tagDaysAgo(1)},
+				},
+			},
+			versionFilter: version.Filter{
+				Kind:    "semver",
+				Pattern: ">=2.0.0",
+			},
+			spec:        Spec{Age: age.Spec{Minimum: "7d"}},
+			wantSkipped: true,
+		},
+		{
+			name:       "a version filter matching no tag still fails",
+			workingDir: "github.com/updatecli/updatecli",
+			mockedNativeGitHandler: &mockNativeGitHandler{
+				tagRefs: []gitgeneric.DatedTag{
+					{Name: "v1.0.0", Hash: "abc123", When: tagDaysAgo(30)},
+					{Name: "v2.0.0", Hash: "def456", When: tagDaysAgo(1)},
+				},
+			},
+			versionFilter: version.Filter{
+				Kind:    "semver",
+				Pattern: ">=3.0.0",
+			},
+			spec:    Spec{Age: age.Spec{Minimum: "7d"}},
+			wantErr: true,
+		},
+		{
+			name:       "a version filter matching no tag still fails while every tag is in cooldown",
+			workingDir: "github.com/updatecli/updatecli",
+			mockedNativeGitHandler: &mockNativeGitHandler{
+				tagRefs: []gitgeneric.DatedTag{
+					{Name: "v1.0.0", Hash: "abc123", When: tagDaysAgo(2)},
+					{Name: "v2.0.0", Hash: "def456", When: tagDaysAgo(1)},
+				},
+			},
+			versionFilter: version.Filter{
+				Kind:    "semver",
+				Pattern: ">=3.0.0",
+			},
+			spec:    Spec{Age: age.Spec{Minimum: "7d"}},
+			wantErr: true,
+		},
+		{
+			// Like a cooldown, a maximum age discarding every match is an age hold, not a failure
+			name:       "the source is skipped while every tag matching the version filter is above the maximum age",
+			workingDir: "github.com/updatecli/updatecli",
+			mockedNativeGitHandler: &mockNativeGitHandler{
+				tagRefs: []gitgeneric.DatedTag{
+					{Name: "v1.0.0", Hash: "abc123", When: tagDaysAgo(400)},
+					{Name: "v2.0.0", Hash: "def456", When: tagDaysAgo(10)},
+				},
+			},
+			versionFilter: version.Filter{
+				Kind:    "semver",
+				Pattern: "<2.0.0",
+			},
+			spec:        Spec{Age: age.Spec{Minimum: "7d", Maximum: "1y"}},
+			wantSkipped: true,
+		},
+		{
 			name:       "Error: age is not compatible with lsRemote",
 			workingDir: "github.com/updatecli/updatecli",
 			mockedNativeGitHandler: &mockNativeGitHandler{

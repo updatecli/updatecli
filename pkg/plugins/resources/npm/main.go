@@ -348,13 +348,20 @@ func (n *Npm) getVersions(ctx context.Context) (v string, versions []string, err
 	// Discard the versions published outside of the age window, if any is defined.
 	versions = filterVersionsByAge(publishedVersions, n.data.Time, n.spec.Age)
 
+	// dated holds the published versions whose release date is known, when an age filter is defined
+	var dated []string
+	if !n.spec.Age.IsZero() {
+		dated = datedVersions(publishedVersions, n.data.Time)
+		sort.Strings(dated)
+	}
+
 	/*
-		The package does publish versions but the age filter discarded every one of them,
-		which reports a cooldown still running rather than a lookup failure, so callers are
-		expected to skip rather than to fail.
+		A registry reporting no release date for any version can't apply the age filter, which
+		discarded every version. Like a cooldown, it skips rather than fails, as the npm
+		autodiscovery sets a minimum age by default.
 	*/
-	if len(publishedVersions) > 0 && len(versions) == 0 {
-		return "", versions, fmt.Errorf("%w for the npm package %q", age.ErrNoVersionMatchingAge, n.spec.Name)
+	if !n.spec.Age.IsZero() && len(publishedVersions) > 0 && len(versions) == 0 && len(dated) == 0 {
+		return "", versions, fmt.Errorf("%w for the npm package %q: the registry reports no release date", age.ErrNoVersionMatchingAge, n.spec.Name)
 	}
 
 	if n.versionFilter.Kind == version.LATESTVERSIONKIND {
@@ -371,8 +378,22 @@ func (n *Npm) getVersions(ctx context.Context) (v string, versions []string, err
 	}
 
 	sort.Strings(versions)
-	n.foundVersion, err = n.versionFilter.Search(versions)
+	/*
+		Every version matching the filter may still be cooling down, which reports an age
+		hold rather than a lookup failure, so callers are expected to skip rather than to
+		fail. A filter matching no published version still fails.
+	*/
+	n.foundVersion, err = age.Search(&n.versionFilter, dated, versions)
 	if err != nil {
+		if errors.Is(err, age.ErrNoVersionMatchingAge) {
+			return "", versions, fmt.Errorf("%w for the npm package %q", err, n.spec.Name)
+		}
+
+		// While no version passes the age filter, a version the filter matches may only lack a
+		// release date, which the age filter can't check
+		if !n.spec.Age.IsZero() && len(versions) == 0 && age.MatchesUndated(&n.versionFilter, publishedVersions, dated) {
+			return "", versions, fmt.Errorf("%w for the npm package %q: the registry reports no release date for the versions matching %q", age.ErrNoVersionMatchingAge, n.spec.Name, n.versionFilter.Pattern)
+		}
 		return "", nil, err
 	}
 

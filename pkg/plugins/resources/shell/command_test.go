@@ -67,3 +67,9 @@ func TestNativeCommandExecutor_ExecuteCommand(t *testing.T) {
 		})
 	}
 }
+
+func TestEnvironmentNames(t *testing.T) {
+	assert.Equal(t,
+		[]string{"PATH", "GH_TOKEN", "EMPTY"},
+		environmentNames([]string{"PATH=/usr/bin", "GH_TOKEN=secret=value", "EMPTY="}))
+}

@@ -216,6 +216,70 @@ func TestGitHubRelease_Source(t *testing.T) {
 			wantSkipped: true,
 		},
 		{
+			// The autodiscovery bounds the filter at the version in use, so while that version
+			// is too recent, only older releases are left
+			name: "the source is skipped while every release matching the version filter is in cooldown",
+			mockedGhHandler: &mockGhHandler{
+				releases: []github.ReleaseNode{
+					{TagName: "v1.0.0", PublishedAt: publishedDaysAgo(30)},
+					{TagName: "v2.0.0", PublishedAt: publishedDaysAgo(2)},
+					{TagName: "v2.1.0", PublishedAt: publishedDaysAgo(1)},
+				},
+			},
+			versionFilter: version.Filter{
+				Kind:    "semver",
+				Pattern: ">=2.0.0",
+			},
+			releaseAge:  age.Spec{Minimum: "7d"},
+			wantSkipped: true,
+		},
+		{
+			name: "a version filter matching no release still fails",
+			mockedGhHandler: &mockGhHandler{
+				releases: []github.ReleaseNode{
+					{TagName: "v1.0.0", PublishedAt: publishedDaysAgo(30)},
+					{TagName: "v2.0.0", PublishedAt: publishedDaysAgo(1)},
+				},
+			},
+			versionFilter: version.Filter{
+				Kind:    "semver",
+				Pattern: ">=3.0.0",
+			},
+			releaseAge: age.Spec{Minimum: "7d"},
+			wantErr:    true,
+		},
+		{
+			name: "a version filter matching no release still fails while every release is in cooldown",
+			mockedGhHandler: &mockGhHandler{
+				releases: []github.ReleaseNode{
+					{TagName: "v1.0.0", PublishedAt: publishedDaysAgo(2)},
+					{TagName: "v2.0.0", PublishedAt: publishedDaysAgo(1)},
+				},
+			},
+			versionFilter: version.Filter{
+				Kind:    "semver",
+				Pattern: ">=3.0.0",
+			},
+			releaseAge: age.Spec{Minimum: "7d"},
+			wantErr:    true,
+		},
+		{
+			// Like a cooldown, a maximum age discarding every match is an age hold, not a failure
+			name: "the source is skipped while every release matching the version filter is above the maximum age",
+			mockedGhHandler: &mockGhHandler{
+				releases: []github.ReleaseNode{
+					{TagName: "v1.0.0", PublishedAt: publishedDaysAgo(400)},
+					{TagName: "v2.0.0", PublishedAt: publishedDaysAgo(10)},
+				},
+			},
+			versionFilter: version.Filter{
+				Kind:    "semver",
+				Pattern: "<2.0.0",
+			},
+			releaseAge:  age.Spec{Minimum: "7d", Maximum: "1y"},
+			wantSkipped: true,
+		},
+		{
 			name: "an age filter doesn't prevent the git tag fallback for a repository without any release",
 			mockedGhHandler: &mockGhHandler{
 				tags: []string{"1.0.0", "2.0.0", "3.0.0"},

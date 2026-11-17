@@ -71,8 +71,13 @@ type Spec struct {
 	//   * it is propagated to the generated maven sources.
 	//   * a release's age is the Last-Modified date the repository reports for its pom file.
 	//     On a repository reporting none, the generated sources are skipped.
-	//   * when the most recent release is too recent, an older one is suggested, which can be lower
-	//     than the version in pom.xml. Combine it with a "versionfilter" to bound the versions.
+	//   * by default, the age filter doesn't make an update fall back to a version lower than
+	//     the one in pom.xml. A semver "versionfilter" excludes lower versions when the version
+	//     in pom.xml is a semantic version. Otherwise, such as with the default "latest" kind or
+	//     a version such as "5.3.0.Final", the update waits until the version in pom.xml reaches
+	//     the "minimum" age. The "latest" kind can still pick a lower version the repository
+	//     released last, such as a backport. Set "allowdowngrade" to true to fall back to the
+	//     newest release old enough instead.
 	//   * security fixes don't wait for it, see "vulnerability".
 	//
 	// example:
@@ -81,7 +86,7 @@ type Spec struct {
 	//     minimum: 7d
 	//   ```
 	//
-	Age age.Spec `yaml:",omitempty"`
+	Age age.AutodiscoverySpec `yaml:",omitempty"`
 	// "vulnerability" switches the autodiscovery to security updates, based on the OSV database (https://osv.dev).
 	//
 	// A Maven artifact is only updated when its current version has known vulnerabilities,
