@@ -38,6 +38,11 @@ func (m Maven) discoverParentPomDependencyManifests() ([][]byte, error) {
 			continue
 		}
 
+		if hasTemplateSyntax(relativePomFile) {
+			log.Warningf("Skipping %q as its path contains template syntax", relativePomFile)
+			continue
+		}
+
 		doc := etree.NewDocument()
 		if err := doc.ReadFromFile(pomFile); err != nil {
 			log.Debugln(err)
@@ -50,6 +55,11 @@ func (m Maven) discoverParentPomDependencyManifests() ([][]byte, error) {
 
 		// No need to update Version if it's not specified
 		if len(parentPom.Version) == 0 {
+			continue
+		}
+
+		if hasTemplateSyntax(parentPom.GroupID, parentPom.ArtifactID, parentPom.Version) {
+			log.Warningf("Skipping parent pom %q in %q as it contains template syntax", parentPom.ArtifactID, relativePomFile)
 			continue
 		}
 

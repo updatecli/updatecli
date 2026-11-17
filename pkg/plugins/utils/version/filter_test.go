@@ -691,3 +691,229 @@ func TestGreaterThanPattern(t *testing.T) {
 		})
 	}
 }
+
+func TestGreaterThanPatternWithoutDowngrade(t *testing.T) {
+	tests := []struct {
+		pattern string
+		version string
+		want    string
+	}{
+		{pattern: "*", version: "1.5.3", want: ">=1.5.3"},
+		{pattern: "patch", version: "3.0", want: ">=3.0.0, 3.0.x"},
+		{pattern: "minor", version: "3.0", want: ">=3.0.0, 3.x"},
+		{pattern: "minor", version: "3.0.0-rc1", want: ">=3.0.0-rc1, 3.x.x-0"},
+		{pattern: "major", version: "3.0", want: ">=3.0.0"},
+		{pattern: "major", version: "3.0.0-rc1", want: ">=3.0.0-rc1, >=3.x.x-0"},
+		{pattern: "prerelease", version: "1.2.3", want: ">=1.2.3, >=1.2.3-0 <= 1.2.3"},
+		// A custom constraint accepting older versions is bounded at the current version
+		{pattern: "~1.5", version: "1.5.3", want: ">=1.5.3, ~1.5"},
+		// Each group starting below the current version is bounded
+		{pattern: "^1.0.0 || ^2.0.0", version: "1.5.3", want: ">=1.5.3, ^1.0.0 || ^2.0.0"},
+		// A custom constraint already starting above the current version is unchanged
+		{pattern: ">=2.0.0", version: "1.5.3", want: ">=2.0.0"},
+		// A custom constraint with a current version that isn't semver is unchanged
+		{pattern: "~1.5", version: "not-a-version", want: "~1.5"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.pattern+" "+tt.version, func(t *testing.T) {
+			filter := Filter{Kind: SEMVERVERSIONKIND, Pattern: tt.pattern}
+			got, err := filter.GreaterThanPatternWithoutDowngrade(tt.version)
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, got)
+
+			// Without an age filter, the pattern is left as it was
+			if tt.pattern == "~1.5" && tt.version == "1.5.3" {
+				legacy, err := filter.GreaterThanPattern(tt.version)
+				require.NoError(t, err)
+				assert.Equal(t, "~1.5", legacy)
+			}
+		})
+	}
+}
+
+// TestGreaterThanPatternNeverDowngrades checks that the generated semver patterns never pick a
+// version lower than the current one, such as when an age filter drops the current version
+// and every newer one.
+func TestGreaterThanPatternNeverDowngrades(t *testing.T) {
+	for _, pattern := range []string{"*", "patch", "minor", "minoronly", "major", "majoronly", "prerelease"} {
+		t.Run(pattern, func(t *testing.T) {
+			filter := Filter{Kind: SEMVERVERSIONKIND, Pattern: pattern}
+			greaterThanPattern, err := filter.GreaterThanPatternWithoutDowngrade("1.5.3")
+			require.NoError(t, err)
+
+			bounded := Filter{Kind: SEMVERVERSIONKIND, Pattern: greaterThanPattern}
+
+			// Only older versions are left, so nothing must match.
+			_, err = bounded.Search([]string{"1.4.0", "1.5.0", "1.5.2"})
+			assert.Error(t, err, "pattern %q must not accept a version lower than 1.5.3", greaterThanPattern)
+
+			// The current version is still accepted, so an update never goes backwards.
+			found, err := bounded.Search([]string{"1.4.0", "1.5.2", "1.5.3"})
+			require.NoError(t, err)
+			assert.Equal(t, "1.5.3", found.GetVersion())
+		})
+	}
+}
+
+func TestGreaterThanPatternAllowingDowngrade(t *testing.T) {
+	tests := []struct {
+		pattern string
+		version string
+		want    string
+	}{
+		{pattern: "*", version: "1.5.3", want: "*"},
+		// "*" would reject prereleases, replacing a prerelease in use by an older stable release
+		{pattern: "*", version: "2.0.0-rc.2", want: ">=0.0.0-0"},
+		{pattern: "patch", version: "1.5.3", want: "1.5.x"},
+		{pattern: "patch", version: "1.5.3-rc1", want: "1.5.x-0"},
+		{pattern: "minor", version: "1.5.3", want: "1.x"},
+		{pattern: "minor", version: "1.5.3-rc1", want: "1.x.x-0"},
+		{pattern: "major", version: "1.5.3", want: ">=1"},
+		{pattern: "major", version: "1.5.3-rc1", want: ">=1.x.x-0"},
+		// Patterns without any lower bound to remove are the same as GreaterThanPatternWithoutDowngrade
+		{pattern: "minoronly", version: "1.5.3", want: "1.5.3 || >1.5 < 2"},
+		// A custom constraint is returned as is
+		{pattern: "~1.2", version: "1.5.3", want: "~1.2"},
+		{pattern: "~1.5", version: "1.5.3", want: "~1.5"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.pattern+" "+tt.version, func(t *testing.T) {
+			filter := Filter{Kind: SEMVERVERSIONKIND, Pattern: tt.pattern}
+			got, err := filter.GreaterThanPatternAllowingDowngrade(tt.version)
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+
+	// Once the newer versions are filtered out, an older one is accepted
+	for _, pattern := range []string{"*", "patch", "minor", "major"} {
+		t.Run(pattern+" falls back to an older version", func(t *testing.T) {
+			filter := Filter{Kind: SEMVERVERSIONKIND, Pattern: pattern}
+			got, err := filter.GreaterThanPatternAllowingDowngrade("1.5.3")
+			require.NoError(t, err)
+
+			found, err := (&Filter{Kind: SEMVERVERSIONKIND, Pattern: got}).Search([]string{"1.4.0", "1.5.0", "1.5.2"})
+			require.NoError(t, err)
+			assert.Equal(t, "1.5.2", found.GetVersion())
+		})
+	}
+}
+
+func TestBoundPattern(t *testing.T) {
+	tests := []struct {
+		name       string
+		pattern    string
+		lowerBound string
+		want       string
+	}{
+		{name: "any version", pattern: "*", lowerBound: "1.2.5", want: ">=1.2.5"},
+		{name: "empty pattern", pattern: "", lowerBound: "1.2.5", want: ">=1.2.5"},
+		{name: "caret range", pattern: "^1.2.0", lowerBound: "1.2.5", want: ">=1.2.5, ^1.2.0"},
+		{name: "each group below the lower bound", pattern: "^1.0.0 || ^2.0.0", lowerBound: "1.2.5", want: ">=1.2.5, ^1.0.0 || ^2.0.0"},
+		{name: "group already bounded", pattern: ">=1.2.5, 1.x", lowerBound: "1.2.5", want: ">=1.2.5, 1.x"},
+		{name: "v prefix", pattern: "~1.2", lowerBound: "v1.2.5", want: ">=1.2.5, ~1.2"},
+		// The bound doesn't make a group accept prereleases, so a prerelease is bounded at its release
+		{name: "prerelease", pattern: "^1.2.0", lowerBound: "1.5.0-beta.1", want: ">=1.5.0, ^1.2.0"},
+		// Hyphens in build metadata aren't prereleases
+		{name: "prerelease with build metadata", pattern: "^1.2.0+2026-01", lowerBound: "1.5.0-beta.1", want: ">=1.5.0, ^1.2.0+2026-01"},
+		{name: "prerelease with any version", pattern: "*", lowerBound: "1.5.0-beta.1", want: ">=1.5.0"},
+		{name: "prerelease below the pattern", pattern: "~1.2", lowerBound: "v0.0.0-20230215024106-420ad0987b9b", want: "~1.2"},
+		{name: "prerelease with a group accepting prereleases", pattern: "1.5.x-0 || ^2.0.0", lowerBound: "1.5.0-beta.1", want: ">=1.5.0-beta.1, 1.5.x-0 || ^2.0.0"},
+		{name: "prerelease with any version or prerelease", pattern: ">=0.0.0-0", lowerBound: "1.5.0-beta.1", want: ">=1.5.0-beta.1"},
+		// The release bound must not drop the prereleases the pattern accepts
+		{name: "release with any version or prerelease", pattern: ">=0.0.0-0", lowerBound: "1.5.0", want: ">=1.5.0, >=0.0.0-0"},
+		{name: "prerelease already bounded", pattern: "^2.0.0-beta.3", lowerBound: "2.0.0-beta.3", want: "^2.0.0-beta.3"},
+		{name: "upper bound at the lower bound", pattern: "<1.2.5", lowerBound: "1.2.5", want: ">=1.2.5, <1.2.5"},
+		{name: "inclusive upper bound at the lower bound", pattern: "<=1.2.5", lowerBound: "1.2.5", want: ">=1.2.5, <=1.2.5"},
+		{name: "exclusion of the lower bound", pattern: "!=1.2.5", lowerBound: "1.2.5", want: ">=1.2.5, !=1.2.5"},
+		{name: "hyphen range ending at the lower bound", pattern: "1.0.0 - 1.2.5", lowerBound: "1.2.5", want: ">=1.2.5, 1.0.0 - 1.2.5"},
+		{name: "hyphen range starting at the lower bound", pattern: "1.2.5 - 2.0.0", lowerBound: "1.2.5", want: "1.2.5 - 2.0.0"},
+		{name: "lower bound inside a bigger version", pattern: "<11.2.5", lowerBound: "1.2.5", want: ">=1.2.5, <11.2.5"},
+		{name: "operator followed by a space", pattern: ">= 1.2.5", lowerBound: "1.2.5", want: ">= 1.2.5"},
+		{name: "higher lower bound", pattern: ">=1.3.0", lowerBound: "1.2.5", want: ">=1.3.0"},
+		{name: "exact version", pattern: "1.2.5", lowerBound: "1.2.5", want: "1.2.5"},
+		{name: "not a constraint", pattern: "latest", lowerBound: "1.2.5", want: "latest"},
+		{name: "not a version", pattern: "^1.2.0", lowerBound: "next", want: "^1.2.0"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, BoundPattern(tt.pattern, tt.lowerBound))
+		})
+	}
+}
+
+func TestBoundPatternAcceptingPrereleases(t *testing.T) {
+	tests := []struct {
+		name       string
+		pattern    string
+		lowerBound string
+		want       string
+	}{
+		{name: "pseudo version", pattern: "~1.2", lowerBound: "v1.2.4-0.20230215024106-420ad0987b9b", want: ">=1.2.4-0.20230215024106-420ad0987b9b, ~1.2"},
+		// The prerelease bound also lets the group accept prereleases
+		{name: "zero pseudo version below the pattern", pattern: "~1.2", lowerBound: "v0.0.0-20230215024106-420ad0987b9b", want: ">=0.0.0-20230215024106-420ad0987b9b, ~1.2"},
+		{name: "pseudo version with any version", pattern: "*", lowerBound: "v0.0.0-20230215024106-420ad0987b9b", want: ">=0.0.0-20230215024106-420ad0987b9b"},
+		{name: "pseudo version with any version or prerelease", pattern: ">=0.0.0-0", lowerBound: "v0.0.0-20230215024106-420ad0987b9b", want: ">=0.0.0-20230215024106-420ad0987b9b"},
+		{name: "release", pattern: "^1.2.0", lowerBound: "1.2.5", want: ">=1.2.5, ^1.2.0"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, BoundPatternAcceptingPrereleases(tt.pattern, tt.lowerBound))
+		})
+	}
+}
+
+// TestBoundPatternKeepsStableGroupsStable checks that bounding a stable range at a prerelease,
+// such as a prerelease in a lock file, doesn't make the range accept prereleases.
+func TestBoundPatternKeepsStableGroupsStable(t *testing.T) {
+	filter := Filter{Kind: SEMVERVERSIONKIND, Pattern: BoundPattern("^1.2.0", "1.5.0-beta.1")}
+
+	found, err := filter.Search([]string{"1.4.0", "1.5.0-beta.1", "1.5.0", "1.6.0-alpha.1"})
+	require.NoError(t, err)
+	assert.Equal(t, "1.5.0", found.GetVersion())
+}
+
+// TestGreaterThanPatternWithoutDowngradeRejectsLowerPrereleases checks that the "prerelease"
+// pattern never accepts a prerelease of the release in use, which is lower than it.
+func TestGreaterThanPatternWithoutDowngradeRejectsLowerPrereleases(t *testing.T) {
+	filter := Filter{Kind: SEMVERVERSIONKIND, Pattern: "prerelease"}
+	pattern, err := filter.GreaterThanPatternWithoutDowngrade("1.2.3")
+	require.NoError(t, err)
+
+	bounded := Filter{Kind: SEMVERVERSIONKIND, Pattern: pattern}
+	assert.False(t, bounded.Matches([]string{"1.2.2", "1.2.3-alpha", "1.2.3-rc.1"}))
+
+	found, err := bounded.Search([]string{"1.2.3-alpha", "1.2.3"})
+	require.NoError(t, err)
+	assert.Equal(t, "1.2.3", found.GetVersion())
+
+	// Without an age filter, the pattern is left as it was
+	legacy, err := filter.GreaterThanPattern("1.2.3")
+	require.NoError(t, err)
+	assert.Equal(t, ">=1.2.3-0 <= 1.2.3", legacy)
+}
+
+// TestBoundPatternIgnoresBuildMetadataHyphens checks that a stable range with build metadata
+// bounded at a prerelease still rejects prereleases.
+func TestBoundPatternIgnoresBuildMetadataHyphens(t *testing.T) {
+	filter := Filter{Kind: SEMVERVERSIONKIND, Pattern: BoundPattern("^1.2.0+2026-01", "1.5.0-beta.1")}
+
+	assert.False(t, filter.Matches([]string{"1.4.0", "1.5.0-beta.1", "1.5.0-beta.2"}))
+
+	found, err := filter.Search([]string{"1.4.0", "1.5.0-beta.2", "1.5.1", "1.6.0-alpha.1"})
+	require.NoError(t, err)
+	assert.Equal(t, "1.5.1", found.GetVersion())
+}
+
+func TestUnboundedPatternKeepsPrereleases(t *testing.T) {
+	filter := Filter{Kind: SEMVERVERSIONKIND, Pattern: UnboundedPattern("2.0.0-rc.2")}
+
+	// Without any newer version filtered out, the prerelease in use is kept
+	found, err := filter.Search([]string{"1.9.0", "2.0.0-rc.1", "2.0.0-rc.2"})
+	require.NoError(t, err)
+	assert.Equal(t, "2.0.0-rc.2", found.GetVersion())
+}

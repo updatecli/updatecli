@@ -74,22 +74,22 @@ func (gt *GitTag) listRemoteURLTags() ([]string, map[string]string, error) {
 // inside the provided age window.
 //
 // directory is the repository to read from when the spec names neither a URL nor a path.
-func (gt *GitTag) listRemoteDirectoryTags(directory string, tagAge age.Spec, pathResolver pathresolver.Resolver) ([]string, map[string]string, error) {
+// published holds every tag of the repository, whatever its age, so that callers can tell
+// a tag still cooling down from a version filter matching no tag.
+func (gt *GitTag) listRemoteDirectoryTags(directory string, tagAge age.Spec, pathResolver pathresolver.Resolver) (tagsList []string, results map[string]string, published []string, err error) {
 	if gt.nativeGitHandler == nil {
-		return nil, nil, fmt.Errorf("nativeGitHandler is not initialized")
+		return nil, nil, nil, fmt.Errorf("nativeGitHandler is not initialized")
 	}
 
 	gt.directory = directory
 
-	var err error
-
-	results := make(map[string]string)
-	tagsList := make([]string, 0)
+	results = make(map[string]string)
+	tagsList = make([]string, 0)
 
 	if gt.spec.URL != "" {
 		gt.directory, err = gt.clone()
 		if err != nil {
-			return nil, nil, fmt.Errorf("cloning repository: %w", err)
+			return nil, nil, nil, fmt.Errorf("cloning repository: %w", err)
 		}
 	}
 	if gt.spec.Path != "" {
@@ -97,15 +97,16 @@ func (gt *GitTag) listRemoteDirectoryTags(directory string, tagAge age.Spec, pat
 	}
 
 	if gt.directory == "" {
-		return nil, nil, fmt.Errorf("unknown Git working directory. Did you specify one of `URL`, `scmID`, or `spec.path`?")
+		return nil, nil, nil, fmt.Errorf("unknown Git working directory. Did you specify one of `URL`, `scmID`, or `spec.path`?")
 	}
 
 	refs, err := gt.nativeGitHandler.TagRefs(gt.directory)
 	if err != nil {
-		return nil, nil, fmt.Errorf("retrieving tag refs: %w", err)
+		return nil, nil, nil, fmt.Errorf("retrieving tag refs: %w", err)
 	}
 
 	for _, ref := range refs {
+		published = append(published, ref.Name)
 		if !tagAge.Matches(ref.When) {
 			log.Debugf("ignoring tag %q, dated %s, as outside of the age window", ref.Name, ref.When)
 			continue
@@ -114,14 +115,5 @@ func (gt *GitTag) listRemoteDirectoryTags(directory string, tagAge age.Spec, pat
 		tagsList = append(tagsList, ref.Name)
 	}
 
-	/*
-		The repository does publish tags but the age filter discarded every one of them,
-		which means the tag we would have returned is still cooling down. That's not a
-		lookup failure, so the sentinel lets the caller skip rather than fail.
-	*/
-	if len(refs) > 0 && len(tagsList) == 0 {
-		return nil, nil, fmt.Errorf("%w for the tags of %q", age.ErrNoVersionMatchingAge, gt.directory)
-	}
-
-	return tagsList, results, nil
+	return tagsList, results, published, nil
 }

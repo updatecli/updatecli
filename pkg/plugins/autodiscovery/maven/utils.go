@@ -32,6 +32,18 @@ func propertyName(version string) (string, bool) {
 	return match[1], true
 }
 
+// hasTemplateSyntax returns true when one of the values contains Go template delimiters.
+// A generated manifest is executed as a Go template at runtime, so such a value, read from
+// a pom.xml, would be evaluated with access to the pipeline data rather than kept as is.
+func hasTemplateSyntax(values ...string) bool {
+	for _, v := range values {
+		if strings.Contains(v, "{{") || strings.Contains(v, "}}") {
+			return true
+		}
+	}
+	return false
+}
+
 // elemText returns the text of an XML element without the whitespace around it,
 // which POM files often have when an element spans several lines.
 func elemText(elem *etree.Element) string {
@@ -329,5 +341,20 @@ func getMavenRepositoriesURL(pomFile string, doc *etree.Document) (mavenReposito
 		}
 	}
 
-	return mavenRepositories
+	return withoutTemplateSyntax(pomFile, mavenRepositories)
+}
+
+// withoutTemplateSyntax removes the repository URLs containing template syntax, which a
+// generated manifest would evaluate rather than keep as is.
+func withoutTemplateSyntax(pomFile string, repositories []string) []string {
+	result := make([]string, 0, len(repositories))
+	for _, repository := range repositories {
+		if hasTemplateSyntax(repository) {
+			// The URL isn't logged, as it may carry credentials from settings.xml
+			log.Warningf("Ignoring a Maven repository of %q as its URL contains template syntax", pomFile)
+			continue
+		}
+		result = append(result, repository)
+	}
+	return result
 }

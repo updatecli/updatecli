@@ -3,11 +3,14 @@ package maven
 import (
 	"bytes"
 	"fmt"
+	"strings"
 	"sync"
 	"text/template"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/vulnerability"
 )
 
@@ -62,7 +65,10 @@ targets:
     sourceid: '{{ .SourceID }}'
 {{ end }}`
 
-// manifestTemplate is the Go template used to generate Maven manifests
+// manifestTemplate is the Go template used to generate Maven manifests.
+// The "currentversionage" condition stops the pipeline while the current version is younger than
+// the minimum age, when the version filter can't exclude versions lower than the current one,
+// so the source never falls back to an older version.
 const manifestTemplate = `{{ template "header" . }}sources:
   {{ .SourceID }}:
     name: '{{ .SourceName }}'
@@ -83,7 +89,25 @@ const manifestTemplate = `{{ template "header" . }}sources:
         regex: '{{ .SourceVersionFilterRegex }}'
 {{- end }}
 {{- template "age" .SourceAge }}
-conditions:{{ template "xmlconditions" . }}{{ template "xmltarget" . }}`
+conditions:
+{{- if .ConditionAge.Maximum }}
+  currentversionage:
+    name: {{ printf "Test if Maven artifact %q version %s is older than %s" .SourceID .CurrentVersion .ConditionAge.Maximum | printf "%q" }}
+    kind: 'maven'
+    disablesourceinput: true
+    failwhen: true
+    spec:
+      artifactid: '{{ .SourceArtifactID }}'
+      groupid: '{{ .SourceGroupID }}'
+  {{- if .SourceRepositories }}
+      repositories:
+  {{- range $repo := .SourceRepositories }}
+        - '{{ $repo }}'
+  {{- end }}
+  {{- end }}
+      version: {{ printf "%q" .CurrentVersion }}
+{{- template "age" .ConditionAge }}
+{{- end }}{{ template "xmlconditions" . }}{{ template "xmltarget" . }}`
 
 // securityManifestTemplate is the Go template used to generate Maven manifests updating an
 // artifact with known vulnerabilities, according to the OSV database.
@@ -170,8 +194,12 @@ type manifestTemplateParams struct {
 	ScmID                      string
 	// Vulnerability switches the manifest to a security update of the artifact, when set.
 	Vulnerability *vulnerability.Spec
-	// CurrentVersion is the artifact version checked against the OSV database by security updates.
+	// CurrentVersion is the artifact version checked against the OSV database by security updates,
+	// or against ConditionAge by routine updates.
 	CurrentVersion string
+	// ConditionAge holds, as a maximum age, the minimum age the current version must reach
+	// before a routine update runs, when set. The condition fails when it matches.
+	ConditionAge age.Spec
 }
 
 // withRoutineUpdate sets the source of a manifest bumping an artifact to its latest version.
@@ -179,16 +207,45 @@ func (m Maven) withRoutineUpdate(params *manifestTemplateParams, currentVersion 
 	params.SourceVersionFilterKind = m.versionFilter.Kind
 	params.SourceVersionFilterPattern = m.versionFilter.Pattern
 	params.SourceVersionFilterRegex = m.versionFilter.Regex
-	params.SourceAge = m.spec.Age
+	params.SourceAge = m.spec.Age.Spec
 
 	// A user defined version filter only accepts versions greater than the current one
 	if !m.spec.VersionFilter.IsZero() {
-		pattern, err := m.versionFilter.GreaterThanPattern(currentVersion)
+		pattern, err := m.spec.Age.GreaterThanPattern(&m.versionFilter, currentVersion)
 		if err != nil {
 			log.Debugf("building version filter pattern: %s", err)
 			pattern = "*"
+			if m.spec.Age.NeverDowngrade() {
+				pattern = version.BoundPattern(pattern, currentVersion)
+			}
 		}
 		params.SourceVersionFilterPattern = pattern
+	}
+
+	/*
+		Only a semver pattern can exclude versions lower than the current one, and only when
+		the current version is a semantic version, which "5.3.0.Final" isn't. Otherwise, such
+		as with the default "latest" kind, an age filter holding back the newest versions would
+		make the source fall back to an older one, so the update waits for the current version
+		to reach the minimum age instead. A maximum age isn't checked, as it would hold back
+		every artifact whose current version is older than it, which are the ones to update.
+		A snapshot isn't published to release repositories, so it can't be checked.
+
+		The condition is inverted: it fails when the repository dates the current version
+		within the minimum age, that is when it's younger. A current version the repository
+		doesn't list or date can't be held back by the age filter, so it lets the update run.
+		An error from the repository, such as a denied request, still fails the condition, so
+		that wrong credentials aren't hidden.
+	*/
+	_, err := semver.NewVersion(currentVersion)
+	boundedPattern := m.versionFilter.Kind == version.SEMVERVERSIONKIND && err == nil
+
+	if m.spec.Age.Minimum != "" &&
+		!m.spec.Age.DowngradeAllowed() &&
+		!boundedPattern &&
+		!strings.HasSuffix(currentVersion, "-SNAPSHOT") {
+		params.CurrentVersion = currentVersion
+		params.ConditionAge = age.Spec{Maximum: m.spec.Age.Minimum}
 	}
 }
 

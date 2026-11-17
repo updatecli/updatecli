@@ -104,6 +104,8 @@ func TestVersions(t *testing.T) {
 		expectedVersion string
 		// expectedHeldBackByAge is true when the age filter is expected to discard every version
 		expectedHeldBackByAge bool
+		// expectedError is true when versions() is expected to fail for another reason than the age filter
+		expectedError bool
 		// expectedInfoRequests is the number of ".info" requests expected on the proxy
 		expectedInfoRequests int
 	}{
@@ -206,6 +208,120 @@ func TestVersions(t *testing.T) {
 			expectedInfoRequests: 3,
 		},
 		{
+			// The autodiscovery bounds the filter at the version in go.mod, so while that
+			// version is too recent, only older versions are left
+			name: "cooldown holds back every version matching the filter while older ones pass",
+			spec: Spec{
+				VersionFilter: version.Filter{Kind: version.SEMVERVERSIONKIND, Pattern: ">=1.10.0"},
+				Age:           age.Spec{Minimum: "7d"},
+			},
+			stub: goProxyStub{
+				publishedVersions: []string{"v1.9.0", "v1.10.0", "v1.11.0"},
+				releaseDates: map[string]string{
+					"v1.9.0":  daysAgo(50),
+					"v1.10.0": daysAgo(3),
+					"v1.11.0": daysAgo(1),
+				},
+			},
+			expectedHeldBackByAge: true,
+			expectedInfoRequests:  3,
+		},
+		{
+			name: "a version filter matching no published version still fails",
+			spec: Spec{
+				VersionFilter: version.Filter{Kind: version.SEMVERVERSIONKIND, Pattern: ">=2.0.0"},
+				Age:           age.Spec{Minimum: "7d"},
+			},
+			stub: goProxyStub{
+				publishedVersions: []string{"v1.9.0", "v1.10.0"},
+				releaseDates: map[string]string{
+					"v1.9.0":  daysAgo(50),
+					"v1.10.0": daysAgo(1),
+				},
+			},
+			expectedError:        true,
+			expectedInfoRequests: 2,
+		},
+		{
+			name: "a version filter matching no published version still fails while every version is in cooldown",
+			spec: Spec{
+				VersionFilter: version.Filter{Kind: version.SEMVERVERSIONKIND, Pattern: ">=2.0.0"},
+				Age:           age.Spec{Minimum: "7d"},
+			},
+			stub: goProxyStub{
+				publishedVersions: []string{"v1.9.0", "v1.10.0"},
+				releaseDates: map[string]string{
+					"v1.9.0":  daysAgo(2),
+					"v1.10.0": daysAgo(1),
+				},
+			},
+			expectedError:        true,
+			expectedInfoRequests: 2,
+		},
+		{
+			// The age filter can't be applied, which skips like a cooldown rather than fails
+			name: "versions without any release date are held back",
+			spec: Spec{
+				VersionFilter: version.Filter{Kind: version.SEMVERVERSIONKIND, Pattern: "*"},
+				Age:           age.Spec{Minimum: "7d"},
+			},
+			stub: goProxyStub{
+				publishedVersions: []string{"v1.9.0", "v1.10.0"},
+			},
+			expectedHeldBackByAge: true,
+			expectedInfoRequests:  2,
+		},
+		{
+			// Like a cooldown, a maximum age discarding every match is an age hold, not a failure
+			name: "a version filter matching only versions above the maximum age is held back",
+			spec: Spec{
+				VersionFilter: version.Filter{Kind: version.SEMVERVERSIONKIND, Pattern: "~1.9"},
+				Age:           age.Spec{Minimum: "7d", Maximum: "1y"},
+			},
+			stub: goProxyStub{
+				publishedVersions: []string{"v1.9.0", "v1.10.0"},
+				releaseDates: map[string]string{
+					"v1.9.0":  daysAgo(400),
+					"v1.10.0": daysAgo(10),
+				},
+			},
+			expectedHeldBackByAge: true,
+			expectedInfoRequests:  2,
+		},
+		{
+			// v1.9.0 is too recent and v1.10.0, the only version matching the filter, has no
+			// release date, so no version passes the age filter, which skips
+			name: "a version filter matching only a version without release date is held back while no version passes the age filter",
+			spec: Spec{
+				VersionFilter: version.Filter{Kind: version.SEMVERVERSIONKIND, Pattern: ">=1.10.0"},
+				Age:           age.Spec{Minimum: "7d"},
+			},
+			stub: goProxyStub{
+				publishedVersions: []string{"v1.9.0", "v1.10.0"},
+				releaseDates: map[string]string{
+					"v1.9.0": daysAgo(2),
+				},
+			},
+			expectedHeldBackByAge: true,
+			expectedInfoRequests:  2,
+		},
+		{
+			// A version whose release date can't be retrieved isn't known to be cooling down
+			name: "a version filter matching only a version without release date still fails",
+			spec: Spec{
+				VersionFilter: version.Filter{Kind: version.SEMVERVERSIONKIND, Pattern: ">=1.10.0"},
+				Age:           age.Spec{Minimum: "7d"},
+			},
+			stub: goProxyStub{
+				publishedVersions: []string{"v1.9.0", "v1.10.0"},
+				releaseDates: map[string]string{
+					"v1.9.0": daysAgo(50),
+				},
+			},
+			expectedError:        true,
+			expectedInfoRequests: 2,
+		},
+		{
 			name: "no age filter means no release date lookup",
 			spec: Spec{
 				VersionFilter: version.Filter{Kind: version.SEMVERVERSIONKIND, Pattern: "*"},
@@ -224,10 +340,14 @@ func TestVersions(t *testing.T) {
 
 			gotVersion, err := got.versions(context.Background())
 
-			if tt.expectedHeldBackByAge {
+			switch {
+			case tt.expectedHeldBackByAge:
 				require.ErrorIs(t, err, age.ErrNoVersionMatchingAge)
 				assert.Empty(t, gotVersion)
-			} else {
+			case tt.expectedError:
+				require.Error(t, err)
+				assert.NotErrorIs(t, err, age.ErrNoVersionMatchingAge)
+			default:
 				require.NoError(t, err)
 				assert.Equal(t, tt.expectedVersion, gotVersion)
 			}
@@ -235,6 +355,71 @@ func TestVersions(t *testing.T) {
 			assert.Len(t, tt.stub.infoRequests(), tt.expectedInfoRequests)
 		})
 	}
+}
+
+// TestVersionsTriesTheNextProxyWithoutReleaseDates checks that a proxy failing to date every
+// version, such as when rate limited, doesn't prevent the next proxy from being queried.
+func TestVersionsTriesTheNextProxyWithoutReleaseDates(t *testing.T) {
+	spec := Spec{
+		VersionFilter: version.Filter{Kind: version.SEMVERVERSIONKIND, Pattern: "*"},
+		Age:           age.Spec{Minimum: "7d"},
+	}
+
+	undated := &goProxyStub{publishedVersions: []string{"v1.9.0", "v1.10.0"}}
+	dated := &goProxyStub{
+		publishedVersions: []string{"v1.9.0", "v1.10.0"},
+		releaseDates: map[string]string{
+			"v1.9.0":  daysAgo(50),
+			"v1.10.0": daysAgo(10),
+		},
+	}
+
+	first := undated.start(t, spec)
+	got := dated.start(t, spec)
+	got.Spec.Proxy = first.Spec.Proxy + "," + got.Spec.Proxy
+
+	gotVersion, err := got.versions(context.Background())
+	require.NoError(t, err)
+	assert.Equal(t, "v1.10.0", gotVersion)
+	assert.Len(t, undated.infoRequests(), 2)
+
+	// Without another proxy, the missing release dates skip the source, as a cooldown does
+	gotVersion, err = first.versions(context.Background())
+	require.ErrorIs(t, err, age.ErrNoVersionMatchingAge)
+	assert.ErrorContains(t, err, "no release date")
+	assert.Empty(t, gotVersion)
+}
+
+// TestVersionsKeepsAnAgeHoldFromAPreviousProxy checks that a proxy without any version matching
+// the filter, such as a stale mirror, doesn't turn the age hold of a previous proxy into a failure.
+func TestVersionsKeepsAnAgeHoldFromAPreviousProxy(t *testing.T) {
+	spec := Spec{
+		VersionFilter: version.Filter{Kind: version.SEMVERVERSIONKIND, Pattern: ">=1.10.0"},
+		Age:           age.Spec{Minimum: "7d"},
+	}
+
+	recent := &goProxyStub{
+		publishedVersions: []string{"v1.9.0", "v1.10.0"},
+		releaseDates: map[string]string{
+			"v1.9.0":  daysAgo(50),
+			"v1.10.0": daysAgo(2),
+		},
+	}
+	stale := &goProxyStub{
+		publishedVersions: []string{"v1.9.0"},
+		releaseDates: map[string]string{
+			"v1.9.0": daysAgo(50),
+		},
+	}
+
+	first := recent.start(t, spec)
+	got := stale.start(t, spec)
+	got.Spec.Proxy = first.Spec.Proxy + "," + got.Spec.Proxy
+
+	gotVersion, err := got.versions(context.Background())
+	require.ErrorIs(t, err, age.ErrNoVersionMatchingAge)
+	assert.Empty(t, gotVersion)
+	assert.NotEmpty(t, stale.requestedPaths)
 }
 
 func TestNewVersionFilter(t *testing.T) {

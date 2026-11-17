@@ -2,10 +2,13 @@ package githubaction
 
 import (
 	"fmt"
+	"path"
 	"path/filepath"
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/updatecli/updatecli/pkg/core/log"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
 const (
@@ -123,6 +126,22 @@ func (g GitHubAction) discoverManifests() [][]byte {
 			continue
 		}
 
+		// A workflow onboarded in the lockfile only runs the actions the lockfile records, so its
+		// actions are only bumped when "gh actions-lock" can update the lockfile too.
+		// An unreadable lockfile may lock any workflow it sits next to.
+		relativeWorkflow := filepath.ToSlash(relateFoundFile)
+		lockWorkflow := g.lockedWorkflows[relativeWorkflow]
+		skipActions := (lockWorkflow && !g.lockAvailable) ||
+			(g.lockfileInvalid && path.Dir(relativeWorkflow) == path.Dir(actionsLockFile))
+		switch {
+		case lockWorkflow && !g.lockAvailable:
+			log.Warningf("skipping the actions of %q: the workflow is locked in %q but \"gh actions-lock\" can't update it",
+				relateFoundFile, actionsLockFile)
+		case skipActions:
+			log.Warningf("skipping the actions of %q: the workflow may be locked in %q, which can't be read",
+				relateFoundFile, actionsLockFile)
+		}
+
 		for jobID, job := range data.Jobs {
 
 			if job.Container.Image != "" {
@@ -178,6 +197,10 @@ func (g GitHubAction) discoverManifests() [][]byte {
 					}
 
 				case ACTIONKINDDEFAULT:
+					if skipActions {
+						continue
+					}
+
 					u := githubActionManifestSpec{
 						URL:               URL,
 						Owner:             owner,
@@ -188,6 +211,7 @@ func (g GitHubAction) discoverManifests() [][]byte {
 						CommentDigest:     step.CommentDigest,
 						JobID:             jobID,
 						StepID:            stepID,
+						LockWorkflow:      lockWorkflow,
 					}
 
 					manifest, err := g.getGitHubActionManifest(&u)
@@ -208,11 +232,21 @@ func (g GitHubAction) discoverManifests() [][]byte {
 	return manifests
 }
 
-// detectVersionFilter tries to identify the kind of versionfilter
-func detectVersionFilter(reference string) (string, string) {
+// detectVersionFilter tries to identify the kind of versionfilter.
+// With an age filter that doesn't allow a downgrade, a semver reference is used as lower bound,
+// so that a release filtered out by the age filter never makes the source fall back to an older
+// one. A prerelease reference, such as "v2.0.0-rc.2", keeps accepting the newer prereleases.
+func detectVersionFilter(reference string, releaseAge age.AutodiscoverySpec) (string, string) {
 
 	if _, err := semver.NewVersion(reference); err == nil {
-		return "semver", "*"
+		switch {
+		case releaseAge.NeverDowngrade():
+			return version.SEMVERVERSIONKIND, version.BoundPatternAcceptingPrereleases("*", reference)
+		case releaseAge.MayDowngrade():
+			return version.SEMVERVERSIONKIND, version.UnboundedPattern(reference)
+		default:
+			return version.SEMVERVERSIONKIND, "*"
+		}
 	}
 
 	return latestVersionIdentifier, latestVersionIdentifier

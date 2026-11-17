@@ -126,7 +126,7 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 					g.actionID,
 					relativeWorkDir,
 					goModTidyEnabled,
-					g.spec.Age,
+					g.spec.Age.Spec,
 				)
 				if err != nil {
 					log.Debugf("skipping golang module %q module due to: %s", goModule, err)
@@ -178,7 +178,7 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 					g.actionID,
 					relativeWorkDir,
 					goModTidyEnabled,
-					g.spec.Age,
+					g.spec.Age.Spec,
 				)
 				if err != nil {
 					log.Debugf("skipping golang module %q module due to: %s", replace.NewPath, err)
@@ -276,7 +276,7 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 			}
 		}
 
-		goVersionPattern, err := g.versionFilter.GreaterThanPattern(goVersion)
+		goVersionPattern, err := g.spec.Age.GreaterThanPattern(&g.versionFilter, goVersion)
 		golangVersionManifest := []byte{}
 		if err != nil {
 			log.Debugln(err)
@@ -288,7 +288,7 @@ func (g Golang) discoverDependencyManifests() ([][]byte, error) {
 				goVersionPattern,
 				g.scmID,
 				g.actionID,
-				g.spec.Age)
+				g.spec.Age.Spec)
 			if err != nil {
 				log.Debugln(err)
 				log.Debugln("skipping golang version manifest due to previous error")
