@@ -1,6 +1,7 @@
 package gitgeneric
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -10,8 +11,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// baseBranch is a branch, other than the default branch of the remote, used as the base branch.
-const baseBranch = "9.6"
+const (
+	// baseBranch is a branch, other than the default branch of the remote, used as the base branch.
+	baseBranch = "9.6"
+	// otherBaseBranch is another base branch of the same repository, used by another pipeline.
+	otherBaseBranch = "9.5"
+)
 
 // newNonDefaultBaseRemote creates a remote whose default branch is main, with a baseBranch
 // branch diverging from it.
@@ -21,6 +26,28 @@ func newNonDefaultBaseRemote(t *testing.T) *singleBranchRemote {
 	r.commit(baseBranch, "base-1")
 	r.commit("main", "main-2")
 	return r
+}
+
+// newExecution forgets the branches already pulled and fetched, as a new execution of updatecli
+// starts with none, so that a clone left by a previous execution is updated again.
+func newExecution() {
+	pulledBranches.Clear()
+	fetchedBaseBranches.Clear()
+}
+
+// cloneModes runs a test with a regular clone and with a single branch clone, which must behave the same.
+func cloneModes(t *testing.T, test func(t *testing.T, singleBranch bool)) {
+	t.Helper()
+	for _, singleBranch := range []bool{false, true} {
+		name := "regular clone"
+		if singleBranch {
+			name = "single branch clone"
+		}
+		t.Run(name, func(t *testing.T) {
+			newExecution()
+			test(t, singleBranch)
+		})
+	}
 }
 
 // TestSingleBranchNonDefaultBaseBranch checks that Checkout works with a single branch clone
@@ -220,5 +247,97 @@ func TestSingleBranchNonDefaultBaseBranchPull(t *testing.T) {
 				assert.Equal(t, refSpecs, remoteFetchRefSpecs(t, dir), "remote configuration should be restored after pull")
 			})
 		}
+	}
+}
+
+// TestSingleBranchNonDefaultBaseBranchSharedClone checks that pipelines using different base branches
+// of the same repository can share a clone. Scms clone a repository in a directory named after it,
+// whatever the branch, and the engine only clones each directory once per execution, with the branch
+// of one of the pipelines using it.
+func TestSingleBranchNonDefaultBaseBranchSharedClone(t *testing.T) {
+	cloneModes(t, func(t *testing.T, singleBranch bool) {
+		r := newNonDefaultBaseRemote(t)
+		gitCmd(t, r.seed, "checkout", "-q", "main")
+		r.commit(otherBaseBranch, "other-base-1")
+
+		dir := filepath.Join(t.TempDir(), "clone")
+		g := &GoGit{}
+
+		for i := range 2 {
+			if i > 0 {
+				// otherBaseBranch moved on the remote since the previous execution
+				gitCmd(t, r.seed, "checkout", "-q", "main")
+				r.commit(otherBaseBranch, "other-base-2")
+				newExecution()
+			}
+
+			require.NoError(t, g.Clone("", "", r.url, dir, nil, nil, baseBranch, singleBranch), "execution %d", i+1)
+
+			// A first pipeline, using baseBranch
+			require.NoError(t, g.Checkout("", "", baseBranch, workingBranch, dir, true, nil), "execution %d", i+1)
+
+			// A second pipeline, using otherBaseBranch, with a new working branch each execution
+			branch := fmt.Sprintf("%s_other_%d", workingBranch, i)
+			require.NoError(t, g.Checkout("", "", otherBaseBranch, branch, dir, true, nil), "execution %d", i+1)
+
+			hash, err := g.GetLatestCommitHash(dir)
+			require.NoError(t, err)
+			assert.Equal(t, r.head(otherBaseBranch), hash, "execution %d: the working branch should be created from the latest %q", i+1, otherBaseBranch)
+		}
+	})
+}
+
+// TestSingleBranchNonDefaultBaseBranchExistingCloneWorkingBranch checks that cloning again into a
+// directory where a previous execution left a working branch checked out updates the base branch,
+// which moved on the remote since, so the working branch is based on its latest commit.
+func TestSingleBranchNonDefaultBaseBranchExistingCloneWorkingBranch(t *testing.T) {
+	tests := []struct {
+		name string
+		// published tells whether the working branch was pushed, with a commit, before the base branch moved.
+		published bool
+		// branch is the working branch checked out by the second execution.
+		branch string
+	}{
+		{
+			name:   "another working branch is created",
+			branch: workingBranch + "_other",
+		},
+		{
+			name:      "published working branch is reset",
+			published: true,
+			branch:    workingBranch,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cloneModes(t, func(t *testing.T, singleBranch bool) {
+				r := newNonDefaultBaseRemote(t)
+				if tt.published {
+					gitCmd(t, r.seed, "checkout", "-q", baseBranch)
+					r.commit(workingBranch, "wb-1")
+				}
+
+				dir := filepath.Join(t.TempDir(), "clone")
+				g := &GoGit{}
+
+				require.NoError(t, g.Clone("", "", r.url, dir, nil, nil, baseBranch, singleBranch))
+				require.NoError(t, g.Checkout("", "", baseBranch, workingBranch, dir, true, nil))
+
+				gitCmd(t, r.seed, "checkout", "-q", "main")
+				r.commit(baseBranch, "base-2")
+
+				newExecution()
+				require.NoError(t, g.Clone("", "", r.url, dir, nil, nil, baseBranch, singleBranch))
+				require.NoError(t, g.Checkout("", "", baseBranch, tt.branch, dir, true, nil))
+
+				assert.Equal(t, tt.published, g.IsForceReset(), "the working branch should only be reset if it was published")
+
+				hash, err := g.GetLatestCommitHash(dir)
+				require.NoError(t, err)
+				assert.Equal(t, r.head(baseBranch), hash, "the working branch should be based on the latest %q", baseBranch)
+				assert.Equal(t, r.head(baseBranch), strings.TrimSpace(gitCmd(t, dir, "rev-parse", baseBranch)), "the local %q should be updated", baseBranch)
+			})
+		})
 	}
 }
