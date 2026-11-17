@@ -453,6 +453,11 @@ func (g *GoGit) checkout(username, password, basedBranch, newBranch, gitReposito
 		Password: password,
 	}
 
+	// Checkout runs before every resource of the repository, but the branch only changes
+	// during an execution through Updatecli's own pushes and API commits, which update
+	// the local branch themselves, so it's pulled once.
+	pulledKey := gitRepositoryPath + "\x00" + newBranch
+
 	// Checkout source branch without creating it yet
 	// If newBranch already exist, use it
 	// otherwise use the one define in the spec
@@ -484,6 +489,8 @@ func (g *GoGit) checkout(username, password, basedBranch, newBranch, gitReposito
 				log.Warningf("failed fetching new branch %q from the remote, continuing without it: %s", newBranch, fetchErr)
 			case fetched:
 				log.Debugf("new branch %q already exists on the remote, using it", newBranch)
+				// It was just fetched, there is nothing to pull.
+				pulledBranches.Store(pulledKey, true)
 				return g.checkout(username, password, basedBranch, newBranch, gitRepositoryPath, forceReset, depth, false)
 			}
 		}
@@ -517,6 +524,8 @@ func (g *GoGit) checkout(username, password, basedBranch, newBranch, gitReposito
 		}
 
 		log.Debugf("branch %q successfully created", newBranch)
+		// It doesn't exist on the remote, there is nothing to pull.
+		pulledBranches.Store(pulledKey, true)
 
 	case nil:
 		// Means that a local branch named remoteBranch already exist
@@ -540,10 +549,6 @@ func (g *GoGit) checkout(username, password, basedBranch, newBranch, gitReposito
 			pullOptions.Auth = &auth
 		}
 
-		// Checkout runs before every resource of the repository, but the branch only changes
-		// during an execution through Updatecli's own pushes and API commits, which update
-		// the local branch themselves, so it's pulled once.
-		pulledKey := gitRepositoryPath + "\x00" + newBranch
 		if _, pulled := pulledBranches.Load(pulledKey); pulled {
 			err = git.NoErrAlreadyUpToDate
 		} else {
