@@ -32,6 +32,14 @@ const (
 	ErrNoGitTagFound = "no tag found"
 )
 
+var (
+	// pulledBranches holds the "<repository path>\x00<branch>" keys Checkout already pulled.
+	pulledBranches sync.Map
+	// fetchedBaseBranches holds the "<repository path>\x00<branch>" keys of the base branches
+	// Checkout already fetched, or tried to, during this execution.
+	fetchedBaseBranches sync.Map
+)
+
 type GitHandler interface {
 	Add(files []string, workingDir string) error
 	Checkout(username, password, branch, remoteBranch, workingDir string, forceReset bool, depth *int) error
@@ -418,9 +426,6 @@ func (g GoGit) Add(files []string, workingDir string) error {
 	return nil
 }
 
-// pulledBranches holds the "<repository path>\x00<branch>" keys Checkout already pulled.
-var pulledBranches sync.Map
-
 // Checkout create and then uses a temporary git branch.
 func (g *GoGit) Checkout(username, password, basedBranch, newBranch, gitRepositoryPath string, forceReset bool, depth *int) error {
 	return g.checkout(username, password, basedBranch, newBranch, gitRepositoryPath, forceReset, depth, true)
@@ -447,6 +452,11 @@ func (g *GoGit) checkout(username, password, basedBranch, newBranch, gitReposito
 		Username: username, // anything except an empty string
 		Password: password,
 	}
+
+	// Checkout runs before every resource of the repository, but the branch only changes
+	// during an execution through Updatecli's own pushes and API commits, which update
+	// the local branch themselves, so it's pulled once.
+	pulledKey := gitRepositoryPath + "\x00" + newBranch
 
 	// Checkout source branch without creating it yet
 	// If newBranch already exist, use it
@@ -479,11 +489,17 @@ func (g *GoGit) checkout(username, password, basedBranch, newBranch, gitReposito
 				log.Warningf("failed fetching new branch %q from the remote, continuing without it: %s", newBranch, fetchErr)
 			case fetched:
 				log.Debugf("new branch %q already exists on the remote, using it", newBranch)
+				// It was just fetched, there is nothing to pull.
+				pulledBranches.Store(pulledKey, true)
 				return g.checkout(username, password, basedBranch, newBranch, gitRepositoryPath, forceReset, depth, false)
 			}
 		}
 
 		log.Debugf("new branch %q doesn't exist, creating it from branch %q", newBranch, basedBranch)
+
+		if err := fetchBaseBranch(repository, &auth, basedBranch, gitRepositoryPath, depth); err != nil {
+			return err
+		}
 
 		// First we need to checkout the based branch
 		err = worktree.Checkout(&git.CheckoutOptions{
@@ -508,6 +524,8 @@ func (g *GoGit) checkout(username, password, basedBranch, newBranch, gitReposito
 		}
 
 		log.Debugf("branch %q successfully created", newBranch)
+		// It doesn't exist on the remote, there is nothing to pull.
+		pulledBranches.Store(pulledKey, true)
 
 	case nil:
 		// Means that a local branch named remoteBranch already exist
@@ -531,14 +549,10 @@ func (g *GoGit) checkout(username, password, basedBranch, newBranch, gitReposito
 			pullOptions.Auth = &auth
 		}
 
-		// Checkout runs before every resource of the repository, but the branch only changes
-		// during an execution through Updatecli's own pushes and API commits, which update
-		// the local branch themselves, so it's pulled once.
-		pulledKey := gitRepositoryPath + "\x00" + newBranch
 		if _, pulled := pulledBranches.Load(pulledKey); pulled {
 			err = git.NoErrAlreadyUpToDate
 		} else {
-			err = worktree.Pull(&pullOptions)
+			err = pullCheckedOutBranch(repository, worktree, &pullOptions, newBranch)
 		}
 		if b.String() != "" {
 			log.Debugln(b.String())
@@ -553,6 +567,13 @@ func (g *GoGit) checkout(username, password, basedBranch, newBranch, gitReposito
 		pulledBranches.Store(pulledKey, true)
 
 		if forceReset {
+			// The base branch was pulled above if it's the checked out branch.
+			if newBranch != basedBranch {
+				if err := fetchBaseBranch(repository, &auth, basedBranch, gitRepositoryPath, depth); err != nil {
+					return err
+				}
+			}
+
 			log.Debugf("Checking if branch %q diverged from %q:", newBranch, basedBranch)
 			// If the newBranch diverged from the basedBranch, we need to reset it
 			resetBranch, err := resetNewBranchToBaseBranch(
@@ -576,6 +597,69 @@ func (g *GoGit) checkout(username, password, basedBranch, newBranch, gitReposito
 	}
 
 	return nil
+}
+
+// pullCheckedOutBranch pulls the checked out branch from the remote.
+//
+// Without a reference name, a pull resolves the remote HEAD, which is the default branch of the
+// remote. A single branch clone doesn't fetch the default branch if it isn't the configured one,
+// so the pull would fail to find its latest commit. Single branch clones therefore pull the
+// branch itself, temporarily added to the fetched references, like Pull does.
+// Regular clones keep pulling the remote HEAD.
+func pullCheckedOutBranch(repository *git.Repository, worktree *git.Worktree, pullOptions *git.PullOptions, branch string) error {
+	singleBranch, err := isSingleBranchClone(repository)
+	if err != nil {
+		return err
+	}
+
+	if !singleBranch {
+		return worktree.Pull(pullOptions)
+	}
+
+	restore, err := trackBranch(repository, branch)
+	if err != nil {
+		return err
+	}
+	defer restore()
+
+	// go-git fetches the references configured on the remote, which now include the branch,
+	// then resolves this reference name among them.
+	pullOptions.ReferenceName = plumbing.NewBranchReferenceName(branch)
+
+	err = worktree.Pull(pullOptions)
+	if errors.Is(err, git.NoMatchingRefSpecError{}) {
+		// A fetched reference doesn't exist on the remote and go-git aborts the whole fetch.
+		// This is usually the branch, which was never pushed, so there is nothing to pull.
+		// It can also be the configured branch of the clone if it was deleted from the remote.
+		log.Warningf("a reference to fetch for branch %q doesn't exist on the remote, nothing to pull: %s", branch, err)
+		return git.NoErrAlreadyUpToDate
+	}
+	return err
+}
+
+// isSingleBranchClone reports whether the origin remote only fetches specific branches,
+// as configured by a clone done with "singleBranch", instead of every branch.
+//
+// It's detected from the repository configuration rather than from the scm configuration, so it
+// also matches a repository cloned by a previous execution.
+func isSingleBranchClone(repository *git.Repository) (bool, error) {
+	cfg, err := repository.Config()
+	if err != nil {
+		return false, fmt.Errorf("getting repository configuration: %w", err)
+	}
+
+	remote, ok := cfg.Remotes[DefaultRemoteReferenceName]
+	if !ok {
+		return false, nil
+	}
+
+	for _, refSpec := range remote.Fetch {
+		if refSpec.IsWildcard() {
+			return false, nil
+		}
+	}
+
+	return len(remote.Fetch) > 0, nil
 }
 
 func (g *GoGit) IsForceReset() bool {
@@ -634,6 +718,75 @@ func (g GoGit) Commit(user, email, message, workingDir string, signingKey string
 		return fmt.Errorf("getting commit object: %w", err)
 	}
 	log.Debugf("git commit object:\n%s\n", obj)
+
+	return nil
+}
+
+// updateSingleBranchClone updates the configured branch of an existing single branch clone,
+// which may have been made for another branch of the repository, by a previous pipeline or execution.
+//
+// The branch is fetched into the local one, as the refs/heads/* fetch done for regular clones does.
+// If it's checked out, the worktree is reset to it. Otherwise, such as when a previous execution left
+// a working branch checked out, Checkout later creates or resets the working branch from it.
+func updateSingleBranchClone(repository *git.Repository, worktree *git.Worktree, auth *transportHttp.BasicAuth, branch string, depth *int) error {
+	branchRef := plumbing.NewBranchReferenceName(branch)
+
+	fetched, err := fetchBranch(repository, auth, branch, branchRef.String(), depth)
+	if err != nil {
+		return err
+	}
+	if !fetched {
+		return fmt.Errorf("branch %q not found on the remote", branch)
+	}
+
+	head, err := repository.Head()
+	if err != nil {
+		return fmt.Errorf("getting HEAD: %w", err)
+	}
+	if head.Name() != branchRef {
+		return nil
+	}
+
+	ref, err := repository.Reference(branchRef, true)
+	if err != nil {
+		return fmt.Errorf("getting branch %q: %w", branch, err)
+	}
+
+	return worktree.Reset(&git.ResetOptions{
+		Commit: ref.Hash(),
+		Mode:   git.HardReset,
+	})
+}
+
+// fetchBaseBranch updates the local base branch of a single branch clone from the remote, once per
+// execution, as the refs/heads/* fetch done by Clone does for regular clones.
+//
+// A clone is shared by every pipeline using the repository, whatever their base branch, but Clone
+// only runs once per execution, for one of them. A single branch clone doesn't have the base branch
+// of the others, or has the one left by a previous execution.
+func fetchBaseBranch(repository *git.Repository, auth *transportHttp.BasicAuth, branch, gitRepositoryPath string, depth *int) error {
+	// Only try once per execution, whatever the outcome, as Checkout runs before every resource.
+	if _, tried := fetchedBaseBranches.LoadOrStore(gitRepositoryPath+"\x00"+branch, true); tried {
+		return nil
+	}
+
+	singleBranch, err := isSingleBranchClone(repository)
+	if err != nil {
+		return err
+	}
+	if !singleBranch {
+		return nil
+	}
+
+	// Don't fail, a regular clone doesn't need the remote here either: the local base branch is used
+	// if there is one, and Checkout fails if there isn't.
+	fetched, err := fetchBranch(repository, auth, branch, plumbing.NewBranchReferenceName(branch).String(), depth)
+	switch {
+	case err != nil:
+		log.Warningf("failed fetching base branch %q from the remote, using the local one: %s", branch, err)
+	case !fetched:
+		log.Warningf("base branch %q not found on the remote, using the local one", branch)
+	}
 
 	return nil
 }
@@ -704,23 +857,27 @@ func (g GoGit) Clone(username, password, URL, workingDir string, withSubmodules 
 		}
 		b.WriteString(status.String())
 
-		pullOptions := git.PullOptions{
-			Force:    true,
-			Progress: &b,
-		}
-
-		if depth != nil {
-			if *depth < 0 {
-				return fmt.Errorf("invalid depth value: %d, depth should be a positive integer", *depth)
+		if singleBranch && branch != "" {
+			err = updateSingleBranchClone(repo, w, &auth, branch, depth)
+		} else {
+			pullOptions := git.PullOptions{
+				Force:    true,
+				Progress: &b,
 			}
-			pullOptions.Depth = *depth
-		}
 
-		if !isAuthEmpty(&auth) {
-			pullOptions.Auth = &auth
-		}
+			if depth != nil {
+				if *depth < 0 {
+					return fmt.Errorf("invalid depth value: %d, depth should be a positive integer", *depth)
+				}
+				pullOptions.Depth = *depth
+			}
 
-		err = w.Pull(&pullOptions)
+			if !isAuthEmpty(&auth) {
+				pullOptions.Auth = &auth
+			}
+
+			err = w.Pull(&pullOptions)
+		}
 
 		if b.String() != "" {
 			log.Debugln(b.String())
@@ -750,6 +907,10 @@ func (g GoGit) Clone(username, password, URL, workingDir string, withSubmodules 
 	// cloning/fetching the configured branch and can be very expensive on repositories with a
 	// large number of refs.
 	if singleBranch {
+		if branch != "" {
+			// The configured branch was just cloned or updated, Checkout doesn't need to fetch it again.
+			fetchedBaseBranches.Store(workingDir+"\x00"+branch, true)
+		}
 		return nil
 	}
 
