@@ -6,6 +6,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/log"
 
 	"github.com/updatecli/updatecli/pkg/core/result"
+	giteaChangelog "github.com/updatecli/updatecli/pkg/plugins/changelog/gitea"
 	githubChangelog "github.com/updatecli/updatecli/pkg/plugins/changelog/github/v3"
 )
 
@@ -14,7 +15,7 @@ func (t *TerraformRegistry) Changelog(from, to string) *result.Changelogs {
 	if strings.HasPrefix(t.scm, "https://github.com") {
 		return getChangelogFromGitHub(t.scm, from, to)
 	}
-	return nil
+	return giteaChangelog.SearchRepository(t.scm, from, to)
 }
 
 func getChangelogFromGitHub(registry, from, to string) *result.Changelogs {

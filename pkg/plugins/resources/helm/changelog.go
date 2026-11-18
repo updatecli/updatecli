@@ -12,6 +12,7 @@ import (
 	"github.com/Masterminds/semver/v3"
 	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	giteaChangelog "github.com/updatecli/updatecli/pkg/plugins/changelog/gitea"
 	githubChangelog "github.com/updatecli/updatecli/pkg/plugins/changelog/github/v3"
 	"go.yaml.in/yaml/v4"
 	"golang.org/x/text/cases"
@@ -74,7 +75,7 @@ func (c Chart) Changelog(from, to string) *result.Changelogs {
 
 	log.Debugf("no changelog found in %s annotation for versions between %s and %s", artifactHubChangesAnnotation, from, to)
 
-	changelogs = c.getChangelogsFromGithubReleases(index, from, to)
+	changelogs = c.getChangelogsFromForgeReleases(index, from, to)
 	if len(changelogs) > 0 {
 		return &changelogs
 	}
@@ -116,7 +117,7 @@ func (c Chart) Changelog(from, to string) *result.Changelogs {
 	}
 }
 
-func (c Chart) getChangelogsFromGithubReleases(index repo.IndexFile, from string, to string) result.Changelogs {
+func (c Chart) getChangelogsFromForgeReleases(index repo.IndexFile, from string, to string) result.Changelogs {
 
 	chartVersion, err := index.Get(c.spec.Name, from)
 	if err != nil {
@@ -150,13 +151,18 @@ func (c Chart) getChangelogsFromGithubReleases(index repo.IndexFile, from string
 
 	chartSourceLink := links[linkIndex].URL
 	log.Debugf("chart source link: %s", chartSourceLink)
-	if !strings.HasPrefix(chartSourceLink, "https://github.com/") {
-		log.Debugf("chart source link is not a github link: %s", chartSourceLink)
+	if strings.HasPrefix(chartSourceLink, "https://github.com/") {
+		return c.getChangelogFromGitHub(chartSourceLink, from, to)
+	}
+
+	fromLongVersion := c.getLongVersion(from)
+	releases := giteaChangelog.SearchRepository(chartSourceLink, fromLongVersion, c.getLongVersion(to))
+	if releases == nil {
+		log.Debugf("no GitHub or known Gitea releases found for chart source link: %s", chartSourceLink)
 		return nil
 	}
 
-	changelog := c.getChangelogFromGitHub(chartSourceLink, from, to)
-	return changelog
+	return c.excludeOtherReleases(*releases, fromLongVersion)
 }
 
 func (c Chart) getChangelogFromGitHub(chartSourceLink, from, to string) result.Changelogs {
@@ -178,12 +184,15 @@ func (c Chart) getChangelogFromGitHub(chartSourceLink, from, to string) result.C
 		log.Debugf("failed to search github releases: %s", err)
 	}
 
-	// exclude fromVersion from releases and exclude releases of other charts
-	releases = slices.DeleteFunc(releases, func(ch result.Changelog) bool {
+	return c.excludeOtherReleases(releases, fromLongVersion)
+}
+
+// excludeOtherReleases drops the release of the current version and the
+// releases of other charts that share the repository.
+func (c Chart) excludeOtherReleases(releases result.Changelogs, fromLongVersion string) result.Changelogs {
+	return slices.DeleteFunc(releases, func(ch result.Changelog) bool {
 		return !strings.HasPrefix(ch.Title, c.spec.Name) || ch.Title == fromLongVersion
 	})
-
-	return releases
 }
 
 func (c Chart) getLongVersion(version string) string {

@@ -8,6 +8,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
 	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	giteaChangelog "github.com/updatecli/updatecli/pkg/plugins/changelog/gitea"
 	githubChangelog "github.com/updatecli/updatecli/pkg/plugins/changelog/github/v3"
 	"golang.org/x/net/html"
 )
@@ -20,8 +21,9 @@ func (g *GoModule) Changelog(from, to string) *result.Changelogs {
 }
 
 // DetectChangelogSource tries to identify based on the Goland module
-// where the changelog is located. At the moment it only supports
-// GitHub repositories both direct and from a proxy.
+// where the changelog is located. It supports GitHub repositories and
+// repositories on known Gitea compatible hosts such as Codeberg,
+// both direct and from a proxy.
 func DetectChangelogSource(module, from, to string, depth int) *result.Changelogs {
 
 	if module == "" {
@@ -30,6 +32,10 @@ func DetectChangelogSource(module, from, to string, depth int) *result.Changelog
 
 	if strings.HasPrefix(module, "github.com/") {
 		return getChangelogFromGitHub(module, from, to)
+	}
+
+	if _, _, _, ok := giteaChangelog.ParseRepositoryURL(module); ok {
+		return giteaChangelog.SearchRepository(module, from, to)
 	}
 
 	if depth == 0 {
