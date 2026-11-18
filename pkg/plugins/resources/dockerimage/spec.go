@@ -118,7 +118,7 @@ type Spec struct {
 	//   * a tag is dated by its "org.opencontainers.image.created" annotation, from the image index
 	//     then the image manifest, or else by the "created" field of the image configuration.
 	//   * a tag without a creation date, or one set to 1970-01-01 by a reproducible build,
-	//     is never selected.
+	//     is never selected. Such images, like gcr.io/distroless ones, can't be filtered by age.
 	//   * dating a tag costs requests to the registry, so a source checks at most 20 tags
 	//     in order of preference.
 	//   * a source is skipped when no tag matches the age filter yet.
