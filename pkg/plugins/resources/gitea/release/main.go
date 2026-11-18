@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/drone/go-scm/scm"
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/updatecli/updatecli/pkg/core/log"
+	giteaChangelog "github.com/updatecli/updatecli/pkg/plugins/changelog/gitea"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/gitea/client"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
@@ -237,7 +237,7 @@ func (g *Gitea) searchReleases(ctx context.Context, releaseAge age.Spec) ([]stri
 			continue
 		}
 		published = append(published, releases[i].Tag)
-		date := releaseDate(releases[i])
+		date := giteaChangelog.ReleaseDate(releases[i])
 		if !releaseAge.Matches(date) {
 			log.Debugf("ignoring release %q, dated %s, as outside of the age window", releases[i].Tag, date)
 			continue
@@ -250,41 +250,7 @@ func (g *Gitea) searchReleases(ctx context.Context, releaseAge age.Spec) ([]stri
 
 // listReleases retrieves release metadata without applying source filters.
 func (g *Gitea) listReleases(ctx context.Context) ([]*scm.Release, error) {
-	var results []*scm.Release
-	page := 1
-	for {
-		pageCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
-		releases, resp, err := g.client.Releases.List(
-			pageCtx,
-			strings.Join([]string{g.spec.Owner, g.spec.Repository}, "/"),
-			scm.ReleaseListOptions{
-				Page:   page,
-				Size:   30,
-				Open:   true,
-				Closed: true,
-			},
-		)
-		cancel()
-		if err != nil {
-			return nil, err
-		}
-
-		results = append(results, releases...)
-		if resp.Page.Next == 0 {
-			return results, nil
-		}
-		page = resp.Page.Next
-	}
-}
-
-// releaseDate returns the date at which a release became public.
-// Gitea leaves the publication date empty for releases created without one, so the
-// creation date is used as a fallback.
-func releaseDate(r *scm.Release) time.Time {
-	if !r.Published.IsZero() {
-		return r.Published
-	}
-	return r.Created
+	return giteaChangelog.ListReleases(ctx, g.client, g.spec.Owner, g.spec.Repository)
 }
 
 func (s Spec) Validate() error {
