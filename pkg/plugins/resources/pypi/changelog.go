@@ -13,9 +13,15 @@ import (
 
 // Changelog returns release notes for the package between the from and to versions.
 func (p *Pypi) Changelog(from, to string) *result.Changelogs {
-	_, _, err := p.getVersions(context.Background())
-	if err != nil {
-		return nil
+	// Only the package metadata is needed, which the source already fetched in the same run.
+	// Searching versions again would repeat the age filter, whose outcome must not prevent
+	// the changelog.
+	if p.data.Info.Name == "" && len(p.data.Releases) == 0 {
+		data, err := p.getPackageData(context.Background())
+		if err != nil {
+			return nil
+		}
+		p.data = data
 	}
 
 	// Prefer GitHub releases when a Source URL is provided in project_urls.

@@ -13,6 +13,7 @@ func TestNormalizePEP440(t *testing.T) {
 		expected string
 	}{
 		{input: "2.31.0", expected: "2.31.0"},
+		{input: "1.0", expected: "1.0"},
 		{input: "0.51b0", expected: "0.51.0-beta.0"},
 		{input: "1.0a1", expected: "1.0.0-alpha.1"},
 		{input: "2.0rc1", expected: "2.0.0-rc.1"},
@@ -25,6 +26,13 @@ func TestNormalizePEP440(t *testing.T) {
 			assert.Equal(t, tt.expected, normalizePEP440(tt.input))
 		})
 	}
+}
+
+func TestPadShortRelease(t *testing.T) {
+	assert.Equal(t, "1.0.0", padShortRelease("1"))
+	assert.Equal(t, "1.0.0", padShortRelease("1.0"))
+	assert.Equal(t, "2.31.0", padShortRelease("2.31.0"))
+	assert.Equal(t, "1.0.0-rc.1", padShortRelease("1.0.0-rc.1"))
 }
 
 func TestNew(t *testing.T) {
