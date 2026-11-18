@@ -7,7 +7,7 @@ retract v0.999.0 // Published accidentally.
 require (
 	cuelang.org/go v0.17.1
 	dario.cat/mergo v1.0.2
-	gitea.dev/sdk v1.4.0
+	gitea.dev/sdk v1.5.1
 	github.com/BurntSushi/toml v1.6.0
 	github.com/JohannesKaufmann/html-to-markdown v1.6.0
 	github.com/Masterminds/semver/v3 v3.5.0
