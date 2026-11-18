@@ -11,6 +11,7 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
 	"github.com/updatecli/updatecli/pkg/core/registry"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	giteaChangelog "github.com/updatecli/updatecli/pkg/plugins/changelog/gitea"
 	"github.com/updatecli/updatecli/pkg/plugins/changelog/markdown"
 )
 
@@ -58,6 +59,10 @@ func (di *DockerImage) Changelog(from, to string) *result.Changelogs {
 	// https://github.com/updatecli/policies/blob/main/updatecli/policies/updatecli/autodiscovery/CHANGELOG.md?raw=true
 	if changelogURL.Host == "github.com" {
 		redirectToGitHubRawContent(changelogURL)
+	}
+
+	if giteaChangelog.IsKnownHost(changelogURL.Hostname()) {
+		redirectToGiteaRawContent(changelogURL)
 	}
 
 	resp, err := httpclient.NewRetryClient().Get(changelogURL.String())
@@ -125,6 +130,19 @@ func redirectToGitHubRawContent(u *url.URL) {
 	}
 
 	if beforePath != u.Path {
+		log.Debugf("Redirecting %s to %s", beforePath, u.Path)
+	}
+}
+
+// redirectToGiteaRawContent rewrites a Gitea or Forgejo file page URL, such as
+// https://codeberg.org/owner/repo/src/branch/main/CHANGELOG.md, to the URL of
+// its raw content, https://codeberg.org/owner/repo/raw/branch/main/CHANGELOG.md.
+func redirectToGiteaRawContent(u *url.URL) {
+	s := strings.Split(u.Path, "/")
+	if len(s) > 3 && s[3] == "src" {
+		beforePath := u.Path
+		s[3] = "raw"
+		u.Path = strings.Join(s, "/")
 		log.Debugf("Redirecting %s to %s", beforePath, u.Path)
 	}
 }
