@@ -144,7 +144,9 @@ func getGitRepositoryURL(htmlContent string) string {
 				// We only support git repositories
 				urls := strings.Split(content, " git ")
 
-				if len(urls) > 0 {
+				// Only git repositories have a second part. Other VCS kinds, such as
+				// "mod" or "hg", have none and are ignored.
+				if len(urls) > 1 {
 					result = urls[1]
 				}
 
