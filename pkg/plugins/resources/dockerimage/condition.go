@@ -3,6 +3,7 @@ package dockerimage
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
@@ -47,9 +48,43 @@ func (di *DockerImage) Condition(_ context.Context, source string, scm scm.ScmHa
 		}
 	}
 
-	if found {
-		return true, fmt.Sprintf("docker image %s:%s found", di.spec.Image, version), nil
+	if !found {
+		return false, fmt.Sprintf("docker image %s:%s not found", di.spec.Image, version), nil
 	}
 
-	return false, fmt.Sprintf("docker image %s:%s not found", di.spec.Image, version), nil
+	if !di.spec.Age.IsZero() {
+		return di.conditionAge(version)
+	}
+
+	return true, fmt.Sprintf("docker image %s:%s found", di.spec.Image, version), nil
+}
+
+// conditionAge checks the creation date of a tag against the age filter, for every requested platform.
+func (di *DockerImage) conditionAge(tag string) (bool, string, error) {
+	architectures := di.spec.Architectures
+	if len(architectures) == 0 {
+		architectures = []string{""}
+	}
+
+	for _, arch := range architectures {
+		image := fmt.Sprintf("%s:%s", di.spec.Image, tag)
+		if arch != "" {
+			image += " (" + arch + ")"
+		}
+
+		date, dated, err := di.releaseDate(tag, arch)
+		if err != nil {
+			return false, "", err
+		}
+
+		if !dated {
+			return false, fmt.Sprintf("docker image %s has no creation date, so the age filter can't be applied", image), nil
+		}
+
+		if !di.spec.Age.Matches(date) {
+			return false, fmt.Sprintf("docker image %s created on %s is outside the age filter", image, date.Format(time.RFC3339)), nil
+		}
+	}
+
+	return true, fmt.Sprintf("docker image %s:%s found and matching the age filter", di.spec.Image, tag), nil
 }

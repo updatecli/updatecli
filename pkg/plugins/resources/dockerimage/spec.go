@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/updatecli/updatecli/pkg/core/log"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/docker"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
@@ -107,6 +108,28 @@ type Spec struct {
 	//   * tagfilter: ^v\d*(\.\d*){2}-alpine$
 	//
 	TagFilter string `yaml:",omitempty"`
+	// "age" defines how old a tag must be to be selected by a source or accepted by a condition.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//
+	// remark:
+	//   * a tag is dated by its "org.opencontainers.image.created" annotation, from the image index
+	//     then the image manifest, or else by the "created" field of the image configuration.
+	//   * a tag without a creation date, or one set to 1970-01-01 by a reproducible build,
+	//     is never selected.
+	//   * dating a tag costs requests to the registry, so a source checks at most 20 tags
+	//     in order of preference.
+	//   * a source is skipped when no tag matches the age filter yet.
+	//
+	// example:
+	// ```
+	//   age:
+	//     minimum: 7d
+	// ```
+	//
+	Age age.Spec `yaml:",omitempty"`
 }
 
 func sanitizeRegistryEndpoint(repository string) string {

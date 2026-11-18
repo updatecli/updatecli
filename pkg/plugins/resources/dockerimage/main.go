@@ -2,6 +2,7 @@ package dockerimage
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/go-viper/mapstructure/v2"
@@ -61,6 +62,10 @@ func New(spec interface{}) (*DockerImage, error) {
 		return nil, err
 	}
 
+	if err := newSpec.Age.Validate(); err != nil {
+		return nil, fmt.Errorf("wrong age spec: %w", err)
+	}
+
 	keychains := []authn.Keychain{}
 
 	if !newSpec.Empty() {
@@ -87,38 +92,47 @@ func (di *DockerImage) createRef(source string) (name.Reference, error) {
 	return ref, nil
 }
 
+// remoteOptions returns the registry options, restricted to a platform when arch is set.
+func (di *DockerImage) remoteOptions(arch string) []remote.Option {
+	remoteOptions := slices.Clone(di.options)
+
+	if arch == "" {
+		return remoteOptions
+	}
+
+	return append(remoteOptions, remote.WithPlatform(parsePlatform(arch)))
+}
+
+// parsePlatform parses a platform written "<architecture>" or "<os>/<architecture>[/<variant>]".
+func parsePlatform(arch string) v1.Platform {
+	platform := v1.Platform{OS: "linux", Architecture: arch}
+
+	splitArchitecture := strings.Split(arch, "/")
+
+	if len(splitArchitecture) > 1 {
+		platform.OS = splitArchitecture[0]
+		platform.Architecture = splitArchitecture[1]
+	}
+
+	if len(splitArchitecture) > 2 {
+		platform.Variant = splitArchitecture[2]
+	}
+
+	return platform
+}
+
 // checkImage checks if a container reference exists on the "remote" registry with a given set of options
 func (di *DockerImage) checkImage(ref name.Reference, arch string) (bool, error) {
 	var queriedPlatform string
 
-	remoteOptions := di.options
-
 	if arch != "" {
-		os := "linux"
-		architecture := arch
-		variant := ""
-
-		splitArchitecture := strings.Split(arch, "/")
-
-		if len(splitArchitecture) > 1 {
-			os = splitArchitecture[0]
-			architecture = splitArchitecture[1]
-		}
-
-		if len(splitArchitecture) > 2 {
-			variant = splitArchitecture[2]
-		}
-
-		platform := v1.Platform{OS: os, Architecture: architecture, Variant: variant}
-
+		platform := parsePlatform(arch)
 		queriedPlatform = platform.String()
-
-		remoteOptions = append(remoteOptions, remote.WithPlatform(platform))
 
 		log.Debugf("Querying docker image %q, os: %q, arch: %q, variant %q", ref.Name(), platform.OS, platform.Architecture, platform.Variant)
 	}
 
-	descriptor, err := remote.Get(ref, remoteOptions...)
+	descriptor, err := remote.Get(ref, di.remoteOptions(arch)...)
 	if err != nil {
 		if strings.Contains(err.Error(), "unexpected status code 404") {
 			return false, nil
@@ -158,5 +172,6 @@ func (di *DockerImage) ReportConfig() interface{} {
 		Tag:           di.spec.Tag,
 		TagFilter:     di.spec.TagFilter,
 		VersionFilter: di.spec.VersionFilter,
+		Age:           di.spec.Age,
 	}
 }

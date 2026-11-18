@@ -78,6 +78,17 @@ sources:
         kind: semver
         strict: true
 
+  ghcr.io-semver-age:
+    name: Get Latest semver Tag from ghcr at least 30 days old
+    kind: dockerimage
+    spec:
+      image: "ghcr.io/updatecli/updatecli"
+      architecture: amd64
+      versionfilter:
+        kind: semver
+      age:
+        minimum: 30d
+
 conditions:
   ## GitHub action is not configured with DockerHub credentials
   #dockerhub-private:
@@ -161,3 +172,13 @@ conditions:
     kind: dockerimage
     spec:
       image: "quay.io/calico/node"
+
+  ghcr.io-semver-age:
+    name: Get Latest semver Tag from ghcr at least 30 days old
+    sourceid: ghcr.io-semver-age
+    kind: dockerimage
+    spec:
+      image: "ghcr.io/updatecli/updatecli"
+      architecture: amd64
+      age:
+        minimum: 30d
