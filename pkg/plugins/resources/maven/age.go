@@ -20,10 +20,6 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
-// maxAgeChecks bounds the number of versions dated to find one matching the age filter,
-// as every version costs a request to the repository.
-const maxAgeChecks = 20
-
 // pomURL returns the url of the pom file of a version, next to the maven-metadata.xml file.
 // Credentials in the metadata url are kept, so the request is authenticated the same way.
 func (m *Maven) pomURL(metadataURL, ver string) (string, error) {
@@ -167,7 +163,7 @@ func (m *Maven) versionMatchingAge(ctx context.Context, handler mavenmetadata.Ha
 }
 
 // ageCandidates returns the versions to check against the age filter, in order of preference,
-// at most maxAgeChecks as each one costs a request.
+// at most age.MaxChecks as each one costs a request.
 //
 // With the kind "latest", they are the version the repository reports as latest, then the versions
 // below it, see olderVersions. With other kinds, they are the versions the version filter accepts,
@@ -187,23 +183,17 @@ func (m *Maven) ageCandidates(handler mavenmetadata.Handler) ([]string, error) {
 			return nil, err
 		}
 
-		return append([]string{latest}, olderVersions(versions, latest, maxAgeChecks-1)...), nil
+		return append([]string{latest}, olderVersions(versions, latest, age.MaxChecks-1)...), nil
 	}
 
-	var candidates []string
-	for len(candidates) < maxAgeChecks {
-		found, err := filter.Search(versions)
-		if err != nil {
-			// A version filter matching no version at all is an error, running out of candidates isn't
-			if len(candidates) == 0 {
-				return nil, err
-			}
-			break
-		}
+	ranked, err := filter.Rank(versions, age.MaxChecks)
+	if err != nil {
+		return nil, err
+	}
 
-		candidate := found.GetVersion()
-		candidates = append(candidates, candidate)
-		versions = slices.DeleteFunc(versions, func(v string) bool { return v == candidate })
+	candidates := make([]string, 0, len(ranked))
+	for _, v := range ranked {
+		candidates = append(candidates, v.GetVersion())
 	}
 
 	return candidates, nil

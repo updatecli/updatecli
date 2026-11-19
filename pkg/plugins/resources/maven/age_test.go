@@ -206,7 +206,7 @@ func TestSourceAge(t *testing.T) {
 
 func TestSourceAgeBoundsTheChecks(t *testing.T) {
 	var releases []fakeRelease
-	for i := range 2 * maxAgeChecks {
+	for i := range 2 * age.MaxChecks {
 		releases = append(releases, fakeRelease{fmt.Sprintf("1.%d.0", i), 1})
 	}
 	repo := &fakeRepository{releases: releases}
@@ -218,7 +218,7 @@ func TestSourceAgeBoundsTheChecks(t *testing.T) {
 		got := result.Source{}
 		require.NoError(t, m.Source(context.Background(), pathresolver.Resolver{}, &got))
 		assert.Equal(t, result.SKIPPED, got.Result)
-		assert.Equal(t, int64(maxAgeChecks), repo.pomRequests.Load(), "versionfilter kind %q", filter.Kind)
+		assert.Equal(t, int64(age.MaxChecks), repo.pomRequests.Load(), "versionfilter kind %q", filter.Kind)
 	}
 }
 

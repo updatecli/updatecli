@@ -6,6 +6,12 @@ import (
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
+const (
+	// MaxChecks bounds the number of versions a resource dates to find one matching the age filter,
+	// when each one costs requests to a registry or repository.
+	MaxChecks = 20
+)
+
 // Search returns the version matching the filter among the versions kept by the age filter.
 //
 // dated holds the published versions whose release date is known, so it contains kept. When
