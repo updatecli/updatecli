@@ -145,6 +145,9 @@ func ageCandidates(filter *version.Filter, tags []string) ([]string, error) {
 
 		candidate := found.GetVersion()
 		if candidate == "" {
+			if len(candidates) == 0 {
+				return nil, fmt.Errorf("no version found matching pattern %q", filter.Pattern)
+			}
 			break
 		}
 		candidates = append(candidates, candidate)

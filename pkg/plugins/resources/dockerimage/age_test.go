@@ -45,6 +45,9 @@ const day = 24 * time.Hour
 type testRegistry struct {
 	host             string
 	manifestRequests atomic.Int32
+	// manifestsServed, when positive, answers later manifest requests with a bodyless 404,
+	// as some registries do for a deleted tag.
+	manifestsServed atomic.Int32
 }
 
 func newTestRegistry(t *testing.T) *testRegistry {
@@ -55,7 +58,11 @@ func newTestRegistry(t *testing.T) *testRegistry {
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodGet && strings.Contains(r.URL.Path, "/manifests/") {
-			reg.manifestRequests.Add(1)
+			served := reg.manifestRequests.Add(1)
+			if limit := reg.manifestsServed.Load(); limit > 0 && served > limit {
+				w.WriteHeader(http.StatusNotFound)
+				return
+			}
 		}
 		handler.ServeHTTP(w, r)
 	}))
@@ -295,6 +302,38 @@ func TestSourceAgeBoundsTheChecks(t *testing.T) {
 
 	assert.Equal(t, result.SKIPPED, got.Result)
 	assert.Equal(t, int32(maxAgeChecks), reg.manifestRequests.Load())
+}
+
+func TestSourceAgeTagDeletedAfterDating(t *testing.T) {
+	reg := newTestRegistry(t)
+	image := reg.push(t, "app", testImage{tag: "v1.0.0", created: 10 * day})
+	reg.manifestsServed.Store(1)
+
+	di, err := New(Spec{Image: image, VersionFilter: semverFilter, Age: age.Spec{Minimum: "7d"}})
+	require.NoError(t, err)
+
+	got := result.Source{}
+	err = di.Source(context.Background(), pathresolver.Resolver{}, &got)
+
+	assert.ErrorContains(t, err, "v1.0.0")
+}
+
+func TestSourceAgeTimeFilterWithoutVersion(t *testing.T) {
+	reg := newTestRegistry(t)
+	// The time filter parses the lowercase month but looks the tag up as "2026-Feb-01".
+	image := reg.push(t, "app", testImage{tag: "2026-feb-01", created: 10 * day})
+
+	di, err := New(Spec{
+		Image:         image,
+		VersionFilter: version.Filter{Kind: version.TIMEVERSIONKIND, Pattern: "2006-Jan-02"},
+		Age:           age.Spec{Minimum: "7d"},
+	})
+	require.NoError(t, err)
+
+	got := result.Source{}
+	err = di.Source(context.Background(), pathresolver.Resolver{}, &got)
+
+	assert.Error(t, err)
 }
 
 func TestConditionAge(t *testing.T) {

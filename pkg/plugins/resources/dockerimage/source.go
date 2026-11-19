@@ -79,7 +79,10 @@ func (di *DockerImage) Source(_ context.Context, pathResolver pathresolver.Resol
 	}
 
 	if !found {
-		return fmt.Errorf("no Docker Image for architecture %s", di.spec.Architectures[0])
+		if architecture == "" {
+			return fmt.Errorf("no Docker Image found for tag %s", tag)
+		}
+		return fmt.Errorf("no Docker Image for architecture %s", architecture)
 	}
 
 	resultSource.Result = result.SUCCESS
