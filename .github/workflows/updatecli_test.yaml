@@ -13,7 +13,7 @@ jobs:
         with:
           persist-credentials: false
       - name: "Setup updatecli"
-        uses: "updatecli/updatecli-action@93ae2608256484ef8598e902aa675bbc9e278e4e" # v3.10.0
+        uses: "updatecli/updatecli-action@8aa7bec31d6463e47c947f06c6b1df7dba276e07" # v3.11.0
         with:
           version: "v0.124.0"
       - name: "Set up Go"
