@@ -117,6 +117,12 @@ type Spec struct {
 	// remark:
 	//   * a tag is dated by its "org.opencontainers.image.created" annotation, from the image index
 	//     then the image manifest, or else by the "created" field of the image configuration.
+	//   * this date is recorded by the image publisher when the image is built, not by the registry
+	//     when the tag is pushed, as registries don't report push dates. An image built long before
+	//     its release, such as one promoted or retagged, or built with SOURCE_DATE_EPOCH set to a
+	//     commit date, looks older than it is and can pass a "minimum" age on its first day.
+	//   * as the publisher sets this date, the age filter can't protect against a malicious image
+	//     claiming an older one, unlike with registries recording publish dates such as npm or PyPI.
 	//   * a tag is dated for every platform of "architectures", and must exist and match the age
 	//     filter for all of them. Without one, an image index is dated by its linux/amd64 image,
 	//     or else its first image.
