@@ -1,7 +1,9 @@
 package dockerimage
 
 import (
+	"errors"
 	"fmt"
+	"net/http"
 	"slices"
 	"strings"
 
@@ -10,6 +12,7 @@ import (
 	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
+	"github.com/google/go-containerregistry/pkg/v1/remote/transport"
 	"github.com/google/go-containerregistry/pkg/v1/types"
 	"github.com/updatecli/updatecli/pkg/core/httpclient"
 	"github.com/updatecli/updatecli/pkg/core/log"
@@ -134,7 +137,7 @@ func (di *DockerImage) checkImage(ref name.Reference, arch string) (bool, error)
 
 	descriptor, err := remote.Get(ref, di.remoteOptions(arch)...)
 	if err != nil {
-		if strings.Contains(err.Error(), "unexpected status code 404") {
+		if isStatus(err, http.StatusNotFound) {
 			return false, nil
 		}
 		return false, err
@@ -174,4 +177,10 @@ func (di *DockerImage) ReportConfig() interface{} {
 		VersionFilter: di.spec.VersionFilter,
 		Age:           di.spec.Age,
 	}
+}
+
+// isStatus returns true if err is a registry response with the given status code.
+func isStatus(err error, code int) bool {
+	var transportErr *transport.Error
+	return errors.As(err, &transportErr) && transportErr.StatusCode == code
 }

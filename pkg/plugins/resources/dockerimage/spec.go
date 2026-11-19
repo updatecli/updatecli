@@ -117,14 +117,25 @@ type Spec struct {
 	// remark:
 	//   * a tag is dated by its "org.opencontainers.image.created" annotation, from the image index
 	//     then the image manifest, or else by the "created" field of the image configuration.
+	//   * a tag is dated for every platform of "architectures", and must exist and match the age
+	//     filter for all of them. Without one, an image index is dated by its linux/amd64 image,
+	//     or else its first image.
 	//   * a tag without a creation date, or one set to 1970-01-01 by a reproducible build,
 	//     is never selected. Such images, like gcr.io/distroless ones, can't be filtered by age.
+	//   * a source needs a version filter ordering tags, such as the kind "semver", as the
+	//     registry lists tags alphabetically: the kind "latest" with the pattern "latest" is refused.
 	//   * dating a tag costs requests to the registry, so a source checks at most 20 tags
-	//     in order of preference.
-	//   * a source is skipped when no tag matches the age filter yet.
+	//     in order of preference. A tag missing, missing for a platform, or whose image the age
+	//     filter doesn't support, such as a schema1 image, is passed over.
+	//   * a source is skipped when no tag matches the age filter yet, when none of the tags
+	//     checked has a creation date or is supported, or when the registry rate limits requests
+	//     or fails to answer for a tag after answering for a preferred one. It fails when the
+	//     registry fails to answer for the first tag.
 	//
 	// example:
 	// ```
+	//   versionfilter:
+	//     kind: semver
 	//   age:
 	//     minimum: 7d
 	// ```
