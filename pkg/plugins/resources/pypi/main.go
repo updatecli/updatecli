@@ -256,7 +256,8 @@ func (p *Pypi) availableVersions(ctx context.Context) (releases, error) {
 			if candidate == "" {
 				continue // skip dev releases
 			}
-			if p.versionFilter.Kind == version.SEMVERVERSIONKIND || p.versionFilter.Kind == version.LATESTVERSIONKIND {
+			if p.versionFilter.Kind == version.LATESTVERSIONKIND ||
+				(p.versionFilter.Kind == version.SEMVERVERSIONKIND && !p.versionFilter.Strict) {
 				candidate = padShortRelease(candidate)
 			}
 		}
@@ -320,7 +321,7 @@ func normalizePEP440(v string) string {
 // padShortRelease pads a final release with fewer than three parts, such as "1.0" to "1.0.0",
 // so that it shares its candidate with its post releases, such as "1.0.post1". It only applies
 // to the kinds comparing versions semantically, "semver" and "latest": a "regex" or "time"
-// pattern still sees the version as published.
+// pattern still sees the version as published, and a strict "semver" filter still rejects it.
 func padShortRelease(v string) string {
 	if !pep440ShortRelease.MatchString(v) {
 		return v
@@ -352,6 +353,13 @@ func (p *Pypi) getVersions(ctx context.Context) (string, error) {
 	rels, err := p.availableVersions(ctx)
 	if err != nil {
 		return "", err
+	}
+
+	// A yanked latest release fails the source, even when the age filter has nothing to work with.
+	if p.versionFilter.Kind == version.LATESTVERSIONKIND {
+		if err := p.checkLatestPublished(rels); err != nil {
+			return "", err
+		}
 	}
 
 	/*
@@ -400,15 +408,12 @@ func (p *Pypi) getVersions(ctx context.Context) (string, error) {
 func (p *Pypi) latestVersion(rels releases) (string, error) {
 	latest := p.data.Info.Version
 
-	rel, published := rels[latest]
-	switch {
-	case !published:
-		// Dev releases are left out when they can't be normalized for the versionfilter kind.
-		if files, found := p.data.Releases[latest]; found && !isYanked(files) {
-			return "", fmt.Errorf("latest version %q of package %q is a development release, which the %q versionfilter kind ignores", latest, p.spec.Name, p.versionFilter.Kind)
-		}
-		return "", fmt.Errorf("latest version %q of package %q is yanked", latest, p.spec.Name)
-	case rel.status == ageMatching:
+	if err := p.checkLatestPublished(rels); err != nil {
+		return "", err
+	}
+
+	rel := rels[latest]
+	if rel.status == ageMatching {
 		return latest, nil
 	}
 
@@ -423,6 +428,21 @@ func (p *Pypi) latestVersion(rels releases) (string, error) {
 	}
 
 	return "", fmt.Errorf("%w for the PyPI package %q", age.ErrNoVersionMatchingAge, p.spec.Name)
+}
+
+// checkLatestPublished returns an error when the latest release reported by the registry is
+// yanked, or is a dev release the versionfilter kind leaves out.
+func (p *Pypi) checkLatestPublished(rels releases) error {
+	latest := p.data.Info.Version
+	if _, published := rels[latest]; published {
+		return nil
+	}
+
+	// Dev releases are left out when they can't be normalized for the versionfilter kind.
+	if files, found := p.data.Releases[latest]; found && !isYanked(files) {
+		return fmt.Errorf("latest version %q of package %q is a development release, which the %q versionfilter kind ignores", latest, p.spec.Name, p.versionFilter.Kind)
+	}
+	return fmt.Errorf("latest version %q of package %q is yanked", latest, p.spec.Name)
 }
 
 // ReportConfig returns a sanitized copy of the spec for reporting.

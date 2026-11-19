@@ -72,16 +72,21 @@ func (r releases) versions(statuses ...releaseAgeStatus) []string {
 }
 
 // candidates returns the candidates of the releases having one of the given statuses, oldest
-// first and without duplicates, as distinct releases can share a candidate.
+// first and without duplicates, as distinct releases can share a candidate. A shared candidate
+// is placed at its newest release: "1.0.0.post1" ranks above "1.0.0+local", so "1.0.0" must
+// come after "1.0.0+local" for the kinds taking the last match as the newest, such as "regex".
 func (r releases) candidates(statuses ...releaseAgeStatus) []string {
+	selected := r.withStatus(statuses...)
+	last := make(map[string]int, len(selected))
+	for i, rel := range selected {
+		last[rel.candidate] = i
+	}
+
 	var candidates []string
-	seen := map[string]bool{}
-	for _, rel := range r.withStatus(statuses...) {
-		if seen[rel.candidate] {
-			continue
+	for i, rel := range selected {
+		if last[rel.candidate] == i {
+			candidates = append(candidates, rel.candidate)
 		}
-		seen[rel.candidate] = true
-		candidates = append(candidates, rel.candidate)
 	}
 	return candidates
 }

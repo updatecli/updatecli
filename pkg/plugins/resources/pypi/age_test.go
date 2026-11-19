@@ -708,3 +708,68 @@ func TestNewInvalidAge(t *testing.T) {
 	_, err := New(Spec{Name: "requests", Age: age.Spec{Minimum: "seven days"}})
 	assert.Error(t, err)
 }
+
+func TestSourceLatestYankedUndatedFails(t *testing.T) {
+	// The registry reports no upload time, but a yanked latest release must still fail.
+	p, err := New(Spec{Name: "testpkg", Age: age.Spec{Minimum: "7d"}})
+	require.NoError(t, err)
+
+	p.webClient = GetMockClient(pypiDefaultURL, "", `{
+  "info": {"name": "testpkg", "version": "2.0.0", "project_urls": {}},
+  "releases": {"1.0.0": [{"yanked": false}], "2.0.0": [{"yanked": true}]}
+}`, 200)
+
+	gotResult := result.Source{}
+	err = p.Source(context.Background(), pathresolver.Resolver{}, &gotResult)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "is yanked")
+}
+
+func TestSourceLatestUndatedSkips(t *testing.T) {
+	p, err := New(Spec{Name: "testpkg", Age: age.Spec{Minimum: "7d"}})
+	require.NoError(t, err)
+
+	p.webClient = GetMockClient(pypiDefaultURL, "", `{
+  "info": {"name": "testpkg", "version": "2.0.0", "project_urls": {}},
+  "releases": {"1.0.0": [{"yanked": false}], "2.0.0": [{"yanked": false}]}
+}`, 200)
+
+	gotResult := result.Source{}
+	require.NoError(t, p.Source(context.Background(), pathresolver.Resolver{}, &gotResult))
+	assert.Equal(t, result.SKIPPED, gotResult.Result)
+}
+
+func TestSourceStrictSemverIgnoresShortReleases(t *testing.T) {
+	// A strict semver filter rejects "2.0", so it must not be padded to "2.0.0".
+	p, err := New(Spec{Name: "testpkg", VersionFilter: version.Filter{Kind: "semver", Strict: true}})
+	require.NoError(t, err)
+
+	p.webClient = GetMockClient(pypiDefaultURL, "", `{
+  "info": {"name": "testpkg", "version": "2.0", "project_urls": {}},
+  "releases": {"1.0.0": [{"yanked": false}], "2.0": [{"yanked": false}]}
+}`, 200)
+
+	gotResult := result.Source{}
+	require.NoError(t, p.Source(context.Background(), pathresolver.Resolver{}, &gotResult))
+	assert.Equal(t, "1.0.0", gotResult.Information)
+}
+
+func TestSourceRegexPicksPostReleaseOverLocal(t *testing.T) {
+	// By PEP 440 order 1.0.0 < 1.0.0+local < 1.0.0.post1, and "1.0.0.post1" normalizes to
+	// "1.0.0", which must then rank above "1.0.0+local".
+	p, err := New(Spec{Name: "testpkg", VersionFilter: version.Filter{Kind: "regex", Pattern: `^1\.0\.0`}})
+	require.NoError(t, err)
+
+	p.webClient = GetMockClient(pypiDefaultURL, "", `{
+  "info": {"name": "testpkg", "version": "1.0.0.post1", "project_urls": {}},
+  "releases": {
+    "1.0.0": [{"yanked": false}],
+    "1.0.0+local": [{"yanked": false}],
+    "1.0.0.post1": [{"yanked": false}]
+  }
+}`, 200)
+
+	gotResult := result.Source{}
+	require.NoError(t, p.Source(context.Background(), pathresolver.Resolver{}, &gotResult))
+	assert.Equal(t, "1.0.0.post1", gotResult.Information)
+}
