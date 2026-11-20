@@ -22,6 +22,7 @@ dist/
 *.env
 .idea
 .vscode
+.dir-locals.el
 
 *.swp
 

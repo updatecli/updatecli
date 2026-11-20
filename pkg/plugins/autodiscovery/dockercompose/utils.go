@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"errors"
 
 	"github.com/updatecli/updatecli/pkg/core/log"
 
@@ -20,6 +21,10 @@ func searchDockerComposeFiles(rootDir string, filePatterns []string) ([]string, 
 
 	err := filepath.WalkDir(rootDir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
+			if errors.Is(err, fs.ErrPermission) {
+				log.Warningf("%q: Permission denied\n", path)
+				return nil
+			}
 			log.Warningf("prevent panic by handling failure accessing a path %q: %v\n", path, err)
 			return err
 		}

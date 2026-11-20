@@ -5,6 +5,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"errors"
 
 	"github.com/updatecli/updatecli/pkg/core/log"
 
@@ -27,21 +28,26 @@ func searchDockerfiles(rootDir string, files []string) ([]string, error) {
 
 	log.Debugf("Looking for Dockerfile(s) in %q", rootDir)
 
-	// To do switch to WalkDir which is more efficient, introduced in 1.16
-	err := filepath.Walk(rootDir, func(path string, info fs.FileInfo, err error) error {
+	err := filepath.WalkDir(rootDir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
+			if errors.Is(err, fs.ErrPermission) {
+				log.Warningf("%q: Permission denied\n", path)
+				return nil
+			}
 			log.Warningf("prevent panic by handling failure accessing a path %q: %v\n", path, err)
 			return err
 		}
 
-		for _, f := range files {
-			match, err := filepath.Match(f, info.Name())
-			if err != nil {
-				log.Errorln(err)
-				continue
-			}
-			if match {
-				dockerfiles = append(dockerfiles, path)
+		if !d.IsDir() {
+			for _, f := range files {
+				match, err := filepath.Match(f, d.Name())
+				if err != nil {
+					log.Errorln(err)
+					continue
+				}
+				if match {
+					dockerfiles = append(dockerfiles, path)
+				}
 			}
 		}
 
