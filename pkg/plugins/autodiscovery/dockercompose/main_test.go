@@ -160,7 +160,7 @@ sources:
     kind: 'dockerimage'
     spec:
       image: 'jenkinsci/jenkins'
-      tagfilter: ''
+      tagfilter: '^\d*(\.\d*){2}$'
       versionfilter:
         kind: 'semver'
         pattern: '2.150.x'
