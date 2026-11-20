@@ -2,6 +2,7 @@ package version
 
 import (
 	"fmt"
+	"runtime"
 	"strings"
 
 	"github.com/updatecli/updatecli/pkg/core/log"
@@ -16,9 +17,6 @@ var (
 	// BuildTime contains application build time
 	BuildTime string
 
-	// GoVersion contains the golang version uses to build this binary
-	GoVersion string
-
 	// DisableDevWarning is used to identify if we already notify that we use a dev version
 	isDevWarningDisabled bool
 )
@@ -27,7 +25,9 @@ var (
 func Show() {
 	log.Infof("")
 	log.Infof("Application:\t%s", Version)
-	log.Infof("%s", strings.ReplaceAll(GoVersion, "go version go", "Golang     :\t"))
+	// runtime describes the binary that is running, whereas a build time value
+	// would describe the host that cross compiled it.
+	log.Infof("Golang     :\t%s %s/%s", strings.TrimPrefix(runtime.Version(), "go"), runtime.GOOS, runtime.GOARCH)
 	log.Infof("Build Time :\t%s", BuildTime)
 	log.Infof("")
 }

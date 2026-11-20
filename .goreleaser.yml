@@ -79,7 +79,6 @@ builds:
     ldflags:
       - -w -s
       - -X "github.com/updatecli/updatecli/pkg/core/version.BuildTime={{.Date}}"
-      - -X "github.com/updatecli/updatecli/pkg/core/version.GoVersion={{.Env.GOVERSION}}"
       - -X "github.com/updatecli/updatecli/pkg/core/version.Version={{ .Version }}"
     goos:
       - linux
