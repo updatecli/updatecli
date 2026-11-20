@@ -1859,3 +1859,53 @@ Target ID: ` + "`" + `4567` + "`" + `
 		})
 	}
 }
+
+func TestMarkdownToActionsUnexpectedStructure(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected Actions
+	}{
+		{
+			name: "custom pull request body opening with a level-2 heading",
+			input: "## Update [example/orb](https://example.com): `v1.24.1` → `v1.25.0`\n\n" +
+				"| Package | Change |\n|---|---|\n| example/orb | `v1.24.1` → `v1.25.0` |\n\n---\n\n### Release Notes\n",
+			expected: Actions{},
+		},
+		{
+			name:     "target and changelog headings before any pipeline heading",
+			input:    "### 1.0.0\n\n## Target One\n\nTarget ID: `4567`\n\nPipeline ID: `1234`\n\nPipeline URL: [run](https://example.com)\n",
+			expected: Actions{},
+		},
+		{
+			name:  "changelog heading before any target heading",
+			input: "# Test Title\n\nPipeline ID: `1234`\n\n### 1.0.0\n\nTarget ID: `4567`\n",
+			expected: Actions{Actions: []Action{{
+				PipelineTitle: "Test Title",
+				ID:            "1234",
+			}}},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var got Actions
+			assert.NotPanics(t, func() {
+				assert.NoError(t, markdownToActions(tt.input, &got))
+			})
+			assert.Equal(t, tt.expected, got)
+		})
+	}
+}
+
+func TestMergeFromMarkdownCustomOldBody(t *testing.T) {
+	newReport := "# New Pipeline\n\nPipeline ID: `1234`\n\n## Target One\n\nTarget ID: `4567`"
+	var got string
+	assert.NotPanics(t, func() {
+		var err error
+		got, err = MergeFromMarkdown("## Custom body written by a person\n\nSome text.", newReport)
+		assert.NoError(t, err)
+	})
+	assert.Contains(t, got, "# New Pipeline")
+	assert.Contains(t, got, "## Target One")
+}
