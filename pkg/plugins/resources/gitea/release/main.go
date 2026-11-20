@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/drone/go-scm/scm"
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/updatecli/updatecli/pkg/core/log"
+	giteaChangelog "github.com/updatecli/updatecli/pkg/plugins/changelog/gitea"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/gitea/client"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/redact"
@@ -223,63 +223,34 @@ func (g *Gitea) SearchReleases(ctx context.Context, releaseAge age.Spec) ([]stri
 // published release tag, so that callers can tell a release still cooling down from a
 // version filter matching no release.
 func (g *Gitea) searchReleases(ctx context.Context, releaseAge age.Spec) ([]string, []string, error) {
+	releases, err := g.listReleases(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	results := []string{}
 	published := []string{}
-	page := 0
-	for {
-		// Timeout api query after 30sec
-		ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
-		defer cancel()
-		releases, resp, err := g.client.Releases.List(
-			ctx,
-			strings.Join([]string{g.spec.Owner, g.spec.Repository}, "/"),
-			scm.ReleaseListOptions{
-				Page:   page,
-				Size:   30,
-				Open:   true,
-				Closed: true,
-			},
-		)
-
-		if err != nil {
-			return nil, nil, err
+	// The API returns newest first. Reverse all pages together so version filters
+	// receive the oldest releases first.
+	for i := len(releases) - 1; i >= 0; i-- {
+		if releases[i].Draft {
+			continue
 		}
-
-		if resp.Status > 400 {
-			log.Debugf("Gitea Api Response:\n%+v", resp)
+		published = append(published, releases[i].Tag)
+		date := giteaChangelog.ReleaseDate(releases[i])
+		if !releaseAge.Matches(date) {
+			log.Debugf("ignoring release %q, dated %s, as outside of the age window", releases[i].Tag, date)
+			continue
 		}
-
-		for i := len(releases) - 1; i >= 0; i-- {
-			if releases[i].Draft {
-				continue
-			}
-			published = append(published, releases[i].Tag)
-			date := releaseDate(releases[i])
-			if !releaseAge.Matches(date) {
-				log.Debugf("ignoring release %q, dated %s, as outside of the age window", releases[i].Tag, date)
-				continue
-			}
-			results = append(results, releases[i].Tag)
-		}
-
-		if page >= resp.Page.Last {
-			break
-		}
-		page++
-
+		results = append(results, releases[i].Tag)
 	}
 
 	return results, published, nil
 }
 
-// releaseDate returns the date at which a release became public.
-// Gitea leaves the publication date empty for releases created without one, so the
-// creation date is used as a fallback.
-func releaseDate(r *scm.Release) time.Time {
-	if !r.Published.IsZero() {
-		return r.Published
-	}
-	return r.Created
+// listReleases retrieves release metadata without applying source filters.
+func (g *Gitea) listReleases(ctx context.Context) ([]*scm.Release, error) {
+	return giteaChangelog.ListReleases(ctx, g.client, g.spec.Owner, g.spec.Repository)
 }
 
 func (s Spec) Validate() error {
