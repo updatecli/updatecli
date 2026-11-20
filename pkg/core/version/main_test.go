@@ -1,7 +1,12 @@
 package version
 
 import (
+	"bytes"
+	"runtime"
+	"strings"
 	"testing"
+
+	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
 func TestIsGreaterThan(t *testing.T) {
@@ -90,5 +95,19 @@ func TestIsGreaterThan(t *testing.T) {
 			}
 
 		})
+	}
+}
+
+// Show must describe the platform running the binary, not the one that built it.
+func TestShowReportsRuntimePlatform(t *testing.T) {
+	var out bytes.Buffer
+	previous := log.SetOutput(&out)
+	t.Cleanup(func() { log.SetOutput(previous) })
+
+	Show()
+
+	want := "Golang     :\t" + strings.TrimPrefix(runtime.Version(), "go") + " " + runtime.GOOS + "/" + runtime.GOARCH
+	if !strings.Contains(out.String(), want) {
+		t.Errorf("want output containing %q, got:\n%s", want, out.String())
 	}
 }
