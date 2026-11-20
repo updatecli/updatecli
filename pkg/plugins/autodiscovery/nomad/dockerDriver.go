@@ -146,12 +146,13 @@ func (n Nomad) discoverDockerDriverManifests() ([][]byte, error) {
 				registryToken = sourceSpec.Token
 			}
 
-			// If a versionfilter is specified in the manifest then we want to be sure that it takes precedence
+			// If a versionfilter is specified in the manifest then we want to be sure that it takes precedence.
+			// The tag filter derived from the current tag is kept, so that the image variant such as "alpine"
+			// doesn't change: the autodiscovery spec has no tag filter to override it.
 			if !n.spec.VersionFilter.IsZero() {
 				versionFilterKind = n.versionFilter.Kind
 				versionFilterPattern, err = n.versionFilter.GreaterThanPattern(imageTag)
 				versionFilterRegex = n.versionFilter.Regex
-				tagFilter = ""
 				if err != nil {
 					log.Debugf("building version filter pattern: %s", err)
 					sourceSpec.VersionFilter.Pattern = "*"
