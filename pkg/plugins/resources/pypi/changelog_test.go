@@ -1,28 +1,14 @@
 package pypi
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
-
-func TestWithVPrefix(t *testing.T) {
-	tests := []struct {
-		name     string
-		input    string
-		expected string
-	}{
-		{name: "Empty string unchanged", input: "", expected: ""},
-		{name: "Already prefixed unchanged", input: "v2.31.0", expected: "v2.31.0"},
-		{name: "Plain version gets v prefix", input: "2.31.0", expected: "v2.31.0"},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.expected, withVPrefix(tt.input))
-		})
-	}
-}
 
 func TestChangelogFromGitHub(t *testing.T) {
 	tests := []struct {
@@ -139,5 +125,26 @@ func TestChangelog_FallsBackToPyPI(t *testing.T) {
 	require.NotNil(t, changelogs)
 	assert.Equal(t, 1, len(*changelogs))
 	assert.Contains(t, (*changelogs)[0].URL, "requests")
+	assert.Contains(t, (*changelogs)[0].URL, "2.31.0")
+}
+
+func TestChangelog_ReusesSourceData(t *testing.T) {
+	const noGitHubData = `{
+  "info": {"name": "requests", "version": "2.31.0", "project_urls": {}},
+  "releases": {"2.31.0": [{"yanked": false}]}
+}`
+
+	p, err := New(Spec{Name: "requests", URL: "https://pypi.example.com", Token: "validtoken"})
+	require.NoError(t, err)
+	p.webClient = GetMockClient("https://pypi.example.com/", "validtoken", noGitHubData, 200)
+
+	gotResult := result.Source{}
+	require.NoError(t, p.Source(context.Background(), pathresolver.Resolver{}, &gotResult))
+
+	// The registry now fails: the changelog must rely on what the source fetched.
+	p.webClient = GetMockClient("https://pypi.example.com/", "validtoken", "", 500)
+
+	changelogs := p.Changelog("2.31.0", "2.31.0")
+	require.NotNil(t, changelogs)
 	assert.Contains(t, (*changelogs)[0].URL, "2.31.0")
 }

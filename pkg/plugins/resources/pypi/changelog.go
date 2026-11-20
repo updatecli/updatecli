@@ -8,26 +8,34 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/result"
 
+	giteaChangelog "github.com/updatecli/updatecli/pkg/plugins/changelog/gitea"
 	githubChangelog "github.com/updatecli/updatecli/pkg/plugins/changelog/github/v3"
+	"github.com/updatecli/updatecli/pkg/plugins/changelog/vprefix"
 )
 
 // Changelog returns release notes for the package between the from and to versions.
 func (p *Pypi) Changelog(from, to string) *result.Changelogs {
-	_, _, err := p.getVersions(context.Background())
-	if err != nil {
-		return nil
+	// Only the package metadata is needed, which the source already fetched in the same run.
+	// Searching versions again would repeat the age filter, whose outcome must not prevent
+	// the changelog.
+	if p.data.Info.Name == "" && len(p.data.Releases) == 0 {
+		data, err := p.getPackageData(context.Background())
+		if err != nil {
+			return nil
+		}
+		p.data = data
 	}
 
-	// Prefer GitHub releases when a Source URL is provided in project_urls.
-	if githubURL, ok := p.data.Info.ProjectURLs["Source"]; ok {
-		if releases := changelogFromGitHub(githubURL, from, to); releases != nil {
-			return releases
-		}
-
-		// PyPI versions rarely have the "v" prefix but GitHub tags often do.
-		vfrom, vto := withVPrefix(from), withVPrefix(to)
-		if vfrom != from || vto != to {
-			if releases := changelogFromGitHub(githubURL, vfrom, vto); releases != nil {
+	// Prefer forge releases when a Source URL is provided in project_urls.
+	if sourceURL, ok := p.data.Info.ProjectURLs["Source"]; ok {
+		for _, search := range []func(rawURL, from, to string) *result.Changelogs{
+			changelogFromGitHub,
+			giteaChangelog.SearchRepository,
+		} {
+			// PyPI versions rarely have the "v" prefix but release tags often do.
+			if releases := vprefix.Search(from, to, func(from, to string) *result.Changelogs {
+				return search(sourceURL, from, to)
+			}); releases != nil {
 				return releases
 			}
 		}
@@ -91,12 +99,4 @@ func changelogFromPyPI(packageName, baseURL, from, to string) *result.Changelogs
 	}
 
 	return &changelogs
-}
-
-// withVPrefix prepends "v" if the version string does not already have it.
-func withVPrefix(ver string) string {
-	if ver == "" || strings.HasPrefix(ver, "v") {
-		return ver
-	}
-	return "v" + ver
 }
