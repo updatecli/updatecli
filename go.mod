@@ -60,7 +60,7 @@ require (
 	github.com/spf13/afero v1.15.0
 	github.com/spf13/cobra v1.10.2
 	github.com/stretchr/testify v1.12.1
-	github.com/testcontainers/testcontainers-go v0.44.0
+	github.com/testcontainers/testcontainers-go v0.45.0
 	github.com/tetratelabs/wazero v1.12.0
 	github.com/tomwright/dasel v1.27.3
 	github.com/tomwright/dasel/v2 v2.8.1
