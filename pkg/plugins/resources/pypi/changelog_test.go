@@ -7,23 +7,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestWithVPrefix(t *testing.T) {
-	tests := []struct {
-		name     string
-		input    string
-		expected string
-	}{
-		{name: "Empty string unchanged", input: "", expected: ""},
-		{name: "Already prefixed unchanged", input: "v2.31.0", expected: "v2.31.0"},
-		{name: "Plain version gets v prefix", input: "2.31.0", expected: "v2.31.0"},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.expected, withVPrefix(tt.input))
-		})
-	}
-}
-
 func TestChangelogFromGitHub(t *testing.T) {
 	tests := []struct {
 		name      string
