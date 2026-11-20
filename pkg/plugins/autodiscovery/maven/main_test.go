@@ -2,11 +2,15 @@ package maven
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.yaml.in/yaml/v4"
 
+	mavenresource "github.com/updatecli/updatecli/pkg/plugins/resources/maven"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
@@ -345,5 +349,154 @@ func TestDiscoverManifestsSkipsVersionRanges(t *testing.T) {
 	require.Len(t, manifests, 2)
 	for _, manifest := range manifests {
 		assert.NotContains(t, string(manifest), "commons-collections")
+	}
+}
+
+// TestDiscoverManifestsSkipsTemplateSyntax checks that values read from a pom.xml can't inject
+// Go template actions, as a generated manifest is executed as a template at runtime.
+func TestDiscoverManifestsSkipsTemplateSyntax(t *testing.T) {
+	maven, err := New(Spec{}, "testdata/templatesyntax", "", "")
+	require.NoError(t, err)
+
+	manifests, err := maven.DiscoverManifests()
+	require.NoError(t, err)
+
+	// Only log4j-core is left, the parent pom and the other dependencies contain template syntax
+	require.Len(t, manifests, 1)
+	assert.Contains(t, string(manifests[0]), "log4j-core")
+	assert.NotContains(t, string(manifests[0]), "{{ .Name }}")
+	assert.NotContains(t, string(manifests[0]), "pipeline")
+	// Only the repository URL with template syntax is dropped
+	assert.Contains(t, string(manifests[0]), "https://repo.example.com/maven2")
+	assert.NotContains(t, string(manifests[0]), "attacker.example.com")
+}
+
+// TestDiscoverManifestsSkipsTemplateSyntaxInPath checks that a pom.xml path can't inject Go
+// template actions either, as the manifest references it.
+func TestDiscoverManifestsSkipsTemplateSyntaxInPath(t *testing.T) {
+	pom, err := os.ReadFile("testdata/default/pom.xml")
+	require.NoError(t, err)
+
+	rootDir := t.TempDir()
+	pomDir := filepath.Join(rootDir, `{{ pipeline "Name" }}`)
+	require.NoError(t, os.MkdirAll(pomDir, 0o755))
+	require.NoError(t, os.WriteFile(filepath.Join(pomDir, "pom.xml"), pom, 0o600)) //nolint:gosec // G703 false positive: pomDir is under t.TempDir()
+
+	maven, err := New(Spec{}, rootDir, "", "")
+	require.NoError(t, err)
+
+	manifests, err := maven.DiscoverManifests()
+	require.NoError(t, err)
+	assert.Empty(t, manifests)
+}
+
+// TestDiscoverManifestsAgeCondition checks that a routine update waits for the current version to
+// reach the minimum age when the version filter can't exclude versions lower than the current one.
+func TestDiscoverManifestsAgeCondition(t *testing.T) {
+	tests := []struct {
+		name          string
+		spec          map[string]interface{}
+		wantCondition bool
+	}{
+		{
+			name:          "default latest filter with a minimum age",
+			spec:          map[string]interface{}{"age": map[string]interface{}{"minimum": "3d", "maximum": "1y"}},
+			wantCondition: true,
+		},
+		{
+			name: "regex filter with a minimum age",
+			spec: map[string]interface{}{
+				"age":           map[string]interface{}{"minimum": "3d"},
+				"versionfilter": map[string]interface{}{"kind": "regex", "pattern": "^3"},
+			},
+			wantCondition: true,
+		},
+		{
+			name: "semver filter bounded at the current version",
+			spec: map[string]interface{}{
+				"age":           map[string]interface{}{"minimum": "3d"},
+				"versionfilter": map[string]interface{}{"kind": "semver", "pattern": "minor"},
+			},
+		},
+		{
+			name: "downgrade allowed",
+			spec: map[string]interface{}{"age": map[string]interface{}{"minimum": "3d", "allowdowngrade": true}},
+		},
+		{
+			name: "maximum age only",
+			spec: map[string]interface{}{"age": map[string]interface{}{"maximum": "1y"}},
+		},
+		{
+			name: "no age",
+			spec: map[string]interface{}{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			crawler, err := New(tt.spec, "testdata/externalhttp", "", "")
+			require.NoError(t, err)
+
+			manifests, err := crawler.DiscoverManifests()
+			require.NoError(t, err)
+			require.Len(t, manifests, 1)
+
+			var pipeline securityPipeline
+			require.NoError(t, yaml.Unmarshal(manifests[0], &pipeline))
+			condition, found := pipeline.Conditions["currentversionage"]
+			require.Equal(t, tt.wantCondition, found)
+			if !tt.wantCondition {
+				return
+			}
+
+			assert.Equal(t, "maven", condition.Kind)
+			assert.Equal(t, "3.12.0", condition.Spec["version"])
+			assert.Equal(t, "org.apache.commons", condition.Spec["groupid"])
+			assert.Equal(t, "commons-lang3", condition.Spec["artifactid"])
+			// Only the minimum age is checked, a maximum would hold back every old version forever.
+			// The condition is inverted, so that it only fails when the repository dates the
+			// current version within the minimum age, and a version it doesn't list passes.
+			assert.True(t, condition.FailWhen)
+			assert.Equal(t, map[string]interface{}{"maximum": "3d"}, condition.Spec["age"])
+
+			_, err = mavenresource.New(condition.Spec)
+			require.NoError(t, err)
+		})
+	}
+}
+
+// TestWithRoutineUpdateAgeConditionNonSemverVersion checks that a semver filter can't exclude
+// versions lower than a current version that isn't a semantic version, so the update waits
+// for the current version to reach the minimum age instead.
+func TestWithRoutineUpdateAgeConditionNonSemverVersion(t *testing.T) {
+	tests := []struct {
+		name           string
+		currentVersion string
+		wantCondition  bool
+	}{
+		{name: "semantic version", currentVersion: "5.3.0"},
+		{name: "not a semantic version", currentVersion: "5.3.0.Final", wantCondition: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := Maven{
+				spec: Spec{
+					Age:           age.AutodiscoverySpec{Spec: age.Spec{Minimum: "7d"}},
+					VersionFilter: version.Filter{Kind: "semver", Pattern: "patch"},
+				},
+				versionFilter: version.Filter{Kind: "semver", Pattern: "patch"},
+			}
+
+			params := manifestTemplateParams{}
+			m.withRoutineUpdate(&params, tt.currentVersion)
+
+			if !tt.wantCondition {
+				assert.Empty(t, params.ConditionAge.Maximum)
+				return
+			}
+			assert.Equal(t, "7d", params.ConditionAge.Maximum)
+			assert.Equal(t, tt.currentVersion, params.CurrentVersion)
+		})
 	}
 }

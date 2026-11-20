@@ -1,0 +1,13 @@
+name: other
+on:
+  push:
+    branches: [main]
+
+permissions: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Setup Go"
+        uses: "actions/setup-go@v5"

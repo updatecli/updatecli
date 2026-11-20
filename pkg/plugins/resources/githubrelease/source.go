@@ -2,6 +2,7 @@ package githubrelease
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/updatecli/updatecli/pkg/core/log"
@@ -18,8 +19,10 @@ func (gr *GitHubRelease) Source(ctx context.Context, pathResolver pathresolver.R
 		return err
 	}
 
-	var versions []string
+	// published holds every release, versions the ones within the age window
+	var published, versions []string
 	for _, release := range releaseRefs {
+		published = append(published, release.TagName)
 		date := release.PublicationDate()
 		if !gr.spec.Age.Matches(date) {
 			log.Debugf("ignoring release %q, published on %s, as outside of the age window", release.TagName, date)
@@ -28,19 +31,11 @@ func (gr *GitHubRelease) Source(ctx context.Context, pathResolver pathresolver.R
 		versions = append(versions, release.TagName)
 	}
 	/*
-		The repository does publish releases but the age filter discarded every one of
-		them, which is an expected state of the filter rather than a failure, so the
-		source is skipped instead. The git tag fallback is deliberately not attempted
-		here: it only reports tag names, so it couldn't honor the age window.
+		The git tag fallback only applies to a repository without any release. When the age
+		filter discarded every release, it's deliberately not attempted: it only reports tag
+		names, so it couldn't honor the age window.
 	*/
-	if len(releaseRefs) > 0 && len(versions) == 0 {
-		log.Debugf("%s", age.ErrNoVersionMatchingAge)
-		resultSource.Result = result.SKIPPED
-		resultSource.Description = "no GitHub release matches the age filter yet"
-		return nil
-	}
-
-	if len(versions) == 0 {
+	if len(releaseRefs) == 0 {
 		switch gr.spec.TypeFilter.IsZero() {
 		case true:
 			log.Warningf("%s No GitHub Release found, we fallback to published git tags", result.ATTENTION)
@@ -55,13 +50,22 @@ func (gr *GitHubRelease) Source(ctx context.Context, pathResolver pathresolver.R
 			if len(versions) == 0 {
 				return fmt.Errorf("no GitHub release or git tags found, exiting")
 			}
+			// Git tags are reported without their date, so the age filter doesn't apply to them
+			published = versions
 		case false:
 			return fmt.Errorf("no GitHub release found, exiting")
 		}
 	}
 
-	gr.foundVersion, err = gr.versionFilter.Search(versions)
+	gr.foundVersion, err = age.Search(&gr.versionFilter, published, versions)
 	if err != nil {
+		// Every release matching the version filter may still be cooling down
+		if errors.Is(err, age.ErrNoVersionMatchingAge) {
+			log.Debugf("%s", err)
+			resultSource.Result = result.SKIPPED
+			resultSource.Description = "no GitHub release matching the version filter matches the age filter yet"
+			return nil
+		}
 		return fmt.Errorf("filtering github release version: %w", err)
 	}
 

@@ -49,6 +49,18 @@ func filterVersionsByAge(versions []string, publishDates map[string]string, rele
 	return sanitizedVersions
 }
 
+// datedVersions returns the versions with a valid release date. A version without one is
+// discarded by any age filter, so it can't be told apart from a version still cooling down.
+func datedVersions(versions []string, publishDates map[string]string) []string {
+	dated := []string{}
+	for _, v := range versions {
+		if _, err := time.Parse(time.RFC3339, publishDates[v]); err == nil {
+			dated = append(dated, v)
+		}
+	}
+	return dated
+}
+
 // latestVersionMatchingAge returns the version to use when the versionfilter is of kind
 // "latest" and an age filter discarded some versions.
 // The npm dist-tag "latest" is used as soon as it matches the age window, otherwise we

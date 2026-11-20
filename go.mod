@@ -7,7 +7,7 @@ retract v0.999.0 // Published accidentally.
 require (
 	cuelang.org/go v0.17.1
 	dario.cat/mergo v1.0.2
-	gitea.dev/sdk v1.4.0
+	gitea.dev/sdk v1.5.1
 	github.com/BurntSushi/toml v1.6.0
 	github.com/JohannesKaufmann/html-to-markdown v1.6.0
 	github.com/Masterminds/semver/v3 v3.5.0
@@ -23,7 +23,7 @@ require (
 	github.com/beevik/etree v1.8.1
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/coreos/go-systemd/v22 v22.7.0
-	github.com/drone/go-scm v1.42.20
+	github.com/drone/go-scm v1.42.22
 	github.com/extism/go-sdk v1.7.1
 	github.com/fluxcd/helm-controller/api v1.7.1
 	github.com/fluxcd/source-controller/api v1.10.1
@@ -41,14 +41,14 @@ require (
 	github.com/heimdalr/dag v1.5.1
 	github.com/hexops/gotextdiff v1.0.3
 	github.com/invopop/jsonschema v0.14.0
-	github.com/jferrl/go-githubauth v1.9.1
+	github.com/jferrl/go-githubauth v1.12.0
 	github.com/joho/godotenv v1.5.1
 	github.com/lithammer/dedent v1.1.0
 	github.com/microsoft/azure-devops-go-api/azuredevops/v7 v7.1.0
 	github.com/minamijoyo/hcledit v0.2.18
 	github.com/minamijoyo/tfupdate v0.10.2
 	github.com/mitchellh/hashstructure v1.1.0
-	github.com/moby/buildkit v0.34.1
+	github.com/moby/buildkit v0.34.2
 	github.com/muesli/mango-cobra v1.3.0
 	github.com/muesli/roff v0.1.0
 	github.com/muesli/termenv v0.16.0
@@ -66,8 +66,8 @@ require (
 	github.com/tomwright/dasel/v2 v2.8.1
 	github.com/tomwright/dasel/v3 v3.11.2
 	github.com/vmware-labs/yaml-jsonpath v0.3.2
-	github.com/yuin/goldmark v1.8.6
-	github.com/zclconf/go-cty v1.19.0
+	github.com/yuin/goldmark v1.8.7
+	github.com/zclconf/go-cty v1.20.0
 	gitlab.com/gitlab-org/api/client-go v1.46.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.71.0
 	go.opentelemetry.io/otel v1.46.0
@@ -80,8 +80,8 @@ require (
 	go.yaml.in/yaml/v4 v4.0.0
 	golang.org/x/exp v0.0.0-20260603202125-055de637280b
 	golang.org/x/mod v0.42.0
-	golang.org/x/net v0.61.0
-	golang.org/x/oauth2 v0.37.0
+	golang.org/x/net v0.62.0
+	golang.org/x/oauth2 v0.38.0
 	golang.org/x/term v0.47.0
 	golang.org/x/text v0.43.0
 	golang.org/x/time v0.16.0
@@ -253,7 +253,7 @@ require (
 	github.com/jmoiron/sqlx v1.4.0 // indirect
 	github.com/json-iterator/go v1.1.13-0.20220915233716-71ac16282d12 // indirect
 	github.com/kevinburke/ssh_config v1.2.0 // indirect
-	github.com/klauspost/compress v1.20.1 // indirect
+	github.com/klauspost/compress v1.20.2 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
 	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect

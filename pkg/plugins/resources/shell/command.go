@@ -43,10 +43,10 @@ func (nce *nativeCommandExecutor) ExecuteCommand(inputCmd command) (commandResul
 	command.Env = append(command.Env, inputCmd.Env...)
 	err := command.Run()
 
-	// Display environment variables in debug mode
+	// Display environment variable names in debug mode, never their values which may hold secrets
 	log.Debugf("Environment variables\n")
-	for _, env := range command.Env {
-		log.Debugf("\t* %s\n", env)
+	for _, name := range environmentNames(command.Env) {
+		log.Debugf("\t* %s\n", name)
 	}
 
 	// Remove line returns from stdout
@@ -71,4 +71,14 @@ func (nce *nativeCommandExecutor) ExecuteCommand(inputCmd command) (commandResul
 		Stderr:   stderr.String(),
 		Cmd:      inputCmd.Cmd,
 	}, nil
+}
+
+// environmentNames returns the names of the "NAME=value" environment entries
+func environmentNames(environ []string) []string {
+	names := make([]string, 0, len(environ))
+	for _, entry := range environ {
+		name, _, _ := strings.Cut(entry, "=")
+		names = append(names, name)
+	}
+	return names
 }

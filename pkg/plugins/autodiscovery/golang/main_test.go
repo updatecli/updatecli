@@ -22,9 +22,9 @@ func TestDiscoverManifests(t *testing.T) {
 			name:    "Maximum one year old Golang Version",
 			rootDir: "testdata/noSumFile",
 			spec: Spec{
-				Age: age.Spec{
+				Age: age.AutodiscoverySpec{Spec: age.Spec{
 					Maximum: "1y",
-				},
+				}},
 			},
 			expectedPipelines: []string{`name: 'deps(go): bump module gopkg.in/yaml.v3'
 sources:
@@ -71,9 +71,9 @@ targets:
 			name:    "Minimum one year old Golang Version",
 			rootDir: "testdata/noSumFile",
 			spec: Spec{
-				Age: age.Spec{
+				Age: age.AutodiscoverySpec{Spec: age.Spec{
 					Minimum: "1y",
-				},
+				}},
 			},
 			expectedPipelines: []string{`name: 'deps(go): bump module gopkg.in/yaml.v3'
 sources:

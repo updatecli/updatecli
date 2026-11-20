@@ -2,9 +2,12 @@ package language
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/result"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
 )
 
@@ -22,6 +25,17 @@ func (l *Language) Source(ctx context.Context, pathResolver pathresolver.Resolve
 	case false:
 		_, err = l.getTagsFromRepository()
 		if err != nil {
+			/*
+				Every version matching the version filter is still cooling down, which is an
+				expected state of the age filter rather than a failure, so the source is
+				skipped instead.
+			*/
+			if errors.Is(err, age.ErrNoVersionMatchingAge) {
+				log.Debugf("%s", err)
+				resultSource.Result = result.SKIPPED
+				resultSource.Description = "no Golang version matching the version filter matches the age filter yet"
+				return nil
+			}
 			return fmt.Errorf("searching golang version from repository: %w", err)
 		}
 	}

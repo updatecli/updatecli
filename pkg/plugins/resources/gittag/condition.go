@@ -47,7 +47,7 @@ func (gt *GitTag) Condition(_ context.Context, source string, scm scm.ScmHandler
 
 		// A condition checks whether a specific tag exists, so the age filter,
 		// which only narrows down which tag to pick, doesn't apply here.
-		tagsList, tags, err = gt.listRemoteDirectoryTags(gt.directory, age.Spec{}, pathResolver)
+		tagsList, tags, _, err = gt.listRemoteDirectoryTags(gt.directory, age.Spec{}, pathResolver)
 		if err != nil {
 			return false, "", fmt.Errorf("listing local tags: %w", err)
 		}

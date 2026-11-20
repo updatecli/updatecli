@@ -63,5 +63,34 @@ targets:
 {{- template "target" (.Source "release") }}
 {{ template "target" (.Source "tag") }}
 {{ template "target" (.Source "branch") }}
+{{- if .LockWorkflow }}
+  lock:
+    dependson:
+      - 'target#release:or'
+      - 'target#tag:or'
+      - 'target#branch:or'
+    dependsonchange: true
+    disableconditions: true
+    disablesourceinput: true
+    name: 'deps(github): update {{ .LockFile }} for {{ yamlquote .File }}'
+    kind: 'shell'
+{{- if .ScmID }}
+    scmid: '{{ .ScmID }}'
+{{- end }}
+    spec:
+      command: '{{ yamlquote .LockCommand }}'
+      environments:
+{{- range .LockEnvironments }}
+        - name: '{{ .Name }}'
+{{- if not .Inherit }}
+          value: '{{ yamlquote .Value }}'
+{{- end }}
+{{- end }}
+      changedif:
+        kind: 'file/checksum'
+        spec:
+          files:
+            - '{{ .LockFile }}'
+{{ end }}
 `
 )

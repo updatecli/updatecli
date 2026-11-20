@@ -282,6 +282,64 @@ func TestConditionAge(t *testing.T) {
 	}
 }
 
+// TestConditionAgeHoldingBackTheCurrentVersion checks the condition the Maven autodiscovery
+// generates to hold back an update while the current version is younger than the minimum age:
+// a maximum age set to that minimum, with "failwhen", fails only for a version too recent.
+func TestConditionAgeHoldingBackTheCurrentVersion(t *testing.T) {
+	releases := []fakeRelease{{"1.0.0", 30}, {"1.1.0", 1}, {"1.2.0", -1}}
+
+	tests := []struct {
+		name      string
+		version   string
+		wantHolds bool
+	}{
+		{name: "version old enough", version: "1.0.0"},
+		{name: "version too recent", version: "1.1.0", wantHolds: true},
+		{name: "version not published", version: "2.0.0"},
+		{name: "version without release date", version: "1.2.0"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := newAgeTestMaven(t, &fakeRepository{releases: releases}, version.Filter{}, age.Spec{Maximum: "7d"})
+
+			matches, _, err := m.Condition(context.Background(), tt.version, nil, pathresolver.Resolver{})
+			require.NoError(t, err)
+			// With "failwhen", a matching condition holds the update back
+			assert.Equal(t, tt.wantHolds, matches)
+		})
+	}
+}
+
+// TestConditionAgeIgnoresRepositoriesWithoutTheArtifact checks that a repository declared in a
+// pom.xml, which doesn't host the artifact, doesn't fail the condition the Maven autodiscovery
+// generates, while another failure still does.
+func TestConditionAgeIgnoresRepositoriesWithoutTheArtifact(t *testing.T) {
+	tests := []struct {
+		name    string
+		err     error
+		wantErr string
+	}{
+		{name: "artifact not hosted", err: fmt.Errorf("private repository: %w", text.ErrNotFound)},
+		{name: "access denied", err: errors.New("401 Unauthorized"), wantErr: "401 Unauthorized"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := newAgeTestMaven(t, &fakeRepository{releases: []fakeRelease{{"1.0.0", 1}}}, version.Filter{}, age.Spec{Maximum: "7d"})
+			m.metadataHandlers = append([]mavenmetadata.Handler{&mavenmetadata.MockMetadataHandler{Err: tt.err}}, m.metadataHandlers...)
+
+			matches, _, err := m.Condition(context.Background(), "1.0.0", nil, pathresolver.Resolver{})
+			if tt.wantErr != "" {
+				require.ErrorContains(t, err, tt.wantErr)
+				return
+			}
+			require.NoError(t, err)
+			assert.True(t, matches)
+		})
+	}
+}
+
 func TestConditionAgeTriesEveryRepository(t *testing.T) {
 	failing := &fakeRepository{releases: []fakeRelease{{"1.0.0", unavailable}}}
 	m := newAgeTestMaven(t, &fakeRepository{releases: []fakeRelease{{"1.0.0", 30}}}, version.Filter{}, age.Spec{Minimum: "7d"})

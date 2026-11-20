@@ -36,7 +36,7 @@ func TestDiscoverManifests(t *testing.T) {
 		expectedPipelines []string
 		credentials       map[string]gitProviderToken
 		digest            bool
-		age               age.Spec
+		age               age.AutodiscoverySpec
 	}{
 		{
 			name:    "Scenario - GitHub Action using Docker image",
@@ -2429,7 +2429,7 @@ targets:
 					Token: "xxx",
 				},
 			},
-			age: age.Spec{Minimum: "7d", Maximum: "1y"},
+			age: age.AutodiscoverySpec{Spec: age.Spec{Minimum: "7d", Maximum: "1y"}},
 			expectedPipelines: []string{`name: 'deps: bump actions/checkout GitHub workflow'
 
 sources:
@@ -2448,7 +2448,7 @@ sources:
         maximum: '1y'
       versionfilter:
         kind: 'semver'
-        pattern: '*'
+        pattern: '>=4.0.0'
 
   tag:
     dependson:
@@ -2464,7 +2464,7 @@ sources:
         maximum: '1y'
       versionfilter:
         kind: 'semver'
-        pattern: '*'
+        pattern: '>=4.0.0'
 
   branch:
     dependson:
@@ -2480,7 +2480,7 @@ sources:
         maximum: '1y'
       versionfilter:
         kind: 'semver'
-        pattern: '*'
+        pattern: '>=4.0.0'
 
 conditions:
   release: &release

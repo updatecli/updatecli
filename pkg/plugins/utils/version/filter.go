@@ -205,6 +205,18 @@ func (f *Filter) applyReplaceAll(version string) (string, error) {
 func (f *Filter) Search(versions []string) (Version, error) {
 	log.Infof("Searching for version matching pattern %q", f.Pattern)
 
+	return f.search(versions)
+}
+
+// Matches returns true if one of versions matches the filter. Unlike Search, it doesn't log
+// the pattern it searches for.
+func (f *Filter) Matches(versions []string) bool {
+	_, err := f.search(versions)
+	return err == nil
+}
+
+// search returns the version matching the filter among versions.
+func (f *Filter) search(versions []string) (Version, error) {
 	foundVersion := Version{}
 
 	if len(versions) == 0 {
@@ -381,8 +393,170 @@ func (f Filter) IsZero() bool {
 	return empty == f
 }
 
+// BoundPattern returns a semver pattern that also rejects any version lower than lowerBound.
+// Each group of the pattern, separated by "||", gets lowerBound as minimum unless it already
+// rejects every version lower than it. The pattern is returned unchanged when lowerBound isn't a version or the
+// pattern isn't a semver constraint, such as "latest".
+//
+// A group only accepts prereleases when one of its comparators is a prerelease. So that the
+// bound doesn't make a group accept prereleases, a group without any, such as "^1.2.0", is
+// bounded at the release of a prerelease lowerBound: "1.5.0" for "1.5.0-beta.1".
+func BoundPattern(pattern, lowerBound string) string {
+	return boundPattern(pattern, lowerBound, false)
+}
+
+// BoundPatternAcceptingPrereleases returns the same pattern as BoundPattern, except that every
+// group is bounded at lowerBound itself. For a prerelease lowerBound, such as a Go pseudo
+// version, every group then also accepts the prereleases newer than it.
+func BoundPatternAcceptingPrereleases(pattern, lowerBound string) string {
+	return boundPattern(pattern, lowerBound, true)
+}
+
+func boundPattern(pattern, lowerBound string, acceptPrereleases bool) string {
+	v, err := sv.NewVersion(lowerBound)
+	if err != nil {
+		return pattern
+	}
+
+	// groupBound returns the bound of a group, which only accepts prereleases when it already does
+	groupBound := func(group string) *sv.Version {
+		if acceptPrereleases || v.Prerelease() == "" || prereleaseComparatorRegex.MatchString(buildMetadataRegex.ReplaceAllString(group, "")) {
+			return v
+		}
+		return sv.New(v.Major(), v.Minor(), v.Patch(), "", "")
+	}
+
+	/*
+		A pattern accepting any version only needs the bound. ">=0.0.0-0" also accepts
+		prereleases, which only a prerelease bound keeps, so a release bound is added to it.
+	*/
+	if pattern == "" || pattern == "*" || (pattern == anyPrereleasePattern && v.Prerelease() != "") {
+		return ">=" + groupBound(pattern).String()
+	}
+
+	if _, err := sv.NewConstraint(pattern); err != nil {
+		return pattern
+	}
+
+	groups := strings.Split(pattern, "||")
+	for i, group := range groups {
+		group = strings.TrimSpace(group)
+		bound := groupBound(group)
+		if !hasLowerBound(group, bound) {
+			group = fmt.Sprintf(">=%s, %s", bound.String(), group)
+		}
+		groups[i] = group
+	}
+
+	return strings.Join(groups, " || ")
+}
+
+// anyPrereleasePattern is a semver pattern accepting any version, prereleases included.
+const anyPrereleasePattern = ">=0.0.0-0"
+
+// prereleaseComparatorRegex matches a comparator whose version is a prerelease, such as
+// "1.2.x-0" or ">=1.5.0-beta.1", but not a hyphen range such as "1.2 - 2.0".
+var prereleaseComparatorRegex = regexp.MustCompile(`[0-9xX*]-[0-9A-Za-z]`)
+
+// buildMetadataRegex matches the build metadata of a comparator, such as "+2026-01" in
+// "^1.2.0+2026-01", whose hyphens aren't prereleases.
+var buildMetadataRegex = regexp.MustCompile(`\+[0-9A-Za-z.-]*`)
+
+// UnboundedPattern returns a semver pattern accepting any version, such as one lower than
+// currentVersion. For a prerelease, it also accepts prereleases, which "*" doesn't, so that
+// a prerelease in use isn't replaced by an older stable release.
+func UnboundedPattern(currentVersion string) string {
+	if v, err := sv.NewVersion(currentVersion); err == nil && v.Prerelease() != "" {
+		return anyPrereleasePattern
+	}
+	return "*"
+}
+
+// lowerBoundOperators lists the operators of a comparator rejecting any version lower than its own.
+var lowerBoundOperators = []string{"", "=", ">", ">=", "^", "~", "~>"}
+
+// operatorSpaceRegex matches the spaces a constraint allows between an operator and its version, as in "> 1.2.5".
+var operatorSpaceRegex = regexp.MustCompile(`([<>=!~^]+)\s+`)
+
+// hasLowerBound returns true if a group of a semver constraint, without "||", already rejects
+// every version lower than bound.
+//
+// A group only accepts prereleases when one of its comparators is a prerelease, so for a
+// prerelease bound, such as a Go pseudo version, only a prerelease comparator counts: the
+// bound added otherwise also makes the group accept prereleases.
+func hasLowerBound(group string, bound *sv.Version) bool {
+	// Only the first version of a hyphen range, such as "1.2.5 - 2.0.0", is a lower bound
+	if first, _, found := strings.Cut(group, " - "); found {
+		group = first
+	}
+
+	group = operatorSpaceRegex.ReplaceAllString(group, "$1")
+
+	for _, comparator := range strings.FieldsFunc(group, func(r rune) bool { return r == ',' || r == ' ' }) {
+		operatorEnd := strings.IndexFunc(comparator, func(r rune) bool { return !strings.ContainsRune("<>=!~^", r) })
+		if operatorEnd < 0 || !slices.Contains(lowerBoundOperators, comparator[:operatorEnd]) {
+			continue
+		}
+
+		v, err := sv.NewVersion(comparator[operatorEnd:])
+		if err != nil {
+			continue
+		}
+
+		if bound.Prerelease() != "" && v.Prerelease() == "" {
+			continue
+		}
+
+		if !v.LessThan(bound) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// lowerBoundMode defines how a pattern built from a version handles the versions lower than it.
+type lowerBoundMode int
+
+const (
+	// defaultLowerBound only bounds the "*" pattern at the given version
+	defaultLowerBound lowerBoundMode = iota
+	// withLowerBound bounds every semver pattern at the given version
+	withLowerBound
+	// withoutLowerBound bounds no pattern
+	withoutLowerBound
+)
+
 // GreaterThanPattern returns a pattern that can be used to find newer version
 func (f *Filter) GreaterThanPattern(version string) (string, error) {
+	return f.greaterThanPattern(version, defaultLowerBound)
+}
+
+// GreaterThanPatternWithoutDowngrade returns the same pattern as GreaterThanPattern, except
+// that a semver pattern never accepts a version lower than the given one. A source whose
+// newest versions are filtered out, such as by an age filter, then finds nothing rather than
+// falling back to an older version. A custom semver constraint is bounded the same way, unless
+// it already rejects every version lower than the given one.
+func (f *Filter) GreaterThanPatternWithoutDowngrade(version string) (string, error) {
+	return f.greaterThanPattern(version, withLowerBound)
+}
+
+// GreaterThanPatternAllowingDowngrade returns the same pattern as GreaterThanPattern,
+// without any lower bound. A source whose newest versions are filtered out, such as by
+// an age filter, can then fall back to a version older than the given one.
+func (f *Filter) GreaterThanPatternAllowingDowngrade(version string) (string, error) {
+	return f.greaterThanPattern(version, withoutLowerBound)
+}
+
+// boundAt prepends ">=v" to pattern when mode bounds every pattern.
+func boundAt(pattern string, v *sv.Version, mode lowerBoundMode) string {
+	if mode != withLowerBound {
+		return pattern
+	}
+	return fmt.Sprintf(">=%s, %s", v.String(), pattern)
+}
+
+func (f *Filter) greaterThanPattern(version string, mode lowerBoundMode) (string, error) {
 	switch f.Kind {
 	case LATESTVERSIONKIND:
 		return LATESTVERSIONKIND, nil
@@ -413,10 +587,11 @@ func (f *Filter) GreaterThanPattern(version string) (string, error) {
 				prerelease = "0"
 			}
 
-			return fmt.Sprintf(">=%d.%d.%d-%s <= %d.%d.%d",
+			// For a release, ">=1.2.3-0" also accepts the prereleases lower than it
+			return boundAt(fmt.Sprintf(">=%d.%d.%d-%s <= %d.%d.%d",
 				v.Major(), v.Minor(), v.Patch(), prerelease,
 				v.Major(), v.Minor(), v.Patch(),
-			), nil
+			), v, mode), nil
 
 		case "patch":
 			v, err := sv.NewVersion(version)
@@ -426,13 +601,13 @@ func (f *Filter) GreaterThanPattern(version string) (string, error) {
 
 			switch v.Prerelease() == "" {
 			case true:
-				return fmt.Sprintf("%d.%d.x",
+				return boundAt(fmt.Sprintf("%d.%d.x",
 					v.Major(),
-					v.Minor()), nil
+					v.Minor()), v, mode), nil
 			case false:
-				return fmt.Sprintf("%d.%d.x-0",
+				return boundAt(fmt.Sprintf("%d.%d.x-0",
 					v.Major(),
-					v.Minor()), nil
+					v.Minor()), v, mode), nil
 			}
 
 		case "minor":
@@ -443,13 +618,9 @@ func (f *Filter) GreaterThanPattern(version string) (string, error) {
 
 			switch v.Prerelease() == "" {
 			case true:
-				return fmt.Sprintf(
-					"%d.x",
-					v.Major()), nil
+				return boundAt(fmt.Sprintf("%d.x", v.Major()), v, mode), nil
 			case false:
-				return fmt.Sprintf(
-					"%d.x.x-0",
-					v.Major()), nil
+				return boundAt(fmt.Sprintf("%d.x.x-0", v.Major()), v, mode), nil
 			}
 
 		case "minoronly":
@@ -482,14 +653,13 @@ func (f *Filter) GreaterThanPattern(version string) (string, error) {
 			}
 			switch v.Prerelease() == "" {
 			case true:
-				return fmt.Sprintf(
-					">=%d",
-					v.Major()), nil
+				if mode != withLowerBound {
+					return fmt.Sprintf(">=%d", v.Major()), nil
+				}
+				return ">=" + v.String(), nil
 
 			case false:
-				return fmt.Sprintf(
-					">=%d.x.x-0",
-					v.Major()), nil
+				return boundAt(fmt.Sprintf(">=%d.x.x-0", v.Major()), v, mode), nil
 			}
 
 		case "majoronly":
@@ -514,6 +684,9 @@ func (f *Filter) GreaterThanPattern(version string) (string, error) {
 			v, err := sv.NewVersion(version)
 			// If NewVersion do not fails then it means that version contains a valid semantic version
 			if err == nil {
+				if mode == withoutLowerBound {
+					return UnboundedPattern(version), nil
+				}
 				return ">=" + v.String(), nil
 			}
 
@@ -524,7 +697,12 @@ func (f *Filter) GreaterThanPattern(version string) (string, error) {
 			return version, nil
 
 		default:
-			return f.Pattern, nil
+			// A custom constraint, such as "~1.5", may also accept versions lower than the
+			// current one
+			if mode != withLowerBound {
+				return f.Pattern, nil
+			}
+			return BoundPattern(f.Pattern, version), nil
 		}
 
 	case PEP440VERSIONKIND:

@@ -7,6 +7,7 @@ import (
 	"slices"
 
 	"github.com/updatecli/updatecli/pkg/core/log"
+	"github.com/updatecli/updatecli/pkg/core/text"
 
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pathresolver"
@@ -42,6 +43,15 @@ func (m *Maven) Condition(ctx context.Context, source string, scm scm.ScmHandler
 
 		versions, err := metadataHandler.GetVersions()
 		if err != nil {
+			/*
+				With an age filter, a repository without the artifact is skipped, as Source does,
+				since a repository declared in a pom.xml or a settings.xml file rarely hosts every
+				artifact. Any other failure, such as wrong credentials, still fails the condition.
+			*/
+			if !m.spec.Age.IsZero() && errors.Is(err, text.ErrNotFound) {
+				log.Debugf("Maven artifact (%s/%s) not found on %s", m.spec.GroupID, m.spec.ArtifactID, redact.URL(metadataURL))
+				continue
+			}
 			return false, "", err
 		}
 
