@@ -45,7 +45,7 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/lithammer/dedent v1.1.0
 	github.com/microsoft/azure-devops-go-api/azuredevops/v7 v7.1.0
-	github.com/minamijoyo/hcledit v0.2.18
+	github.com/minamijoyo/hcledit v0.2.19
 	github.com/minamijoyo/tfupdate v0.10.2
 	github.com/mitchellh/hashstructure v1.1.0
 	github.com/moby/buildkit v0.35.0
