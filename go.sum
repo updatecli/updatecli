@@ -590,8 +590,8 @@ github.com/minamijoyo/hcledit v0.2.19 h1:E3+zWj4foHWCcd0bF5mpAbUZJoSoSHgI9e91xUb
 github.com/minamijoyo/hcledit v0.2.19/go.mod h1:bUZ8X2gxAbXLOUk5BKG8nd31mF8eBD8U0I3rjYZDMQE=
 github.com/minamijoyo/terraform-config-inspect v0.0.0-20250505010908-6ad6eb27d3c9 h1:6trjsdYNQsBXv9BShavPR047w/ufWQ6CnzlGO/nd2vo=
 github.com/minamijoyo/terraform-config-inspect v0.0.0-20250505010908-6ad6eb27d3c9/go.mod h1:RhDzenR6+Mj5hmOQpw0nOiMTPDTrjLfuYAtxvcq2IVY=
-github.com/minamijoyo/tfupdate v0.10.2 h1:yZynmJpBSHIK7+Sq2vJHyPIPxg3toJyMizr2z+Th3hc=
-github.com/minamijoyo/tfupdate v0.10.2/go.mod h1:ncSt+rZ0D0kyyZDvvBGhsOk0TT7yjQ/Vf+ECoLvFBHk=
+github.com/minamijoyo/tfupdate v0.10.3 h1:NXwlwvaHSg70NHTSZkpSt8I8PD0cwh20ajTxuHhBKfQ=
+github.com/minamijoyo/tfupdate v0.10.3/go.mod h1:ncSt+rZ0D0kyyZDvvBGhsOk0TT7yjQ/Vf+ECoLvFBHk=
 github.com/mitchellh/copystructure v1.2.0 h1:vpKXTN4ewci03Vljg/q9QvCGUDttBOGBIa15WveJJGw=
 github.com/mitchellh/copystructure v1.2.0/go.mod h1:qLl+cE2AmVv+CoeAwDPye/v+N2HKCj9FbZEVFJRxO9s=
 github.com/mitchellh/go-homedir v1.1.0 h1:lukF9ziXFxDFPkA1vsr5zpc1XuPDn/wFntq5mG+4E0Y=
