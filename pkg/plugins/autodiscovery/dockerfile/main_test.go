@@ -324,7 +324,7 @@ sources:
     kind: 'dockerimage'
     spec:
       image: 'python'
-      tagfilter: ''
+      tagfilter: '^\d*(\.\d*){1}-slim$'
       versionfilter:
         kind: 'regex/semver'
         pattern: '>=3.14'

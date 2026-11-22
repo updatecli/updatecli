@@ -112,6 +112,23 @@ func TestGetSourceURL(t *testing.T) {
 			expectedURL: "github.com/kubernetes-sigs/yaml",
 		},
 		{
+			name: "vanity path redirecting to gitea.com",
+			htmlContent: `<html><head>
+<meta name="go-import" content="gitea.dev/sdk git https://gitea.com/gitea/go-sdk">
+<meta name="go-source" content="gitea.dev/sdk https://gitea.com/gitea/go-sdk https://gitea.com/gitea/go-sdk/src/branch/main{/dir} https://gitea.com/gitea/go-sdk/src/branch/main{/dir}/{file}#L{line}">
+</head></html>
+`,
+			expectedURL: "gitea.com/gitea/go-sdk",
+		},
+		{
+			name: "non git vcs is ignored",
+			htmlContent: `<html><head>
+<meta name="go-import" content="example.org/mod mod https://proxy.example.org">
+</head></html>
+`,
+			expectedURL: "",
+		},
+		{
 			name: "empty html content",
 			htmlContent: `<html><head></head></html>
 `,

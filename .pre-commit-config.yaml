@@ -1,0 +1,6 @@
+repos:
+  - repo: https://github.com/updatecli/updatecli
+    rev: main
+    hooks:
+      - id: updatecli-validate
+        args: [--strict, --config, updatecli/updatecli.d/, --values, updatecli/values.d/scm.yaml]
