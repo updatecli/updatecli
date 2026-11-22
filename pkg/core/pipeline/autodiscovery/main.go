@@ -73,12 +73,15 @@ type Crawler interface {
 type crawlerEntry struct {
 	kind    string
 	crawler Crawler
+	variant Variant
 }
 
 // CrawlerResult holds the output of a single crawler run.
 type CrawlerResult struct {
 	Kind      string
 	Manifests [][]byte
+	// Variant describes the group and version filter covered by this crawler run.
+	Variant Variant
 }
 
 type AutoDiscovery struct {
@@ -326,18 +329,26 @@ func New(spec Config, workDir string) (*AutoDiscovery, error) {
 			continue
 		}
 		if f, ok := crawlerFuncMap()[kind]; ok {
-			crawler, err := f(
-				g.spec.Crawlers[pluginName],
-				workDir,
-				g.spec.ScmId,
-				g.spec.ActionId,
-				pluginName,
-			)
+			variants, err := expandCrawlerSpec(kind, g.spec.Crawlers[pluginName], g.spec.GroupBy)
 			if err != nil {
-				errs = append(errs, fmt.Errorf("%s - %s", kind, err))
+				errs = append(errs, fmt.Errorf("%s - %s", pluginName, err))
 				continue
 			}
-			g.crawlers = append(g.crawlers, crawlerEntry{kind: pluginName, crawler: crawler})
+
+			for _, v := range variants {
+				crawler, err := f(
+					v.spec,
+					workDir,
+					g.spec.ScmId,
+					g.spec.ActionId,
+					pluginName,
+				)
+				if err != nil {
+					errs = append(errs, fmt.Errorf("%s - %s", kind, err))
+					continue
+				}
+				g.crawlers = append(g.crawlers, crawlerEntry{kind: pluginName, crawler: crawler, variant: v.variant})
+			}
 		} else {
 			log.Infof("Crawler of type %q is not supported", kind)
 		}
@@ -364,6 +375,11 @@ func (g *AutoDiscovery) Run(ctx context.Context) ([]CrawlerResult, error) {
 			),
 		)
 
+		if !entry.variant.IsDefault() {
+			log.Printf("Crawler %q, group %q, versionfilter %q\n",
+				entry.kind, entry.variant.Group, entry.variant.VersionFilter)
+		}
+
 		discoveredManifests, err := entry.crawler.DiscoverManifests()
 		if err != nil {
 			telemetry.RecordSpanError(span, err)
@@ -379,6 +395,7 @@ func (g *AutoDiscovery) Run(ctx context.Context) ([]CrawlerResult, error) {
 		results = append(results, CrawlerResult{
 			Kind:      entry.kind,
 			Manifests: discoveredManifests,
+			Variant:   entry.variant,
 		})
 
 		span.End()
