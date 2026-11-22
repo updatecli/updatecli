@@ -247,7 +247,7 @@ func (e *Engine) LoadAutoDiscovery(ctx context.Context, defaultEnabled bool) err
 					}
 					manifest.Actions[p.Config.Spec.AutoDiscovery.ActionId] = generatedActionConfig(
 						*actionConfig,
-						manifest.Actions[p.Config.Spec.AutoDiscovery.ScmId],
+						manifest.Actions[p.Config.Spec.AutoDiscovery.ActionId],
 						crawlerResult.Kind,
 						variant,
 						groupedActionTitle,
