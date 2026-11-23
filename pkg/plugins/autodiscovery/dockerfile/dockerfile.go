@@ -27,6 +27,7 @@ var (
 	}
 )
 
+//nolint:funlen // Let's refactor this function later on
 func (d Dockerfile) generateManifest(
 	globalIgnore MatchingRules,
 	relativeFoundDockerfile, basename, dirname string,
