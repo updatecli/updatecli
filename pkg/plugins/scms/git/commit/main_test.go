@@ -5,6 +5,8 @@ import (
 	"testing"
 )
 
+func stringPointer(value string) *string { return &value }
+
 type DataSet []Data
 
 type Data struct {
@@ -25,7 +27,7 @@ var (
 			ExpectedBody:   "",
 			ExpectedTitle:  "Bump updatecli version",
 			Commit: Commit{
-				Type:       "chore",
+				Type:       stringPointer("chore"),
 				Scope:      "deps",
 				HideCredit: true,
 			},
@@ -45,7 +47,7 @@ var (
 			ExpectedBody:   "",
 			ExpectedTitle:  "Bump updatecli version",
 			Commit: Commit{
-				Type:       "chore",
+				Type:       stringPointer("chore"),
 				HideCredit: true,
 			},
 		},
@@ -56,7 +58,7 @@ var (
 			ExpectedBody:   "",
 			ExpectedTitle:  "Bump updatecli version",
 			Commit: Commit{
-				Type:       "chore",
+				Type:       stringPointer("chore"),
 				Footers:    "BREAKING CHANGE",
 				HideCredit: true,
 			},
@@ -68,7 +70,7 @@ var (
 			ExpectedBody:   "... aaaaaaaaaaaaa",
 			ExpectedTitle:  "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa...",
 			Commit: Commit{
-				Type:       "chore",
+				Type:       stringPointer("chore"),
 				Footers:    "BREAKING CHANGE",
 				HideCredit: true,
 			},
@@ -80,7 +82,7 @@ var (
 			ExpectedBody:   "... aaaaaaaaaaaaa",
 			ExpectedTitle:  "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa...",
 			Commit: Commit{
-				Type:       "chore",
+				Type:       stringPointer("chore"),
 				HideCredit: true,
 			},
 		},
@@ -91,7 +93,7 @@ var (
 			ExpectedBody:   "",
 			ExpectedTitle:  "",
 			Commit: Commit{
-				Type:       "chore",
+				Type:       stringPointer("chore"),
 				HideCredit: true,
 			},
 		},
