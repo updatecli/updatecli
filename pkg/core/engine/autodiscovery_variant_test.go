@@ -108,3 +108,22 @@ func TestWithVariantLabels(t *testing.T) {
 	assert.Equal(t, map[string]string{"updatecli.io/group": "aws", "updatecli.io/versionfilter": "minor"}, withVariantLabels(nil, variant, "Bump x"))
 	assert.Nil(t, withVariantLabels(nil, autodiscovery.Variant{}, "Bump x"))
 }
+
+// TestVariantIDsDontCollideAcrossKinds checks that a crawler kind containing "/"
+// can't produce the same ID or gate key as another kind with a group and filter.
+func TestVariantIDsDontCollideAcrossKinds(t *testing.T) {
+	golangVariant := autodiscovery.Variant{Group: "gomod", VersionFilter: "aws", GroupBy: autodiscovery.GROUPBYALL}
+	gomodVariant := autodiscovery.Variant{Group: "aws", GroupBy: autodiscovery.GROUPBYALL}
+
+	golangID := variantPipelineID("parent", "golang", golangVariant)
+	gomodID := variantPipelineID("parent", "golang/gomod", gomodVariant)
+
+	assert.Equal(t, "parent/golang/gomod/aws", golangID)
+	assert.Equal(t, "parent/golang-gomod/aws", gomodID)
+	assert.NotEqual(t, golangID, gomodID)
+
+	gomodFiltered := autodiscovery.Variant{Group: "aws", VersionFilter: "aws", GroupBy: autodiscovery.GROUPBYALL}
+	assert.NotEqual(t,
+		variantGate("m", "golang", golangVariant, autodiscovery.GROUPBYALL, "x").Key,
+		variantGate("m", "golang/gomod", gomodFiltered, autodiscovery.GROUPBYALL, "x").Key)
+}

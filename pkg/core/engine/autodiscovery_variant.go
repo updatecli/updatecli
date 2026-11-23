@@ -28,7 +28,7 @@ func variantPipelineID(parentID, crawlerKind string, variant autodiscovery.Varia
 		return parentID
 	}
 
-	parts := []string{parentID, crawlerKind, variantGroup(variant)}
+	parts := []string{parentID, variantKindSegment(crawlerKind), variantGroup(variant)}
 	if variant.VersionFilter != "" {
 		parts = append(parts, variant.VersionFilter)
 	}
@@ -113,7 +113,7 @@ func variantGate(parentManifestID, crawlerKind string, variant autodiscovery.Var
 		return nil
 	}
 
-	key := strings.Join([]string{parentManifestID, crawlerKind, variantGroup(variant)}, "/")
+	key := strings.Join([]string{parentManifestID, variantKindSegment(crawlerKind), variantGroup(variant)}, "/")
 	if groupBy == autodiscovery.GROUPBYINDIVIDUAL {
 		key += "/" + manifestName
 	}
@@ -150,6 +150,15 @@ func generatedActionConfig(autodiscoveryAction, crawlerAction action.Config, cra
 	}
 
 	return generated
+}
+
+// variantKindSegment returns the crawler kind as one segment of a pipeline ID or gate key.
+//
+// Kinds such as "golang/gomod" contain a "/", which group and version filter names can't,
+// so without this "golang" with group "gomod" and filter "aws" would share an ID with "golang/gomod" with group "aws".
+// No crawler kind contains a "-", and WASM plugins don't support variants, so two kinds never get the same segment.
+func variantKindSegment(crawlerKind string) string {
+	return strings.ReplaceAll(crawlerKind, "/", "-")
 }
 
 func variantGroup(variant autodiscovery.Variant) string {
