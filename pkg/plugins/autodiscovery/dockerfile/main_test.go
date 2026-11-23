@@ -1,10 +1,15 @@
 package dockerfile
 
 import (
+	"os"
+	"path/filepath"
+	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/plugins/resources/dockerfile/simpletextparser"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
@@ -423,4 +428,89 @@ targets:
 		})
 	}
 
+}
+
+// TestGeneratedFromTargetsUpdateOnlyTheirOwnLine feeds the matchers produced by
+// the autodiscovery through the same simple text parser a dockerfile target
+// uses at runtime. On a Dockerfile reusing one image with two variant tags,
+// each generated target must rewrite exactly its own FROM line and leave the
+// other one untouched, otherwise the targets overwrite each other.
+func TestGeneratedFromTargetsUpdateOnlyTheirOwnLine(t *testing.T) {
+	digest := false
+	dockerfile, err := New(Spec{Digest: &digest}, "testdata/multi-variant", "", "")
+	require.NoError(t, err)
+
+	rawPipelines, err := dockerfile.DiscoverManifests()
+	require.NoError(t, err)
+	require.Len(t, rawPipelines, 2)
+
+	matcherRegex := regexp.MustCompile(`(?m)^\s*matcher: '([^']+)'$`)
+	keywordRegex := regexp.MustCompile(`(?m)^\s*keyword: '([^']+)'$`)
+
+	var generatedMatchers []string
+	for _, rawPipeline := range rawPipelines {
+		pipeline := string(rawPipeline)
+
+		keyword := keywordRegex.FindStringSubmatch(pipeline)
+		require.Len(t, keyword, 2)
+		require.Equal(t, "FROM", keyword[1])
+
+		matcher := matcherRegex.FindStringSubmatch(pipeline)
+		require.Len(t, matcher, 2)
+		generatedMatchers = append(generatedMatchers, matcher[1])
+	}
+	require.ElementsMatch(t, []string{"caddy:2.11.4-builder", "caddy:2.11.4-alpine"}, generatedMatchers)
+
+	originalContent, err := os.ReadFile(filepath.Join("testdata", "multi-variant", "Dockerfile"))
+	require.NoError(t, err)
+
+	// Each target resolves to a newer tag of its own variant; the pinned
+	// matcher restricts which FROM line the target is allowed to rewrite.
+	testdata := []struct {
+		name                string
+		matcher             string
+		sourceValue         string
+		expectedChangedLine int
+		expectedDockerfile  []string
+	}{
+		{
+			name:                "the builder target only updates the builder FROM line",
+			matcher:             "caddy:2.11.4-builder",
+			sourceValue:         "2.11.5-builder",
+			expectedChangedLine: 1,
+			expectedDockerfile: []string{
+				"FROM caddy:2.11.5-builder AS builder",
+				"RUN xcaddy build",
+				"FROM caddy:2.11.4-alpine",
+			},
+		},
+		{
+			name:                "the alpine target only updates the alpine FROM line",
+			matcher:             "caddy:2.11.4-alpine",
+			sourceValue:         "2.11.5-alpine",
+			expectedChangedLine: 3,
+			expectedDockerfile: []string{
+				"FROM caddy:2.11.4-builder AS builder",
+				"RUN xcaddy build",
+				"FROM caddy:2.11.5-alpine",
+			},
+		},
+	}
+
+	for _, tt := range testdata {
+		t.Run(tt.name, func(t *testing.T) {
+			parser, err := simpletextparser.NewSimpleTextDockerfileParser(map[string]string{
+				"keyword": "FROM",
+				"matcher": tt.matcher,
+			})
+			require.NoError(t, err)
+
+			updatedContent, changedLines, err := parser.ReplaceInstructions(originalContent, tt.sourceValue, "")
+			require.NoError(t, err)
+			require.Len(t, changedLines, 1)
+			require.Contains(t, changedLines, tt.expectedChangedLine)
+
+			assert.Equal(t, strings.Join(tt.expectedDockerfile, "\n")+"\n", string(updatedContent))
+		})
+	}
 }
