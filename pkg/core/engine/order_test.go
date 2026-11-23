@@ -50,6 +50,29 @@ func TestOrderPipelines(t *testing.T) {
 			expectedOrder: []string{"first", "second", "app"},
 		},
 		{
+			name: "runs versionfilter variants in versionfilters order",
+			engine: Engine{
+				Pipelines: []*pipeline.Pipeline{
+					newGatedPipelineForOrderTest("major", "debian", 1),
+					newPipelineForOrderTest("base", "base", nil),
+					newGatedPipelineForOrderTest("other-major", "golang", 1),
+					newGatedPipelineForOrderTest("minor", "debian", 0, "base"),
+					newGatedPipelineForOrderTest("patch-before-minor", "debian", 0),
+				},
+			},
+			expectedOrder: []string{"base", "other-major", "patch-before-minor", "minor", "major"},
+		},
+		{
+			name: "fails when dependson contradicts the versionfilters order",
+			engine: Engine{
+				Pipelines: []*pipeline.Pipeline{
+					newGatedPipelineForOrderTest("minor", "debian", 0, "major"),
+					newGatedPipelineForOrderTest("major", "debian", 1),
+				},
+			},
+			expectedError: "manifest dependency cycle detected",
+		},
+		{
 			name: "fails on unknown dependency target",
 			engine: Engine{
 				Pipelines: []*pipeline.Pipeline{
@@ -140,4 +163,15 @@ func newLegacyPipelineForOrderTest(name, seed string) *pipeline.Pipeline {
 		Name:   name,
 		Config: cfg,
 	}
+}
+
+func newGatedPipelineForOrderTest(name, gateKey string, rank int, dependsOn ...string) *pipeline.Pipeline {
+	p := newPipelineForOrderTest(name, name, dependsOn)
+	p.Gate = &pipeline.Gate{
+		Key:           gateKey,
+		Rank:          rank,
+		VersionFilter: name,
+	}
+
+	return p
 }
