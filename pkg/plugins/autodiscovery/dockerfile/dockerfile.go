@@ -27,6 +27,7 @@ var (
 	}
 )
 
+//nolint:funlen // Let's refactor this function later on
 func (d Dockerfile) generateManifest(
 	globalIgnore MatchingRules,
 	relativeFoundDockerfile, basename, dirname string,
@@ -167,6 +168,21 @@ func (d Dockerfile) generateManifest(
 			log.Debugf("building version filter pattern: %s", err)
 			versionFilterPattern = "*"
 		}
+	}
+
+	// When the instruction updates a FROM line directly (no ARG redirection),
+	// pin the matcher to the resolved image reference: image names alone would
+	// match every FROM line sharing that name, such as a builder and a runtime
+	// variant in the same Dockerfile, and the targets would overwrite each other.
+	if strings.EqualFold(targetInstruction, FromInstruction) {
+		imageRef := image
+		if tag != "" {
+			imageRef += ":" + tag
+		}
+		if digest != "" {
+			imageRef += "@" + digest
+		}
+		targetMatcher = imageRef
 	}
 
 	var tmpl *template.Template

@@ -237,7 +237,13 @@ func (f From) IsLineMatching(originalLine, matcher string) bool {
 	if err != nil {
 		return false
 	}
-	return tokens.Image == matcher
+	if tokens.Image == matcher {
+		return true
+	}
+	// The matcher may reference a full image, pinning the match to a specific
+	// tag or digest, such as "alpine:3.20" or "alpine:3.20@sha256:...", instead
+	// of every FROM line sharing the same image name.
+	return tokens.getImageRef() == matcher
 }
 
 func (f From) GetStageName(originalLine string) (string, error) {
