@@ -1,4 +1,4 @@
-package release
+package gitea
 
 import (
 	"testing"
@@ -31,7 +31,7 @@ func TestReleaseDate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, releaseDate(&tt.release))
+			assert.Equal(t, tt.want, ReleaseDate(&tt.release))
 		})
 	}
 }

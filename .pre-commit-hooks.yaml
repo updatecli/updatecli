@@ -1,0 +1,7 @@
+- id: updatecli-validate
+  name: Validate Updatecli manifests
+  entry: updatecli manifest validate --disable-version-check
+  language: mise
+  additional_dependencies: ["aqua:updatecli/updatecli@latest"]
+  pass_filenames: false
+  always_run: true
