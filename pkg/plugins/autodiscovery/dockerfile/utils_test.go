@@ -21,6 +21,7 @@ func TestSearchFiles(t *testing.T) {
 				"testdata/alpine/Dockerfile",
 				"testdata/jenkins/Dockerfile",
 				"testdata/multi-variable/Dockerfile",
+				"testdata/multi-variant/Dockerfile",
 				"testdata/python-slim/Dockerfile",
 				"testdata/scratch-and-base/Dockerfile",
 				"testdata/similar-stage-and-image/Dockerfile",
