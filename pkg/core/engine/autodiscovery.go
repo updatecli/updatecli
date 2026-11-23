@@ -260,7 +260,7 @@ func (e *Engine) LoadAutoDiscovery(ctx context.Context, defaultEnabled bool) err
 					)
 				}
 
-				// Pipelines generated for different groups or version filters would otherwise share a name
+				// Pipelines generated for different groups or tracks would otherwise share a name
 				// in logs and reports, so the variant is added to it.
 				// dependencyName keeps the name the crawler gave, which identifies the dependency.
 				dependencyName := manifest.Name

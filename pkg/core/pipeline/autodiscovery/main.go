@@ -80,7 +80,7 @@ type crawlerEntry struct {
 type CrawlerResult struct {
 	Kind      string
 	Manifests [][]byte
-	// Variant describes the group and version filter covered by this crawler run.
+	// Variant describes the group and track covered by this crawler run.
 	Variant Variant
 }
 
@@ -376,8 +376,8 @@ func (g *AutoDiscovery) Run(ctx context.Context) ([]CrawlerResult, error) {
 		)
 
 		if !entry.variant.IsDefault() {
-			log.Printf("Crawler %q, group %q, versionfilter %q\n",
-				entry.kind, entry.variant.Group, entry.variant.VersionFilter)
+			log.Printf("Crawler %q, group %q, track %q\n",
+				entry.kind, entry.variant.Group, entry.variant.Track)
 		}
 
 		discoveredManifests, err := entry.crawler.DiscoverManifests()

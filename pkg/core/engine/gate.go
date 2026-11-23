@@ -11,14 +11,14 @@ import (
 	"github.com/updatecli/updatecli/pkg/core/result"
 )
 
-// waitingVersionFilter returns why a pipeline generated from autodiscovery "versionfilters" must wait,
+// waitingTrack returns why a pipeline generated from autodiscovery "tracks" must wait,
 // or an empty string when it can run.
 //
-// A pipeline waits while a pipeline for the same dependency, with an earlier version filter,
+// A pipeline waits while a pipeline for the same dependency, with an earlier track,
 // has a pending update: either it changed something during this run,
 // or its pull request from a previous run is still open.
 // pending caches, for the whole run, the lookups that succeeded and the failures already warned about.
-func (e *Engine) waitingVersionFilter(ctx context.Context, p *pipeline.Pipeline, pending map[string]bool) string {
+func (e *Engine) waitingTrack(ctx context.Context, p *pipeline.Pipeline, pending map[string]bool) string {
 	if p.Gate == nil || p.Gate.Rank == 0 {
 		return ""
 	}
@@ -33,7 +33,7 @@ func (e *Engine) waitingVersionFilter(ctx context.Context, p *pipeline.Pipeline,
 		}
 
 		if hasPendingUpdate(ctx, earlier, pending) {
-			return fmt.Sprintf("waiting for the pending update of versionfilter %q", earlier.Gate.VersionFilter)
+			return fmt.Sprintf("waiting for the pending update of track %q", earlier.Gate.Track)
 		}
 	}
 
@@ -51,8 +51,8 @@ func (e *Engine) waitingVersionFilter(ctx context.Context, p *pipeline.Pipeline,
 // A pipeline fails as soon as one target fails, while its other targets may still open a pull request,
 // so a target that changed something counts as pending whatever the pipeline result.
 // A failed pipeline that changed nothing doesn't block, otherwise a failure repeated on every run,
-// such as a version filter matching no version, would block later version filters for good.
-// A failed lookup counts as pending, so a later version filter never goes ahead on a lookup error.
+// such as a version filter matching no version, would block later tracks for good.
+// A failed lookup counts as pending, so a later track never goes ahead on a lookup error.
 func hasPendingUpdate(ctx context.Context, p *pipeline.Pipeline, pending map[string]bool) bool {
 	if p.Report.Result == result.ATTENTION || hasChangedTarget(p) {
 		return true
@@ -65,13 +65,13 @@ func hasPendingUpdate(ctx context.Context, p *pipeline.Pipeline, pending map[str
 		waiting = hasRemoteWorkingBranch(p, pending)
 	}
 
-	// Warn once per run, as every later version filter checks this pipeline.
+	// Warn once per run, as every later track checks this pipeline.
 	if !waiting && p.Report.Result == result.FAILURE {
 		warnedKey := "failure#" + p.ID
 		if !pending[warnedKey] {
 			pending[warnedKey] = true
-			log.Warningf("pipeline %q, for versionfilter %q, failed without changing anything: later version filters don't wait for it",
-				p.Name, p.Gate.VersionFilter)
+			log.Warningf("pipeline %q, for track %q, failed without changing anything: later tracks don't wait for it",
+				p.Name, p.Gate.Track)
 		}
 	}
 
