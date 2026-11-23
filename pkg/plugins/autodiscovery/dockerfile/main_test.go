@@ -49,7 +49,7 @@ targets:
       file: 'Dockerfile'
       instruction:
         keyword: 'FROM'
-        matcher: 'updatecli/updatecli'
+        matcher: 'updatecli/updatecli:v0.25.0@sha256:1fafb0905264413501df60d90a92ca32df8a2011cbfb4876ddff5ceb20c8f165'
     sourceid: 'updatecli/updatecli-digest'
 `},
 		},
@@ -113,7 +113,7 @@ targets:
       file: 'Dockerfile'
       instruction:
         keyword: 'FROM'
-        matcher: 'updatecli/updatecli'
+        matcher: 'updatecli/updatecli:v0.25.0@sha256:1fafb0905264413501df60d90a92ca32df8a2011cbfb4876ddff5ceb20c8f165'
     sourceid: 'updatecli/updatecli'
 `},
 		},
@@ -185,7 +185,7 @@ targets:
       file: 'Dockerfile'
       instruction:
         keyword: 'FROM'
-        matcher: 'python'
+        matcher: 'python:3.13'
     sourceid: 'python-digest'
 `},
 		},
@@ -255,7 +255,7 @@ targets:
       file: 'Dockerfile'
       instruction:
         keyword: 'FROM'
-        matcher: 'opensuse'
+        matcher: 'opensuse:15.4'
     sourceid: 'opensuse'
 `},
 		},
@@ -337,8 +337,57 @@ targets:
       file: 'Dockerfile'
       instruction:
         keyword: 'FROM'
-        matcher: 'python'
+        matcher: 'python:3.14-slim'
     sourceid: 'python'
+`},
+		},
+		{
+			name:          "Scenario 9: Same image with different variant tags",
+			rootDir:       "testdata/multi-variant",
+			digest:        false,
+			versionFilter: nil,
+			expectedPipelines: []string{`name: 'deps(dockerfile): bump "caddy" tag'
+sources:
+  caddy:
+    name: 'get latest image tag for "caddy"'
+    kind: 'dockerimage'
+    spec:
+      image: 'caddy'
+      tagfilter: '^\d*(\.\d*){2}-builder$'
+      versionfilter:
+        kind: 'semver'
+        pattern: '>=2.11.4-builder'
+targets:
+  caddy:
+    name: 'deps: update Docker image "caddy" to "{{ source "caddy" }}"'
+    kind: 'dockerfile'
+    spec:
+      file: 'Dockerfile'
+      instruction:
+        keyword: 'FROM'
+        matcher: 'caddy:2.11.4-builder'
+    sourceid: 'caddy'
+`, `name: 'deps(dockerfile): bump "caddy" tag'
+sources:
+  caddy:
+    name: 'get latest image tag for "caddy"'
+    kind: 'dockerimage'
+    spec:
+      image: 'caddy'
+      tagfilter: '^\d*(\.\d*){2}-alpine$'
+      versionfilter:
+        kind: 'semver'
+        pattern: '>=2.11.4-alpine'
+targets:
+  caddy:
+    name: 'deps: update Docker image "caddy" to "{{ source "caddy" }}"'
+    kind: 'dockerfile'
+    spec:
+      file: 'Dockerfile'
+      instruction:
+        keyword: 'FROM'
+        matcher: 'caddy:2.11.4-alpine'
+    sourceid: 'caddy'
 `},
 		},
 	}
