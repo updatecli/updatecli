@@ -190,7 +190,12 @@ func (e *Engine) LoadAutoDiscovery(ctx context.Context, defaultEnabled bool) err
 					}
 				}
 
-				manifest.Labels = withVariantLabels(manifest.Labels, variant, manifest.Name)
+				manifest.Labels = withAutodiscoveryLabels(manifest.Labels, p.Config.Spec.PipelineID, crawlerResult.Kind, variant, manifest.Name)
+
+				if !config.IsMatchingLabel(manifest.Labels, e.Options.Labels) {
+					log.Debugf("Generated pipeline %q labels %v did not match filter labels %v, skipping.", manifest.Name, manifest.Labels, e.Options.Labels)
+					continue
+				}
 
 				basePipelineID := variantPipelineID(p.Config.Spec.PipelineID, crawlerResult.Kind, variant)
 

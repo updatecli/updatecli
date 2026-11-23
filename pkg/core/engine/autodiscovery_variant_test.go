@@ -20,8 +20,14 @@ func TestVariantHelpers(t *testing.T) {
 	assert.Equal(t, "parent/golang/aws/minor", variantPipelineID("parent", "golang", grouped))
 	assert.Equal(t, "parent/golang/aws", variantPipelineID("parent", "golang", groupOnly))
 
-	assert.Empty(t, variantLabels(plain))
-	assert.Equal(t, map[string]string{"updatecli.io/group": "aws", "updatecli.io/versionfilter": "minor"}, variantLabels(grouped))
+	assert.Equal(t, map[string]string{"updatecli.io/autodiscovery": "golang", "updatecli.io/parent": "parent"}, autodiscoveryLabels("parent", "golang", plain))
+	assert.Equal(t, map[string]string{
+		"updatecli.io/autodiscovery": "golang",
+		"updatecli.io/parent":        "parent",
+		"updatecli.io/group":         "aws",
+		"updatecli.io/versionfilter": "minor",
+	}, autodiscoveryLabels("parent", "golang", grouped))
+	assert.Empty(t, autodiscoveryLabels("", "", plain))
 
 	assert.Empty(t, variantTitleSuffix("golang", plain))
 	assert.Equal(t, "(major)", variantTitleSuffix("golang", individual))
@@ -99,14 +105,27 @@ func TestGeneratedActionConfig(t *testing.T) {
 	}
 }
 
-func TestWithVariantLabels(t *testing.T) {
+func TestWithAutodiscoveryLabels(t *testing.T) {
 	variant := autodiscovery.Variant{Group: "aws", VersionFilter: "minor"}
+	expected := map[string]string{
+		"updatecli.io/autodiscovery": "golang",
+		"updatecli.io/parent":        "parent",
+		"updatecli.io/group":         "aws",
+		"updatecli.io/versionfilter": "minor",
+	}
 
-	got := withVariantLabels(map[string]string{"updatecli.io/group": "infra", "group": "backend", "team": "core"}, variant, "Bump x")
-	assert.Equal(t, map[string]string{"updatecli.io/group": "aws", "updatecli.io/versionfilter": "minor", "group": "backend", "team": "core"}, got)
+	got := withAutodiscoveryLabels(map[string]string{"updatecli.io/group": "infra", "updatecli.io/autodiscovery": "npm", "group": "backend", "team": "core"}, "parent", "golang", variant, "Bump x")
+	assert.Equal(t, map[string]string{
+		"updatecli.io/autodiscovery": "golang",
+		"updatecli.io/parent":        "parent",
+		"updatecli.io/group":         "aws",
+		"updatecli.io/versionfilter": "minor",
+		"group":                      "backend",
+		"team":                       "core",
+	}, got)
 
-	assert.Equal(t, map[string]string{"updatecli.io/group": "aws", "updatecli.io/versionfilter": "minor"}, withVariantLabels(nil, variant, "Bump x"))
-	assert.Nil(t, withVariantLabels(nil, autodiscovery.Variant{}, "Bump x"))
+	assert.Equal(t, expected, withAutodiscoveryLabels(nil, "parent", "golang", variant, "Bump x"))
+	assert.Nil(t, withAutodiscoveryLabels(nil, "", "", autodiscovery.Variant{}, "Bump x"))
 }
 
 // TestVariantIDsDontCollideAcrossKinds checks that a crawler kind containing "/"
