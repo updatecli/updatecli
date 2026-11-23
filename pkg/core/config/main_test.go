@@ -1069,3 +1069,46 @@ labels:
 	require.Empty(t, got[0].Spec.ID)
 	require.NotEmpty(t, got[0].ManifestID())
 }
+
+// TestNewKeepsAutodiscoveryOnLabelMismatch checks that an autodiscovery manifest not matching the label filter
+// still runs its autodiscovery, whose generated pipelines are filtered later, without its own sources and targets.
+func TestNewKeepsAutodiscoveryOnLabelMismatch(t *testing.T) {
+	t.Parallel()
+
+	tempDir := t.TempDir()
+	manifestPath := filepath.Join(tempDir, "updatecli.yaml")
+
+	err := os.WriteFile(manifestPath, []byte(`
+name: Autodiscovery manifest
+pipelineid: autodiscovery-manifest
+sources:
+  default:
+    kind: shell
+    spec:
+      command: echo 1.0.0
+targets:
+  default:
+    kind: shell
+    disablesourceinput: true
+    spec:
+      command: echo done
+autodiscovery:
+  crawlers:
+    golang:
+`), 0600)
+	require.NoError(t, err)
+
+	got, err := New(Option{ManifestFile: manifestPath}, ManifestOptions{}, nil, map[string]string{"updatecli.io/autodiscovery": "golang"})
+	require.NoError(t, err)
+	require.Len(t, got, 1)
+
+	assert.NotNil(t, got[0].Spec.AutoDiscovery.Crawlers)
+	assert.Empty(t, got[0].Spec.Sources)
+	assert.Empty(t, got[0].Spec.Targets)
+
+	got, err = New(Option{ManifestFile: manifestPath}, ManifestOptions{}, nil, nil)
+	require.NoError(t, err)
+	require.Len(t, got, 1)
+	assert.Len(t, got[0].Spec.Sources, 1)
+	assert.Len(t, got[0].Spec.Targets, 1)
+}

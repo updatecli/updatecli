@@ -15,8 +15,14 @@ const (
 	// defaultVariantGroup names, in pipeline IDs, the dependencies matching no autodiscovery group.
 	defaultVariantGroup = "default"
 
-	// groupLabel and versionFilterLabel are the labels set on pipelines generated for a group or a version filter.
+	// The labels below are set by autodiscovery on the pipelines it generates.
 	// The "updatecli.io/" prefix keeps them apart from the labels users set.
+	//
+	// autodiscoveryLabel holds the crawler kind, such as "golang" or "dockerfile".
+	autodiscoveryLabel = "updatecli.io/autodiscovery"
+	// parentLabel holds the pipeline ID of the autodiscovery manifest.
+	parentLabel = "updatecli.io/parent"
+	// groupLabel and versionFilterLabel hold the group and version filter names, when set.
 	groupLabel         = "updatecli.io/group"
 	versionFilterLabel = "updatecli.io/versionfilter"
 )
@@ -36,9 +42,17 @@ func variantPipelineID(parentID, crawlerKind string, variant autodiscovery.Varia
 	return strings.Join(parts, "/")
 }
 
-// variantLabels returns the labels identifying the group and version filter of a generated pipeline.
-func variantLabels(variant autodiscovery.Variant) map[string]string {
+// autodiscoveryLabels returns the labels identifying the crawler, parent pipeline, group and version filter of a generated pipeline.
+func autodiscoveryLabels(parentID, crawlerKind string, variant autodiscovery.Variant) map[string]string {
 	labels := map[string]string{}
+
+	if crawlerKind != "" {
+		labels[autodiscoveryLabel] = crawlerKind
+	}
+
+	if parentID != "" {
+		labels[parentLabel] = parentID
+	}
 
 	if variant.Group != "" {
 		labels[groupLabel] = variant.Group
@@ -51,17 +65,17 @@ func variantLabels(variant autodiscovery.Variant) map[string]string {
 	return labels
 }
 
-// withVariantLabels adds the variant labels to the labels of a generated pipeline.
-// They identify the group and version filter of the pipeline, so they replace any label with the same key,
+// withAutodiscoveryLabels adds the autodiscovery labels to the labels of a generated pipeline.
+// They identify where the pipeline comes from, so they replace any label with the same key,
 // such as one set on the autodiscovery manifest, with a warning.
-func withVariantLabels(labels map[string]string, variant autodiscovery.Variant, pipelineName string) map[string]string {
-	for k, v := range variantLabels(variant) {
+func withAutodiscoveryLabels(labels map[string]string, parentID, crawlerKind string, variant autodiscovery.Variant, pipelineName string) map[string]string {
+	for k, v := range autodiscoveryLabels(parentID, crawlerKind, variant) {
 		if labels == nil {
 			labels = make(map[string]string)
 		}
 
 		if existing, ok := labels[k]; ok && existing != v {
-			log.Warningf("Label %q set to %q in pipeline %q is replaced by %q, the value autodiscovery sets for its groups and versionfilters",
+			log.Warningf("Label %q set to %q in pipeline %q is replaced by %q, the value set by autodiscovery",
 				k,
 				existing,
 				pipelineName,
