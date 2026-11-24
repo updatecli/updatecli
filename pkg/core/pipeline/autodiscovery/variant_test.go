@@ -286,6 +286,48 @@ func TestExpandCrawlerSpec(t *testing.T) {
 			},
 		},
 		{
+			name: "a track with wait false doesn't wait, and wait isn't a crawler setting",
+			kind: "golang",
+			spec: map[string]any{
+				"tracks": []any{
+					map[string]any{"name": "minor", "versionfilter": minorFilter, "wait": true},
+					map[string]any{"name": "lts", "versionfilter": majorFilter, "Wait": false},
+				},
+				"groups": []any{map[string]any{"name": "aws", "only": []any{aws}}},
+			},
+			groupBy: GROUPBYINDIVIDUAL,
+			expected: []crawlerVariant{
+				{
+					spec:    map[string]any{"only": []any{aws}, "ignore": []any{}, "versionfilter": minorFilter},
+					variant: Variant{Group: "aws", Track: "minor", Rank: 0, GroupBy: GROUPBYALL},
+				},
+				{
+					spec:    map[string]any{"ignore": []any{aws}, "versionfilter": minorFilter},
+					variant: Variant{Track: "minor", Rank: 0, GroupBy: GROUPBYINDIVIDUAL},
+				},
+				{
+					spec:    map[string]any{"only": []any{aws}, "ignore": []any{}, "versionfilter": majorFilter},
+					variant: Variant{Group: "aws", Track: "lts", Rank: 1, NoWait: true, GroupBy: GROUPBYALL},
+				},
+				{
+					spec:    map[string]any{"ignore": []any{aws}, "versionfilter": majorFilter},
+					variant: Variant{Track: "lts", Rank: 1, NoWait: true, GroupBy: GROUPBYINDIVIDUAL},
+				},
+			},
+		},
+		{
+			name:    "a track with only wait sets nothing",
+			kind:    "golang",
+			spec:    map[string]any{"tracks": []any{map[string]any{"name": "lts", "wait": false}}},
+			wantErr: `tracks[0] "lts": must set "versionfilter" or "age"`,
+		},
+		{
+			name:    "wait must be a boolean",
+			kind:    "golang",
+			spec:    map[string]any{"tracks": []any{map[string]any{"name": "lts", "versionfilter": minorFilter, "wait": "no"}}},
+			wantErr: "expected type 'bool'",
+		},
+		{
 			name:    "tracks must not be empty",
 			kind:    "golang",
 			spec:    map[string]any{"tracks": []any{}},
@@ -305,6 +347,30 @@ func TestExpandCrawlerSpec(t *testing.T) {
 				"groups": []any{map[string]any{"name": "nested", "only": []any{map[string]any{"path": "*/go.mod"}}}},
 			},
 			wantErr: `group "nested"`,
+		},
+		{
+			name:    "track names can't contain the pipeline ID separator",
+			kind:    "golang",
+			spec:    map[string]any{"tracks": []any{map[string]any{"name": "b_c", "versionfilter": minorFilter}}},
+			wantErr: "must start with a letter or a digit",
+		},
+		{
+			name:    "group names can't contain the pipeline ID separator",
+			kind:    "golang",
+			spec:    map[string]any{"groups": []any{map[string]any{"name": "a_b", "only": []any{aws}}}},
+			wantErr: "must start with a letter or a digit",
+		},
+		{
+			name:    "unknown group settings are rejected",
+			kind:    "golang",
+			spec:    map[string]any{"groups": []any{map[string]any{"name": "aws", "only": []any{aws}, "ignore": []any{gx}}}},
+			wantErr: "ignore",
+		},
+		{
+			name:    "group name default is reserved whatever its case",
+			kind:    "golang",
+			spec:    map[string]any{"groups": []any{map[string]any{"name": "Default", "only": []any{aws}}}},
+			wantErr: "reserved",
 		},
 		{
 			name:    "group name default is reserved",

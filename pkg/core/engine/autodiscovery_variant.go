@@ -25,9 +25,14 @@ const (
 	// groupLabel and trackLabel hold the group and track names, when set.
 	groupLabel = "updatecli.io/group"
 	trackLabel = "updatecli.io/track"
+
+	// variantIDSeparator separates the parts of a variant pipeline ID.
+	// Not "/": git can't hold the branches "<parent>" and "<parent>/golang/..." together.
+	variantIDSeparator = "_"
 )
 
-// variantPipelineID returns the pipeline ID shared by the pipelines generated for a variant.
+// variantPipelineID returns the pipeline ID shared by the pipelines generated for a variant,
+// such as "<parent>_golang_aws_minor".
 // Without "groups" and "tracks" it's the autodiscovery pipeline ID, as before they existed.
 func variantPipelineID(parentID, crawlerKind string, variant autodiscovery.Variant) string {
 	if variant.IsDefault() {
@@ -39,7 +44,7 @@ func variantPipelineID(parentID, crawlerKind string, variant autodiscovery.Varia
 		parts = append(parts, variant.Track)
 	}
 
-	return strings.Join(parts, "/")
+	return strings.Join(parts, variantIDSeparator)
 }
 
 // autodiscoveryLabels returns the labels identifying the crawler, parent pipeline, group and track of a generated pipeline.
@@ -133,9 +138,10 @@ func variantGate(parentManifestID, crawlerKind string, variant autodiscovery.Var
 	}
 
 	return &pipeline.Gate{
-		Key:   key,
-		Rank:  variant.Rank,
-		Track: variant.Track,
+		Key:    key,
+		Rank:   variant.Rank,
+		Track:  variant.Track,
+		NoWait: variant.NoWait,
 	}
 }
 
