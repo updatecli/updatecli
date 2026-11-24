@@ -31,7 +31,8 @@ const (
 
 var (
 	// variantNameRegex restricts names to characters safe in a pipeline ID, a git branch and a label value.
-	variantNameRegex = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._-]*$`)
+	// "_" separates the parts of a variant pipeline ID, so names can't contain it.
+	variantNameRegex = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9.-]*$`)
 
 	// trackSettingKeys are the crawler settings a track sets, in place of the crawler ones.
 	trackSettingKeys = []string{versionFilterKey, ageKey}
@@ -115,7 +116,7 @@ type Track struct {
 	// "name" identifies the track in the generated pipelines.
 	//
 	// remark:
-	//   * it must be unique, start with a letter or a digit, and only contain letters, digits, ".", "_" and "-".
+	//   * it must be unique, start with a letter or a digit, and only contain letters, digits, "." and "-".
 	//
 	Name string `yaml:",omitempty" jsonschema:"required"`
 	// "versionfilter" defines the version filter used by the track, as the crawler "versionfilter" does.
@@ -140,7 +141,7 @@ type Group struct {
 	// "name" identifies the group in the generated pipelines.
 	//
 	// remark:
-	//   * it must be unique, start with a letter or a digit, and only contain letters, digits, ".", "_" and "-".
+	//   * it must be unique, start with a letter or a digit, and only contain letters, digits, "." and "-".
 	//
 	Name string `yaml:",omitempty" jsonschema:"required"`
 	// "only" defines the rules matching the dependencies of the group.
@@ -510,8 +511,17 @@ func decodeGroups(raw any, set bool) ([]Group, error) {
 		return nil, nil
 	}
 
+	// Reject unknown settings instead of dropping them.
 	var groups []Group
-	if err := mapstructure.Decode(raw, &groups); err != nil {
+	decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
+		ErrorUnused: true,
+		Result:      &groups,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if err := decoder.Decode(raw); err != nil {
 		return nil, fmt.Errorf("%q: %w", groupsKey, err)
 	}
 
@@ -528,7 +538,7 @@ func decodeGroups(raw any, set bool) ([]Group, error) {
 			continue
 		}
 
-		if group.Name == reservedGroupName {
+		if strings.EqualFold(group.Name, reservedGroupName) {
 			errs = append(errs, fmt.Errorf("%s[%d]: name %q is reserved for the dependencies matching no group", groupsKey, i, reservedGroupName))
 			continue
 		}
@@ -551,7 +561,7 @@ func validateVariantName(name string, names map[string]bool) error {
 	case name == "":
 		return errors.New(`"name" is required`)
 	case !variantNameRegex.MatchString(name):
-		return fmt.Errorf("name %q must start with a letter or a digit, and only contain letters, digits, \".\", \"_\" and \"-\"", name)
+		return fmt.Errorf("name %q must start with a letter or a digit, and only contain letters, digits, \".\" and \"-\"", name)
 	case names[name]:
 		return fmt.Errorf("name %q is used more than once", name)
 	}

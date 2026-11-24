@@ -307,6 +307,30 @@ func TestExpandCrawlerSpec(t *testing.T) {
 			wantErr: `group "nested"`,
 		},
 		{
+			name:    "track names can't contain the pipeline ID separator",
+			kind:    "golang",
+			spec:    map[string]any{"tracks": []any{map[string]any{"name": "b_c", "versionfilter": minorFilter}}},
+			wantErr: "must start with a letter or a digit",
+		},
+		{
+			name:    "group names can't contain the pipeline ID separator",
+			kind:    "golang",
+			spec:    map[string]any{"groups": []any{map[string]any{"name": "a_b", "only": []any{aws}}}},
+			wantErr: "must start with a letter or a digit",
+		},
+		{
+			name:    "unknown group settings are rejected",
+			kind:    "golang",
+			spec:    map[string]any{"groups": []any{map[string]any{"name": "aws", "only": []any{aws}, "ignore": []any{gx}}}},
+			wantErr: "ignore",
+		},
+		{
+			name:    "group name default is reserved whatever its case",
+			kind:    "golang",
+			spec:    map[string]any{"groups": []any{map[string]any{"name": "Default", "only": []any{aws}}}},
+			wantErr: "reserved",
+		},
+		{
 			name:    "group name default is reserved",
 			kind:    "golang",
 			spec:    map[string]any{"groups": []any{map[string]any{"name": "default", "only": []any{aws}}}},
