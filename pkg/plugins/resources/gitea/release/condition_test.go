@@ -3,6 +3,8 @@ package release
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -117,5 +119,59 @@ func TestCondition(t *testing.T) {
 
 		})
 
+	}
+}
+
+func TestConditionReleasesDisabled(t *testing.T) {
+	const repoPath = "/forge/api/v1/repos/updatecli/project"
+	settings := func(body string) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "Bearer test-token", r.Header.Get("Authorization"))
+			fmt.Fprint(w, body)
+		}
+	}
+	disabled := settings(`{"has_releases":false}`)
+	otherForge := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
+		t.Error("followed a metadata redirect to another forge")
+	}))
+	defer otherForge.Close()
+
+	for _, tt := range []struct {
+		name    string
+		status  int
+		repo    http.Handler
+		wantErr bool
+	}{
+		{"disabled on Forgejo", http.StatusNotFound, disabled, false},
+		{"disabled on Gitea after a rename", http.StatusForbidden, http.RedirectHandler(repoPath+"-new", http.StatusMovedPermanently), false},
+		{"enabled but forbidden", http.StatusForbidden, settings(`{"has_releases":true}`), true},
+		{"missing setting", http.StatusNotFound, settings(`{}`), true},
+		{"redirect to another forge", http.StatusForbidden, http.RedirectHandler(otherForge.URL, http.StatusMovedPermanently), true},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			mux := http.NewServeMux()
+			mux.HandleFunc("GET "+repoPath+"/releases", func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(tt.status)
+			})
+			mux.Handle("GET "+repoPath, tt.repo)
+			mux.Handle("GET "+repoPath+"-new", disabled)
+			server := httptest.NewServer(mux)
+			defer server.Close()
+
+			g, err := New(map[string]any{
+				"url":        server.URL + "/forge",
+				"owner":      "updatecli",
+				"repository": "project",
+				"token":      "test-token",
+			})
+			require.NoError(t, err)
+			pass, _, err := g.Condition(t.Context(), "v1.0.0", nil, pathresolver.Resolver{})
+			assert.False(t, pass)
+			if tt.wantErr {
+				require.EqualError(t, err, "looking for Gitea release: "+http.StatusText(tt.status))
+			} else {
+				require.NoError(t, err)
+			}
+		})
 	}
 }
