@@ -31,7 +31,8 @@ const (
 
 var (
 	// variantNameRegex restricts names to characters safe in a pipeline ID, a git branch and a label value.
-	variantNameRegex = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._-]*$`)
+	// "_" separates the parts of a variant pipeline ID, so names can't contain it.
+	variantNameRegex = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9.-]*$`)
 
 	// trackSettingKeys are the crawler settings a track sets, in place of the crawler ones.
 	trackSettingKeys = []string{versionFilterKey, ageKey}
@@ -59,6 +60,7 @@ type VariantSpec struct {
 	//     so it waits for the whole pull request: one pending minor update holds back every major update of that crawler.
 	//     An update is pending while its pull request is open or, without an action, while its working branch exists.
 	//     Tracks are run in the order they are listed.
+	//   * a track with "wait: false" never waits, but later tracks still wait for it.
 	//   * the version filters of the tracks should not overlap, for example "minor" then "majoronly".
 	//     Tracks setting only "age" share the crawler version filter, so they overlap:
 	//     with "allowdowngrade", one track may undo the updates of another.
@@ -79,6 +81,11 @@ type VariantSpec struct {
 	//         pattern: majoronly
 	//       age:
 	//         minimum: 14d
+	//     - name: lts
+	//       wait: false
+	//       versionfilter:
+	//         kind: regex
+	//         pattern: '^1\.'
 	//   ```
 	//
 	Tracks []Track `yaml:",omitempty"`
@@ -115,7 +122,7 @@ type Track struct {
 	// "name" identifies the track in the generated pipelines.
 	//
 	// remark:
-	//   * it must be unique, start with a letter or a digit, and only contain letters, digits, ".", "_" and "-".
+	//   * it must be unique, start with a letter or a digit, and only contain letters, digits, "." and "-".
 	//
 	Name string `yaml:",omitempty" jsonschema:"required"`
 	// "versionfilter" defines the version filter used by the track, as the crawler "versionfilter" does.
@@ -133,6 +140,16 @@ type Track struct {
 	//   * it's only accepted by crawlers supporting "age".
 	//
 	Age *age.AutodiscoverySpec `yaml:",omitempty"`
+	// "wait" defines whether the track waits while an earlier track still has a pending update.
+	//
+	// default:
+	//   true
+	//
+	// remark:
+	//   * a track with "wait: false" proposes its updates at once, but later tracks still wait for it.
+	//   * it has no effect on the first track, which never waits.
+	//
+	Wait *bool `yaml:",omitempty"`
 }
 
 // Group defines dependencies updated together.
@@ -140,7 +157,7 @@ type Group struct {
 	// "name" identifies the group in the generated pipelines.
 	//
 	// remark:
-	//   * it must be unique, start with a letter or a digit, and only contain letters, digits, ".", "_" and "-".
+	//   * it must be unique, start with a letter or a digit, and only contain letters, digits, "." and "-".
 	//
 	Name string `yaml:",omitempty" jsonschema:"required"`
 	// "only" defines the rules matching the dependencies of the group.
@@ -159,6 +176,8 @@ type Variant struct {
 	Track string
 	// Rank is the position of the track in "tracks".
 	Rank int
+	// NoWait is set for a track with "wait: false", which never waits for earlier tracks.
+	NoWait bool
 	// GroupBy is the grouping used for the pipelines of this variant.
 	GroupBy GroupBy
 }
@@ -269,6 +288,7 @@ func expandCrawlerSpec(kind string, spec any, groupBy GroupBy) ([]crawlerVariant
 					Group:   group.Name,
 					Track:   track.Name,
 					Rank:    rank,
+					NoWait:  track.Wait != nil && !*track.Wait,
 					GroupBy: GROUPBYALL,
 				},
 			})
@@ -286,6 +306,7 @@ func expandCrawlerSpec(kind string, spec any, groupBy GroupBy) ([]crawlerVariant
 			variant: Variant{
 				Track:   track.Name,
 				Rank:    rank,
+				NoWait:  track.Wait != nil && !*track.Wait,
 				GroupBy: groupBy,
 			},
 		})
@@ -510,8 +531,17 @@ func decodeGroups(raw any, set bool) ([]Group, error) {
 		return nil, nil
 	}
 
+	// Reject unknown settings instead of dropping them.
 	var groups []Group
-	if err := mapstructure.Decode(raw, &groups); err != nil {
+	decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
+		ErrorUnused: true,
+		Result:      &groups,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if err := decoder.Decode(raw); err != nil {
 		return nil, fmt.Errorf("%q: %w", groupsKey, err)
 	}
 
@@ -528,7 +558,7 @@ func decodeGroups(raw any, set bool) ([]Group, error) {
 			continue
 		}
 
-		if group.Name == reservedGroupName {
+		if strings.EqualFold(group.Name, reservedGroupName) {
 			errs = append(errs, fmt.Errorf("%s[%d]: name %q is reserved for the dependencies matching no group", groupsKey, i, reservedGroupName))
 			continue
 		}
@@ -551,7 +581,7 @@ func validateVariantName(name string, names map[string]bool) error {
 	case name == "":
 		return errors.New(`"name" is required`)
 	case !variantNameRegex.MatchString(name):
-		return fmt.Errorf("name %q must start with a letter or a digit, and only contain letters, digits, \".\", \"_\" and \"-\"", name)
+		return fmt.Errorf("name %q must start with a letter or a digit, and only contain letters, digits, \".\" and \"-\"", name)
 	case names[name]:
 		return fmt.Errorf("name %q is used more than once", name)
 	}
