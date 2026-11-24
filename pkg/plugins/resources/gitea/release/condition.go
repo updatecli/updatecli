@@ -61,16 +61,14 @@ func (g *Gitea) releasesDisabled(ctx context.Context) bool {
 		return false
 	}
 
-	client := http.Client{
-		Transport: g.client.Client.Transport,
-		Timeout:   30 * time.Second,
-		// Follow repository renames without sending the token to another forge.
-		CheckRedirect: func(next *http.Request, via []*http.Request) error {
-			if next.URL.Scheme != repoURL.Scheme || next.URL.Host != repoURL.Host || len(via) >= 10 {
-				return http.ErrUseLastResponse
-			}
-			return nil
-		},
+	client := *g.client.Client
+	client.Timeout = 30 * time.Second
+	// Follow repository renames without sending the token to another forge.
+	client.CheckRedirect = func(next *http.Request, via []*http.Request) error {
+		if next.URL.Scheme != repoURL.Scheme || next.URL.Host != repoURL.Host || len(via) >= 10 {
+			return http.ErrUseLastResponse
+		}
+		return nil
 	}
 	resp, err := client.Do(req)
 	if err != nil {
