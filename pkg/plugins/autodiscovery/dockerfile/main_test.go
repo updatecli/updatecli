@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/updatecli/updatecli/pkg/plugins/resources/dockerfile/simpletextparser"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
+	"go.yaml.in/yaml/v4"
 )
 
 func TestDiscoverManifests(t *testing.T) {
@@ -428,6 +429,24 @@ targets:
 		})
 	}
 
+}
+
+func TestDigestOnlyActionTitle(t *testing.T) {
+	dir := t.TempDir()
+	content := "ARG TAG=trixie-slim@sha256:" + strings.Repeat("0", 64) + "\nFROM debian:${TAG}\n"
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "Dockerfile"), []byte(content), 0o600))
+
+	dockerfile, err := New(Spec{}, dir, "", "pr")
+	require.NoError(t, err)
+	manifests, err := dockerfile.DiscoverManifests()
+	require.NoError(t, err)
+	require.Len(t, manifests, 1)
+
+	var manifest struct {
+		Actions map[string]struct{ Title string }
+	}
+	require.NoError(t, yaml.Unmarshal(manifests[0], &manifest))
+	assert.Equal(t, `deps: update Docker image "debian" digest`, manifest.Actions["pr"].Title)
 }
 
 // TestGeneratedFromTargetsUpdateOnlyTheirOwnLine feeds the matchers produced by
