@@ -215,6 +215,43 @@ func (f *Filter) Matches(versions []string) bool {
 	return err == nil
 }
 
+// Rank returns at most limit versions accepted by the filter, in order of preference: the version
+// Search returns, then the one it returns once the first is removed, and so on. It's meant for
+// resources checking each version in turn, such as against an age filter. Like Search, it logs the
+// pattern it searches for, but only once.
+//
+// It returns an error when the filter accepts no version at all. Running out of versions after the
+// first one isn't an error.
+func (f *Filter) Rank(versions []string, limit int) ([]Version, error) {
+	log.Infof("Searching for versions matching pattern %q", f.Pattern)
+
+	versions = slices.Clone(versions)
+
+	var ranked []Version
+	for len(ranked) < limit {
+		found, err := f.search(versions)
+		if err != nil {
+			if len(ranked) == 0 {
+				return nil, err
+			}
+			break
+		}
+
+		candidate := found.GetVersion()
+		if candidate == "" {
+			if len(ranked) == 0 {
+				return nil, &ErrNoVersionFoundForPattern{Pattern: f.Pattern}
+			}
+			break
+		}
+
+		ranked = append(ranked, found)
+		versions = slices.DeleteFunc(versions, func(v string) bool { return v == candidate })
+	}
+
+	return ranked, nil
+}
+
 // search returns the version matching the filter among versions.
 func (f *Filter) search(versions []string) (Version, error) {
 	foundVersion := Version{}
