@@ -60,6 +60,7 @@ type VariantSpec struct {
 	//     so it waits for the whole pull request: one pending minor update holds back every major update of that crawler.
 	//     An update is pending while its pull request is open or, without an action, while its working branch exists.
 	//     Tracks are run in the order they are listed.
+	//   * a track with "wait: false" never waits, but later tracks still wait for it.
 	//   * the version filters of the tracks should not overlap, for example "minor" then "majoronly".
 	//     Tracks setting only "age" share the crawler version filter, so they overlap:
 	//     with "allowdowngrade", one track may undo the updates of another.
@@ -80,6 +81,11 @@ type VariantSpec struct {
 	//         pattern: majoronly
 	//       age:
 	//         minimum: 14d
+	//     - name: lts
+	//       wait: false
+	//       versionfilter:
+	//         kind: regex
+	//         pattern: '^1\.'
 	//   ```
 	//
 	Tracks []Track `yaml:",omitempty"`
@@ -134,6 +140,16 @@ type Track struct {
 	//   * it's only accepted by crawlers supporting "age".
 	//
 	Age *age.AutodiscoverySpec `yaml:",omitempty"`
+	// "wait" defines whether the track waits while an earlier track still has a pending update.
+	//
+	// default:
+	//   true
+	//
+	// remark:
+	//   * a track with "wait: false" proposes its updates at once, but later tracks still wait for it.
+	//   * it has no effect on the first track, which never waits.
+	//
+	Wait *bool `yaml:",omitempty"`
 }
 
 // Group defines dependencies updated together.
@@ -160,6 +176,8 @@ type Variant struct {
 	Track string
 	// Rank is the position of the track in "tracks".
 	Rank int
+	// NoWait is set for a track with "wait: false", which never waits for earlier tracks.
+	NoWait bool
 	// GroupBy is the grouping used for the pipelines of this variant.
 	GroupBy GroupBy
 }
@@ -270,6 +288,7 @@ func expandCrawlerSpec(kind string, spec any, groupBy GroupBy) ([]crawlerVariant
 					Group:   group.Name,
 					Track:   track.Name,
 					Rank:    rank,
+					NoWait:  track.Wait != nil && !*track.Wait,
 					GroupBy: GROUPBYALL,
 				},
 			})
@@ -287,6 +306,7 @@ func expandCrawlerSpec(kind string, spec any, groupBy GroupBy) ([]crawlerVariant
 			variant: Variant{
 				Track:   track.Name,
 				Rank:    rank,
+				NoWait:  track.Wait != nil && !*track.Wait,
 				GroupBy: groupBy,
 			},
 		})

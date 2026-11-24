@@ -19,7 +19,7 @@ import (
 // or its pull request from a previous run is still open.
 // pending caches, for the whole run, the lookups that succeeded and the failures already warned about.
 func (e *Engine) waitingTrack(ctx context.Context, p *pipeline.Pipeline, pending map[string]bool) string {
-	if p.Gate == nil || p.Gate.Rank == 0 {
+	if p.Gate == nil || p.Gate.Rank == 0 || p.Gate.NoWait {
 		return ""
 	}
 

@@ -138,9 +138,10 @@ func variantGate(parentManifestID, crawlerKind string, variant autodiscovery.Var
 	}
 
 	return &pipeline.Gate{
-		Key:   key,
-		Rank:  variant.Rank,
-		Track: variant.Track,
+		Key:    key,
+		Rank:   variant.Rank,
+		Track:  variant.Track,
+		NoWait: variant.NoWait,
 	}
 }
 

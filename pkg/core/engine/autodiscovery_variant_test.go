@@ -42,6 +42,11 @@ func TestVariantHelpers(t *testing.T) {
 	assert.Equal(t,
 		&pipeline.Gate{Key: "m/golang/aws", Rank: 0, Track: "minor"},
 		variantGate("m", "golang", grouped, autodiscovery.GROUPBYALL, "deps(go): bump module x"))
+
+	noWait := autodiscovery.Variant{Track: "lts", Rank: 2, NoWait: true, GroupBy: autodiscovery.GROUPBYALL}
+	assert.Equal(t,
+		&pipeline.Gate{Key: "m/golang/default", Rank: 2, Track: "lts", NoWait: true},
+		variantGate("m", "golang", noWait, autodiscovery.GROUPBYALL, "x"))
 }
 
 func TestGeneratedActionConfig(t *testing.T) {
