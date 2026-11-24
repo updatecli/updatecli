@@ -50,7 +50,7 @@ func TestOrderPipelines(t *testing.T) {
 			expectedOrder: []string{"first", "second", "app"},
 		},
 		{
-			name: "runs versionfilter variants in versionfilters order",
+			name: "runs track variants in tracks order",
 			engine: Engine{
 				Pipelines: []*pipeline.Pipeline{
 					newGatedPipelineForOrderTest("major", "debian", 1),
@@ -63,7 +63,7 @@ func TestOrderPipelines(t *testing.T) {
 			expectedOrder: []string{"base", "other-major", "patch-before-minor", "minor", "major"},
 		},
 		{
-			name: "fails when dependson contradicts the versionfilters order",
+			name: "fails when dependson contradicts the tracks order",
 			engine: Engine{
 				Pipelines: []*pipeline.Pipeline{
 					newGatedPipelineForOrderTest("minor", "debian", 0, "major"),
@@ -168,9 +168,9 @@ func newLegacyPipelineForOrderTest(name, seed string) *pipeline.Pipeline {
 func newGatedPipelineForOrderTest(name, gateKey string, rank int, dependsOn ...string) *pipeline.Pipeline {
 	p := newPipelineForOrderTest(name, name, dependsOn)
 	p.Gate = &pipeline.Gate{
-		Key:           gateKey,
-		Rank:          rank,
-		VersionFilter: name,
+		Key:   gateKey,
+		Rank:  rank,
+		Track: name,
 	}
 
 	return p

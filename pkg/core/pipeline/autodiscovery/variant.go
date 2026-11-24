@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/go-viper/mapstructure/v2"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
@@ -19,53 +20,68 @@ const (
 	// reservedGroupName names, in pipeline IDs, the dependencies matching no group.
 	reservedGroupName = "default"
 
-	versionFiltersKey = "versionfilters"
-	groupsKey         = "groups"
-	versionFilterKey  = "versionfilter"
-	onlyKey           = "only"
-	ignoreKey         = "ignore"
+	tracksKey        = "tracks"
+	groupsKey        = "groups"
+	nameKey          = "name"
+	versionFilterKey = "versionfilter"
+	ageKey           = "age"
+	onlyKey          = "only"
+	ignoreKey        = "ignore"
 )
 
 var (
 	// variantNameRegex restricts names to characters safe in a pipeline ID, a git branch and a label value.
 	variantNameRegex = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._-]*$`)
+
+	// trackSettingKeys are the crawler settings a track sets, in place of the crawler ones.
+	trackSettingKeys = []string{versionFilterKey, ageKey}
 )
 
 // VariantSpec holds the settings, shared by every crawler, that split one crawler into several variants.
 type VariantSpec struct {
-	// "versionfilters" defines an ordered list of version filters.
-	// The crawler runs once per entry, and each entry gets its own pipelines.
+	// "tracks" defines an ordered list of tracks, each one choosing versions its own way.
+	// The crawler runs once per track, and each track gets its own pipelines.
 	//
 	// default:
-	//   empty, the crawler runs once with its own "versionfilter".
+	//   empty, the crawler runs once with its own settings.
 	//
 	// remark:
-	//   * each entry accepts every "versionfilter" setting, plus a required "name".
+	//   * each track requires a "name", and sets "versionfilter", "age" or both.
+	//   * a setting used by a track can't also be set on the crawler,
+	//     so a track without it uses the crawler default.
+	//   * "age" is only accepted by crawlers supporting it.
 	//   * the name is added to the generated pipeline IDs and action titles,
-	//     and set as the "updatecli.io/versionfilter" label, so "--labels updatecli.io/versionfilter:major" selects them.
-	//   * an entry waits while an earlier entry still has a pending update,
+	//     and set as the "updatecli.io/track" label, so "--labels updatecli.io/track:major" selects them.
+	//   * a track waits while an earlier track still has a pending update,
 	//     so a major update is proposed once no minor update is pending.
 	//     With "groupby: individual", it waits for the same dependency.
 	//     With "groupby: all", or in a group, the dependencies share one pull request per crawler,
 	//     so it waits for the whole pull request: one pending minor update holds back every major update of that crawler.
 	//     An update is pending while its pull request is open or, without an action, while its working branch exists.
-	//     Entries are run in the order they are listed.
-	//   * the filters should not overlap, for example "minor" then "majoronly".
-	//   * it can't be combined with "versionfilter".
+	//     Tracks are run in the order they are listed.
+	//   * the version filters of the tracks should not overlap, for example "minor" then "majoronly".
+	//     Tracks setting only "age" share the crawler version filter, so they overlap:
+	//     with "allowdowngrade", one track may undo the updates of another.
 	//   * it isn't supported by WASM plugins.
 	//
 	// example:
 	//   ```
-	//   versionfilters:
+	//   tracks:
 	//     - name: minor
-	//       kind: semver
-	//       pattern: minor
+	//       versionfilter:
+	//         kind: semver
+	//         pattern: minor
+	//       age:
+	//         minimum: 3d
 	//     - name: major
-	//       kind: semver
-	//       pattern: majoronly
+	//       versionfilter:
+	//         kind: semver
+	//         pattern: majoronly
+	//       age:
+	//         minimum: 14d
 	//   ```
 	//
-	VersionFilters []NamedVersionFilter `yaml:",omitempty"`
+	Tracks []Track `yaml:",omitempty"`
 	// "groups" defines dependencies updated together, in one pipeline per group.
 	//
 	// default:
@@ -94,15 +110,29 @@ type VariantSpec struct {
 	Groups []Group `yaml:",omitempty"`
 }
 
-// NamedVersionFilter is a version filter with a name.
-type NamedVersionFilter struct {
-	// "name" identifies the version filter in the generated pipelines.
+// Track defines how one variant of a crawler chooses versions.
+type Track struct {
+	// "name" identifies the track in the generated pipelines.
 	//
 	// remark:
 	//   * it must be unique, start with a letter or a digit, and only contain letters, digits, ".", "_" and "-".
 	//
-	Name           string `yaml:",omitempty" jsonschema:"required"`
-	version.Filter `yaml:",inline" mapstructure:",squash"`
+	Name string `yaml:",omitempty" jsonschema:"required"`
+	// "versionfilter" defines the version filter used by the track, as the crawler "versionfilter" does.
+	//
+	// default:
+	//   the crawler default version filter.
+	//
+	VersionFilter *version.Filter `yaml:",omitempty"`
+	// "age" defines the release age accepted by the track, as the crawler "age" does.
+	//
+	// default:
+	//   the crawler default age.
+	//
+	// remark:
+	//   * it's only accepted by crawlers supporting "age".
+	//
+	Age *age.AutodiscoverySpec `yaml:",omitempty"`
 }
 
 // Group defines dependencies updated together.
@@ -125,17 +155,17 @@ type Group struct {
 type Variant struct {
 	// Group is the group name, empty for dependencies matching no group.
 	Group string
-	// VersionFilter is the version filter name, empty when "versionfilters" isn't set.
-	VersionFilter string
-	// Rank is the position of the version filter in "versionfilters".
+	// Track is the track name, empty when "tracks" isn't set.
+	Track string
+	// Rank is the position of the track in "tracks".
 	Rank int
 	// GroupBy is the grouping used for the pipelines of this variant.
 	GroupBy GroupBy
 }
 
-// IsDefault reports whether the variant covers the whole crawler, as without "versionfilters" and "groups".
+// IsDefault reports whether the variant covers the whole crawler, as without "tracks" and "groups".
 func (v Variant) IsDefault() bool {
-	return v.Group == "" && v.VersionFilter == ""
+	return v.Group == "" && v.Track == ""
 }
 
 // crawlerVariant is a crawler spec ready for one crawler run.
@@ -144,11 +174,11 @@ type crawlerVariant struct {
 	variant Variant
 }
 
-// expandCrawlerSpec splits a crawler spec into one spec per group and version filter.
+// expandCrawlerSpec splits a crawler spec into one spec per group and track.
 //
-// The crawler code is untouched: "versionfilters" and "groups" are removed from the spec,
-// and the keys every crawler already supports, "versionfilter", "only" and "ignore", are set instead.
-// Variants are returned ordered by version filter rank, so earlier version filters run first.
+// The crawler code is untouched: "tracks" and "groups" are removed from the spec,
+// and the crawler settings they map to, "versionfilter", "age", "only" and "ignore", are set instead.
+// Variants are returned ordered by track rank, so earlier tracks run first.
 func expandCrawlerSpec(kind string, spec any, groupBy GroupBy) ([]crawlerVariant, error) {
 	defaultVariant := []crawlerVariant{{spec: spec, variant: Variant{GroupBy: groupBy}}}
 
@@ -158,25 +188,31 @@ func expandCrawlerSpec(kind string, spec any, groupBy GroupBy) ([]crawlerVariant
 	}
 
 	base := specMap
-	rawFilters, hasFilters := popKey(base, versionFiltersKey)
+	rawTracks, hasTracks := popKey(base, tracksKey)
 	rawGroups, hasGroups := popKey(base, groupsKey)
 
-	if !hasFilters && !hasGroups {
+	if !hasTracks && !hasGroups {
 		return defaultVariant, nil
 	}
 
 	if kind == pluginCrawlerKind || strings.HasSuffix(kind, ".wasm") {
-		return nil, fmt.Errorf("%q and %q aren't supported by WASM plugins", versionFiltersKey, groupsKey)
+		return nil, fmt.Errorf("%q and %q aren't supported by WASM plugins", tracksKey, groupsKey)
 	}
 
-	filters, rawFilterSpecs, err := decodeVersionFilters(rawFilters, hasFilters)
+	tracks, trackSettings, err := decodeTracks(kind, rawTracks, hasTracks)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(filters) > 0 {
-		if _, ok := lookupKey(base, versionFilterKey); ok {
-			return nil, fmt.Errorf("%q and %q are mutually exclusive", versionFilterKey, versionFiltersKey)
+	for _, key := range trackSettingKeys {
+		if _, ok := lookupKey(base, key); !ok {
+			continue
+		}
+
+		for i, settings := range trackSettings {
+			if _, ok := settings[key]; ok {
+				return nil, fmt.Errorf("%q is set both on the crawler and in track %q: set it in each track instead", key, tracks[i].Name)
+			}
 		}
 	}
 
@@ -203,18 +239,18 @@ func expandCrawlerSpec(kind string, spec any, groupBy GroupBy) ([]crawlerVariant
 		}
 	}
 
-	// Without "versionfilters", every variant keeps the crawler's own "versionfilter".
-	if len(filters) == 0 {
-		filters = []NamedVersionFilter{{}}
-		rawFilterSpecs = []map[string]any{nil}
+	// Without "tracks", every variant keeps the crawler's own settings.
+	if len(tracks) == 0 {
+		tracks = []Track{{}}
+		trackSettings = []map[string]any{nil}
 	}
 
 	var variants []crawlerVariant
 
-	for rank, filter := range filters {
-		withFilter := func(m map[string]any) map[string]any {
-			if rawFilterSpecs[rank] != nil {
-				setKey(m, versionFilterKey, rawFilterSpecs[rank])
+	for rank, track := range tracks {
+		withTrack := func(m map[string]any) map[string]any {
+			for key, value := range trackSettings[rank] {
+				setKey(m, key, value)
 			}
 			return m
 		}
@@ -223,24 +259,24 @@ func expandCrawlerSpec(kind string, spec any, groupBy GroupBy) ([]crawlerVariant
 		claimed := append([]any{}, parentIgnore...)
 
 		for i, group := range groups {
-			m := withFilter(maps.Clone(base))
+			m := withTrack(maps.Clone(base))
 			setKey(m, onlyKey, append([]any{}, groupOnly[i]...))
 			setKey(m, ignoreKey, append([]any{}, claimed...))
 
 			variants = append(variants, crawlerVariant{
 				spec: m,
 				variant: Variant{
-					Group:         group.Name,
-					VersionFilter: filter.Name,
-					Rank:          rank,
-					GroupBy:       GROUPBYALL,
+					Group:   group.Name,
+					Track:   track.Name,
+					Rank:    rank,
+					GroupBy: GROUPBYALL,
 				},
 			})
 
 			claimed = append(claimed, group.Only...)
 		}
 
-		m := withFilter(maps.Clone(base))
+		m := withTrack(maps.Clone(base))
 		if len(groups) > 0 {
 			setKey(m, ignoreKey, claimed)
 		}
@@ -248,9 +284,9 @@ func expandCrawlerSpec(kind string, spec any, groupBy GroupBy) ([]crawlerVariant
 		variants = append(variants, crawlerVariant{
 			spec: m,
 			variant: Variant{
-				VersionFilter: filter.Name,
-				Rank:          rank,
-				GroupBy:       groupBy,
+				Track:   track.Name,
+				Rank:    rank,
+				GroupBy: groupBy,
 			},
 		})
 	}
@@ -312,67 +348,160 @@ func mergeRules(a, b map[string]any) (map[string]any, bool) {
 	return merged, true
 }
 
-// decodeVersionFilters decodes and validates "versionfilters".
-// It also returns each entry without its name, as the crawler expects its "versionfilter".
-func decodeVersionFilters(raw any, set bool) ([]NamedVersionFilter, []map[string]any, error) {
+// decodeTracks decodes and validates "tracks".
+// It also returns, for each track, the crawler settings it sets, keyed by their lowercase name.
+func decodeTracks(kind string, raw any, set bool) ([]Track, []map[string]any, error) {
 	if !set {
 		return nil, nil, nil
 	}
 
 	rawList, ok := asList(raw)
 	if !ok {
-		return nil, nil, fmt.Errorf("%q must be a list", versionFiltersKey)
+		return nil, nil, fmt.Errorf("%q must be a list", tracksKey)
 	}
 
 	if len(rawList) == 0 {
-		return nil, nil, fmt.Errorf("%q must not be empty", versionFiltersKey)
+		return nil, nil, fmt.Errorf("%q must not be empty", tracksKey)
 	}
 
-	filters := make([]NamedVersionFilter, 0, len(rawList))
-	rawSpecs := make([]map[string]any, 0, len(rawList))
+	tracks := make([]Track, 0, len(rawList))
+	settings := make([]map[string]any, 0, len(rawList))
 	names := map[string]bool{}
 
 	var errs []error
 	for i, item := range rawList {
-		itemMap, ok := asMap(item)
-		if !ok {
-			errs = append(errs, fmt.Errorf("%s[%d]: must be a map", versionFiltersKey, i))
-			continue
-		}
-
-		var filter NamedVersionFilter
-		if err := mapstructure.Decode(itemMap, &filter); err != nil {
-			errs = append(errs, fmt.Errorf("%s[%d]: %w", versionFiltersKey, i, err))
-			continue
-		}
-
-		if err := validateVariantName(filter.Name, names); err != nil {
-			errs = append(errs, fmt.Errorf("%s[%d]: %w", versionFiltersKey, i, err))
-			continue
-		}
-
-		// The crawler applies the defaults, such as kind "latest", so only validate them here.
-		initialized, err := filter.Init()
-		if err == nil {
-			err = initialized.Validate()
-		}
+		track, trackSettings, err := decodeTrack(kind, item, names)
 		if err != nil {
-			errs = append(errs, fmt.Errorf("%s[%d] %q: %w", versionFiltersKey, i, filter.Name, err))
+			if track.Name != "" {
+				errs = append(errs, fmt.Errorf("%s[%d] %q: %w", tracksKey, i, track.Name, err))
+			} else {
+				errs = append(errs, fmt.Errorf("%s[%d]: %w", tracksKey, i, err))
+			}
 			continue
 		}
 
-		rawSpec := itemMap
-		popKey(rawSpec, "name")
-
-		filters = append(filters, filter)
-		rawSpecs = append(rawSpecs, rawSpec)
+		tracks = append(tracks, track)
+		settings = append(settings, trackSettings)
 	}
 
 	if len(errs) > 0 {
 		return nil, nil, errors.Join(errs...)
 	}
 
-	return filters, rawSpecs, nil
+	return tracks, settings, nil
+}
+
+// decodeTrack decodes and validates one track, and records its name in names.
+// The returned track holds its name, when decoded, even on error.
+func decodeTrack(kind string, item any, names map[string]bool) (Track, map[string]any, error) {
+	var track Track
+
+	itemMap, ok := asMap(item)
+	if !ok {
+		return track, nil, errors.New("must be a map")
+	}
+
+	// Reject unknown settings, as the crawler would otherwise ignore a mistyped or unsupported one.
+	decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
+		ErrorUnused: true,
+		Result:      &track,
+	})
+	if err != nil {
+		return track, nil, err
+	}
+
+	if err := decoder.Decode(itemMap); err != nil {
+		return track, nil, err
+	}
+
+	if err := validateVariantName(track.Name, names); err != nil {
+		return Track{}, nil, err
+	}
+
+	// A setting written without a value, such as "versionfilter:", sets nothing.
+	settings := map[string]any{}
+	for _, key := range trackSettingKeys {
+		if value, ok := lookupKey(itemMap, key); ok && value != nil {
+			settings[key] = value
+		}
+	}
+
+	if len(settings) == 0 {
+		return track, nil, fmt.Errorf("must set %q or %q", versionFilterKey, ageKey)
+	}
+
+	for key := range settings {
+		if !crawlerSupports(kind, key) {
+			return track, nil, fmt.Errorf("%q isn't supported by the %q crawler", key, kind)
+		}
+	}
+
+	if track.VersionFilter != nil {
+		// The crawler applies the defaults, such as kind "latest", so only validate them here.
+		initialized, err := track.VersionFilter.Init()
+		if err == nil {
+			err = initialized.Validate()
+		}
+		if err != nil {
+			return track, nil, fmt.Errorf("%s: %w", versionFilterKey, err)
+		}
+	}
+
+	if track.Age != nil {
+		if err := track.Age.Validate(); err != nil {
+			return track, nil, fmt.Errorf("%s: %w", ageKey, err)
+		}
+	}
+
+	return track, settings, nil
+}
+
+// crawlerSupports reports whether the spec of the crawler kind has a setting named key.
+// Unknown kinds, and specs that aren't structs, are reported as supporting it, leaving the check to the crawler.
+func crawlerSupports(kind, key string) bool {
+	spec, ok := GetAutodiscoverySpecsMapping()[kind]
+	if !ok {
+		return true
+	}
+
+	return structHasSetting(reflect.TypeOf(spec), key)
+}
+
+// structHasSetting reports whether a struct type has a field decoded from key, as mapstructure matches them.
+func structHasSetting(t reflect.Type, key string) bool {
+	for t != nil && t.Kind() == reflect.Pointer {
+		t = t.Elem()
+	}
+
+	if t == nil || t.Kind() != reflect.Struct {
+		return true
+	}
+
+	for i := range t.NumField() {
+		field := t.Field(i)
+		if !field.IsExported() {
+			continue
+		}
+
+		tagName, tagOptions, _ := strings.Cut(field.Tag.Get("mapstructure"), ",")
+		if field.Anonymous && tagName == "" && strings.Contains(tagOptions, "squash") {
+			if structHasSetting(field.Type, key) {
+				return true
+			}
+			continue
+		}
+
+		name := field.Name
+		if tagName != "" {
+			name = tagName
+		}
+
+		if strings.EqualFold(name, key) {
+			return true
+		}
+	}
+
+	return false
 }
 
 // decodeGroups decodes and validates "groups".

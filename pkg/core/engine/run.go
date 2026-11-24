@@ -56,7 +56,7 @@ func (e *Engine) Run(ctx context.Context) (err error) {
 		if err != nil {
 			pipeline.Report.Result = result.FAILURE
 			pipeline.Report.Err = err.Error()
-		} else if reason := e.waitingVersionFilter(ctx, pipeline, pendingUpdates); reason != "" {
+		} else if reason := e.waitingTrack(ctx, pipeline, pendingUpdates); reason != "" {
 			skipWaitingPipeline(pipeline, reason)
 		} else {
 			err = pipeline.Run(ctx)

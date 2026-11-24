@@ -49,7 +49,7 @@ type Pipeline struct {
 	mu     sync.Mutex
 	// CrawlerKind identifies the autodiscovery crawler that generated this pipeline (empty for user-defined pipelines).
 	CrawlerKind string
-	// Gate orders this pipeline against the other pipelines generated from the same autodiscovery "versionfilters".
+	// Gate orders this pipeline against the other pipelines generated from the same autodiscovery "tracks".
 	// It's nil for every other pipeline.
 	Gate *Gate
 	// SourceCache is a shared in-memory cache for source execution results,

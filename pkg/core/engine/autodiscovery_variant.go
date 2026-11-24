@@ -22,27 +22,27 @@ const (
 	autodiscoveryLabel = "updatecli.io/autodiscovery"
 	// parentLabel holds the pipeline ID of the autodiscovery manifest.
 	parentLabel = "updatecli.io/parent"
-	// groupLabel and versionFilterLabel hold the group and version filter names, when set.
-	groupLabel         = "updatecli.io/group"
-	versionFilterLabel = "updatecli.io/versionfilter"
+	// groupLabel and trackLabel hold the group and track names, when set.
+	groupLabel = "updatecli.io/group"
+	trackLabel = "updatecli.io/track"
 )
 
 // variantPipelineID returns the pipeline ID shared by the pipelines generated for a variant.
-// Without "groups" and "versionfilters" it's the autodiscovery pipeline ID, as before they existed.
+// Without "groups" and "tracks" it's the autodiscovery pipeline ID, as before they existed.
 func variantPipelineID(parentID, crawlerKind string, variant autodiscovery.Variant) string {
 	if variant.IsDefault() {
 		return parentID
 	}
 
 	parts := []string{parentID, variantKindSegment(crawlerKind), variantGroup(variant)}
-	if variant.VersionFilter != "" {
-		parts = append(parts, variant.VersionFilter)
+	if variant.Track != "" {
+		parts = append(parts, variant.Track)
 	}
 
 	return strings.Join(parts, "/")
 }
 
-// autodiscoveryLabels returns the labels identifying the crawler, parent pipeline, group and version filter of a generated pipeline.
+// autodiscoveryLabels returns the labels identifying the crawler, parent pipeline, group and track of a generated pipeline.
 func autodiscoveryLabels(parentID, crawlerKind string, variant autodiscovery.Variant) map[string]string {
 	labels := map[string]string{}
 
@@ -58,8 +58,8 @@ func autodiscoveryLabels(parentID, crawlerKind string, variant autodiscovery.Var
 		labels[groupLabel] = variant.Group
 	}
 
-	if variant.VersionFilter != "" {
-		labels[versionFilterLabel] = variant.VersionFilter
+	if variant.Track != "" {
+		labels[trackLabel] = variant.Track
 	}
 
 	return labels
@@ -107,8 +107,8 @@ func variantTitleSuffix(crawlerKind string, variant autodiscovery.Variant) strin
 		parts = append(parts, variant.Group)
 	}
 
-	if variant.VersionFilter != "" {
-		parts = append(parts, variant.VersionFilter)
+	if variant.Track != "" {
+		parts = append(parts, variant.Track)
 	}
 
 	if len(parts) == 0 {
@@ -118,12 +118,12 @@ func variantTitleSuffix(crawlerKind string, variant autodiscovery.Variant) strin
 	return fmt.Sprintf("(%s)", strings.Join(parts, ", "))
 }
 
-// variantGate returns how a generated pipeline is ordered against the other version filters, or nil without "versionfilters".
+// variantGate returns how a generated pipeline is ordered against the other tracks, or nil without "tracks".
 //
 // Grouped pipelines share one pull request, so they wait for the whole group.
-// Individual pipelines wait for the same dependency, which crawlers name the same way for every version filter.
+// Individual pipelines wait for the same dependency, which crawlers name the same way for every track.
 func variantGate(parentManifestID, crawlerKind string, variant autodiscovery.Variant, groupBy autodiscovery.GroupBy, manifestName string) *pipeline.Gate {
-	if variant.VersionFilter == "" {
+	if variant.Track == "" {
 		return nil
 	}
 
@@ -133,9 +133,9 @@ func variantGate(parentManifestID, crawlerKind string, variant autodiscovery.Var
 	}
 
 	return &pipeline.Gate{
-		Key:           key,
-		Rank:          variant.Rank,
-		VersionFilter: variant.VersionFilter,
+		Key:   key,
+		Rank:  variant.Rank,
+		Track: variant.Track,
 	}
 }
 
@@ -143,7 +143,7 @@ func variantGate(parentManifestID, crawlerKind string, variant autodiscovery.Var
 //
 // The autodiscovery action takes precedence over the action set by the crawler.
 // Pipelines grouped with "groupby: all" share one pull request, so they need a stable title: groupedTitle.
-// The group and version filter are added to the title, so pull requests updating the same dependencies can be told apart.
+// The group and track are added to the title, so pull requests updating the same dependencies can be told apart.
 // Without any title, it's added to manifestName, which is otherwise the title used for the pull request.
 func generatedActionConfig(autodiscoveryAction, crawlerAction action.Config, crawlerKind string, variant autodiscovery.Variant, groupedTitle func() string, manifestName string) action.Config {
 	generated := autodiscoveryAction
@@ -168,8 +168,8 @@ func generatedActionConfig(autodiscoveryAction, crawlerAction action.Config, cra
 
 // variantKindSegment returns the crawler kind as one segment of a pipeline ID or gate key.
 //
-// Kinds such as "golang/gomod" contain a "/", which group and version filter names can't,
-// so without this "golang" with group "gomod" and filter "aws" would share an ID with "golang/gomod" with group "aws".
+// Kinds such as "golang/gomod" contain a "/", which group and track names can't,
+// so without this "golang" with group "gomod" and track "aws" would share an ID with "golang/gomod" with group "aws".
 // No crawler kind contains a "-", and WASM plugins don't support variants, so two kinds never get the same segment.
 func variantKindSegment(crawlerKind string) string {
 	return strings.ReplaceAll(crawlerKind, "/", "-")

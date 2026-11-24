@@ -123,8 +123,8 @@ func (e *Engine) OrderPipelines() error {
 	return nil
 }
 
-// addGateDependencies makes each pipeline generated from autodiscovery "versionfilters"
-// run after the pipelines sharing its gate key with an earlier version filter,
+// addGateDependencies makes each pipeline generated from autodiscovery "tracks"
+// run after the pipelines sharing its gate key with an earlier track,
 // so the gate sees their result before deciding whether the pipeline waits.
 func addGateDependencies(pipelines []*pipeline.Pipeline, successors [][]int, indegree []int) {
 	indicesByGateKey := map[string][]int{}
