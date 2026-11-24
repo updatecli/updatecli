@@ -63,6 +63,26 @@ func TestOrderPipelines(t *testing.T) {
 			expectedOrder: []string{"base", "other-major", "patch-before-minor", "minor", "major"},
 		},
 		{
+			name: "doesn't order a track that never waits after earlier tracks",
+			engine: Engine{
+				Pipelines: []*pipeline.Pipeline{
+					newGatedPipelineForOrderTest("minor", "debian", 0, "lts"),
+					newNoWaitPipelineForOrderTest("lts", "debian", 1),
+				},
+			},
+			expectedOrder: []string{"lts", "minor"},
+		},
+		{
+			name: "orders later tracks after a track that never waits",
+			engine: Engine{
+				Pipelines: []*pipeline.Pipeline{
+					newGatedPipelineForOrderTest("major", "debian", 2),
+					newNoWaitPipelineForOrderTest("lts", "debian", 1),
+				},
+			},
+			expectedOrder: []string{"lts", "major"},
+		},
+		{
 			name: "fails when dependson contradicts the tracks order",
 			engine: Engine{
 				Pipelines: []*pipeline.Pipeline{
@@ -163,6 +183,13 @@ func newLegacyPipelineForOrderTest(name, seed string) *pipeline.Pipeline {
 		Name:   name,
 		Config: cfg,
 	}
+}
+
+func newNoWaitPipelineForOrderTest(name, gateKey string, rank int, dependsOn ...string) *pipeline.Pipeline {
+	p := newGatedPipelineForOrderTest(name, gateKey, rank, dependsOn...)
+	p.Gate.NoWait = true
+
+	return p
 }
 
 func newGatedPipelineForOrderTest(name, gateKey string, rank int, dependsOn ...string) *pipeline.Pipeline {

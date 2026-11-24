@@ -215,6 +215,22 @@ func TestWaitingTrack(t *testing.T) {
 	}
 }
 
+func TestWaitingTrackNoWait(t *testing.T) {
+	minor := gatedPipeline("minor", "k", 0, "minor", result.ATTENTION, nil)
+	lts := gatedPipeline("lts", "k", 1, "lts", result.ATTENTION, nil)
+	lts.Gate.NoWait = true
+	major := gatedPipeline("major", "k", 2, "major", result.SKIPPED, nil)
+
+	e := Engine{Pipelines: []*pipeline.Pipeline{minor, lts, major}}
+
+	// A track that doesn't wait runs while an earlier track is pending.
+	assert.Empty(t, e.waitingTrack(context.Background(), lts, map[string]bool{}))
+
+	// Later tracks still wait for it.
+	e.Pipelines = []*pipeline.Pipeline{lts, major}
+	assert.Contains(t, e.waitingTrack(context.Background(), major, map[string]bool{}), `track "lts"`)
+}
+
 func TestWaitingTrackCachesRemoteLookups(t *testing.T) {
 	s := &mockGateScm{workingBranch: "updatecli_main_minor"}
 	earlier := gatedPipeline("minor", "k", 0, "minor", result.SUCCESS, s)

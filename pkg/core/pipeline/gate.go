@@ -11,6 +11,9 @@ type Gate struct {
 	Rank int
 	// Track is the name of the pipeline track.
 	Track string
+	// NoWait is set when the pipeline never waits for earlier tracks.
+	// Later tracks still wait for it.
+	NoWait bool
 	// Waiting is set when the pipeline was skipped during this run, waiting for an earlier track.
 	// A waiting pipeline never ran, so its actions are neither run nor cleaned up.
 	Waiting bool

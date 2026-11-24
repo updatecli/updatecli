@@ -16,9 +16,9 @@ func TestVariantHelpers(t *testing.T) {
 	plain := autodiscovery.Variant{GroupBy: autodiscovery.GROUPBYALL}
 
 	assert.Equal(t, "parent", variantPipelineID("parent", "golang", plain))
-	assert.Equal(t, "parent/golang/default/major", variantPipelineID("parent", "golang", individual))
-	assert.Equal(t, "parent/golang/aws/minor", variantPipelineID("parent", "golang", grouped))
-	assert.Equal(t, "parent/golang/aws", variantPipelineID("parent", "golang", groupOnly))
+	assert.Equal(t, "parent_golang_default_major", variantPipelineID("parent", "golang", individual))
+	assert.Equal(t, "parent_golang_aws_minor", variantPipelineID("parent", "golang", grouped))
+	assert.Equal(t, "parent_golang_aws", variantPipelineID("parent", "golang", groupOnly))
 
 	assert.Equal(t, map[string]string{"updatecli.io/autodiscovery": "golang", "updatecli.io/parent": "parent"}, autodiscoveryLabels("parent", "golang", plain))
 	assert.Equal(t, map[string]string{
@@ -42,6 +42,11 @@ func TestVariantHelpers(t *testing.T) {
 	assert.Equal(t,
 		&pipeline.Gate{Key: "m/golang/aws", Rank: 0, Track: "minor"},
 		variantGate("m", "golang", grouped, autodiscovery.GROUPBYALL, "deps(go): bump module x"))
+
+	noWait := autodiscovery.Variant{Track: "lts", Rank: 2, NoWait: true, GroupBy: autodiscovery.GROUPBYALL}
+	assert.Equal(t,
+		&pipeline.Gate{Key: "m/golang/default", Rank: 2, Track: "lts", NoWait: true},
+		variantGate("m", "golang", noWait, autodiscovery.GROUPBYALL, "x"))
 }
 
 func TestGeneratedActionConfig(t *testing.T) {
@@ -137,8 +142,8 @@ func TestVariantIDsDontCollideAcrossKinds(t *testing.T) {
 	golangID := variantPipelineID("parent", "golang", golangVariant)
 	gomodID := variantPipelineID("parent", "golang/gomod", gomodVariant)
 
-	assert.Equal(t, "parent/golang/gomod/aws", golangID)
-	assert.Equal(t, "parent/golang-gomod/aws", gomodID)
+	assert.Equal(t, "parent_golang_gomod_aws", golangID)
+	assert.Equal(t, "parent_golang-gomod_aws", gomodID)
 	assert.NotEqual(t, golangID, gomodID)
 
 	gomodFiltered := autodiscovery.Variant{Group: "aws", Track: "aws", GroupBy: autodiscovery.GROUPBYALL}
