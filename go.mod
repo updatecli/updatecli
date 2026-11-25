@@ -37,7 +37,7 @@ require (
 	github.com/goware/urlx v0.3.2
 	github.com/hashicorp/go-retryablehttp v0.7.8
 	github.com/hashicorp/hcl/v2 v2.25.0
-	github.com/hashicorp/terraform-registry-address v0.5.0
+	github.com/hashicorp/terraform-registry-address v0.5.1
 	github.com/heimdalr/dag v1.5.1
 	github.com/hexops/gotextdiff v1.0.3
 	github.com/invopop/jsonschema v0.14.0
