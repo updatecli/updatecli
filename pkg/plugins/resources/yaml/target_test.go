@@ -1373,6 +1373,118 @@ services:
 			wantedResult: true,
 		},
 		{
+			name: "Append to an aliased sequence holding an aliased entry does not duplicate the value (issue #11053)",
+			spec: Spec{
+				File:          "test.yaml",
+				Key:           "$.selected",
+				Value:         "c",
+				AppendToArray: true,
+			},
+			files: map[string]file{
+				"test.yaml": {
+					filePath:         "test.yaml",
+					originalFilePath: "test.yaml",
+				},
+			},
+			inputSourceValue: "c",
+			mockedContents: map[string]string{
+				"test.yaml": `item: &item c
+base: &base [*item]
+selected: *base
+`,
+			},
+			wantedContents: map[string]string{
+				"test.yaml": `item: &item c
+base: &base [*item]
+selected: *base
+`,
+			},
+			wantedResult: false,
+		},
+		{
+			name: "Append a distinct value to an aliased sequence holding an aliased entry keeps the alias in place (issue #11053)",
+			spec: Spec{
+				File:          "test.yaml",
+				Key:           "$.selected",
+				Value:         "d",
+				AppendToArray: true,
+			},
+			files: map[string]file{
+				"test.yaml": {
+					filePath:         "test.yaml",
+					originalFilePath: "test.yaml",
+				},
+			},
+			inputSourceValue: "d",
+			mockedContents: map[string]string{
+				"test.yaml": `item: &item c
+base: &base [*item]
+selected: *base
+`,
+			},
+			wantedContents: map[string]string{
+				"test.yaml": `item: &item c
+base: &base [*item, d]
+selected: *base
+`,
+			},
+			wantedResult: true,
+		},
+		{
+			name: "Append to a sequence holding a chained alias entry does not duplicate the value (issue #11053)",
+			spec: Spec{
+				File:          "test.yaml",
+				Key:           "$.selected",
+				Value:         "c",
+				AppendToArray: true,
+			},
+			files: map[string]file{
+				"test.yaml": {
+					filePath:         "test.yaml",
+					originalFilePath: "test.yaml",
+				},
+			},
+			inputSourceValue: "c",
+			mockedContents: map[string]string{
+				"test.yaml": `item: &item c
+ref: &ref
+  *item
+base: &base [*ref]
+selected: *base
+`,
+			},
+			wantedContents: map[string]string{
+				"test.yaml": `item: &item c
+ref: &ref *item
+base: &base [*ref]
+selected: *base
+`,
+			},
+			wantedResult: false,
+		},
+		{
+			name: "Append to a sequence holding an unresolved alias entry returns an error (issue #11053)",
+			spec: Spec{
+				File:          "test.yaml",
+				Key:           "$.selected",
+				Value:         "c",
+				AppendToArray: true,
+			},
+			files: map[string]file{
+				"test.yaml": {
+					filePath:         "test.yaml",
+					originalFilePath: "test.yaml",
+				},
+			},
+			inputSourceValue: "c",
+			mockedContents: map[string]string{
+				"test.yaml": `base: &base [*missing]
+selected: *base
+`,
+			},
+			wantedError: true,
+		},
+		{
 			name: "Anchors are scoped per document (issue #11053)",
 			spec: Spec{
 				File:  "test.yaml",

@@ -317,14 +317,28 @@ func replaceNode(doc *ast.DocumentNode, elements []pathElement, depth int, node 
 	return path.ReplaceWithNode(file, node)
 }
 
-// appendToSequence appends valueNode to seq unless the sequence already holds value.
+// appendToSequence appends value to seq unless the sequence already holds value.
 // It reports whether the sequence was modified.
-func appendToSequence(seq *ast.SequenceNode, value string, comment string) (bool, error) {
+func appendToSequence(seq *ast.SequenceNode, value string, comment string, docIndex *anchorIndex) (bool, error) {
 	for _, element := range seq.Values {
+		// Resolve alias and anchor entries only for comparison so alias nodes
+		// remain intact in the sequence.
+		candidate := element
+		if docIndex != nil {
+			resolved, _, err := docIndex.resolve(element)
+			if err != nil {
+				return false, err
+			}
+			candidate = resolved
+		}
+		if candidate == nil {
+			continue
+		}
+
 		// Compare the decoded value so that quoted and folded scalars are not
 		// mistaken for a different entry.
 		var decoded string
-		if err := goyaml.NodeToValue(element, &decoded); err != nil {
+		if err := goyaml.NodeToValue(candidate, &decoded); err != nil {
 			continue
 		}
 		if decoded == value {

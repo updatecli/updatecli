@@ -256,7 +256,7 @@ func (y Yaml) updateNode(yamlFile *ast.File, index int, doc *ast.DocumentNode, u
 	values := resolvedValues(resolved)
 
 	if y.spec.AppendToArray {
-		return y.appendResolvedSequences(values, key, valueToWrite, resultTarget, originFilePath, dryRun)
+		return y.appendResolvedSequences(values, key, valueToWrite, resultTarget, originFilePath, dryRun, docIndex)
 	}
 
 	oldVersion := matchedValues(values)
@@ -298,7 +298,7 @@ func (y Yaml) updateNode(yamlFile *ast.File, index int, doc *ast.DocumentNode, u
 
 // appendResolvedSequences appends valueToWrite to each sequence selected by key.
 // Sequences reached through several aliases of one anchor are appended to once.
-func (y Yaml) appendResolvedSequences(values []ast.Node, key, valueToWrite string, resultTarget *result.Target, originFilePath string, dryRun bool) (bool, error) {
+func (y Yaml) appendResolvedSequences(values []ast.Node, key, valueToWrite string, resultTarget *result.Target, originFilePath string, dryRun bool, docIndex *anchorIndex) (bool, error) {
 	sequences, err := appendTargetSequences(values, key, originFilePath)
 	if err != nil {
 		return false, err
@@ -312,7 +312,7 @@ func (y Yaml) appendResolvedSequences(values []ast.Node, key, valueToWrite strin
 		}
 		seen[sequence] = struct{}{}
 
-		sequenceAppended, err := appendToSequence(sequence, valueToWrite, y.spec.Comment)
+		sequenceAppended, err := appendToSequence(sequence, valueToWrite, y.spec.Comment, docIndex)
 		if err != nil {
 			return false, fmt.Errorf("appending to key %q from file %q: %w", key, originFilePath, err)
 		}
