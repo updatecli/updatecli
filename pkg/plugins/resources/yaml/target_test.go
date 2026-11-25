@@ -1820,6 +1820,56 @@ services:
 			},
 			wantedResult: true,
 		},
+		{
+			name: "Inline merge mapping without alias in flow style updates merged key",
+			spec: Spec{
+				File:  "test.yaml",
+				Key:   "$.service.image",
+				Value: "nginx:1.30",
+			},
+			files: map[string]file{
+				"test.yaml": {
+					filePath:         "test.yaml",
+					originalFilePath: "test.yaml",
+				},
+			},
+			inputSourceValue: "nginx:1.29",
+			mockedContents: map[string]string{
+				"test.yaml": "service: {<<: {image: nginx:1.29}}\n",
+			},
+			wantedContents: map[string]string{
+				"test.yaml": "service: {<<: {image: nginx:1.30}}\n",
+			},
+			wantedResult: true,
+		},
+		{
+			name: "Inline merge mapping without alias in block style updates merged key",
+			spec: Spec{
+				File:  "test.yaml",
+				Key:   "$.service.image",
+				Value: "nginx:1.30",
+			},
+			files: map[string]file{
+				"test.yaml": {
+					filePath:         "test.yaml",
+					originalFilePath: "test.yaml",
+				},
+			},
+			inputSourceValue: "nginx:1.29",
+			mockedContents: map[string]string{
+				"test.yaml": `service:
+  <<:
+    image: nginx:1.29
+`,
+			},
+			wantedContents: map[string]string{
+				"test.yaml": `service:
+  <<:
+    image: nginx:1.30
+`,
+			},
+			wantedResult: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

@@ -399,6 +399,7 @@ type anchorIndex struct {
 	aliasToAnchor map[*ast.AliasNode]*ast.AnchorNode
 	parents       map[ast.Node]nodeParent
 	hasAlias      bool
+	hasMergeKey   bool
 }
 
 // nodeParent is the slot that owns a node in the document tree.
@@ -434,6 +435,9 @@ func (w *anchorWalker) Visit(node ast.Node) ast.Visitor {
 	case *ast.DocumentNode:
 		w.index.setParent(n.Body, nodeParent{document: n})
 	case *ast.MappingValueNode:
+		if n.Key != nil && n.Key.IsMergeKey() {
+			w.index.hasMergeKey = true
+		}
 		w.index.setParent(n.Value, nodeParent{mapping: n})
 	case *ast.SequenceNode:
 		for i, value := range n.Values {
@@ -499,7 +503,7 @@ func locateDocumentTargets(doc *ast.DocumentNode, urlPath *goyaml.Path, key stri
 		}
 	}
 
-	if (filterErr != nil || len(matched) == 0 || missing > 0 || hasRecursiveSelector(key)) && idx != nil && idx.hasAlias {
+	if (filterErr != nil || len(matched) == 0 || missing > 0 || hasRecursiveSelector(key)) && idx != nil && (idx.hasAlias || idx.hasMergeKey) {
 		found, foundMissing, err := idx.matchPath(doc.Body, key)
 		if err != nil {
 			return nil, nil, 0, nil, false, err
