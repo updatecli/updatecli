@@ -2304,3 +2304,173 @@ a:
 		require.Error(t, err)
 	})
 }
+
+func Test_TargetNestedAnchorReplacement(t *testing.T) {
+	tests := []struct {
+		name           string
+		key            string
+		value          string
+		content        string
+		wantedContent  string
+		wantedChanged  bool
+		wantedError    bool
+		wantedErrMatch string
+	}{
+		{
+			name:  "Rejects alias replacement that would leave a dangling nested anchor",
+			key:   "$.selected",
+			value: "updated",
+			content: `base: &base
+  image: &image nginx:1.29
+selected: *base
+other: *image
+`,
+			wantedContent: `base: &base
+  image: &image nginx:1.29
+selected: *base
+other: *image
+`,
+			wantedError:    true,
+			wantedErrMatch: `anchor "image"`,
+		},
+		{
+			name:  "Rejects direct anchored subtree replacement that would leave a dangling nested anchor",
+			key:   "$.base",
+			value: "updated",
+			content: `base: &base
+  image: &image nginx:1.29
+other: *image
+`,
+			wantedContent: `base: &base
+  image: &image nginx:1.29
+other: *image
+`,
+			wantedError:    true,
+			wantedErrMatch: `anchor "image"`,
+		},
+		{
+			name:  "Rejects unanchored subtree replacement that would leave a dangling nested anchor",
+			key:   "$.base",
+			value: "updated",
+			content: `base:
+  image: &image nginx:1.29
+other: *image
+`,
+			wantedContent: `base:
+  image: &image nginx:1.29
+other: *image
+`,
+			wantedError:    true,
+			wantedErrMatch: `anchor "image"`,
+		},
+		{
+			name:  "Rejects replacement that would rebind an external alias to an earlier anchor",
+			key:   "$.selected",
+			value: "updated",
+			content: `first: &image nginx:1.28
+base: &base
+  image: &image nginx:1.29
+selected: *base
+other: *image
+`,
+			wantedContent: `first: &image nginx:1.28
+base: &base
+  image: &image nginx:1.29
+selected: *base
+other: *image
+`,
+			wantedError:    true,
+			wantedErrMatch: `anchor "image"`,
+		},
+		{
+			name:  "Allows replacing anchored subtree when nested anchor is only referenced inside it",
+			key:   "$.selected",
+			value: "updated",
+			content: `base: &base
+  image: &image nginx:1.29
+  copy: *image
+selected: *base
+`,
+			wantedContent: `base: &base updated
+selected: *base
+`,
+			wantedChanged: true,
+		},
+		{
+			name:  "Allows replacing unanchored subtree when nested anchor is only referenced inside it",
+			key:   "$.base",
+			value: "updated",
+			content: `base:
+  image: &image nginx:1.29
+  copy: *image
+`,
+			wantedContent: `base: updated
+`,
+			wantedChanged: true,
+		},
+		{
+			name:  "Existing scalar anchor update still works via alias",
+			key:   "$.other",
+			value: "v2.0.0",
+			content: `tag: &tag v1.0.0
+other: *tag
+`,
+			wantedContent: `tag: &tag v2.0.0
+other: *tag
+`,
+			wantedChanged: true,
+		},
+		{
+			name:  "Existing scalar anchor update still works directly",
+			key:   "$.tag",
+			value: "v2.0.0",
+			content: `tag: &tag v1.0.0
+other: *tag
+`,
+			wantedContent: `tag: &tag v2.0.0
+other: *tag
+`,
+			wantedChanged: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Chdir(t.TempDir())
+			require.NoError(t, os.WriteFile("test.yaml", []byte(tt.content), 0600))
+
+			mockedText := text.MockTextRetriever{
+				Contents: map[string]string{
+					"test.yaml": tt.content,
+				},
+			}
+
+			y, err := New(Spec{
+				File:  "test.yaml",
+				Key:   tt.key,
+				Value: tt.value,
+			})
+			require.NoError(t, err)
+			y.contentRetriever = &mockedText
+
+			gotResult := result.Target{}
+			gotErr := y.Target(context.Background(), tt.value, nil, pathresolver.Resolver{}, false, &gotResult)
+			if tt.wantedError {
+				require.Error(t, gotErr)
+				if tt.wantedErrMatch != "" {
+					assert.Contains(t, gotErr.Error(), tt.wantedErrMatch)
+				}
+				assert.False(t, gotResult.Changed)
+				assert.Equal(t, tt.wantedContent, mockedText.Contents["test.yaml"])
+				diskContent, readErr := os.ReadFile("test.yaml")
+				require.NoError(t, readErr)
+				assert.Equal(t, tt.wantedContent, string(diskContent))
+				return
+			}
+
+			require.NoError(t, gotErr)
+			assert.Equal(t, tt.wantedChanged, gotResult.Changed)
+			assert.Equal(t, tt.wantedContent, mockedText.Contents["test.yaml"])
+		})
+	}
+}

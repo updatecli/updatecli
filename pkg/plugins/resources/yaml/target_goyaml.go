@@ -273,6 +273,10 @@ func (y Yaml) updateNode(yamlFile *ast.File, index int, doc *ast.DocumentNode, u
 		return false, nil
 	}
 
+	if err := docIndex.checkReplacementAnchors(values); err != nil {
+		return false, fmt.Errorf("replacing yaml key %q: %w", key, err)
+	}
+
 	if matchesUseAnchor(resolved, throughAlias) {
 		if err := y.updateInPlace(resolved, docIndex, valueToWrite); err != nil {
 			return false, fmt.Errorf("replacing yaml key %q: %w", key, err)
@@ -615,6 +619,85 @@ func matchesUseAnchor(matches []resolvedMatch, throughAlias bool) bool {
 	}
 
 	return false
+}
+
+// subtreeAnchorWalker collects anchors defined and aliases used within a
+// replaced subtree so replacements that would orphan or rebind external
+// aliases can be rejected before mutating the document.
+type subtreeAnchorWalker struct {
+	anchors     map[*ast.AnchorNode]struct{}
+	anchorOrder []*ast.AnchorNode
+	aliases     map[*ast.AliasNode]struct{}
+}
+
+func (w *subtreeAnchorWalker) Visit(node ast.Node) ast.Visitor {
+	if node == nil {
+		return nil
+	}
+
+	switch n := node.(type) {
+	case *ast.AnchorNode:
+		if _, ok := w.anchors[n]; !ok {
+			w.anchors[n] = struct{}{}
+			w.anchorOrder = append(w.anchorOrder, n)
+		}
+	case *ast.AliasNode:
+		w.aliases[n] = struct{}{}
+	}
+
+	return w
+}
+
+// checkReplacementAnchors verifies that replacing subtrees will not remove or
+// rebind any anchor definition nested inside them that is referenced by an
+// alias outside those subtrees.
+func (idx *anchorIndex) checkReplacementAnchors(subtrees []ast.Node) error {
+	if idx == nil || len(idx.aliasToAnchor) == 0 {
+		return nil
+	}
+
+	walker := &subtreeAnchorWalker{
+		anchors: map[*ast.AnchorNode]struct{}{},
+		aliases: map[*ast.AliasNode]struct{}{},
+	}
+	seenSubtrees := map[ast.Node]struct{}{}
+	for _, subtree := range subtrees {
+		if subtree == nil {
+			continue
+		}
+		if _, ok := seenSubtrees[subtree]; ok {
+			continue
+		}
+		seenSubtrees[subtree] = struct{}{}
+		ast.Walk(walker, subtree)
+	}
+
+	if len(walker.anchors) == 0 {
+		return nil
+	}
+
+	danglingAnchors := map[*ast.AnchorNode]struct{}{}
+	for alias, anchor := range idx.aliasToAnchor {
+		if _, removed := walker.anchors[anchor]; !removed {
+			continue
+		}
+		if _, aliasRemoved := walker.aliases[alias]; aliasRemoved {
+			continue
+		}
+		danglingAnchors[anchor] = struct{}{}
+	}
+
+	if len(danglingAnchors) == 0 {
+		return nil
+	}
+
+	for _, anchor := range walker.anchorOrder {
+		if _, ok := danglingAnchors[anchor]; ok {
+			return fmt.Errorf("cannot remove anchor %q because it is referenced by an alias outside the replaced subtree", anchorName(anchor))
+		}
+	}
+
+	return nil
 }
 
 // updateInPlace writes valueToWrite into each anchored value once, and replaces
