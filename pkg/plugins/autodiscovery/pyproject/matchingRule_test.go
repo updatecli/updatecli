@@ -35,6 +35,21 @@ func TestMatchingRulesValidate(t *testing.T) {
 			expectError: false,
 		},
 		{
+			name: "two spellings of one package with different versions are rejected",
+			rules: MatchingRules{
+				{Packages: map[string]string{"Typing_Extensions": "", "typing-extensions": ">=4"}},
+			},
+			expectError: true,
+			errorMsg:    "lists the package \"typing-extensions\" twice with different versions",
+		},
+		{
+			name: "two spellings of one package with the same version are accepted",
+			rules: MatchingRules{
+				{Packages: map[string]string{"Jinja2": ">=3.1", "jinja2": ">=3.1"}},
+			},
+			expectError: false,
+		},
+		{
 			name: "rule with dependencygroups should pass",
 			rules: MatchingRules{
 				{DependencyGroups: []string{"dev"}},
@@ -116,6 +131,25 @@ func TestIsMatchingRules(t *testing.T) {
 			},
 			filePath:       "subdir/pyproject.toml",
 			expectedResult: false,
+		},
+		{
+			name: "package names match once normalized",
+			rules: MatchingRules{
+				{Packages: map[string]string{"typing-extensions": ">=4"}},
+			},
+			filePath:       "pyproject.toml",
+			packageName:    "Typing_Extensions",
+			packageVersion: "4.12.2",
+			expectedResult: true,
+		},
+		{
+			name: "rule package names match once normalized",
+			rules: MatchingRules{
+				{Packages: map[string]string{"Requests": ""}},
+			},
+			filePath:       "pyproject.toml",
+			packageName:    "requests",
+			expectedResult: true,
 		},
 		{
 			name: "package name matches",

@@ -23,6 +23,8 @@ type MatchingRule struct {
 	// "packages" defines the Python packages to match, keyed by package name.
 	//
 	// remark:
+	//   * names are compared once normalized as PEP 503 requires, ignoring case and treating
+	//     runs of "-", "_" and "." alike, so "typing-extensions" matches "Typing_Extensions".
 	//   * an empty value matches any version.
 	//   * otherwise the value is a PEP 440 version specifier, such as ">=2.0,<3.0".
 	//   * when the version or the specifier cannot be parsed, the value must equal the version.
@@ -60,6 +62,15 @@ func (m MatchingRules) Validate() error {
 		if rule.Path == "" && len(rule.Packages) == 0 && len(rule.DependencyGroups) == 0 {
 			return fmt.Errorf("rule %d has no valid fields (path, packages or dependencygroups must be specified)", i+1)
 		}
+		// Names are matched once normalized, so two spellings of one package must agree.
+		names := map[string]string{}
+		for name, constraint := range rule.Packages {
+			normalized := pep503.NormalizeName(name)
+			if other, found := names[normalized]; found && rule.Packages[other] != constraint {
+				return fmt.Errorf("rule %d lists the package %q twice with different versions, as %q and %q", i+1, normalized, other, name)
+			}
+			names[normalized] = name
+		}
 		for _, group := range rule.DependencyGroups {
 			// Patterns are matched once normalized, so the normalized form is the one to check.
 			if _, err := filepath.Match(pep503.NormalizeName(group), ""); err != nil {
@@ -70,11 +81,19 @@ func (m MatchingRules) Validate() error {
 	return nil
 }
 
-// normalized returns a copy of the rules with their dependencygroups patterns normalized as
-// PEP 735 requires, so matching compares them with normalized group names as they are.
+// normalized returns a copy of the rules with their package names normalized as PEP 503
+// requires, and their dependencygroups patterns as PEP 735 does, so matching compares them
+// with normalized names as they are.
 func (m MatchingRules) normalized() MatchingRules {
 	rules := make(MatchingRules, 0, len(m))
 	for _, rule := range m {
+		if len(rule.Packages) > 0 {
+			packages := make(map[string]string, len(rule.Packages))
+			for name, constraint := range rule.Packages {
+				packages[pep503.NormalizeName(name)] = constraint
+			}
+			rule.Packages = packages
+		}
 		if len(rule.DependencyGroups) > 0 {
 			patterns := make([]string, 0, len(rule.DependencyGroups))
 			for _, pattern := range rule.DependencyGroups {
@@ -89,12 +108,15 @@ func (m MatchingRules) normalized() MatchingRules {
 
 // isMatchingRules reports whether the given file/package pair matches any rule in the list.
 // dependencyGroups holds the normalized names of the PEP 735 groups the package belongs to,
-// empty when it belongs to none. The rules must have been normalized first.
+// empty when it belongs to none. The rules must have been normalized first, so that package
+// names compare in their PEP 503 normalized form.
 // Multiple conditions within one rule are AND-ed; multiple rules are OR-ed.
 func (m MatchingRules) isMatchingRules(rootDir, filePath, packageName, packageVersion string, dependencyGroups []string) bool {
 	if len(m) == 0 {
 		return false
 	}
+
+	packageName = pep503.NormalizeName(packageName)
 
 	for _, rule := range m {
 		var ruleResults []bool
