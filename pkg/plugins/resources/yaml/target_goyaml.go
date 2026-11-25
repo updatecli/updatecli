@@ -277,6 +277,10 @@ func (y Yaml) updateNode(yamlFile *ast.File, index int, doc *ast.DocumentNode, u
 		return false, fmt.Errorf("replacing yaml key %q: %w", key, err)
 	}
 
+	if err := docIndex.checkMergeOperands(resolved, values); err != nil {
+		return false, fmt.Errorf("replacing yaml key %q: %w", key, err)
+	}
+
 	if matchesUseAnchor(resolved, throughAlias) {
 		if err := y.updateInPlace(resolved, docIndex, valueToWrite); err != nil {
 			return false, fmt.Errorf("replacing yaml key %q: %w", key, err)
@@ -400,6 +404,9 @@ type anchorIndex struct {
 	parents       map[ast.Node]nodeParent
 	hasAlias      bool
 	hasMergeKey   bool
+	// mergeAliases holds every alias used as a << merge operand, either directly
+	// (<<: *base) or as an entry of a merge sequence (<<: [*base, *extra]).
+	mergeAliases []*ast.AliasNode
 }
 
 // nodeParent is the slot that owns a node in the document tree.
@@ -437,6 +444,7 @@ func (w *anchorWalker) Visit(node ast.Node) ast.Visitor {
 	case *ast.MappingValueNode:
 		if n.Key != nil && n.Key.IsMergeKey() {
 			w.index.hasMergeKey = true
+			w.index.recordMergeOperands(n.Value)
 		}
 		w.index.setParent(n.Value, nodeParent{mapping: n})
 	case *ast.SequenceNode:
@@ -456,6 +464,20 @@ func (w *anchorWalker) Visit(node ast.Node) ast.Visitor {
 	}
 
 	return w
+}
+
+// recordMergeOperands records the aliases a << value merges from.
+func (idx *anchorIndex) recordMergeOperands(value ast.Node) {
+	switch typed := value.(type) {
+	case *ast.AliasNode:
+		idx.mergeAliases = append(idx.mergeAliases, typed)
+	case *ast.SequenceNode:
+		for _, entry := range typed.Values {
+			if alias, ok := entry.(*ast.AliasNode); ok {
+				idx.mergeAliases = append(idx.mergeAliases, alias)
+			}
+		}
+	}
 }
 
 func (idx *anchorIndex) setParent(child ast.Node, parent nodeParent) {
@@ -706,6 +728,52 @@ func (idx *anchorIndex) checkReplacementAnchors(subtrees []ast.Node) error {
 	for _, anchor := range walker.anchorOrder {
 		if _, ok := danglingAnchors[anchor]; ok {
 			return fmt.Errorf("cannot remove anchor %q because it is referenced by an alias outside the replaced subtree", anchorName(anchor))
+		}
+	}
+
+	return nil
+}
+
+// checkMergeOperands rejects a scalar replacement of an anchored value that a
+// surviving << merge key still uses as an operand: a merge operand must stay a
+// mapping. Merge keys inside the replaced subtrees go away with them and are
+// ignored. Leaves reached through a merge (such as $.service.image) carry no
+// anchor of their own and stay valid.
+func (idx *anchorIndex) checkMergeOperands(matches []resolvedMatch, subtrees []ast.Node) error {
+	if idx == nil || len(idx.mergeAliases) == 0 {
+		return nil
+	}
+
+	replaced := map[*ast.AnchorNode]struct{}{}
+	for _, match := range matches {
+		if match.anchor != nil {
+			replaced[match.anchor] = struct{}{}
+		}
+	}
+	if len(replaced) == 0 {
+		return nil
+	}
+
+	walker := &subtreeAnchorWalker{
+		anchors: map[*ast.AnchorNode]struct{}{},
+		aliases: map[*ast.AliasNode]struct{}{},
+	}
+	for _, subtree := range subtrees {
+		if subtree != nil {
+			ast.Walk(walker, subtree)
+		}
+	}
+
+	for _, alias := range idx.mergeAliases {
+		if _, removed := walker.aliases[alias]; removed {
+			continue
+		}
+		_, anchor, err := idx.resolve(alias)
+		if err != nil || anchor == nil {
+			continue
+		}
+		if _, ok := replaced[anchor]; ok {
+			return fmt.Errorf("cannot replace anchor %q with a scalar because it is used as a merge key operand", anchorName(anchor))
 		}
 	}
 

@@ -2710,6 +2710,64 @@ other: *image
 			wantedErrMatch: `anchor "image"`,
 		},
 		{
+			name:  "Rejects alias replacement that would turn a merge operand into a scalar",
+			key:   "$.selected",
+			value: "updated",
+			content: `base: &base
+  image: old
+selected: *base
+service:
+  <<: *base
+`,
+			wantedContent: `base: &base
+  image: old
+selected: *base
+service:
+  <<: *base
+`,
+			wantedError:    true,
+			wantedErrMatch: `merge key operand`,
+		},
+		{
+			name:  "Rejects direct replacement of an anchor used in a merge sequence",
+			key:   "$.base",
+			value: "updated",
+			content: `base: &base
+  image: old
+extra: &extra
+  tag: v1
+service:
+  <<: [*extra, *base]
+`,
+			wantedContent: `base: &base
+  image: old
+extra: &extra
+  tag: v1
+service:
+  <<: [*extra, *base]
+`,
+			wantedError:    true,
+			wantedErrMatch: `merge key operand`,
+		},
+		{
+			name:  "Allows updating a leaf reached through a merge key",
+			key:   "$.service.image",
+			value: "new",
+			content: `base: &base
+  image: old
+selected: *base
+service:
+  <<: *base
+`,
+			wantedContent: `base: &base
+  image: new
+selected: *base
+service:
+  <<: *base
+`,
+			wantedChanged: true,
+		},
+		{
 			name:  "Allows replacing anchored subtree when nested anchor is only referenced inside it",
 			key:   "$.selected",
 			value: "updated",
