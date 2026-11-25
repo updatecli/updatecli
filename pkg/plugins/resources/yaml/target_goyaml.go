@@ -503,12 +503,17 @@ func locateDocumentTargets(doc *ast.DocumentNode, urlPath *goyaml.Path, key stri
 		}
 	}
 
-	if (filterErr != nil || len(matched) == 0 || missing > 0 || hasRecursiveSelector(key)) && idx != nil && (idx.hasAlias || idx.hasMergeKey) {
+	recursive := hasRecursiveSelector(key)
+	if (filterErr != nil || len(matched) == 0 || missing > 0 || recursive) && idx != nil && (idx.hasAlias || idx.hasMergeKey) {
 		found, foundMissing, err := idx.matchPath(doc.Body, key)
 		if err != nil {
 			return nil, nil, 0, nil, false, err
 		}
-		if len(found) > 0 && (filterErr != nil || len(matched) == 0 || hasAdditionalNodes(found, matched) || foundMissing < missing) {
+		// goccy stops evaluating a path at a recursive selector and ignores any
+		// trailing segments, so it can return an ancestor node even when the
+		// full path has no match. Prefer matchPath's full-path result for
+		// recursive paths even when found is empty.
+		if recursive || (len(found) > 0 && (filterErr != nil || len(matched) == 0 || hasAdditionalNodes(found, matched) || foundMissing < missing)) {
 			return node, found, foundMissing, nil, true, nil
 		}
 	}

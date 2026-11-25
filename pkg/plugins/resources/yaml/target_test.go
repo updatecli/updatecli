@@ -2365,6 +2365,72 @@ services:
 		assert.Equal(t, wanted, mockedText.Contents["test.yaml"])
 	})
 
+	t.Run("Recursive descent with missing trailing key on anchored mapping reports key not found", func(t *testing.T) {
+		content := `services:
+  group: &group
+    name: web
+  copy: *group
+`
+		t.Chdir(t.TempDir())
+		require.NoError(t, os.WriteFile("test.yaml", []byte(content), 0600))
+
+		mockedText := text.MockTextRetriever{
+			Contents: map[string]string{"test.yaml": content},
+		}
+		y, err := New(Spec{
+			File:  "test.yaml",
+			Key:   "$.services..group.image",
+			Value: "nginx:2.0",
+		})
+		require.NoError(t, err)
+		y.contentRetriever = &mockedText
+
+		gotResult := result.Target{}
+		err = y.Target(context.Background(), "nginx:2.0", nil, pathresolver.Resolver{}, false, &gotResult)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "key not found")
+		assert.False(t, gotResult.Changed)
+		assert.Equal(t, content, mockedText.Contents["test.yaml"])
+
+		diskContent, readErr := os.ReadFile("test.yaml")
+		require.NoError(t, readErr)
+		assert.Equal(t, content, string(diskContent))
+	})
+
+	t.Run("Recursive descent with trailing key on anchored mapping updates anchor once and preserves alias", func(t *testing.T) {
+		content := `services:
+  group: &group
+    name: web
+    image: nginx:1.0
+  copy: *group
+`
+		wanted := `services:
+  group: &group
+    name: web
+    image: nginx:2.0
+  copy: *group
+`
+		t.Chdir(t.TempDir())
+		require.NoError(t, os.WriteFile("test.yaml", []byte(content), 0600))
+
+		mockedText := text.MockTextRetriever{
+			Contents: map[string]string{"test.yaml": content},
+		}
+		y, err := New(Spec{
+			File:  "test.yaml",
+			Key:   "$.services..group.image",
+			Value: "nginx:2.0",
+		})
+		require.NoError(t, err)
+		y.contentRetriever = &mockedText
+
+		gotResult := result.Target{}
+		require.NoError(t, y.Target(context.Background(), "nginx:1.0", nil, pathresolver.Resolver{}, false, &gotResult))
+		assert.True(t, gotResult.Changed)
+		assert.Equal(t, result.ATTENTION, gotResult.Result)
+		assert.Equal(t, wanted, mockedText.Contents["test.yaml"])
+	})
+
 	t.Run("Nested wildcards traversing an empty aliased sequence do not report missing key", func(t *testing.T) {
 		content := `x-empty: &empty []
 a:
