@@ -2530,6 +2530,12 @@ a:
 		gotResult := result.Target{}
 		err = y.Target(context.Background(), "nginx:1.29", nil, pathresolver.Resolver{}, false, &gotResult)
 		require.Error(t, err)
+		assert.ErrorContains(t, err, "is missing from")
+		assert.Equal(t, content, mockedText.Contents["test.yaml"])
+		onDisk, readErr := os.ReadFile("test.yaml")
+		require.NoError(t, readErr)
+		assert.Equal(t, content, string(onDisk))
+		assert.False(t, gotResult.Changed)
 	})
 }
 
