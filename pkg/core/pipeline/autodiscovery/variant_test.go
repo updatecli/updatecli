@@ -8,8 +8,10 @@ import (
 )
 
 func TestExpandCrawlerSpec(t *testing.T) {
-	minor := map[string]any{"name": "minor", "kind": "semver", "pattern": "minor"}
-	major := map[string]any{"name": "major", "kind": "semver", "pattern": "majoronly"}
+	minorFilter := map[string]any{"kind": "semver", "pattern": "minor"}
+	majorFilter := map[string]any{"kind": "semver", "pattern": "majoronly"}
+	minor := map[string]any{"name": "minor", "versionfilter": minorFilter}
+	major := map[string]any{"name": "major", "versionfilter": majorFilter}
 	aws := map[string]any{"modules": map[string]any{"github.com/aws/*": ""}}
 	gx := map[string]any{"modules": map[string]any{"golang.org/*": ""}}
 	gomod := map[string]any{"path": "go.mod"}
@@ -43,27 +45,27 @@ func TestExpandCrawlerSpec(t *testing.T) {
 			},
 		},
 		{
-			name: "one variant per version filter, in order, without its name",
+			name: "one variant per track, in order, without its name",
 			kind: "golang",
 			spec: map[string]any{
-				"only":           []any{gomod},
-				"versionfilters": []any{minor, major},
+				"only":   []any{gomod},
+				"tracks": []any{minor, major},
 			},
 			groupBy: GROUPBYINDIVIDUAL,
 			expected: []crawlerVariant{
 				{
 					spec: map[string]any{
 						"only":          []any{gomod},
-						"versionfilter": map[string]any{"kind": "semver", "pattern": "minor"},
+						"versionfilter": minorFilter,
 					},
-					variant: Variant{VersionFilter: "minor", Rank: 0, GroupBy: GROUPBYINDIVIDUAL},
+					variant: Variant{Track: "minor", Rank: 0, GroupBy: GROUPBYINDIVIDUAL},
 				},
 				{
 					spec: map[string]any{
 						"only":          []any{gomod},
-						"versionfilter": map[string]any{"kind": "semver", "pattern": "majoronly"},
+						"versionfilter": majorFilter,
 					},
-					variant: Variant{VersionFilter: "major", Rank: 1, GroupBy: GROUPBYINDIVIDUAL},
+					variant: Variant{Track: "major", Rank: 1, GroupBy: GROUPBYINDIVIDUAL},
 				},
 			},
 		},
@@ -95,11 +97,11 @@ func TestExpandCrawlerSpec(t *testing.T) {
 			},
 		},
 		{
-			name: "groups and version filters",
+			name: "groups and tracks",
 			kind: "golang",
 			spec: map[string]any{
-				"versionfilters": []any{minor, major},
-				"groups":         []any{map[string]any{"name": "aws", "only": []any{aws}}},
+				"tracks": []any{minor, major},
+				"groups": []any{map[string]any{"name": "aws", "only": []any{aws}}},
 			},
 			groupBy: GROUPBYINDIVIDUAL,
 			expected: []crawlerVariant{
@@ -107,101 +109,228 @@ func TestExpandCrawlerSpec(t *testing.T) {
 					spec: map[string]any{
 						"only":          []any{aws},
 						"ignore":        []any{},
-						"versionfilter": map[string]any{"kind": "semver", "pattern": "minor"},
+						"versionfilter": minorFilter,
 					},
-					variant: Variant{Group: "aws", VersionFilter: "minor", Rank: 0, GroupBy: GROUPBYALL},
+					variant: Variant{Group: "aws", Track: "minor", Rank: 0, GroupBy: GROUPBYALL},
 				},
 				{
 					spec: map[string]any{
 						"ignore":        []any{aws},
-						"versionfilter": map[string]any{"kind": "semver", "pattern": "minor"},
+						"versionfilter": minorFilter,
 					},
-					variant: Variant{VersionFilter: "minor", Rank: 0, GroupBy: GROUPBYINDIVIDUAL},
+					variant: Variant{Track: "minor", Rank: 0, GroupBy: GROUPBYINDIVIDUAL},
 				},
 				{
 					spec: map[string]any{
 						"only":          []any{aws},
 						"ignore":        []any{},
-						"versionfilter": map[string]any{"kind": "semver", "pattern": "majoronly"},
+						"versionfilter": majorFilter,
 					},
-					variant: Variant{Group: "aws", VersionFilter: "major", Rank: 1, GroupBy: GROUPBYALL},
+					variant: Variant{Group: "aws", Track: "major", Rank: 1, GroupBy: GROUPBYALL},
 				},
 				{
 					spec: map[string]any{
 						"ignore":        []any{aws},
-						"versionfilter": map[string]any{"kind": "semver", "pattern": "majoronly"},
+						"versionfilter": majorFilter,
 					},
-					variant: Variant{VersionFilter: "major", Rank: 1, GroupBy: GROUPBYINDIVIDUAL},
+					variant: Variant{Track: "major", Rank: 1, GroupBy: GROUPBYINDIVIDUAL},
 				},
 			},
 		},
 		{
-			name: "version filters accept any kind",
+			name: "track version filters accept any kind",
 			kind: "dockerfile",
 			spec: map[string]any{
-				"versionfilters": []any{
-					map[string]any{"name": "latest", "kind": "latest"},
-					map[string]any{"name": "jdk", "kind": "regex", "pattern": `^\d+-jdk$`},
+				"tracks": []any{
+					map[string]any{"name": "latest", "versionfilter": map[string]any{"kind": "latest"}},
+					map[string]any{"name": "jdk", "versionfilter": map[string]any{"kind": "regex", "pattern": `^\d+-jdk$`}},
 				},
 			},
 			groupBy: GROUPBYALL,
 			expected: []crawlerVariant{
 				{
 					spec:    map[string]any{"versionfilter": map[string]any{"kind": "latest"}},
-					variant: Variant{VersionFilter: "latest", Rank: 0, GroupBy: GROUPBYALL},
+					variant: Variant{Track: "latest", Rank: 0, GroupBy: GROUPBYALL},
 				},
 				{
 					spec:    map[string]any{"versionfilter": map[string]any{"kind": "regex", "pattern": `^\d+-jdk$`}},
-					variant: Variant{VersionFilter: "jdk", Rank: 1, GroupBy: GROUPBYALL},
+					variant: Variant{Track: "jdk", Rank: 1, GroupBy: GROUPBYALL},
 				},
 			},
 		},
 		{
-			name:    "versionfilter and versionfilters are mutually exclusive",
-			kind:    "golang",
-			spec:    map[string]any{"versionFilter": map[string]any{"kind": "semver"}, "versionfilters": []any{minor}},
-			wantErr: "mutually exclusive",
+			name: "tracks keep the crawler settings they don't set",
+			kind: "golang",
+			spec: map[string]any{
+				"age":    map[string]any{"minimum": "3d"},
+				"tracks": []any{minor, major},
+			},
+			groupBy: GROUPBYINDIVIDUAL,
+			expected: []crawlerVariant{
+				{
+					spec:    map[string]any{"age": map[string]any{"minimum": "3d"}, "versionfilter": minorFilter},
+					variant: Variant{Track: "minor", Rank: 0, GroupBy: GROUPBYINDIVIDUAL},
+				},
+				{
+					spec:    map[string]any{"age": map[string]any{"minimum": "3d"}, "versionfilter": majorFilter},
+					variant: Variant{Track: "major", Rank: 1, GroupBy: GROUPBYINDIVIDUAL},
+				},
+			},
 		},
 		{
-			name:    "version filter name is required",
+			name: "tracks set both version filter and age",
+			kind: "npm",
+			spec: map[string]any{
+				"tracks": []any{
+					map[string]any{"name": "minor", "versionfilter": minorFilter, "age": map[string]any{"minimum": "3d"}},
+					map[string]any{"name": "major", "versionfilter": majorFilter, "Age": map[string]any{"minimum": "14d", "allowdowngrade": true}},
+				},
+			},
+			groupBy: GROUPBYALL,
+			expected: []crawlerVariant{
+				{
+					spec:    map[string]any{"versionfilter": minorFilter, "age": map[string]any{"minimum": "3d"}},
+					variant: Variant{Track: "minor", Rank: 0, GroupBy: GROUPBYALL},
+				},
+				{
+					spec:    map[string]any{"versionfilter": majorFilter, "age": map[string]any{"minimum": "14d", "allowdowngrade": true}},
+					variant: Variant{Track: "major", Rank: 1, GroupBy: GROUPBYALL},
+				},
+			},
+		},
+		{
+			name:    "a track setting can't also be set on the crawler",
 			kind:    "golang",
-			spec:    map[string]any{"versionfilters": []any{map[string]any{"kind": "semver"}}},
+			spec:    map[string]any{"versionFilter": map[string]any{"kind": "semver"}, "tracks": []any{minor}},
+			wantErr: `"versionfilter" is set both on the crawler and in track "minor"`,
+		},
+		{
+			name: "a track age can't also be set on the crawler",
+			kind: "golang",
+			spec: map[string]any{
+				"age":    map[string]any{"minimum": "1d"},
+				"tracks": []any{minor, map[string]any{"name": "slow", "age": map[string]any{"minimum": "14d"}}},
+			},
+			wantErr: `"age" is set both on the crawler and in track "slow"`,
+		},
+		{
+			name:    "age is rejected for crawlers without age",
+			kind:    "helm",
+			spec:    map[string]any{"tracks": []any{map[string]any{"name": "slow", "age": map[string]any{"minimum": "14d"}}}},
+			wantErr: `"age" isn't supported by the "helm" crawler`,
+		},
+		{
+			name:    "unknown track settings are rejected",
+			kind:    "golang",
+			spec:    map[string]any{"tracks": []any{map[string]any{"name": "security", "vulnerability": map[string]any{}}}},
+			wantErr: "vulnerability",
+		},
+		{
+			name:    "version filter settings must be nested",
+			kind:    "golang",
+			spec:    map[string]any{"tracks": []any{map[string]any{"name": "minor", "kind": "semver", "pattern": "minor"}}},
+			wantErr: "kind",
+		},
+		{
+			name:    "a track sets a version filter or an age",
+			kind:    "golang",
+			spec:    map[string]any{"tracks": []any{map[string]any{"name": "empty"}}},
+			wantErr: `tracks[0] "empty": must set "versionfilter" or "age"`,
+		},
+		{
+			name:    "a setting without a value sets nothing",
+			kind:    "golang",
+			spec:    map[string]any{"versionfilter": minorFilter, "tracks": []any{map[string]any{"name": "major", "versionfilter": nil}}},
+			wantErr: `tracks[0] "major": must set "versionfilter" or "age"`,
+		},
+		{
+			name:    "track name is required",
+			kind:    "golang",
+			spec:    map[string]any{"tracks": []any{map[string]any{"versionfilter": minorFilter}}},
 			wantErr: `"name" is required`,
 		},
 		{
-			name:    "version filter names are unique",
+			name:    "track names are unique",
 			kind:    "golang",
-			spec:    map[string]any{"versionfilters": []any{minor, minor}},
+			spec:    map[string]any{"tracks": []any{minor, minor}},
 			wantErr: "used more than once",
 		},
 		{
-			name:    "version filter name is safe in a pipeline ID",
+			name:    "track name is safe in a pipeline ID",
 			kind:    "golang",
-			spec:    map[string]any{"versionfilters": []any{map[string]any{"name": "a b", "kind": "semver"}}},
+			spec:    map[string]any{"tracks": []any{map[string]any{"name": "a b", "versionfilter": minorFilter}}},
 			wantErr: "must start with a letter or a digit",
 		},
 		{
-			name:    "version filter kind is validated",
+			name:    "track version filter kind is validated",
 			kind:    "golang",
-			spec:    map[string]any{"versionfilters": []any{map[string]any{"name": "x", "kind": "unknown"}}},
-			wantErr: `"x"`,
+			spec:    map[string]any{"tracks": []any{map[string]any{"name": "x", "versionfilter": map[string]any{"kind": "unknown"}}}},
+			wantErr: `tracks[0] "x": versionfilter`,
 		},
 		{
-			name:    "version filter kind defaults to latest",
+			name:    "track age is validated",
 			kind:    "golang",
-			spec:    map[string]any{"versionfilters": []any{map[string]any{"name": "any"}}},
+			spec:    map[string]any{"tracks": []any{map[string]any{"name": "x", "age": map[string]any{"minimum": "7"}}}},
+			wantErr: `tracks[0] "x": age`,
+		},
+		{
+			name:    "track version filter kind defaults to latest",
+			kind:    "golang",
+			spec:    map[string]any{"tracks": []any{map[string]any{"name": "any", "versionfilter": map[string]any{}}}},
 			groupBy: GROUPBYALL,
 			expected: []crawlerVariant{
 				{
 					spec:    map[string]any{"versionfilter": map[string]any{}},
-					variant: Variant{VersionFilter: "any", Rank: 0, GroupBy: GROUPBYALL},
+					variant: Variant{Track: "any", Rank: 0, GroupBy: GROUPBYALL},
 				},
 			},
 		},
 		{
-			name:    "version filters must not be empty",
+			name: "a track with wait false doesn't wait, and wait isn't a crawler setting",
+			kind: "golang",
+			spec: map[string]any{
+				"tracks": []any{
+					map[string]any{"name": "minor", "versionfilter": minorFilter, "wait": true},
+					map[string]any{"name": "lts", "versionfilter": majorFilter, "Wait": false},
+				},
+				"groups": []any{map[string]any{"name": "aws", "only": []any{aws}}},
+			},
+			groupBy: GROUPBYINDIVIDUAL,
+			expected: []crawlerVariant{
+				{
+					spec:    map[string]any{"only": []any{aws}, "ignore": []any{}, "versionfilter": minorFilter},
+					variant: Variant{Group: "aws", Track: "minor", Rank: 0, GroupBy: GROUPBYALL},
+				},
+				{
+					spec:    map[string]any{"ignore": []any{aws}, "versionfilter": minorFilter},
+					variant: Variant{Track: "minor", Rank: 0, GroupBy: GROUPBYINDIVIDUAL},
+				},
+				{
+					spec:    map[string]any{"only": []any{aws}, "ignore": []any{}, "versionfilter": majorFilter},
+					variant: Variant{Group: "aws", Track: "lts", Rank: 1, NoWait: true, GroupBy: GROUPBYALL},
+				},
+				{
+					spec:    map[string]any{"ignore": []any{aws}, "versionfilter": majorFilter},
+					variant: Variant{Track: "lts", Rank: 1, NoWait: true, GroupBy: GROUPBYINDIVIDUAL},
+				},
+			},
+		},
+		{
+			name:    "a track with only wait sets nothing",
 			kind:    "golang",
-			spec:    map[string]any{"versionfilters": []any{}},
+			spec:    map[string]any{"tracks": []any{map[string]any{"name": "lts", "wait": false}}},
+			wantErr: `tracks[0] "lts": must set "versionfilter" or "age"`,
+		},
+		{
+			name:    "wait must be a boolean",
+			kind:    "golang",
+			spec:    map[string]any{"tracks": []any{map[string]any{"name": "lts", "versionfilter": minorFilter, "wait": "no"}}},
+			wantErr: "expected type 'bool'",
+		},
+		{
+			name:    "tracks must not be empty",
+			kind:    "golang",
+			spec:    map[string]any{"tracks": []any{}},
 			wantErr: "must not be empty",
 		},
 		{
@@ -220,6 +349,30 @@ func TestExpandCrawlerSpec(t *testing.T) {
 			wantErr: `group "nested"`,
 		},
 		{
+			name:    "track names can't contain the pipeline ID separator",
+			kind:    "golang",
+			spec:    map[string]any{"tracks": []any{map[string]any{"name": "b_c", "versionfilter": minorFilter}}},
+			wantErr: "must start with a letter or a digit",
+		},
+		{
+			name:    "group names can't contain the pipeline ID separator",
+			kind:    "golang",
+			spec:    map[string]any{"groups": []any{map[string]any{"name": "a_b", "only": []any{aws}}}},
+			wantErr: "must start with a letter or a digit",
+		},
+		{
+			name:    "unknown group settings are rejected",
+			kind:    "golang",
+			spec:    map[string]any{"groups": []any{map[string]any{"name": "aws", "only": []any{aws}, "ignore": []any{gx}}}},
+			wantErr: "ignore",
+		},
+		{
+			name:    "group name default is reserved whatever its case",
+			kind:    "golang",
+			spec:    map[string]any{"groups": []any{map[string]any{"name": "Default", "only": []any{aws}}}},
+			wantErr: "reserved",
+		},
+		{
 			name:    "group name default is reserved",
 			kind:    "golang",
 			spec:    map[string]any{"groups": []any{map[string]any{"name": "default", "only": []any{aws}}}},
@@ -228,7 +381,7 @@ func TestExpandCrawlerSpec(t *testing.T) {
 		{
 			name:    "WASM plugins are not supported",
 			kind:    "plugin",
-			spec:    map[string]any{"versionfilters": []any{minor}},
+			spec:    map[string]any{"tracks": []any{minor}},
 			wantErr: "WASM",
 		},
 	}
@@ -250,15 +403,15 @@ func TestExpandCrawlerSpec(t *testing.T) {
 
 func TestExpandCrawlerSpecDoesNotChangeInput(t *testing.T) {
 	spec := map[string]any{
-		"ignore":         []any{"a"},
-		"versionfilters": []any{map[string]any{"name": "minor", "kind": "semver", "pattern": "minor"}},
-		"groups":         []any{map[string]any{"name": "g", "only": []any{"b"}}},
+		"ignore": []any{"a"},
+		"tracks": []any{map[string]any{"name": "minor", "versionfilter": map[string]any{"kind": "semver", "pattern": "minor"}}},
+		"groups": []any{map[string]any{"name": "g", "only": []any{"b"}}},
 	}
 
 	_, err := expandCrawlerSpec("golang", spec, GROUPBYALL)
 	require.NoError(t, err)
 
-	assert.Contains(t, spec, "versionfilters")
+	assert.Contains(t, spec, "tracks")
 	assert.Contains(t, spec, "groups")
 	assert.Equal(t, []any{"a"}, spec["ignore"])
 }
@@ -268,9 +421,9 @@ func TestNewBuildsOneCrawlerPerVariant(t *testing.T) {
 		GroupBy: GROUPBYINDIVIDUAL,
 		Crawlers: CrawlersConfig{
 			"golang": map[string]any{
-				"versionfilters": []any{
-					map[string]any{"name": "minor", "kind": "semver", "pattern": "minor"},
-					map[string]any{"name": "major", "kind": "semver", "pattern": "majoronly"},
+				"tracks": []any{
+					map[string]any{"name": "minor", "versionfilter": map[string]any{"kind": "semver", "pattern": "minor"}},
+					map[string]any{"name": "major", "versionfilter": map[string]any{"kind": "semver", "pattern": "majoronly"}},
 				},
 				"groups": []any{map[string]any{"name": "aws", "only": []any{map[string]any{"modules": map[string]any{"github.com/aws/*": ""}}}}},
 			},
@@ -284,10 +437,10 @@ func TestNewBuildsOneCrawlerPerVariant(t *testing.T) {
 	}
 
 	assert.Equal(t, []Variant{
-		{Group: "aws", VersionFilter: "minor", Rank: 0, GroupBy: GROUPBYALL},
-		{VersionFilter: "minor", Rank: 0, GroupBy: GROUPBYINDIVIDUAL},
-		{Group: "aws", VersionFilter: "major", Rank: 1, GroupBy: GROUPBYALL},
-		{VersionFilter: "major", Rank: 1, GroupBy: GROUPBYINDIVIDUAL},
+		{Group: "aws", Track: "minor", Rank: 0, GroupBy: GROUPBYALL},
+		{Track: "minor", Rank: 0, GroupBy: GROUPBYINDIVIDUAL},
+		{Group: "aws", Track: "major", Rank: 1, GroupBy: GROUPBYALL},
+		{Track: "major", Rank: 1, GroupBy: GROUPBYINDIVIDUAL},
 	}, got)
 }
 
@@ -295,8 +448,8 @@ func TestNewRejectsInvalidVariants(t *testing.T) {
 	_, err := New(Config{
 		Crawlers: CrawlersConfig{
 			"golang": map[string]any{
-				"versionfilter":  map[string]any{"kind": "semver"},
-				"versionfilters": []any{map[string]any{"name": "minor", "kind": "semver"}},
+				"versionfilter": map[string]any{"kind": "semver"},
+				"tracks":        []any{map[string]any{"name": "minor", "versionfilter": map[string]any{"kind": "semver"}}},
 			},
 		},
 	}, t.TempDir())
@@ -306,9 +459,9 @@ func TestNewRejectsInvalidVariants(t *testing.T) {
 // Decoded manifests can hold crawler specs with a named map type, such as CrawlersConfig.
 func TestExpandCrawlerSpecNamedMapTypes(t *testing.T) {
 	spec := CrawlersConfig{
-		"versionfilters": []any{
-			CrawlersConfig{"name": "minor", "kind": "semver", "pattern": "minor"},
-			CrawlersConfig{"name": "major", "kind": "semver", "pattern": "majoronly"},
+		"tracks": []any{
+			CrawlersConfig{"name": "minor", "versionfilter": CrawlersConfig{"kind": "semver", "pattern": "minor"}},
+			CrawlersConfig{"name": "major", "versionfilter": CrawlersConfig{"kind": "semver", "pattern": "majoronly"}, "age": CrawlersConfig{"minimum": "7d"}},
 		},
 	}
 
@@ -316,8 +469,11 @@ func TestExpandCrawlerSpecNamedMapTypes(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, got, 2)
 
-	assert.Equal(t, map[string]any{"versionfilter": map[string]any{"kind": "semver", "pattern": "majoronly"}}, got[1].spec)
-	assert.Equal(t, Variant{VersionFilter: "major", Rank: 1, GroupBy: GROUPBYINDIVIDUAL}, got[1].variant)
+	assert.Equal(t, map[string]any{
+		"versionfilter": CrawlersConfig{"kind": "semver", "pattern": "majoronly"},
+		"age":           CrawlersConfig{"minimum": "7d"},
+	}, got[1].spec)
+	assert.Equal(t, Variant{Track: "major", Rank: 1, GroupBy: GROUPBYINDIVIDUAL}, got[1].variant)
 }
 
 func TestIntersectRules(t *testing.T) {
@@ -351,4 +507,41 @@ func TestIntersectRules(t *testing.T) {
 
 	_, err = intersectRules([]any{gomod}, []any{nested})
 	require.ErrorContains(t, err, "no \"only\" rule can be combined")
+}
+
+func TestCrawlerSupports(t *testing.T) {
+	for kind := range GetAutodiscoverySpecsMapping() {
+		if kind == pluginCrawlerKind {
+			continue
+		}
+		assert.Truef(t, crawlerSupports(kind, versionFilterKey), "crawler %q should support %q", kind, versionFilterKey)
+	}
+
+	for _, kind := range []string{"golang", "npm", "maven", "githubaction"} {
+		assert.Truef(t, crawlerSupports(kind, ageKey), "crawler %q should support %q", kind, ageKey)
+	}
+
+	assert.False(t, crawlerSupports("helm", ageKey))
+	assert.True(t, crawlerSupports("unknown", ageKey))
+}
+
+func TestCrawlerSchemasOfferAgeOnlyWhenSupported(t *testing.T) {
+	schema := CrawlersConfig{}.JSONSchema()
+
+	trackProperties := func(kind string) []string {
+		crawler, ok := schema.Properties.Get(kind)
+		require.Truef(t, ok, "crawler %q", kind)
+		tracks, ok := crawler.Properties.Get(tracksKey)
+		require.Truef(t, ok, "crawler %q tracks", kind)
+
+		var keys []string
+		for pair := tracks.Items.Properties.Oldest(); pair != nil; pair = pair.Next() {
+			keys = append(keys, pair.Key)
+		}
+		return keys
+	}
+
+	assert.Contains(t, trackProperties("golang"), ageKey)
+	assert.NotContains(t, trackProperties("helm"), ageKey)
+	assert.Contains(t, trackProperties("helm"), versionFilterKey)
 }

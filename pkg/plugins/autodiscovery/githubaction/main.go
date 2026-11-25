@@ -147,7 +147,7 @@ type Spec struct {
 	// "credentials" defines the credentials used to authenticate with each git provider, keyed by git provider domain.
 	//
 	// remark:
-	//   * without an entry, "gitea.com", "codeberg.org" and "code.forgejo.org" use kind "gitea",
+	//   * without an entry, "gitea.com", "codeberg.org", "code.forgejo.org" and "data.forgejo.org" use kind "gitea",
 	//     and any other domain uses kind "github" with the "github.com" credentials.
 	//
 	// example:
@@ -156,7 +156,7 @@ type Spec struct {
 	//     crawlers:
 	//       github/action:
 	//         credentials:
-	//           "code.forgejo.com":
+	//           "code.forgejo.org":
 	//             kind: gitea
 	//             token: xxx
 	//           "github.com":

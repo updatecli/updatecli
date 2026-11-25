@@ -1,5 +1,5 @@
-name: "[jenkinsci/docker] Dockerfile autodiscovery using several version filters and groups"
-pipelineid: e2e/autodiscovery/dockerfile/versionfilters
+name: "[jenkinsci/docker] Dockerfile autodiscovery using several tracks and groups"
+pipelineid: e2e/autodiscovery/dockerfile/tracks
 scms:
   jenkins-docker:
     kind: git
@@ -13,16 +13,18 @@ autodiscovery:
   crawlers:
     dockerfile:
       digest: false
-      # Each version filter gets its own pipelines.
+      # Each track gets its own pipelines.
       # The "major" ones wait while a "minor" update is pending for the same image.
-      versionfilters:
+      tracks:
         - name: minor
-          kind: semver
-          pattern: minor
+          versionfilter:
+            kind: semver
+            pattern: minor
         - name: major
-          kind: semver
-          pattern: majoronly
-      # Matching images are updated together, in one pipeline per version filter.
+          versionfilter:
+            kind: semver
+            pattern: majoronly
+      # Matching images are updated together, in one pipeline per track.
       groups:
         - name: base
           only:

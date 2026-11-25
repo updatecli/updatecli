@@ -12,7 +12,7 @@ import (
 // Condition checks if a docker image with a specific tag is published
 // We assume that if we can't retrieve the docker image digest, then it means
 // it doesn't exist.
-func (di *DockerImage) Condition(_ context.Context, source string, scm scm.ScmHandler, pathResolver pathresolver.Resolver) (pass bool, message string, err error) {
+func (di *DockerImage) Condition(ctx context.Context, source string, scm scm.ScmHandler, pathResolver pathresolver.Resolver) (pass bool, message string, err error) {
 	if scm != nil {
 		log.Warningf("SCM configuration is not supported for condition of type dockerimage. Remove the `scm` directive from condition to remove this warning message")
 	}
@@ -20,6 +20,10 @@ func (di *DockerImage) Condition(_ context.Context, source string, scm scm.ScmHa
 	version := source
 	if di.spec.Tag != "" {
 		version = di.spec.Tag
+	}
+
+	if !di.spec.Age.IsZero() {
+		return di.conditionAge(ctx, version)
 	}
 
 	ref, err := di.createRef(version)
@@ -47,9 +51,29 @@ func (di *DockerImage) Condition(_ context.Context, source string, scm scm.ScmHa
 		}
 	}
 
-	if found {
-		return true, fmt.Sprintf("docker image %s:%s found", di.spec.Image, version), nil
+	if !found {
+		return false, fmt.Sprintf("docker image %s:%s not found", di.spec.Image, version), nil
 	}
 
-	return false, fmt.Sprintf("docker image %s:%s not found", di.spec.Image, version), nil
+	return true, fmt.Sprintf("docker image %s:%s found", di.spec.Image, version), nil
+}
+
+// conditionAge checks a tag exists and matches the age filter for every requested platform.
+// Dating a tag already checks it exists, so the registry is queried once per platform.
+func (di *DockerImage) conditionAge(ctx context.Context, tag string) (bool, string, error) {
+	options, err := di.ageOptions(ctx)
+	if err != nil {
+		return false, "", err
+	}
+
+	got, err := di.tagAge(tag, options)
+	if err != nil {
+		return false, "", err
+	}
+
+	if !got.matches {
+		return false, got.reason, nil
+	}
+
+	return true, fmt.Sprintf("docker image %s:%s found and matching the age filter", di.spec.Image, tag), nil
 }

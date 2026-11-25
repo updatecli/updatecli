@@ -294,7 +294,7 @@ func (ga *GitHubAction) getGitProviderKind(URL string) (kind, authToken string, 
 	}
 
 	switch u.Hostname() {
-	case "gitea.com", "codeberg.org", "code.forgejo.org":
+	case "gitea.com", "codeberg.org", "code.forgejo.org", "data.forgejo.org":
 		kind = kindGitea
 		authToken = defaultGiteaToken()
 

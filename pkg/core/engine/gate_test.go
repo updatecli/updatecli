@@ -60,7 +60,7 @@ func withAction(p *pipeline.Pipeline, handler action.ActionHandler) *pipeline.Pi
 func gatedPipeline(name, key string, rank int, filter, reportResult string, s scm.ScmHandler) *pipeline.Pipeline {
 	p := &pipeline.Pipeline{
 		Name: name,
-		Gate: &pipeline.Gate{Key: key, Rank: rank, VersionFilter: filter},
+		Gate: &pipeline.Gate{Key: key, Rank: rank, Track: filter},
 		Targets: map[string]target.Target{
 			"default": {Result: &result.Target{Result: result.SKIPPED}},
 		},
@@ -76,7 +76,7 @@ func gatedPipeline(name, key string, rank int, filter, reportResult string, s sc
 	return p
 }
 
-func TestWaitingVersionFilter(t *testing.T) {
+func TestWaitingTrack(t *testing.T) {
 	tests := []struct {
 		name        string
 		earlier     func() *pipeline.Pipeline
@@ -84,7 +84,7 @@ func TestWaitingVersionFilter(t *testing.T) {
 		wantWaiting bool
 	}{
 		{
-			name: "earlier version filter changed something during this run",
+			name: "earlier track changed something during this run",
 			earlier: func() *pipeline.Pipeline {
 				return gatedPipeline("minor", "k", 0, "minor", result.ATTENTION, nil)
 			},
@@ -92,7 +92,7 @@ func TestWaitingVersionFilter(t *testing.T) {
 			wantWaiting: true,
 		},
 		{
-			name: "earlier version filter still has a pull request from a previous run",
+			name: "earlier track still has a pull request from a previous run",
 			earlier: func() *pipeline.Pipeline {
 				return gatedPipeline("minor", "k", 0, "minor", result.SUCCESS, &mockGateScm{workingBranch: "updatecli_main_minor", exists: true})
 			},
@@ -100,7 +100,7 @@ func TestWaitingVersionFilter(t *testing.T) {
 			wantWaiting: true,
 		},
 		{
-			name: "earlier version filter is up to date",
+			name: "earlier track is up to date",
 			earlier: func() *pipeline.Pipeline {
 				return gatedPipeline("minor", "k", 0, "minor", result.SUCCESS, &mockGateScm{workingBranch: "updatecli_main_minor"})
 			},
@@ -108,7 +108,7 @@ func TestWaitingVersionFilter(t *testing.T) {
 			wantWaiting: false,
 		},
 		{
-			name: "earlier version filter without working branch",
+			name: "earlier track without working branch",
 			earlier: func() *pipeline.Pipeline {
 				return gatedPipeline("minor", "k", 0, "minor", result.SUCCESS, &mockGateScm{workingBranch: "main", exists: true})
 			},
@@ -124,7 +124,7 @@ func TestWaitingVersionFilter(t *testing.T) {
 			wantWaiting: true,
 		},
 		{
-			name: "earlier version filter still has an open pull request",
+			name: "earlier track still has an open pull request",
 			earlier: func() *pipeline.Pipeline {
 				return withAction(
 					gatedPipeline("minor", "k", 0, "minor", result.SUCCESS, &mockGateScm{workingBranch: "updatecli_main_minor"}),
@@ -157,7 +157,7 @@ func TestWaitingVersionFilter(t *testing.T) {
 			wantWaiting: true,
 		},
 		{
-			name: "earlier version filter failed but another target changed something",
+			name: "earlier track failed but another target changed something",
 			earlier: func() *pipeline.Pipeline {
 				p := gatedPipeline("minor", "k", 0, "minor", result.FAILURE, nil)
 				p.Targets["changed"] = target.Target{Result: &result.Target{Result: result.ATTENTION, Changed: true}}
@@ -167,7 +167,7 @@ func TestWaitingVersionFilter(t *testing.T) {
 			wantWaiting: true,
 		},
 		{
-			name: "earlier version filter failed without changing anything",
+			name: "earlier track failed without changing anything",
 			earlier: func() *pipeline.Pipeline {
 				return gatedPipeline("minor", "k", 0, "minor", result.FAILURE, nil)
 			},
@@ -202,20 +202,36 @@ func TestWaitingVersionFilter(t *testing.T) {
 
 			e := Engine{Pipelines: []*pipeline.Pipeline{earlier, later}}
 
-			reason := e.waitingVersionFilter(context.Background(), later, map[string]bool{})
+			reason := e.waitingTrack(context.Background(), later, map[string]bool{})
 			if tt.wantWaiting {
-				assert.Contains(t, reason, `versionfilter "minor"`)
+				assert.Contains(t, reason, `track "minor"`)
 			} else {
 				assert.Empty(t, reason)
 			}
 
-			// The first version filter never waits.
-			assert.Empty(t, e.waitingVersionFilter(context.Background(), earlier, map[string]bool{}))
+			// The first track never waits.
+			assert.Empty(t, e.waitingTrack(context.Background(), earlier, map[string]bool{}))
 		})
 	}
 }
 
-func TestWaitingVersionFilterCachesRemoteLookups(t *testing.T) {
+func TestWaitingTrackNoWait(t *testing.T) {
+	minor := gatedPipeline("minor", "k", 0, "minor", result.ATTENTION, nil)
+	lts := gatedPipeline("lts", "k", 1, "lts", result.ATTENTION, nil)
+	lts.Gate.NoWait = true
+	major := gatedPipeline("major", "k", 2, "major", result.SKIPPED, nil)
+
+	e := Engine{Pipelines: []*pipeline.Pipeline{minor, lts, major}}
+
+	// A track that doesn't wait runs while an earlier track is pending.
+	assert.Empty(t, e.waitingTrack(context.Background(), lts, map[string]bool{}))
+
+	// Later tracks still wait for it.
+	e.Pipelines = []*pipeline.Pipeline{lts, major}
+	assert.Contains(t, e.waitingTrack(context.Background(), major, map[string]bool{}), `track "lts"`)
+}
+
+func TestWaitingTrackCachesRemoteLookups(t *testing.T) {
 	s := &mockGateScm{workingBranch: "updatecli_main_minor"}
 	earlier := gatedPipeline("minor", "k", 0, "minor", result.SUCCESS, s)
 	later := gatedPipeline("major", "k", 1, "major", result.SKIPPED, nil)
@@ -224,12 +240,12 @@ func TestWaitingVersionFilterCachesRemoteLookups(t *testing.T) {
 	e := Engine{Pipelines: []*pipeline.Pipeline{earlier, later, latest}}
 	cache := map[string]bool{}
 
-	assert.Empty(t, e.waitingVersionFilter(context.Background(), later, cache))
-	assert.Empty(t, e.waitingVersionFilter(context.Background(), latest, cache))
+	assert.Empty(t, e.waitingTrack(context.Background(), later, cache))
+	assert.Empty(t, e.waitingTrack(context.Background(), latest, cache))
 	assert.Equal(t, 1, s.calls)
 }
 
-func TestWaitingVersionFilterCachesActionLookups(t *testing.T) {
+func TestWaitingTrackCachesActionLookups(t *testing.T) {
 	a := &mockGateAction{}
 	earlier := withAction(gatedPipeline("minor", "k", 0, "minor", result.SUCCESS, nil), a)
 	later := gatedPipeline("major", "k", 1, "major", result.SKIPPED, nil)
@@ -238,12 +254,12 @@ func TestWaitingVersionFilterCachesActionLookups(t *testing.T) {
 	e := Engine{Pipelines: []*pipeline.Pipeline{earlier, later, latest}}
 	cache := map[string]bool{}
 
-	assert.Empty(t, e.waitingVersionFilter(context.Background(), later, cache))
-	assert.Empty(t, e.waitingVersionFilter(context.Background(), latest, cache))
+	assert.Empty(t, e.waitingTrack(context.Background(), later, cache))
+	assert.Empty(t, e.waitingTrack(context.Background(), latest, cache))
 	assert.Equal(t, 1, a.calls)
 }
 
-func TestWaitingVersionFilterRetriesFailedLookups(t *testing.T) {
+func TestWaitingTrackRetriesFailedLookups(t *testing.T) {
 	s := &mockGateScm{workingBranch: "updatecli_main_minor", err: errors.New("boom")}
 	earlier := gatedPipeline("minor", "k", 0, "minor", result.SUCCESS, s)
 	later := gatedPipeline("major", "k", 1, "major", result.SKIPPED, nil)
@@ -252,8 +268,8 @@ func TestWaitingVersionFilterRetriesFailedLookups(t *testing.T) {
 	e := Engine{Pipelines: []*pipeline.Pipeline{earlier, later, latest}}
 	cache := map[string]bool{}
 
-	assert.NotEmpty(t, e.waitingVersionFilter(context.Background(), later, cache))
-	assert.NotEmpty(t, e.waitingVersionFilter(context.Background(), latest, cache))
+	assert.NotEmpty(t, e.waitingTrack(context.Background(), later, cache))
+	assert.NotEmpty(t, e.waitingTrack(context.Background(), latest, cache))
 	assert.Equal(t, 2, s.calls)
 }
 

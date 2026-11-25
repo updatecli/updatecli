@@ -20,7 +20,7 @@ func (CrawlersConfig) JSONSchema() *jschema.Schema {
 	return schema
 }
 
-// appendVariantSpecToCrawlerSchemas adds the settings shared by every crawler, such as "versionfilters",
+// appendVariantSpecToCrawlerSchemas adds the settings shared by every crawler, such as "tracks",
 // to each crawler schema, except the WASM plugin one.
 func appendVariantSpecToCrawlerSchemas(schema *jschema.Schema) {
 	if schema == nil || schema.Properties == nil {
@@ -32,6 +32,13 @@ func appendVariantSpecToCrawlerSchemas(schema *jschema.Schema) {
 		return
 	}
 
+	// Crawlers without "age" reject it in tracks, so their schema doesn't offer it.
+	variantSchemaWithoutAge := jsonschema.AppendMapToJsonSchema(VariantSpec{}, nil)
+	if tracks, ok := variantSchemaWithoutAge.Properties.Get(tracksKey); ok && tracks != nil &&
+		tracks.Items != nil && tracks.Items.Properties != nil {
+		tracks.Items.Properties.Delete(ageKey)
+	}
+
 	for pair := schema.Properties.Oldest(); pair != nil; pair = pair.Next() {
 		if pair.Key == pluginCrawlerKind || strings.HasSuffix(pair.Key, ".wasm") {
 			continue
@@ -40,6 +47,11 @@ func appendVariantSpecToCrawlerSchemas(schema *jschema.Schema) {
 		crawlerSchema := pair.Value
 		if crawlerSchema == nil || crawlerSchema.Properties == nil {
 			continue
+		}
+
+		variantSchema := variantSchema
+		if !crawlerSupports(pair.Key, ageKey) {
+			variantSchema = variantSchemaWithoutAge
 		}
 
 		for variantPair := variantSchema.Properties.Oldest(); variantPair != nil; variantPair = variantPair.Next() {

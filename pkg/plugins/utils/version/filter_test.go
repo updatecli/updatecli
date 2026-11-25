@@ -917,3 +917,63 @@ func TestUnboundedPatternKeepsPrereleases(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "2.0.0-rc.2", found.GetVersion())
 }
+
+func TestRank(t *testing.T) {
+	tests := []struct {
+		name     string
+		filter   Filter
+		versions []string
+		limit    int
+		want     []string
+		wantErr  bool
+	}{
+		{
+			name:     "semver highest first",
+			filter:   Filter{Kind: SEMVERVERSIONKIND, Pattern: "*"},
+			versions: []string{"1.0.0", "1.10.0", "1.2.0", "not-a-version", "1.9.0"},
+			limit:    10,
+			want:     []string{"1.10.0", "1.9.0", "1.2.0", "1.0.0"},
+		},
+		{
+			name:     "bounded by limit",
+			filter:   Filter{Kind: SEMVERVERSIONKIND, Pattern: "*"},
+			versions: []string{"1.0.0", "1.1.0", "1.2.0"},
+			limit:    2,
+			want:     []string{"1.2.0", "1.1.0"},
+		},
+		{
+			name:     "regex/semver keeps the tag",
+			filter:   Filter{Kind: REGEXSEMVERVERSIONKIND, Pattern: "*", Regex: `^v(\d+\.\d+\.\d+)$`},
+			versions: []string{"v1.0.0", "v1.1.0"},
+			limit:    10,
+			want:     []string{"v1.1.0", "v1.0.0"},
+		},
+		{
+			name:     "no version matching",
+			filter:   Filter{Kind: SEMVERVERSIONKIND, Pattern: ">=2.0.0"},
+			versions: []string{"1.0.0"},
+			limit:    2,
+			wantErr:  true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			versions := append([]string(nil), tt.versions...)
+
+			got, err := tt.filter.Rank(versions, tt.limit)
+			if tt.wantErr {
+				require.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			var gotVersions []string
+			for _, v := range got {
+				gotVersions = append(gotVersions, v.GetVersion())
+			}
+			assert.Equal(t, tt.want, gotVersions)
+			assert.Equal(t, tt.versions, versions, "the versions given mustn't be modified")
+		})
+	}
+}

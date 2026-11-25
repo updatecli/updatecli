@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/updatecli/updatecli/pkg/core/log"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/docker"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
@@ -107,6 +108,45 @@ type Spec struct {
 	//   * tagfilter: ^v\d*(\.\d*){2}-alpine$
 	//
 	TagFilter string `yaml:",omitempty"`
+	// "age" defines how old a tag must be to be selected by a source or accepted by a condition.
+	//
+	// compatible:
+	//   * source
+	//   * condition
+	//
+	// remark:
+	//   * a tag is dated by its "org.opencontainers.image.created" annotation, from the image index
+	//     then the image manifest, or else by the "created" field of the image configuration.
+	//   * this date is recorded by the image publisher when the image is built, not by the registry
+	//     when the tag is pushed, as registries don't report push dates. An image built long before
+	//     its release, such as one promoted or retagged, or built with SOURCE_DATE_EPOCH set to a
+	//     commit date, looks older than it is and can pass a "minimum" age on its first day.
+	//   * as the publisher sets this date, the age filter can't protect against a malicious image
+	//     claiming an older one, unlike with registries recording publish dates such as npm or PyPI.
+	//   * a tag is dated for every platform of "architectures", and must exist and match the age
+	//     filter for all of them. Without one, an image index is dated by its linux/amd64 image,
+	//     or else its first image.
+	//   * a tag without a creation date, or one set to 1970-01-01 by a reproducible build,
+	//     is never selected. Such images, like gcr.io/distroless ones, can't be filtered by age.
+	//   * a source needs a version filter ordering tags, such as the kind "semver", as the
+	//     registry lists tags alphabetically: the kind "latest" with the pattern "latest" is refused.
+	//   * dating a tag costs requests to the registry, so a source checks at most 20 tags
+	//     in order of preference. A tag missing, missing for a platform, or whose image the age
+	//     filter doesn't support, such as a schema1 image, is passed over.
+	//   * a source is skipped when no tag matches the age filter yet, when none of the tags
+	//     checked has a creation date or is supported, or when the registry rate limits requests
+	//     or fails to answer for a tag after answering for a preferred one. It fails when the
+	//     registry fails to answer for the first tag.
+	//
+	// example:
+	// ```
+	//   versionfilter:
+	//     kind: semver
+	//   age:
+	//     minimum: 7d
+	// ```
+	//
+	Age age.Spec `yaml:",omitempty"`
 }
 
 func sanitizeRegistryEndpoint(repository string) string {
