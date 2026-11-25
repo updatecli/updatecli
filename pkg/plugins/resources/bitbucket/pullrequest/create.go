@@ -50,15 +50,16 @@ func (b *Bitbucket) CreateAction(ctx context.Context, report *reports.Action, re
 	var responseTitle, responseBody, responseLink string
 	if pullRequestExists {
 
-		mergedDescription, err := reports.MergeFromMarkdown(pullRequestDetails.Description, report.ToActionsMarkdownString())
-		if err != nil {
-			return err
-		}
-
 		var body string
 		if len(b.spec.Body) > 0 {
+			// A custom body replaces the report, so the existing description is never parsed.
 			body = b.spec.Body
 		} else {
+			mergedDescription, err := reports.MergeFromMarkdown(pullRequestDetails.Description, report.ToActionsMarkdownString())
+			if err != nil {
+				return err
+			}
+
 			body, err = utils.GeneratePullRequestBodyMarkdown("", mergedDescription)
 			if err != nil {
 				return err

@@ -140,6 +140,10 @@ func markdownToActions(input string, actions *Actions) error {
 				actionTargetCount = -1
 				actionTargetChangeLogCount = -1
 			case 2:
+				// A target heading before any pipeline heading isn't an Updatecli report.
+				if actionCount < 0 {
+					return ast.WalkSkipChildren, nil
+				}
 				actionTarget := ActionTarget{
 					Title: title,
 				}
@@ -147,6 +151,9 @@ func markdownToActions(input string, actions *Actions) error {
 				actionTargetCount++
 				actionTargetChangeLogCount = -1
 			case 3:
+				if actionTargetCount < 0 {
+					return ast.WalkSkipChildren, nil
+				}
 				actionTargetChangelog := ActionTargetChangelog{
 					Title: title,
 				}
@@ -161,6 +168,9 @@ func markdownToActions(input string, actions *Actions) error {
 			if child, ok := n.FirstChild().(*ast.Text); ok {
 				switch string(child.Value(source)) {
 				case "Pipeline ID: ":
+					if actionCount < 0 {
+						return ast.WalkSkipChildren, nil
+					}
 					if sibling, ok := child.NextSibling().(*ast.CodeSpan); ok {
 						if codespanValue, ok := sibling.FirstChild().(*ast.Text); ok {
 							actions.Actions[actionCount].ID = string(codespanValue.Value(source))
@@ -168,6 +178,9 @@ func markdownToActions(input string, actions *Actions) error {
 					}
 					return ast.WalkSkipChildren, nil
 				case "Target ID: ":
+					if actionTargetCount < 0 {
+						return ast.WalkSkipChildren, nil
+					}
 					if sibling, ok := child.NextSibling().(*ast.CodeSpan); ok {
 						if codespanValue, ok := sibling.FirstChild().(*ast.Text); ok {
 							actions.Actions[actionCount].Targets[actionTargetCount].ID = string(codespanValue.Value(source))
@@ -175,6 +188,9 @@ func markdownToActions(input string, actions *Actions) error {
 					}
 					return ast.WalkSkipChildren, nil
 				case "Pipeline URL: ":
+					if actionCount < 0 {
+						return ast.WalkSkipChildren, nil
+					}
 					if sibling, ok := child.NextSibling().(*ast.Link); ok {
 						var name string
 						if codespanValue, ok := sibling.FirstChild().(*ast.Text); ok {
