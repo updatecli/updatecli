@@ -317,28 +317,14 @@ func replaceNode(doc *ast.DocumentNode, elements []pathElement, depth int, node 
 	return path.ReplaceWithNode(file, node)
 }
 
-// appendToSequence appends value to seq unless the sequence already holds value.
+// appendToSequence appends valueNode to seq unless the sequence already holds value.
 // It reports whether the sequence was modified.
-func appendToSequence(seq *ast.SequenceNode, value string, comment string, docIndex *anchorIndex) (bool, error) {
+func appendToSequence(seq *ast.SequenceNode, value string, comment string) (bool, error) {
 	for _, element := range seq.Values {
-		// Resolve alias and anchor entries only for comparison so alias nodes
-		// remain intact in the sequence.
-		candidate := element
-		if docIndex != nil {
-			resolved, _, err := docIndex.resolve(element)
-			if err != nil {
-				return false, err
-			}
-			candidate = resolved
-		}
-		if candidate == nil {
-			continue
-		}
-
 		// Compare the decoded value so that quoted and folded scalars are not
 		// mistaken for a different entry.
 		var decoded string
-		if err := goyaml.NodeToValue(candidate, &decoded); err != nil {
+		if err := goyaml.NodeToValue(element, &decoded); err != nil {
 			continue
 		}
 		if decoded == value {
@@ -408,8 +394,7 @@ func multiMatchDepth(key string) (int, error) {
 }
 
 // matchedNodes unwraps the node goccy returned for key into the nodes it actually
-// matched, and reports how many positions matched and how many of the selected
-// positions hold no node at all.
+// matched, and reports how many of the selected positions hold no node at all.
 //
 // A key addressing several nodes ("$.agents[*].tag", "$..tag") never resolves to
 // the matched node itself: goccy answers with a detached sequence holding one entry
@@ -422,24 +407,19 @@ func multiMatchDepth(key string) (int, error) {
 // a nil entry at whichever level the path stops resolving. The depth is taken from
 // the key rather than from the shape of the result, as a matched value may itself
 // be a sequence.
-func matchedNodes(node ast.Node, key string) (matched []ast.Node, positions int, missing int, err error) {
+func matchedNodes(node ast.Node, key string) (matched []ast.Node, missing int, err error) {
 	depth, err := multiMatchDepth(key)
 	if err != nil {
-		return nil, 0, 0, fmt.Errorf("cannot evaluate key %q: %w", key, err)
+		return nil, 0, fmt.Errorf("cannot evaluate key %q: %w", key, err)
 	}
 
 	// goccy answers a path that resolves nowhere at all with a nil node, whether or
 	// not it holds a multi match selector.
 	if node == nil {
-		return nil, 0, 0, nil
+		return nil, 0, nil
 	}
 
-	matched, missing, err = unwrapMatches(node, depth, key)
-	if err != nil {
-		return nil, 0, 0, err
-	}
-
-	return matched, len(matched), missing, nil
+	return unwrapMatches(node, depth, key)
 }
 
 // unwrapMatches flattens depth levels of goccy's synthetic match sequences, counting

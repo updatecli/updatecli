@@ -1,17 +1,12 @@
 package yaml
 
 import (
-	"bytes"
 	"context"
-	"fmt"
 	"os"
-	"strings"
 	"testing"
 
-	"github.com/goccy/go-yaml/parser"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/text"
@@ -20,17 +15,16 @@ import (
 
 func Test_Target(t *testing.T) {
 	tests := []struct {
-		name              string
-		spec              Spec
-		files             map[string]file
-		inputSourceValue  string
-		mockedContents    map[string]string
-		mockedError       error
-		wantedContents    map[string]string
-		wantedResult      bool
-		wantedError       bool
-		wantedInformation string
-		dryRun            bool
+		name             string
+		spec             Spec
+		files            map[string]file
+		inputSourceValue string
+		mockedContents   map[string]string
+		mockedError      error
+		wantedContents   map[string]string
+		wantedResult     bool
+		wantedError      bool
+		dryRun           bool
 	}{
 		{
 			name: "Yamlpath passing case with multiple documents in a file, both input source and specified value (specified value should be used)",
@@ -795,1061 +789,6 @@ existing:
 			wantedResult: false,
 			wantedError:  true,
 		},
-		{
-			name: "Updating an aliased compose image preserves the alias (issue #11053)",
-			spec: Spec{
-				File:  "test.yaml",
-				Key:   "$.services.web.image",
-				Value: "nginx:1.30",
-			},
-			files: map[string]file{
-				"test.yaml": {
-					filePath:         "test.yaml",
-					originalFilePath: "test.yaml",
-				},
-			},
-			inputSourceValue: "nginx:1.29",
-			mockedContents: map[string]string{
-				"test.yaml": `x-image: &image nginx:1.29
-services:
-  web:
-    image: *image
-`,
-			},
-			wantedContents: map[string]string{
-				"test.yaml": `x-image: &image nginx:1.30
-services:
-  web:
-    image: *image
-`,
-			},
-			wantedResult: true,
-		},
-		{
-			name: "Updating an aliased compose image preserves the alias with the yamlpath engine (issue #11053)",
-			spec: Spec{
-				File:   "test.yaml",
-				Key:    "$.services.web.image",
-				Value:  "nginx:1.30",
-				Engine: "yamlpath",
-			},
-			files: map[string]file{
-				"test.yaml": {
-					filePath:         "test.yaml",
-					originalFilePath: "test.yaml",
-				},
-			},
-			inputSourceValue: "nginx:1.29",
-			mockedContents: map[string]string{
-				"test.yaml": `x-image: &image nginx:1.29
-services:
-  web:
-    image: *image
-`,
-			},
-			wantedContents: map[string]string{
-				"test.yaml": `x-image: &image nginx:1.30
-services:
-  web:
-    image: *image
-`,
-			},
-			wantedResult: true,
-		},
-		{
-			name: "Already updated aliased compose image is a no-op (issue #11053)",
-			spec: Spec{
-				File:  "test.yaml",
-				Key:   "$.services.web.image",
-				Value: "nginx:1.30",
-			},
-			files: map[string]file{
-				"test.yaml": {
-					filePath:         "test.yaml",
-					originalFilePath: "test.yaml",
-				},
-			},
-			inputSourceValue: "nginx:1.29",
-			mockedContents: map[string]string{
-				"test.yaml": `x-image: &image nginx:1.30
-services:
-  web:
-    image: *image
-`,
-			},
-			wantedContents: map[string]string{
-				"test.yaml": `x-image: &image nginx:1.30
-services:
-  web:
-    image: *image
-`,
-			},
-			wantedResult: false,
-		},
-		{
-			name: "Already updated aliased compose image is a no-op with the yamlpath engine (issue #11053)",
-			spec: Spec{
-				File:   "test.yaml",
-				Key:    "$.services.web.image",
-				Value:  "nginx:1.30",
-				Engine: "yamlpath",
-			},
-			files: map[string]file{
-				"test.yaml": {
-					filePath:         "test.yaml",
-					originalFilePath: "test.yaml",
-				},
-			},
-			inputSourceValue: "nginx:1.29",
-			mockedContents: map[string]string{
-				"test.yaml": `x-image: &image nginx:1.30
-services:
-  web:
-    image: *image
-`,
-			},
-			wantedContents: map[string]string{
-				"test.yaml": `x-image: &image nginx:1.30
-services:
-  web:
-    image: *image
-`,
-			},
-			wantedResult: false,
-		},
-		{
-			name: "Dry run reports the aliased image value without writing (issue #11053)",
-			spec: Spec{
-				File:  "test.yaml",
-				Key:   "$.services.web.image",
-				Value: "nginx:1.30",
-			},
-			files: map[string]file{
-				"test.yaml": {
-					filePath:         "test.yaml",
-					originalFilePath: "test.yaml",
-				},
-			},
-			inputSourceValue: "nginx:1.29",
-			mockedContents: map[string]string{
-				"test.yaml": `x-image: &image nginx:1.29
-services:
-  web:
-    image: *image
-`,
-			},
-			wantedContents: map[string]string{
-				"test.yaml": `x-image: &image nginx:1.29
-services:
-  web:
-    image: *image
-`,
-			},
-			wantedResult:      true,
-			wantedInformation: "nginx:1.29",
-			dryRun:            true,
-		},
-		{
-			name: "Dry run reports the aliased image value without writing with the yamlpath engine (issue #11053)",
-			spec: Spec{
-				File:   "test.yaml",
-				Key:    "$.services.web.image",
-				Value:  "nginx:1.30",
-				Engine: "yamlpath",
-			},
-			files: map[string]file{
-				"test.yaml": {
-					filePath:         "test.yaml",
-					originalFilePath: "test.yaml",
-				},
-			},
-			inputSourceValue: "nginx:1.29",
-			mockedContents: map[string]string{
-				"test.yaml": `x-image: &image nginx:1.29
-services:
-  web:
-    image: *image
-`,
-			},
-			wantedContents: map[string]string{
-				"test.yaml": `x-image: &image nginx:1.29
-services:
-  web:
-    image: *image
-`,
-			},
-			wantedResult:      true,
-			wantedInformation: "nginx:1.29",
-			dryRun:            true,
-		},
-		{
-			name: "Comment is attached to the updated anchor value (issue #11053)",
-			spec: Spec{
-				File:    "test.yaml",
-				Key:     "$.services.web.image",
-				Value:   "nginx:1.30",
-				Comment: "comment that should be added",
-			},
-			files: map[string]file{
-				"test.yaml": {
-					filePath:         "test.yaml",
-					originalFilePath: "test.yaml",
-				},
-			},
-			inputSourceValue: "nginx:1.29",
-			mockedContents: map[string]string{
-				"test.yaml": `x-image: &image nginx:1.29
-services:
-  web:
-    image: *image
-`,
-			},
-			wantedContents: map[string]string{
-				"test.yaml": `x-image: &image nginx:1.30 # comment that should be added
-services:
-  web:
-    image: *image
-`,
-			},
-			wantedResult: true,
-		},
-		{
-			name: "Comment is attached to the updated anchor value with the yamlpath engine (issue #11053)",
-			spec: Spec{
-				File:    "test.yaml",
-				Key:     "$.services.web.image",
-				Value:   "nginx:1.30",
-				Comment: "comment that should be added",
-				Engine:  "yamlpath",
-			},
-			files: map[string]file{
-				"test.yaml": {
-					filePath:         "test.yaml",
-					originalFilePath: "test.yaml",
-				},
-			},
-			inputSourceValue: "nginx:1.29",
-			mockedContents: map[string]string{
-				"test.yaml": `x-image: &image nginx:1.29
-services:
-  web:
-    image: *image
-`,
-			},
-			wantedContents: map[string]string{
-				"test.yaml": `x-image: &image nginx:1.30 # comment that should be added
-services:
-  web:
-    image: *image
-`,
-			},
-			wantedResult: true,
-		},
-		{
-			name: "Direct update of an anchored key preserves the anchor (issue #11053)",
-			spec: Spec{
-				File:  "test.yaml",
-				Key:   "$.x-image",
-				Value: "nginx:1.30",
-			},
-			files: map[string]file{
-				"test.yaml": {
-					filePath:         "test.yaml",
-					originalFilePath: "test.yaml",
-				},
-			},
-			inputSourceValue: "nginx:1.29",
-			mockedContents: map[string]string{
-				"test.yaml": `x-image: &image nginx:1.29
-services:
-  web:
-    image: *image
-`,
-			},
-			wantedContents: map[string]string{
-				"test.yaml": `x-image: &image nginx:1.30
-services:
-  web:
-    image: *image
-`,
-			},
-			wantedResult: true,
-		},
-		{
-			name: "Direct update of an anchored key preserves the anchor with the yamlpath engine (issue #11053)",
-			spec: Spec{
-				File:   "test.yaml",
-				Key:    "$.x-image",
-				Value:  "nginx:1.30",
-				Engine: "yamlpath",
-			},
-			files: map[string]file{
-				"test.yaml": {
-					filePath:         "test.yaml",
-					originalFilePath: "test.yaml",
-				},
-			},
-			inputSourceValue: "nginx:1.29",
-			mockedContents: map[string]string{
-				"test.yaml": `x-image: &image nginx:1.29
-services:
-  web:
-    image: *image
-`,
-			},
-			wantedContents: map[string]string{
-				"test.yaml": `x-image: &image nginx:1.30
-services:
-  web:
-    image: *image
-`,
-			},
-			wantedResult: true,
-		},
-		{
-			name: "Multiple aliases of one anchor are updated once (issue #11053)",
-			spec: Spec{
-				File: "test.yaml",
-				Keys: []string{
-					"$.services.web.image",
-					"$.services.api.image",
-				},
-				Value: "nginx:1.30",
-			},
-			files: map[string]file{
-				"test.yaml": {
-					filePath:         "test.yaml",
-					originalFilePath: "test.yaml",
-				},
-			},
-			inputSourceValue: "nginx:1.29",
-			mockedContents: map[string]string{
-				"test.yaml": `x-image: &image nginx:1.29
-services:
-  web:
-    image: *image
-  api:
-    image: *image
-`,
-			},
-			wantedContents: map[string]string{
-				"test.yaml": `x-image: &image nginx:1.30
-services:
-  web:
-    image: *image
-  api:
-    image: *image
-`,
-			},
-			wantedResult: true,
-		},
-		{
-			name: "Multiple aliases of one anchor are updated once with the yamlpath engine (issue #11053)",
-			spec: Spec{
-				File: "test.yaml",
-				Keys: []string{
-					"$.services.web.image",
-					"$.services.api.image",
-				},
-				Value:  "nginx:1.30",
-				Engine: "yamlpath",
-			},
-			files: map[string]file{
-				"test.yaml": {
-					filePath:         "test.yaml",
-					originalFilePath: "test.yaml",
-				},
-			},
-			inputSourceValue: "nginx:1.29",
-			mockedContents: map[string]string{
-				"test.yaml": `x-image: &image nginx:1.29
-services:
-  web:
-    image: *image
-  api:
-    image: *image
-`,
-			},
-			wantedContents: map[string]string{
-				"test.yaml": `x-image: &image nginx:1.30
-services:
-  web:
-    image: *image
-  api:
-    image: *image
-`,
-			},
-			wantedResult: true,
-		},
-		{
-			name: "Wildcard over aliased images updates the anchor once (issue #11053)",
-			spec: Spec{
-				File:  "test.yaml",
-				Key:   "$.services[*].image",
-				Value: "nginx:1.30",
-			},
-			files: map[string]file{
-				"test.yaml": {
-					filePath:         "test.yaml",
-					originalFilePath: "test.yaml",
-				},
-			},
-			inputSourceValue: "nginx:1.29",
-			mockedContents: map[string]string{
-				"test.yaml": `x-image: &image nginx:1.29
-services:
-  - image: *image
-  - image: *image
-`,
-			},
-			wantedContents: map[string]string{
-				"test.yaml": `x-image: &image nginx:1.30
-services:
-  - image: *image
-  - image: *image
-`,
-			},
-			wantedResult: true,
-		},
-		{
-			name: "Mixed wildcard updates the aliased anchor and the inline image (issue #11053)",
-			spec: Spec{
-				File:  "test.yaml",
-				Key:   "$.services[*].image",
-				Value: "nginx:1.30",
-			},
-			files: map[string]file{
-				"test.yaml": {
-					filePath:         "test.yaml",
-					originalFilePath: "test.yaml",
-				},
-			},
-			inputSourceValue: "nginx:1.29",
-			mockedContents: map[string]string{
-				"test.yaml": `x-image: &image nginx:1.29
-services:
-  - image: *image
-  - image: nginx:1.28
-`,
-			},
-			wantedContents: map[string]string{
-				"test.yaml": `x-image: &image nginx:1.30
-services:
-  - image: *image
-  - image: nginx:1.30
-`,
-			},
-			wantedResult: true,
-		},
-		{
-			name: "Chained aliases update the base anchor (issue #11053)",
-			spec: Spec{
-				File:  "test.yaml",
-				Key:   "$.web.image",
-				Value: "nginx:1.30",
-			},
-			files: map[string]file{
-				"test.yaml": {
-					filePath:         "test.yaml",
-					originalFilePath: "test.yaml",
-				},
-			},
-			inputSourceValue: "nginx:1.29",
-			mockedContents: map[string]string{
-				"test.yaml": `base: &base nginx:1.29
-image: &image
-  *base
-web:
-  image: *image
-`,
-			},
-			wantedContents: map[string]string{
-				"test.yaml": `base: &base nginx:1.30
-image: &image *base
-web:
-  image: *image
-`,
-			},
-			wantedResult: true,
-		},
-		{
-			name: "Compose merge key updates the anchored image (issue #11053)",
-			spec: Spec{
-				File:  "test.yaml",
-				Key:   "$.services.web.image",
-				Value: "nginx:1.30",
-			},
-			files: map[string]file{
-				"test.yaml": {
-					filePath:         "test.yaml",
-					originalFilePath: "test.yaml",
-				},
-			},
-			inputSourceValue: "nginx:1.29",
-			mockedContents: map[string]string{
-				"test.yaml": `x-common: &common
-  image: nginx:1.29
-  restart: always
-services:
-  web:
-    <<: *common
-    ports:
-      - "80:80"
-`,
-			},
-			wantedContents: map[string]string{
-				"test.yaml": `x-common: &common
-  image: nginx:1.30
-  restart: always
-services:
-  web:
-    <<: *common
-    ports:
-      - "80:80"
-`,
-			},
-			wantedResult: true,
-		},
-		{
-			name: "Mapping alias updates the anchored image (issue #11053)",
-			spec: Spec{
-				File:  "test.yaml",
-				Key:   "$.services.api.image",
-				Value: "nginx:1.30",
-			},
-			files: map[string]file{
-				"test.yaml": {
-					filePath:         "test.yaml",
-					originalFilePath: "test.yaml",
-				},
-			},
-			inputSourceValue: "nginx:1.29",
-			mockedContents: map[string]string{
-				"test.yaml": `services:
-  web: &web
-    image: nginx:1.29
-  api: *web
-`,
-			},
-			wantedContents: map[string]string{
-				"test.yaml": `services:
-  web: &web
-    image: nginx:1.30
-  api: *web
-`,
-			},
-			wantedResult: true,
-		},
-		{
-			name: "Append to an aliased sequence updates the anchored sequence (issue #11053)",
-			spec: Spec{
-				File:          "test.yaml",
-				Key:           "$.services.items",
-				Value:         "c",
-				AppendToArray: true,
-			},
-			files: map[string]file{
-				"test.yaml": {
-					filePath:         "test.yaml",
-					originalFilePath: "test.yaml",
-				},
-			},
-			inputSourceValue: "c",
-			mockedContents: map[string]string{
-				"test.yaml": `x-list: &list
-  - a
-  - b
-services:
-  items: *list
-`,
-			},
-			wantedContents: map[string]string{
-				"test.yaml": `x-list: &list
-  - a
-  - b
-  - c
-services:
-  items: *list
-`,
-			},
-			wantedResult: true,
-		},
-		{
-			name: "Append to an aliased sequence holding an aliased entry does not duplicate the value (issue #11053)",
-			spec: Spec{
-				File:          "test.yaml",
-				Key:           "$.selected",
-				Value:         "c",
-				AppendToArray: true,
-			},
-			files: map[string]file{
-				"test.yaml": {
-					filePath:         "test.yaml",
-					originalFilePath: "test.yaml",
-				},
-			},
-			inputSourceValue: "c",
-			mockedContents: map[string]string{
-				"test.yaml": `item: &item c
-base: &base [*item]
-selected: *base
-`,
-			},
-			wantedContents: map[string]string{
-				"test.yaml": `item: &item c
-base: &base [*item]
-selected: *base
-`,
-			},
-			wantedResult: false,
-		},
-		{
-			name: "Append a distinct value to an aliased sequence holding an aliased entry keeps the alias in place (issue #11053)",
-			spec: Spec{
-				File:          "test.yaml",
-				Key:           "$.selected",
-				Value:         "d",
-				AppendToArray: true,
-			},
-			files: map[string]file{
-				"test.yaml": {
-					filePath:         "test.yaml",
-					originalFilePath: "test.yaml",
-				},
-			},
-			inputSourceValue: "d",
-			mockedContents: map[string]string{
-				"test.yaml": `item: &item c
-base: &base [*item]
-selected: *base
-`,
-			},
-			wantedContents: map[string]string{
-				"test.yaml": `item: &item c
-base: &base [*item, d]
-selected: *base
-`,
-			},
-			wantedResult: true,
-		},
-		{
-			name: "Append to a sequence holding a chained alias entry does not duplicate the value (issue #11053)",
-			spec: Spec{
-				File:          "test.yaml",
-				Key:           "$.selected",
-				Value:         "c",
-				AppendToArray: true,
-			},
-			files: map[string]file{
-				"test.yaml": {
-					filePath:         "test.yaml",
-					originalFilePath: "test.yaml",
-				},
-			},
-			inputSourceValue: "c",
-			mockedContents: map[string]string{
-				"test.yaml": `item: &item c
-ref: &ref
-  *item
-base: &base [*ref]
-selected: *base
-`,
-			},
-			wantedContents: map[string]string{
-				"test.yaml": `item: &item c
-ref: &ref *item
-base: &base [*ref]
-selected: *base
-`,
-			},
-			wantedResult: false,
-		},
-		{
-			name: "Anchors are scoped per document (issue #11053)",
-			spec: Spec{
-				File:  "test.yaml",
-				Key:   "$.services.web.image",
-				Value: "nginx:1.30",
-			},
-			files: map[string]file{
-				"test.yaml": {
-					filePath:         "test.yaml",
-					originalFilePath: "test.yaml",
-				},
-			},
-			inputSourceValue: "nginx:1.29",
-			mockedContents: map[string]string{
-				"test.yaml": `x-image: &image nginx:1.29
-services:
-  web:
-    image: *image
----
-x-image: &image alpine:3
-services:
-  web:
-    image: *image
-`,
-			},
-			wantedContents: map[string]string{
-				"test.yaml": `x-image: &image nginx:1.30
-services:
-  web:
-    image: *image
----
-x-image: &image nginx:1.30
-services:
-  web:
-    image: *image
-`,
-			},
-			wantedResult: true,
-		},
-		{
-			name: "Dangling alias returns an error (issue #11053)",
-			spec: Spec{
-				File:  "test.yaml",
-				Key:   "$.image",
-				Value: "nginx:1.30",
-			},
-			files: map[string]file{
-				"test.yaml": {
-					filePath:         "test.yaml",
-					originalFilePath: "test.yaml",
-				},
-			},
-			inputSourceValue: "nginx:1.29",
-			mockedContents: map[string]string{
-				"test.yaml": `image: *missing
-`,
-			},
-			wantedError: true,
-		},
-		{
-			name: "Dangling alias returns an error with the yamlpath engine (issue #11053)",
-			spec: Spec{
-				File:   "test.yaml",
-				Key:    "$.image",
-				Value:  "nginx:1.30",
-				Engine: "yamlpath",
-			},
-			files: map[string]file{
-				"test.yaml": {
-					filePath:         "test.yaml",
-					originalFilePath: "test.yaml",
-				},
-			},
-			inputSourceValue: "nginx:1.29",
-			mockedContents: map[string]string{
-				"test.yaml": `image: *missing
-`,
-			},
-			wantedError: true,
-		},
-		{
-			name: "Mixed wildcard with inline and merged entry updates both (issue #11053)",
-			spec: Spec{
-				File:  "test.yaml",
-				Key:   "$.services[*].image",
-				Value: "nginx:1.30",
-			},
-			files: map[string]file{
-				"test.yaml": {
-					filePath:         "test.yaml",
-					originalFilePath: "test.yaml",
-				},
-			},
-			inputSourceValue: "nginx:1.29",
-			mockedContents: map[string]string{
-				"test.yaml": `x-common: &common
-  image: nginx:1.29
-services:
-  - image: nginx:1.28
-  - <<: *common
-`,
-			},
-			wantedContents: map[string]string{
-				"test.yaml": `x-common: &common
-  image: nginx:1.30
-services:
-  - image: nginx:1.30
-  - <<: *common
-`,
-			},
-			wantedResult: true,
-		},
-		{
-			name: "Mixed wildcard with inline and mapping alias updates both (issue #11053)",
-			spec: Spec{
-				File:  "test.yaml",
-				Key:   "$.services[*].image",
-				Value: "nginx:1.30",
-			},
-			files: map[string]file{
-				"test.yaml": {
-					filePath:         "test.yaml",
-					originalFilePath: "test.yaml",
-				},
-			},
-			inputSourceValue: "nginx:1.29",
-			mockedContents: map[string]string{
-				"test.yaml": `x-web: &web
-  image: nginx:1.29
-services:
-  - image: nginx:1.28
-  - *web
-`,
-			},
-			wantedContents: map[string]string{
-				"test.yaml": `x-web: &web
-  image: nginx:1.30
-services:
-  - image: nginx:1.30
-  - *web
-`,
-			},
-			wantedResult: true,
-		},
-		{
-			name: "Wildcard with merged entry and genuinely missing entry errors without searchpattern (issue #11053)",
-			spec: Spec{
-				File:  "test.yaml",
-				Key:   "$.services[*].image",
-				Value: "nginx:1.30",
-			},
-			files: map[string]file{
-				"test.yaml": {
-					filePath:         "test.yaml",
-					originalFilePath: "test.yaml",
-				},
-			},
-			inputSourceValue: "nginx:1.29",
-			mockedContents: map[string]string{
-				"test.yaml": `x-common: &common
-  image: nginx:1.29
-services:
-  - <<: *common
-  - ports:
-      - "80:80"
-`,
-			},
-			wantedError: true,
-		},
-		{
-			name: "Wildcard with duplicate merged entries succeeds without false missing error (issue #11053)",
-			spec: Spec{
-				File:  "test.yaml",
-				Key:   "$.services[*].image",
-				Value: "nginx:1.30",
-			},
-			files: map[string]file{
-				"test.yaml": {
-					filePath:         "test.yaml",
-					originalFilePath: "test.yaml",
-				},
-			},
-			inputSourceValue: "nginx:1.29",
-			mockedContents: map[string]string{
-				"test.yaml": `x-common: &common
-  image: nginx:1.29
-services:
-  - <<: *common
-  - <<: *common
-`,
-			},
-			wantedContents: map[string]string{
-				"test.yaml": `x-common: &common
-  image: nginx:1.30
-services:
-  - <<: *common
-  - <<: *common
-`,
-			},
-			wantedResult: true,
-		},
-		{
-			name: "Backtracking across merge targets finds shared anchor on later step (issue #11053)",
-			spec: Spec{
-				File:  "test.yaml",
-				Key:   "$.services.web.a.b",
-				Value: "nginx:1.30",
-			},
-			files: map[string]file{
-				"test.yaml": {
-					filePath:         "test.yaml",
-					originalFilePath: "test.yaml",
-				},
-			},
-			inputSourceValue: "nginx:1.29",
-			mockedContents: map[string]string{
-				"test.yaml": `x-inner: &inner
-  b: nginx:1.29
-x-outer: &outer
-  a: *inner
-services:
-  web:
-    <<: [*inner, *outer]
-`,
-			},
-			wantedContents: map[string]string{
-				"test.yaml": `x-inner: &inner
-  b: nginx:1.30
-x-outer: &outer
-  a: *inner
-services:
-  web:
-    <<: [*inner, *outer]
-`,
-			},
-			wantedResult: true,
-		},
-		{
-			name: "Recursive descent finds nested matching keys through alias (issue #11053)",
-			spec: Spec{
-				File:  "test.yaml",
-				Key:   "$.app..child.target",
-				Value: "nginx:1.30",
-			},
-			files: map[string]file{
-				"test.yaml": {
-					filePath:         "test.yaml",
-					originalFilePath: "test.yaml",
-				},
-			},
-			inputSourceValue: "nginx:1.29",
-			mockedContents: map[string]string{
-				"test.yaml": `x-root: &root
-  child:
-    child:
-      target: nginx:1.29
-app: *root
-`,
-			},
-			wantedContents: map[string]string{
-				"test.yaml": `x-root: &root
-  child:
-    child:
-      target: nginx:1.30
-app: *root
-`,
-			},
-			wantedResult: true,
-		},
-		{
-			name: "Shallow merge precedence does not fall through shadowed key to later merge target (issue #11053)",
-			spec: Spec{
-				File:  "test.yaml",
-				Key:   "$.services.web.env.image",
-				Value: "nginx:1.30",
-			},
-			files: map[string]file{
-				"test.yaml": {
-					filePath:         "test.yaml",
-					originalFilePath: "test.yaml",
-				},
-			},
-			inputSourceValue: "nginx:1.29",
-			mockedContents: map[string]string{
-				"test.yaml": `x-first: &first
-  env:
-    foo: bar
-x-second: &second
-  env:
-    image: nginx:1.29
-services:
-  web:
-    <<: [*first, *second]
-`,
-			},
-			wantedError: true,
-		},
-		{
-			name: "Merge falls through to later merge target when earlier target lacks the key (issue #11053)",
-			spec: Spec{
-				File:  "test.yaml",
-				Key:   "$.services.web.env.image",
-				Value: "nginx:1.30",
-			},
-			files: map[string]file{
-				"test.yaml": {
-					filePath:         "test.yaml",
-					originalFilePath: "test.yaml",
-				},
-			},
-			inputSourceValue: "nginx:1.29",
-			mockedContents: map[string]string{
-				"test.yaml": `x-first: &first
-  other: bar
-x-second: &second
-  env:
-    image: nginx:1.29
-services:
-  web:
-    <<: [*first, *second]
-`,
-			},
-			wantedContents: map[string]string{
-				"test.yaml": `x-first: &first
-  other: bar
-x-second: &second
-  env:
-    image: nginx:1.30
-services:
-  web:
-    <<: [*first, *second]
-`,
-			},
-			wantedResult: true,
-		},
-		{
-			name: "Inline merge mapping without alias in flow style updates merged key",
-			spec: Spec{
-				File:  "test.yaml",
-				Key:   "$.service.image",
-				Value: "nginx:1.30",
-			},
-			files: map[string]file{
-				"test.yaml": {
-					filePath:         "test.yaml",
-					originalFilePath: "test.yaml",
-				},
-			},
-			inputSourceValue: "nginx:1.29",
-			mockedContents: map[string]string{
-				"test.yaml": "service: {<<: {image: nginx:1.29}}\n",
-			},
-			wantedContents: map[string]string{
-				"test.yaml": "service: {<<: {image: nginx:1.30}}\n",
-			},
-			wantedResult: true,
-		},
-		{
-			name: "Inline merge mapping without alias in block style updates merged key",
-			spec: Spec{
-				File:  "test.yaml",
-				Key:   "$.service.image",
-				Value: "nginx:1.30",
-			},
-			files: map[string]file{
-				"test.yaml": {
-					filePath:         "test.yaml",
-					originalFilePath: "test.yaml",
-				},
-			},
-			inputSourceValue: "nginx:1.29",
-			mockedContents: map[string]string{
-				"test.yaml": `service:
-  <<:
-    image: nginx:1.29
-`,
-			},
-			wantedContents: map[string]string{
-				"test.yaml": `service:
-  <<:
-    image: nginx:1.30
-`,
-			},
-			wantedResult: true,
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -1873,9 +812,6 @@ services:
 
 			require.NoError(t, gotErr)
 			assert.Equal(t, tt.wantedResult, gotResult.Changed)
-			if tt.wantedInformation != "" {
-				assert.Equal(t, tt.wantedInformation, gotResult.Information)
-			}
 
 			for filePath := range y.files {
 				defer os.Remove(filePath)
@@ -2073,811 +1009,285 @@ github:
 	}
 }
 
-func Test_MatchPathEdgeCases(t *testing.T) {
-	t.Run("Recursive descent matches nested child.child.target", func(t *testing.T) {
-		docFile, err := parser.ParseBytes([]byte(`child:
-  child:
-    target: old
-`), parser.ParseComments)
-		require.NoError(t, err)
-		require.Len(t, docFile.Docs, 1)
-
-		idx := indexDocument(docFile.Docs[0])
-		found, positions, missing, err := idx.matchPath(docFile.Docs[0].Body, "$..child.target")
-		require.NoError(t, err)
-		assert.Equal(t, 1, positions)
-		assert.Equal(t, 0, missing)
-		require.Len(t, found, 1)
-		assert.Equal(t, "old", found[0].String())
-	})
-
-	t.Run("Sequence alias DAG with repeated wildcards does not blow up exponentially", func(t *testing.T) {
-		const levels = 25
-		var sb strings.Builder
-		sb.WriteString("a0: &a0\n  - image: nginx:1.29\n")
-		for i := 1; i <= levels; i++ {
-			fmt.Fprintf(&sb, "a%d: &a%d [*a%d, *a%d]\n", i, i, i-1, i-1)
-		}
-		fmt.Fprintf(&sb, "root: *a%d\n", levels)
-
-		key := "$.root" + strings.Repeat("[*]", levels+1) + ".image"
-
-		t.Chdir(t.TempDir())
-
-		mockedText := text.MockTextRetriever{
-			Contents: map[string]string{
-				"test.yaml": sb.String(),
-			},
-		}
-
-		y, err := New(Spec{
-			File:  "test.yaml",
-			Key:   key,
-			Value: "nginx:1.30",
-		})
-		require.NoError(t, err)
-		y.contentRetriever = &mockedText
-		y.files = map[string]file{
-			"test.yaml": {
-				filePath:         "test.yaml",
-				originalFilePath: "test.yaml",
-			},
-		}
-
-		gotResult := result.Target{}
-		err = y.Target(context.Background(), "nginx:1.29", nil, pathresolver.Resolver{}, false, &gotResult)
-		require.NoError(t, err)
-		assert.True(t, gotResult.Changed)
-		assert.Contains(t, mockedText.Contents["test.yaml"], "image: nginx:1.30")
-		assert.Contains(t, mockedText.Contents["test.yaml"], "root: *a25")
-	})
-
-	t.Run("Sequence alias DAG with missing leaves reports missing without overflowing", func(t *testing.T) {
-		const levels = 35
-		var sb strings.Builder
-		sb.WriteString("a0: &a0\n  - ports:\n      - 80\n")
-		for i := 1; i <= levels; i++ {
-			fmt.Fprintf(&sb, "a%d: &a%d [*a%d, *a%d]\n", i, i, i-1, i-1)
-		}
-		fmt.Fprintf(&sb, "root: *a%d\n", levels)
-
-		docFile, err := parser.ParseBytes([]byte(sb.String()), parser.ParseComments)
-		require.NoError(t, err)
-		require.Len(t, docFile.Docs, 1)
-
-		idx := indexDocument(docFile.Docs[0])
-		key := "$.root" + strings.Repeat("[*]", levels+1) + ".image"
-		found, positions, missing, err := idx.matchPath(docFile.Docs[0].Body, key)
-		require.NoError(t, err)
-		assert.Empty(t, found)
-		assert.Equal(t, 0, positions)
-		assert.Greater(t, missing, 0)
-	})
-
-	t.Run("Excessive traversal depth returns a bounded error", func(t *testing.T) {
-		docFile, err := parser.ParseBytes([]byte("a: &a\n  - *a\nroot: *a\n"), parser.ParseComments)
-		require.NoError(t, err)
-		require.Len(t, docFile.Docs, 1)
-
-		idx := indexDocument(docFile.Docs[0])
-		key := "$.root" + strings.Repeat("[*]", maxMatchDepth+5)
-		_, _, _, err = idx.matchPath(docFile.Docs[0].Body, key)
-		require.Error(t, err)
-		assert.Contains(t, err.Error(), "maximum depth")
-	})
-
-	t.Run("SearchPattern updates both inline and merged wildcard entries", func(t *testing.T) {
-		content := `x-common: &common
-  image: nginx:1.29
-services:
-  - image: nginx:1.28
-  - <<: *common
-`
-		wanted := `x-common: &common
-  image: nginx:1.30
-services:
-  - image: nginx:1.30
-  - <<: *common
-`
-		t.Chdir(t.TempDir())
-		require.NoError(t, os.WriteFile("test.yaml", []byte(content), 0600))
-
-		mockedText := text.MockTextRetriever{
-			Contents: map[string]string{"test.yaml": content},
-		}
-		y, err := New(Spec{
-			File:          "test.yaml",
-			Key:           "$.services[*].image",
-			Value:         "nginx:1.30",
-			SearchPattern: true,
-		})
-		require.NoError(t, err)
-		y.contentRetriever = &mockedText
-
-		gotResult := result.Target{}
-		require.NoError(t, y.Target(context.Background(), "nginx:1.29", nil, pathresolver.Resolver{}, false, &gotResult))
-		assert.True(t, gotResult.Changed)
-		assert.Equal(t, result.ATTENTION, gotResult.Result)
-		assert.Equal(t, wanted, mockedText.Contents["test.yaml"])
-	})
-
-	t.Run("SearchPattern updates inline and merged entries while skipping genuinely missing wildcard entry", func(t *testing.T) {
-		content := `x-common: &common
-  image: nginx:1.29
-services:
-  - image: nginx:1.28
-  - <<: *common
-  - ports:
-      - "80:80"
-`
-		wanted := `x-common: &common
-  image: nginx:1.30
-services:
-  - image: nginx:1.30
-  - <<: *common
-  - ports:
-      - "80:80"
-`
-		t.Chdir(t.TempDir())
-		require.NoError(t, os.WriteFile("test.yaml", []byte(content), 0600))
-
-		mockedText := text.MockTextRetriever{
-			Contents: map[string]string{"test.yaml": content},
-		}
-		y, err := New(Spec{
-			File:          "test.yaml",
-			Key:           "$.services[*].image",
-			Value:         "nginx:1.30",
-			SearchPattern: true,
-		})
-		require.NoError(t, err)
-		y.contentRetriever = &mockedText
-
-		gotResult := result.Target{}
-		require.NoError(t, y.Target(context.Background(), "nginx:1.29", nil, pathresolver.Resolver{}, false, &gotResult))
-		assert.True(t, gotResult.Changed)
-		assert.Equal(t, result.ATTENTION, gotResult.Result)
-		assert.Equal(t, wanted, mockedText.Contents["test.yaml"])
-	})
-
-	t.Run("SearchPattern skips shadowed merge key without mutating later merge target", func(t *testing.T) {
-		content := `x-first: &first
-  env:
-    foo: bar
-x-second: &second
-  env:
-    image: nginx:1.29
+// Test_TargetAnchorsAliases covers issue #11053: updating a key whose value is an
+// *alias, or an &anchor, rewrites the anchored value and keeps both in place.
+func Test_TargetAnchorsAliases(t *testing.T) {
+	const compose = `x-image: &image nginx:1.29
 services:
   web:
-    <<: [*first, *second]
+    image: *image
 `
-		t.Chdir(t.TempDir())
-		require.NoError(t, os.WriteFile("test.yaml", []byte(content), 0600))
-
-		mockedText := text.MockTextRetriever{
-			Contents: map[string]string{"test.yaml": content},
-		}
-		y, err := New(Spec{
-			File:          "test.yaml",
-			Key:           "$.services.web.env.image",
-			Value:         "nginx:1.30",
-			SearchPattern: true,
-		})
-		require.NoError(t, err)
-		y.contentRetriever = &mockedText
-
-		gotResult := result.Target{}
-		require.NoError(t, y.Target(context.Background(), "nginx:1.29", nil, pathresolver.Resolver{}, false, &gotResult))
-		assert.False(t, gotResult.Changed)
-		assert.Equal(t, result.SKIPPED, gotResult.Result)
-		assert.Equal(t, content, mockedText.Contents["test.yaml"])
-	})
-
-	t.Run("Recursive descent updates both inline and merged matches", func(t *testing.T) {
-		content := `x-common: &common
-  image: nginx:1.29
+	const composeUpdated = `x-image: &image nginx:1.30
 services:
   web:
-    image: nginx:1.28
-  api:
-    <<: *common
+    image: *image
 `
-		wanted := `x-common: &common
-  image: nginx:1.30
-services:
-  web:
-    image: nginx:1.30
-  api:
-    <<: *common
-`
-		t.Chdir(t.TempDir())
-		require.NoError(t, os.WriteFile("test.yaml", []byte(content), 0600))
+	bothEngines := []string{"", "yamlpath"}
 
-		mockedText := text.MockTextRetriever{
-			Contents: map[string]string{"test.yaml": content},
-		}
-		y, err := New(Spec{
-			File:  "test.yaml",
-			Key:   "$.services..image",
-			Value: "nginx:1.30",
-		})
-		require.NoError(t, err)
-		y.contentRetriever = &mockedText
-
-		gotResult := result.Target{}
-		require.NoError(t, y.Target(context.Background(), "nginx:1.29", nil, pathresolver.Resolver{}, false, &gotResult))
-		assert.True(t, gotResult.Changed)
-		assert.Equal(t, result.ATTENTION, gotResult.Result)
-		assert.Equal(t, wanted, mockedText.Contents["test.yaml"])
-	})
-
-	t.Run("Recursive descent updates both inline and mapping-aliased matches", func(t *testing.T) {
-		content := `x-api: &api
-  image: nginx:1.29
-services:
-  web:
-    image: nginx:1.28
-  api: *api
-`
-		wanted := `x-api: &api
-  image: nginx:1.30
-services:
-  web:
-    image: nginx:1.30
-  api: *api
-`
-		t.Chdir(t.TempDir())
-		require.NoError(t, os.WriteFile("test.yaml", []byte(content), 0600))
-
-		mockedText := text.MockTextRetriever{
-			Contents: map[string]string{"test.yaml": content},
-		}
-		y, err := New(Spec{
-			File:  "test.yaml",
-			Key:   "$.services..image",
-			Value: "nginx:1.30",
-		})
-		require.NoError(t, err)
-		y.contentRetriever = &mockedText
-
-		gotResult := result.Target{}
-		require.NoError(t, y.Target(context.Background(), "nginx:1.29", nil, pathresolver.Resolver{}, false, &gotResult))
-		assert.True(t, gotResult.Changed)
-		assert.Equal(t, result.ATTENTION, gotResult.Result)
-		assert.Equal(t, wanted, mockedText.Contents["test.yaml"])
-	})
-
-	t.Run("Recursive descent with missing trailing key on anchored mapping reports key not found", func(t *testing.T) {
-		content := `services:
-  group: &group
-    name: web
-  copy: *group
-`
-		t.Chdir(t.TempDir())
-		require.NoError(t, os.WriteFile("test.yaml", []byte(content), 0600))
-
-		mockedText := text.MockTextRetriever{
-			Contents: map[string]string{"test.yaml": content},
-		}
-		y, err := New(Spec{
-			File:  "test.yaml",
-			Key:   "$.services..group.image",
-			Value: "nginx:2.0",
-		})
-		require.NoError(t, err)
-		y.contentRetriever = &mockedText
-
-		gotResult := result.Target{}
-		err = y.Target(context.Background(), "nginx:2.0", nil, pathresolver.Resolver{}, false, &gotResult)
-		require.Error(t, err)
-		assert.Contains(t, err.Error(), "key not found")
-		assert.False(t, gotResult.Changed)
-		assert.Equal(t, content, mockedText.Contents["test.yaml"])
-
-		diskContent, readErr := os.ReadFile("test.yaml")
-		require.NoError(t, readErr)
-		assert.Equal(t, content, string(diskContent))
-	})
-
-	t.Run("Recursive descent with trailing key on anchored mapping updates anchor once and preserves alias", func(t *testing.T) {
-		content := `services:
-  group: &group
-    name: web
-    image: nginx:1.0
-  copy: *group
-`
-		wanted := `services:
-  group: &group
-    name: web
-    image: nginx:2.0
-  copy: *group
-`
-		t.Chdir(t.TempDir())
-		require.NoError(t, os.WriteFile("test.yaml", []byte(content), 0600))
-
-		mockedText := text.MockTextRetriever{
-			Contents: map[string]string{"test.yaml": content},
-		}
-		y, err := New(Spec{
-			File:  "test.yaml",
-			Key:   "$.services..group.image",
-			Value: "nginx:2.0",
-		})
-		require.NoError(t, err)
-		y.contentRetriever = &mockedText
-
-		gotResult := result.Target{}
-		require.NoError(t, y.Target(context.Background(), "nginx:1.0", nil, pathresolver.Resolver{}, false, &gotResult))
-		assert.True(t, gotResult.Changed)
-		assert.Equal(t, result.ATTENTION, gotResult.Result)
-		assert.Equal(t, wanted, mockedText.Contents["test.yaml"])
-	})
-
-	t.Run("Nested wildcards traversing an empty aliased sequence do not report missing key", func(t *testing.T) {
-		content := `x-empty: &empty []
-a:
-  - b:
-      - c: *empty
-  - b:
-      - c:
-          - d: nginx:1.29
-`
-		wanted := `x-empty: &empty []
-a:
-  - b:
-      - c: *empty
-  - b:
-      - c:
-          - d: nginx:1.30
-`
-		t.Chdir(t.TempDir())
-		require.NoError(t, os.WriteFile("test.yaml", []byte(content), 0600))
-
-		mockedText := text.MockTextRetriever{
-			Contents: map[string]string{"test.yaml": content},
-		}
-		y, err := New(Spec{
-			File:  "test.yaml",
-			Key:   "$.a[*].b[*].c[*].d",
-			Value: "nginx:1.30",
-		})
-		require.NoError(t, err)
-		y.contentRetriever = &mockedText
-
-		gotResult := result.Target{}
-		require.NoError(t, y.Target(context.Background(), "nginx:1.29", nil, pathresolver.Resolver{}, false, &gotResult))
-		assert.True(t, gotResult.Changed)
-		assert.Equal(t, result.ATTENTION, gotResult.Result)
-		assert.Equal(t, wanted, mockedText.Contents["test.yaml"])
-	})
-
-	t.Run("Nested wildcard with empty trailing aliased sequence does not report missing key", func(t *testing.T) {
-		content := `x-empty: &empty []
-groups:
-  - items: *empty
-  - items:
-      - nginx:1.29
-`
-		wanted := `x-empty: &empty []
-groups:
-  - items: *empty
-  - items:
-      - nginx:1.30
-`
-		t.Chdir(t.TempDir())
-		require.NoError(t, os.WriteFile("test.yaml", []byte(content), 0600))
-
-		mockedText := text.MockTextRetriever{
-			Contents: map[string]string{"test.yaml": content},
-		}
-		y, err := New(Spec{
-			File:  "test.yaml",
-			Key:   "$.groups[*].items[*]",
-			Value: "nginx:1.30",
-		})
-		require.NoError(t, err)
-		y.contentRetriever = &mockedText
-
-		gotResult := result.Target{}
-		require.NoError(t, y.Target(context.Background(), "nginx:1.29", nil, pathresolver.Resolver{}, false, &gotResult))
-		assert.True(t, gotResult.Changed)
-		assert.Equal(t, result.ATTENTION, gotResult.Result)
-		assert.Equal(t, wanted, mockedText.Contents["test.yaml"])
-	})
-
-	t.Run("Nested wildcards still report genuinely missing key alongside empty aliased sequence", func(t *testing.T) {
-		content := `x-empty: &empty []
-a:
-  - b:
-      - c: *empty
-      - other: value
-  - b:
-      - c:
-          - d: nginx:1.29
-`
-		t.Chdir(t.TempDir())
-		require.NoError(t, os.WriteFile("test.yaml", []byte(content), 0600))
-
-		mockedText := text.MockTextRetriever{
-			Contents: map[string]string{"test.yaml": content},
-		}
-		y, err := New(Spec{
-			File:  "test.yaml",
-			Key:   "$.a[*].b[*].c[*].d",
-			Value: "nginx:1.30",
-		})
-		require.NoError(t, err)
-		y.contentRetriever = &mockedText
-
-		gotResult := result.Target{}
-		err = y.Target(context.Background(), "nginx:1.29", nil, pathresolver.Resolver{}, false, &gotResult)
-		require.Error(t, err)
-		assert.ErrorContains(t, err, "is missing from")
-		assert.Equal(t, content, mockedText.Contents["test.yaml"])
-		onDisk, readErr := os.ReadFile("test.yaml")
-		require.NoError(t, readErr)
-		assert.Equal(t, content, string(onDisk))
-		assert.False(t, gotResult.Changed)
-	})
-
-	t.Run("Partial match across deduplicated merged anchors reports 1 of 3 and updates shared anchor once", func(t *testing.T) {
-		content := `x-common: &common
-  image: nginx:1.29
-services:
-  - <<: *common
-  - <<: *common
-  - ports:
-      - "80:80"
-`
-		wanted := `x-common: &common
-  image: nginx:1.30
-services:
-  - <<: *common
-  - <<: *common
-  - ports:
-      - "80:80"
-`
-
-		docFile, err := parser.ParseBytes([]byte(content), parser.ParseComments)
-		require.NoError(t, err)
-		require.Len(t, docFile.Docs, 1)
-
-		idx := indexDocument(docFile.Docs[0])
-		found, positions, missing, err := idx.matchPath(docFile.Docs[0].Body, "$.services[*].image")
-		require.NoError(t, err)
-		assert.Len(t, found, 1)
-		assert.Equal(t, 2, positions)
-		assert.Equal(t, 1, missing)
-
-		t.Run("strict error reports 1 of 3", func(t *testing.T) {
-			t.Chdir(t.TempDir())
-			require.NoError(t, os.WriteFile("test.yaml", []byte(content), 0600))
-
-			mockedText := text.MockTextRetriever{
-				Contents: map[string]string{"test.yaml": content},
-			}
-			y, err := New(Spec{
-				File:  "test.yaml",
-				Key:   "$.services[*].image",
-				Value: "nginx:1.30",
-			})
-			require.NoError(t, err)
-			y.contentRetriever = &mockedText
-
-			gotResult := result.Target{}
-			err = y.Target(context.Background(), "nginx:1.29", nil, pathresolver.Resolver{}, false, &gotResult)
-			require.Error(t, err)
-			assert.ErrorContains(t, err, "is missing from 1 of the 3 nodes it selects")
-			assert.False(t, gotResult.Changed)
-			assert.Equal(t, content, mockedText.Contents["test.yaml"])
-			onDisk, readErr := os.ReadFile("test.yaml")
-			require.NoError(t, readErr)
-			assert.Equal(t, content, string(onDisk))
-		})
-
-		t.Run("searchpattern logs 1 of 3 and updates shared anchor once with aliases preserved", func(t *testing.T) {
-			t.Chdir(t.TempDir())
-			require.NoError(t, os.WriteFile("test.yaml", []byte(content), 0600))
-
-			prevLevel := log.GetLevel()
-			log.SetLevel(log.DebugLevel)
-			defer log.SetLevel(prevLevel)
-
-			var logs bytes.Buffer
-			stopCapture := log.Capture(&logs)
-			defer stopCapture()
-
-			mockedText := text.MockTextRetriever{
-				Contents: map[string]string{"test.yaml": content},
-			}
-			y, err := New(Spec{
-				File:          "test.yaml",
-				Key:           "$.services[*].image",
-				Value:         "nginx:1.30",
-				SearchPattern: true,
-			})
-			require.NoError(t, err)
-			y.contentRetriever = &mockedText
-
-			gotResult := result.Target{}
-			require.NoError(t, y.Target(context.Background(), "nginx:1.29", nil, pathresolver.Resolver{}, false, &gotResult))
-			assert.True(t, gotResult.Changed)
-			assert.Equal(t, result.ATTENTION, gotResult.Result)
-			assert.Equal(t, "nginx:1.29", gotResult.Information)
-			assert.Equal(t, wanted, mockedText.Contents["test.yaml"])
-			assert.Contains(t, logs.String(), "is missing from 1 of the 3 nodes it selects")
-		})
-	})
-}
-
-func Test_TargetNestedAnchorReplacement(t *testing.T) {
 	tests := []struct {
-		name           string
-		key            string
-		value          string
-		content        string
-		wantedContent  string
-		wantedChanged  bool
-		wantedError    bool
-		wantedErrMatch string
-		appendToArray  bool
+		name          string
+		engines       []string
+		keys          []string
+		value         string
+		comment       string
+		appendToArray bool
+		createMissing bool
+		documentIndex *int
+		dryRun        bool
+		content       string
+		want          string
+		wantChanged   bool
+		wantInfo      string
+		wantErr       bool
 	}{
 		{
-			name:  "Append to a sequence holding an unresolved alias entry returns an error and leaves the file unchanged",
-			key:   "$.selected",
-			value: "c",
-			content: `base: &base [*missing]
-selected: *base
-`,
-			wantedContent: `base: &base [*missing]
-selected: *base
-`,
-			appendToArray:  true,
-			wantedError:    true,
-			wantedErrMatch: `unresolved yaml alias "missing"`,
+			name:        "alias update rewrites the anchored value",
+			engines:     bothEngines,
+			keys:        []string{"$.services.web.image"},
+			content:     compose,
+			want:        composeUpdated,
+			wantChanged: true,
+			wantInfo:    "nginx:1.29",
 		},
 		{
-			name:  "Terminal wildcard updates the anchor behind an alias entry",
-			key:   "$.items[*]",
-			value: "updated",
-			content: `tag: &tag old
-items: [*tag]
-`,
-			wantedContent: `tag: &tag updated
-items: [*tag]
-`,
-			wantedChanged: true,
+			name:        "direct anchor update keeps the anchor",
+			engines:     bothEngines,
+			keys:        []string{"$.x-image"},
+			content:     compose,
+			want:        composeUpdated,
+			wantChanged: true,
 		},
 		{
-			name:  "Terminal wildcard updates alias and inline entries together",
-			key:   "$.items[*]",
-			value: "updated",
-			content: `tag: &tag old
-items:
-  - *tag
-  - inline
+			name:    "several aliases of one anchor update it once",
+			engines: bothEngines,
+			keys:    []string{"$.services.web.image", "$.services.api.image"},
+			content: `x-image: &image nginx:1.29
+services:
+  web:
+    image: *image
+  api:
+    image: *image
 `,
-			wantedContent: `tag: &tag updated
-items:
-  - *tag
-  - updated
+			want: `x-image: &image nginx:1.30
+services:
+  web:
+    image: *image
+  api:
+    image: *image
 `,
-			wantedChanged: true,
+			wantChanged: true,
 		},
 		{
-			name:  "Rejects alias replacement that would leave a dangling nested anchor",
-			key:   "$.selected",
-			value: "updated",
-			content: `base: &base
-  image: &image nginx:1.29
-selected: *base
-other: *image
+			name:    "wildcard over an alias and an inline value updates both",
+			engines: []string{""},
+			keys:    []string{"$.services[*].image"},
+			content: `x-image: &image nginx:1.29
+services:
+  - image: *image
+  - image: nginx:1.28
+  - image: *image
 `,
-			wantedContent: `base: &base
-  image: &image nginx:1.29
-selected: *base
-other: *image
+			want: `x-image: &image nginx:1.30
+services:
+  - image: *image
+  - image: nginx:1.30
+  - image: *image
 `,
-			wantedError:    true,
-			wantedErrMatch: `anchor "image"`,
+			wantChanged: true,
 		},
 		{
-			name:  "Rejects direct anchored subtree replacement that would leave a dangling nested anchor",
-			key:   "$.base",
-			value: "updated",
-			content: `base: &base
-  image: &image nginx:1.29
-other: *image
-`,
-			wantedContent: `base: &base
-  image: &image nginx:1.29
-other: *image
-`,
-			wantedError:    true,
-			wantedErrMatch: `anchor "image"`,
+			name:     "alias already holding the value is a no-op",
+			engines:  bothEngines,
+			keys:     []string{"$.services.web.image"},
+			content:  composeUpdated,
+			want:     composeUpdated,
+			wantInfo: "nginx:1.30",
 		},
 		{
-			name:  "Rejects unanchored subtree replacement that would leave a dangling nested anchor",
-			key:   "$.base",
-			value: "updated",
-			content: `base:
-  image: &image nginx:1.29
-other: *image
-`,
-			wantedContent: `base:
-  image: &image nginx:1.29
-other: *image
-`,
-			wantedError:    true,
-			wantedErrMatch: `anchor "image"`,
+			name:        "dry run reports the change without writing",
+			engines:     bothEngines,
+			keys:        []string{"$.services.web.image"},
+			dryRun:      true,
+			content:     compose,
+			want:        compose,
+			wantChanged: true,
+			wantInfo:    "nginx:1.29",
 		},
 		{
-			name:  "Rejects replacement that would rebind an external alias to an earlier anchor",
-			key:   "$.selected",
-			value: "updated",
-			content: `first: &image nginx:1.28
-base: &base
-  image: &image nginx:1.29
-selected: *base
-other: *image
+			name:    "comments are kept and the new comment goes on the anchored value",
+			engines: bothEngines,
+			keys:    []string{"$.services.web.image"},
+			comment: "updated",
+			content: `# shared image
+x-image: &image nginx:1.29
+services:
+  web:
+    # web image
+    image: *image
 `,
-			wantedContent: `first: &image nginx:1.28
-base: &base
-  image: &image nginx:1.29
-selected: *base
-other: *image
+			want: `# shared image
+x-image: &image nginx:1.30 # updated
+services:
+  web:
+    # web image
+    image: *image
 `,
-			wantedError:    true,
-			wantedErrMatch: `anchor "image"`,
+			wantChanged: true,
 		},
 		{
-			name:  "Rejects alias replacement that would turn a merge operand into a scalar",
-			key:   "$.selected",
-			value: "updated",
-			content: `base: &base
-  image: old
-selected: *base
-service:
+			name:          "an alias binds to the anchor of its own document",
+			engines:       bothEngines,
+			keys:          []string{"$.services.web.image"},
+			documentIndex: ptrInt(1),
+			content: `x-image: &image nginx:1.29
+services:
+  web:
+    image: *image
+---
+x-image: &image nginx:1.28
+services:
+  web:
+    image: *image
+`,
+			want: `x-image: &image nginx:1.29
+services:
+  web:
+    image: *image
+---
+x-image: &image nginx:1.30
+services:
+  web:
+    image: *image
+`,
+			wantChanged: true,
+		},
+		{
+			name:    "an alias binds to the closest preceding anchor",
+			engines: []string{""},
+			keys:    []string{"$.services.web.image"},
+			content: `old: &image nginx:1.27
+x-image: &image nginx:1.29
+services:
+  web:
+    image: *image
+`,
+			want: `old: &image nginx:1.27
+x-image: &image nginx:1.30
+services:
+  web:
+    image: *image
+`,
+			wantChanged: true,
+		},
+		{
+			name:    "dangling alias is an error",
+			engines: bothEngines,
+			keys:    []string{"$.image"},
+			content: "image: *missing\n",
+			wantErr: true,
+		},
+		{
+			name:          "append to an aliased sequence updates the anchored sequence",
+			engines:       []string{""},
+			keys:          []string{"$.services.items"},
+			value:         "c",
+			appendToArray: true,
+			content: `x-list: &list
+  - a
+  - b
+services:
+  items: *list
+`,
+			want: `x-list: &list
+  - a
+  - b
+  - c
+services:
+  items: *list
+`,
+			wantChanged: true,
+		},
+		{
+			name:          "append skips a value already held through an alias entry",
+			engines:       []string{""},
+			keys:          []string{"$.selected"},
+			value:         "c",
+			appendToArray: true,
+			content: `item: &item c
+selected: [*item]
+`,
+			want: `item: &item c
+selected: [*item]
+`,
+		},
+		{
+			name:          "createmissingkey under a merge key adds a local override",
+			engines:       []string{""},
+			keys:          []string{"$.svc.image"},
+			createMissing: true,
+			content: `x-base: &base
+  image: nginx:1.29
+svc:
   <<: *base
 `,
-			wantedContent: `base: &base
-  image: old
-selected: *base
-service:
+			want: `x-base: &base
+  image: nginx:1.29
+svc:
   <<: *base
+  image: nginx:1.30
 `,
-			wantedError:    true,
-			wantedErrMatch: `merge key operand`,
-		},
-		{
-			name:  "Rejects direct replacement of an anchor used in a merge sequence",
-			key:   "$.base",
-			value: "updated",
-			content: `base: &base
-  image: old
-extra: &extra
-  tag: v1
-service:
-  <<: [*extra, *base]
-`,
-			wantedContent: `base: &base
-  image: old
-extra: &extra
-  tag: v1
-service:
-  <<: [*extra, *base]
-`,
-			wantedError:    true,
-			wantedErrMatch: `merge key operand`,
-		},
-		{
-			name:  "Allows updating a leaf reached through a merge key",
-			key:   "$.service.image",
-			value: "new",
-			content: `base: &base
-  image: old
-selected: *base
-service:
-  <<: *base
-`,
-			wantedContent: `base: &base
-  image: new
-selected: *base
-service:
-  <<: *base
-`,
-			wantedChanged: true,
-		},
-		{
-			name:  "Allows replacing anchored subtree when nested anchor is only referenced inside it",
-			key:   "$.selected",
-			value: "updated",
-			content: `base: &base
-  image: &image nginx:1.29
-  copy: *image
-selected: *base
-`,
-			wantedContent: `base: &base updated
-selected: *base
-`,
-			wantedChanged: true,
-		},
-		{
-			name:  "Allows replacing unanchored subtree when nested anchor is only referenced inside it",
-			key:   "$.base",
-			value: "updated",
-			content: `base:
-  image: &image nginx:1.29
-  copy: *image
-`,
-			wantedContent: `base: updated
-`,
-			wantedChanged: true,
-		},
-		{
-			name:  "Existing scalar anchor update still works via alias",
-			key:   "$.other",
-			value: "v2.0.0",
-			content: `tag: &tag v1.0.0
-other: *tag
-`,
-			wantedContent: `tag: &tag v2.0.0
-other: *tag
-`,
-			wantedChanged: true,
-		},
-		{
-			name:  "Existing scalar anchor update still works directly",
-			key:   "$.tag",
-			value: "v2.0.0",
-			content: `tag: &tag v1.0.0
-other: *tag
-`,
-			wantedContent: `tag: &tag v2.0.0
-other: *tag
-`,
-			wantedChanged: true,
+			wantChanged: true,
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Chdir(t.TempDir())
-			require.NoError(t, os.WriteFile("test.yaml", []byte(tt.content), 0600))
-
-			mockedText := text.MockTextRetriever{
-				Contents: map[string]string{
-					"test.yaml": tt.content,
-				},
+		for _, engine := range tt.engines {
+			name := tt.name
+			if engine != "" {
+				name += " (" + engine + ")"
 			}
-
-			y, err := New(Spec{
-				File:          "test.yaml",
-				Key:           tt.key,
-				Value:         tt.value,
-				AppendToArray: tt.appendToArray,
-			})
-			require.NoError(t, err)
-			y.contentRetriever = &mockedText
-
-			gotResult := result.Target{}
-			gotErr := y.Target(context.Background(), tt.value, nil, pathresolver.Resolver{}, false, &gotResult)
-			if tt.wantedError {
-				require.Error(t, gotErr)
-				if tt.wantedErrMatch != "" {
-					assert.Contains(t, gotErr.Error(), tt.wantedErrMatch)
+			t.Run(name, func(t *testing.T) {
+				value := tt.value
+				if value == "" {
+					value = "nginx:1.30"
 				}
-				assert.False(t, gotResult.Changed)
-				assert.Equal(t, tt.wantedContent, mockedText.Contents["test.yaml"])
-				diskContent, readErr := os.ReadFile("test.yaml")
-				require.NoError(t, readErr)
-				assert.Equal(t, tt.wantedContent, string(diskContent))
-				return
-			}
+				spec := Spec{
+					File:          "test.yaml",
+					Value:         value,
+					Comment:       tt.comment,
+					Engine:        engine,
+					AppendToArray: tt.appendToArray,
+					DocumentIndex: tt.documentIndex,
 
-			require.NoError(t, gotErr)
-			assert.Equal(t, tt.wantedChanged, gotResult.Changed)
-			assert.Equal(t, tt.wantedContent, mockedText.Contents["test.yaml"])
-		})
+					CreateMissingKey: tt.createMissing,
+				}
+				if len(tt.keys) == 1 {
+					spec.Key = tt.keys[0]
+				} else {
+					spec.Keys = tt.keys
+				}
+
+				mockedText := text.MockTextRetriever{Contents: map[string]string{"test.yaml": tt.content}}
+				y, err := New(spec)
+				require.NoError(t, err)
+				y.contentRetriever = &mockedText
+				y.files = map[string]file{"test.yaml": {filePath: "test.yaml", originalFilePath: "test.yaml"}}
+				defer os.Remove("test.yaml")
+
+				gotResult := result.Target{}
+				gotErr := y.Target(context.Background(), "", nil, pathresolver.Resolver{}, tt.dryRun, &gotResult)
+				if tt.wantErr {
+					assert.Error(t, gotErr)
+					return
+				}
+
+				require.NoError(t, gotErr)
+				assert.Equal(t, tt.wantChanged, gotResult.Changed)
+				assert.Equal(t, tt.want, mockedText.Contents["test.yaml"])
+				if tt.wantInfo != "" {
+					assert.Equal(t, tt.wantInfo, gotResult.Information)
+				}
+			})
+		}
 	}
 }
