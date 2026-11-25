@@ -1,0 +1,8 @@
+[project]
+name = "locked-project"
+requires-python = ">=3.12"
+dependencies = [
+    "requests>=2.28",
+    "numpy>=1.20",
+    "corp-utils",
+]

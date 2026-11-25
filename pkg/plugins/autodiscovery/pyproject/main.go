@@ -90,8 +90,13 @@ type Spec struct {
 	//     * "major": patch, minor and major updates.
 	//     * "majoronly": major updates only.
 	//     * a version constraint, such as ">= 1.0.0".
-	//   * relative patterns such as "minor" are resolved against the version each dependency
-	//     currently declares, so "minor" gives the pattern "2.x" for "requests>=2.28".
+	//   * relative patterns such as "minor" are resolved against the version each dependency's
+	//     constraint starts from, so "minor" gives the pattern "2.x" for "requests>=2.28,<3".
+	//     A dependency whose constraint sets no lower bound, such as "requests<3", is skipped,
+	//     unless its installed version is known, as below.
+	//     With an age filter not allowing a downgrade, they are resolved against the installed
+	//     version instead: the version uv.lock resolves or, without uv.lock, the version pinned
+	//     with "==". "minor" then gives ">=3.1.0, 3.x" when uv.lock resolves requests 3.1.0.
 	//   * with kind "regex", "pattern" accepts a regular expression.
 	//   * more examples at https://www.updatecli.io/docs/core/versionfilter/
 	//
@@ -125,10 +130,16 @@ type Spec struct {
 	//     seven days ago. An empty "age: {}" disables it.
 	//   * the default doesn't apply with "indexurl", as private registries may not report the
 	//     upload times an age filter needs. On a registry reporting none, an explicit "age"
-	//     makes the generated sources fail.
+	//     makes the generated sources skip.
+	//   * a version lower than the one uv.lock resolves, or the one pinned with "==" without
+	//     uv.lock, is never suggested. While every newer release is too recent, the update is
+	//     skipped. Set "allowdowngrade" to true to fall back to the newest release old enough
+	//     instead. Kinds other than "pep440" and "semver", such as "latest", can't exclude
+	//     lower versions. A dependency is skipped, with a warning, when its installed version
+	//     can't bound the versionfilter, such as "1.0.post1" with the "semver" kind.
 	//   * security fixes don't wait for it, see "vulnerability".
 	//
-	Age *age.Spec `yaml:",omitempty"`
+	Age *age.AutodiscoverySpec `yaml:",omitempty"`
 	// "vulnerability" switches the autodiscovery to security updates, based on the OSV database (https://osv.dev).
 	//
 	// A package is only updated when its current version has known vulnerabilities,
@@ -236,8 +247,9 @@ type Pyproject struct {
 	versionFilter version.Filter
 	// uvAvailable reports whether the uv CLI is present on PATH.
 	uvAvailable bool
-	// releaseAge holds the release age filter to propagate to generated manifests.
-	releaseAge age.Spec
+	// ageFilter holds the release age filter to propagate to generated manifests, and whether
+	// it may make an update lower the version in use.
+	ageFilter age.AutodiscoverySpec
 	// trustedRegistries holds the normalized URLs of pypi.org and the mirrors from the spec,
 	// whose packages vulnerability mode checks against the OSV database.
 	trustedRegistries map[string]bool
@@ -270,8 +282,9 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Pyproject, error) {
 	// By default, wait for a release to be old enough before suggesting it
 	releaseAge := age.Spec{Minimum: defaultMinimumReleaseAge}
 	switch {
-	case s.Age != nil:
-		releaseAge = *s.Age
+	// "age: {}" disables the default, while "allowdowngrade" alone keeps it
+	case s.Age != nil && (!s.Age.Spec.IsZero() || s.Age.AllowDowngrade == nil):
+		releaseAge = s.Age.Spec
 	case s.Vulnerability != nil:
 		// A fixed version is suggested as soon as it is known
 		releaseAge = age.Spec{}
@@ -311,9 +324,17 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Pyproject, error) {
 		scmID:             scmID,
 		versionFilter:     newFilter,
 		uvAvailable:       isUvAvailable(),
-		releaseAge:        releaseAge,
+		ageFilter:         age.AutodiscoverySpec{Spec: releaseAge, AllowDowngrade: allowDowngrade(s.Age)},
 		trustedRegistries: trustedRegistries(s.PyPIMirrors),
 	}, nil
+}
+
+// allowDowngrade returns the "allowdowngrade" setting of releaseAge, if any.
+func allowDowngrade(releaseAge *age.AutodiscoverySpec) *bool {
+	if releaseAge == nil {
+		return nil
+	}
+	return releaseAge.AllowDowngrade
 }
 
 // trustedRegistries returns the normalized URLs of pypi.org and the given mirrors.

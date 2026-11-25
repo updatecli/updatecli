@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/BurntSushi/toml"
+	pep440 "github.com/aquasecurity/go-pep440-version"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pep503"
 )
 
@@ -58,6 +59,9 @@ type lockedPackages struct {
 	// private index, to that registry. The OSV database only covers pypi.org, so a private
 	// package sharing the name of a public one would get its advisories.
 	untrustedRegistry map[string]string
+	// installed holds the packages resolved from any registry, trusted or not, which an
+	// update must not lower when an age filter holds back the newest releases.
+	installed lockedVersions
 }
 
 // normalizeRegistryURL returns a registry URL in the form used to compare registries.
@@ -81,6 +85,7 @@ func loadUvLockVersions(dir string, trustedRegistries map[string]bool) (lockedPa
 		versions:          lockedVersions{},
 		notFromRegistry:   map[string]bool{},
 		untrustedRegistry: map[string]string{},
+		installed:         lockedVersions{},
 	}
 	for _, pkg := range data.Package {
 		if pkg.Name == "" {
@@ -94,6 +99,9 @@ func loadUvLockVersions(dir string, trustedRegistries map[string]bool) (lockedPa
 			continue
 		}
 		registry, _ := rawRegistry.(string)
+		if pkg.Version != "" {
+			locked.installed[name] = append(locked.installed[name], pkg.Version)
+		}
 		if !trustedRegistries[normalizeRegistryURL(registry)] {
 			locked.untrustedRegistry[name] = registry
 			continue
@@ -106,4 +114,28 @@ func loadUvLockVersions(dir string, trustedRegistries map[string]bool) (lockedPa
 	}
 
 	return locked, nil
+}
+
+// highestSatisfying returns the highest version resolved for the package that satisfies the
+// PEP 440 constraint, any version when the constraint is empty or can't be parsed. It returns
+// "" when none does. A package uv.lock resolves at several versions gets one upgrade for all
+// of them, so only the highest one is safe to keep as the lowest acceptable version. A version
+// outside the constraint, such as one a declaration under another environment marker resolves,
+// would make the bounded constraint match nothing.
+func (l lockedVersions) highestSatisfying(name, constraint string) string {
+	specifiers, err := pep440.NewSpecifiers(constraint, pep440.WithPreRelease(true))
+	checkConstraint := strings.TrimSpace(constraint) != "" && err == nil
+
+	var highest string
+	var highestVersion pep440.Version
+	for _, raw := range l[pep503.NormalizeName(name)] {
+		v, err := pep440.Parse(raw)
+		if err != nil || (checkConstraint && !specifiers.Check(v)) {
+			continue
+		}
+		if highest == "" || v.GreaterThan(highestVersion) {
+			highest, highestVersion = raw, v
+		}
+	}
+	return highest
 }

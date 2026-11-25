@@ -1,10 +1,13 @@
 package pyproject
 
 import (
+	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/age"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
 )
 
@@ -530,7 +533,7 @@ sources:
         minimum: '7d'
       versionfilter:
         kind: 'semver'
-        pattern: '3.x'
+        pattern: '>=3.0.0, 3.x'
 targets:
   flask:
     name: 'deps(pypi): bump "flask" to {{ source "flask" }}'
@@ -558,7 +561,7 @@ sources:
         minimum: '7d'
       versionfilter:
         kind: 'semver'
-        pattern: '2.x'
+        pattern: '>=2.28.0, 2.x'
 targets:
   requests:
     name: 'deps(pypi): bump "requests" to {{ source "requests" }}'
@@ -879,4 +882,245 @@ sources:
 			assert.Equal(t, tt.expectedPipeline, string(manifests[0]))
 		})
 	}
+}
+
+func TestNewAgeNeverDowngrades(t *testing.T) {
+	testdata := []struct {
+		name string
+		spec Spec
+		// expectedPatterns maps a dependency to the pattern of its source versionfilter.
+		expectedPatterns map[string]string
+	}{
+		{
+			name: "the default age bounds the constraint at the version uv.lock resolves",
+			expectedPatterns: map[string]string{
+				"requests": ">=2.32.5, >=2.28",
+				// Resolved at several versions, the highest one is kept
+				"numpy": ">=2.1.0, >=1.20",
+				// Resolved from another registry, still the version in use
+				"corp-utils": ">=1.4.0",
+			},
+		},
+		{
+			name: "a user versionfilter is bounded at the version uv.lock resolves",
+			spec: Spec{VersionFilter: version.Filter{Kind: "semver", Pattern: "minor"}},
+			expectedPatterns: map[string]string{
+				"requests":   ">=2.32.5, 2.x",
+				"numpy":      ">=2.1.0, 2.x",
+				"corp-utils": ">=1.4.0, 1.x",
+			},
+		},
+		{
+			name: "a user pep440 versionfilter is bounded at the version uv.lock resolves",
+			spec: Spec{VersionFilter: version.Filter{Kind: "pep440", Pattern: "<3"}},
+			expectedPatterns: map[string]string{
+				"requests":   ">=2.32.5, <3",
+				"numpy":      ">=2.1.0, <3",
+				"corp-utils": ">=1.4.0, <3",
+			},
+		},
+		{
+			name: "allowdowngrade keeps the constraint as declared",
+			spec: Spec{Age: &age.AutodiscoverySpec{Spec: age.Spec{Minimum: "7d"}, AllowDowngrade: new(true)}},
+			expectedPatterns: map[string]string{
+				"requests":   ">=2.28",
+				"numpy":      ">=1.20",
+				"corp-utils": "*",
+			},
+		},
+		{
+			name: "without an age filter, the constraint is kept as declared",
+			spec: Spec{Age: &age.AutodiscoverySpec{}},
+			expectedPatterns: map[string]string{
+				"requests":   ">=2.28",
+				"numpy":      ">=1.20",
+				"corp-utils": "*",
+			},
+		},
+	}
+
+	for _, tt := range testdata {
+		t.Run(tt.name, func(t *testing.T) {
+			p, err := New(tt.spec, "testdata/locked_versions", "", "")
+			require.NoError(t, err)
+			p.uvAvailable = true
+
+			manifests, err := p.DiscoverManifests()
+			require.NoError(t, err)
+			require.Len(t, manifests, len(tt.expectedPatterns))
+
+			for _, manifest := range manifests {
+				var found bool
+				for dependency, pattern := range tt.expectedPatterns {
+					if !strings.Contains(string(manifest), fmt.Sprintf("name: '%s'\n", dependency)) {
+						continue
+					}
+					found = true
+					assert.Contains(t, string(manifest), fmt.Sprintf("pattern: '%s'\n", pattern), "dependency %q", dependency)
+				}
+				assert.True(t, found, "unexpected manifest:\n%s", manifest)
+			}
+		})
+	}
+}
+
+func TestNewAgeAllowDowngrade(t *testing.T) {
+	// "allowdowngrade" alone keeps the default age
+	p, err := New(map[string]interface{}{"age": map[string]interface{}{"allowdowngrade": true}}, "testdata/no_lockfile", "", "")
+	require.NoError(t, err)
+	assert.Equal(t, defaultMinimumReleaseAge, p.ageFilter.Minimum)
+	assert.True(t, p.ageFilter.MayDowngrade())
+
+	// "age: {}" disables the default, so nothing is held back and nothing is bounded
+	p, err = New(map[string]interface{}{"age": map[string]interface{}{}}, "testdata/no_lockfile", "", "")
+	require.NoError(t, err)
+	assert.True(t, p.ageFilter.IsZero())
+	assert.False(t, p.ageFilter.NeverDowngrade())
+}
+
+func TestInstalledVersion(t *testing.T) {
+	file := discoveredFile{installed: lockedVersions{"requests": {"2.32.5"}, "numpy": {"2.1.0", "1.26.4", "10.0.0rc1"}}}
+
+	assert.Equal(t, "2.32.5", file.installedVersion(pythonDependency{Name: "Requests", Constraint: ">=2.28"}))
+	assert.Equal(t, "10.0.0rc1", file.installedVersion(pythonDependency{Name: "numpy", Constraint: ">=1.20"}))
+	assert.Equal(t, "10.0.0rc1", file.installedVersion(pythonDependency{Name: "numpy"}))
+	// A declaration under an environment marker only gets the versions within its constraint
+	assert.Equal(t, "1.26.4", file.installedVersion(pythonDependency{Name: "numpy", Constraint: ">=1.24,<2"}))
+	// uv.lock resolves none within the constraint, which then stays unbounded, even when pinned
+	assert.Equal(t, "", file.installedVersion(pythonDependency{Name: "requests", Constraint: "<2"}))
+	assert.Equal(t, "", file.installedVersion(pythonDependency{Name: "requests", Constraint: "==2.0.0"}))
+	// Without uv.lock, the version pinned with "==" is the version in use
+	assert.Equal(t, "8.1.7", file.installedVersion(pythonDependency{Name: "click", Constraint: "==8.1.7"}))
+	assert.Equal(t, "", file.installedVersion(pythonDependency{Name: "click", Constraint: ">=8"}))
+}
+
+func TestNewAgeNeverDowngradesPEP440Versions(t *testing.T) {
+	testdata := []struct {
+		name string
+		spec Spec
+		// expectedPatterns maps a dependency to the pattern of its source versionfilter.
+		// A dependency missing from it must be skipped.
+		expectedPatterns map[string]string
+	}{
+		{
+			name: "local, post and pre-release versions bound the declared constraint",
+			expectedPatterns: map[string]string{
+				// A specifier can't name a local version
+				"torch": ">=2.1.0, >=2.0",
+				"foo":   ">=1.0.post1, >=1.0",
+				// A pre-release in use doesn't make newer pre-releases match
+				"bar": ">=2.0, >=1.0",
+			},
+		},
+		{
+			name: "a semver versionfilter skips the versions in use it can't parse",
+			spec: Spec{VersionFilter: version.Filter{Kind: "semver", Pattern: "*"}},
+			expectedPatterns: map[string]string{
+				"torch": ">=2.1.0+cpu",
+			},
+		},
+		{
+			name: "allowdowngrade doesn't need a bound",
+			spec: Spec{
+				VersionFilter: version.Filter{Kind: "semver", Pattern: "*"},
+				Age:           &age.AutodiscoverySpec{Spec: age.Spec{Minimum: "7d"}, AllowDowngrade: new(true)},
+			},
+			expectedPatterns: map[string]string{
+				"torch": "*",
+				"foo":   "*",
+				"bar":   "*",
+			},
+		},
+	}
+
+	for _, tt := range testdata {
+		t.Run(tt.name, func(t *testing.T) {
+			p, err := New(tt.spec, "testdata/locked_pep440_versions", "", "")
+			require.NoError(t, err)
+			p.uvAvailable = true
+
+			manifests, err := p.DiscoverManifests()
+			require.NoError(t, err)
+			require.Len(t, manifests, len(tt.expectedPatterns))
+
+			for _, manifest := range manifests {
+				var found bool
+				for dependency, pattern := range tt.expectedPatterns {
+					if !strings.Contains(string(manifest), fmt.Sprintf("name: '%s'\n", dependency)) {
+						continue
+					}
+					found = true
+					assert.Contains(t, string(manifest), fmt.Sprintf("pattern: '%s'\n", pattern), "dependency %q", dependency)
+				}
+				assert.True(t, found, "unexpected manifest:\n%s", manifest)
+			}
+		})
+	}
+}
+
+func TestRoutineVersionFilterPEP440WithoutInstalledVersion(t *testing.T) {
+	// The declared version of "foo<3.0" is 3.0, an upper bound: a pep440 filter isn't bounded at it.
+	p, err := New(map[string]interface{}{"versionfilter": map[string]interface{}{"kind": "pep440", "pattern": "<3.0"}}, "testdata/no_lockfile", "", "")
+	require.NoError(t, err)
+	require.True(t, p.ageFilter.NeverDowngrade())
+
+	dep, err := parsePEP508("foo<3.0")
+	require.NoError(t, err)
+
+	kind, pattern, _, ok := p.routineVersionFilter(discoveredFile{}, dep)
+	require.True(t, ok)
+	assert.Equal(t, "pep440", kind)
+	assert.Equal(t, "<3.0", pattern)
+
+	// An installed version, here pinned, still bounds it
+	dep, err = parsePEP508("foo==2.5.0")
+	require.NoError(t, err)
+	_, pattern, _, ok = p.routineVersionFilter(discoveredFile{}, dep)
+	require.True(t, ok)
+	assert.Equal(t, ">=2.5.0, <3.0", pattern)
+}
+
+func TestRoutineVersionFilterSemverWithoutLowerBound(t *testing.T) {
+	// "foo<3.0" sets no lower bound, so a semver filter isn't anchored at 3.0
+	p, err := New(map[string]interface{}{"versionfilter": map[string]interface{}{"kind": "semver", "pattern": "minor"}}, "testdata/no_lockfile", "", "")
+	require.NoError(t, err)
+
+	dep, err := parsePEP508("foo<3.0")
+	require.NoError(t, err)
+	_, pattern, _, ok := p.routineVersionFilter(discoveredFile{}, dep)
+	assert.False(t, ok, "a relative pattern without a version to start from must be skipped, not %q", pattern)
+
+	// A pattern which isn't relative applies as is
+	p.versionFilter.Pattern = ">=1.0.0"
+	_, pattern, _, ok = p.routineVersionFilter(discoveredFile{}, dep)
+	require.True(t, ok)
+	assert.Equal(t, ">=1.0.0", pattern)
+	p.versionFilter.Pattern = "minor"
+
+	// ">=2.28,<3" starts from 2.28
+	dep, err = parsePEP508("foo>=2.28,<3")
+	require.NoError(t, err)
+	_, pattern, _, ok = p.routineVersionFilter(discoveredFile{}, dep)
+	require.True(t, ok)
+	assert.Equal(t, ">=2.28.0, 2.x", pattern)
+
+	// A post release starts from its release
+	dep, err = parsePEP508("foo>=2.28.post1")
+	require.NoError(t, err)
+	_, pattern, _, ok = p.routineVersionFilter(discoveredFile{}, dep)
+	require.True(t, ok)
+	assert.Equal(t, ">=2.28.0, 2.x", pattern)
+
+	// A start semver can't parse, such as one with an epoch, skips a relative pattern
+	dep, err = parsePEP508("foo>=1!2.0")
+	require.NoError(t, err)
+	_, pattern, _, ok = p.routineVersionFilter(discoveredFile{}, dep)
+	assert.False(t, ok, "a relative pattern that can't start from the constraint must be skipped, not %q", pattern)
+
+	// With uv.lock, the installed version is the start
+	dep, err = parsePEP508("foo<3.0")
+	require.NoError(t, err)
+	_, pattern, _, ok = p.routineVersionFilter(discoveredFile{installed: lockedVersions{"foo": {"2.5.0"}}}, dep)
+	require.True(t, ok)
+	assert.Equal(t, ">=2.5.0, 2.x", pattern)
 }

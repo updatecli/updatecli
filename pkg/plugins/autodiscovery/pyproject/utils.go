@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strings"
 
+	pep440 "github.com/aquasecurity/go-pep440-version"
 	"github.com/updatecli/updatecli/pkg/core/log"
 )
 
@@ -23,6 +24,16 @@ const (
 )
 
 var (
+	// relativeSemverPatterns lists the semver versionfilter patterns relative to a version.
+	relativeSemverPatterns = map[string]bool{
+		"prerelease": true,
+		"patch":      true,
+		"minor":      true,
+		"minoronly":  true,
+		"major":      true,
+		"majoronly":  true,
+	}
+
 	// dependencyGroupNameRegex matches the dependency group names PEP 735 allows.
 	dependencyGroupNameRegex = regexp.MustCompile(`(?i)^([A-Z0-9]|[A-Z0-9][A-Z0-9._-]*[A-Z0-9])$`)
 
@@ -182,4 +193,26 @@ func parsePEP508(dep string) (pythonDependency, error) {
 		Constraint: constraint,
 		Version:    version,
 	}, nil
+}
+
+// declaredLowerBound returns the release a PEP 440 constraint starts from, such as "2.28" for
+// ">=2.28,<3" or ">=2.28.post1", and "1" for "==1.*", or "" when it sets no lower bound, such as
+// "<3.0" or "!=1.5". The release leaves out pre, post, dev and local segments, which a semantic
+// version can't hold.
+func declaredLowerBound(constraint string) string {
+	constraint = strings.TrimSpace(constraint)
+	for _, specifier := range strings.Split(constraint, ",") {
+		specifier = strings.TrimSpace(specifier)
+		// Longer operators first, so ">=" isn't taken for ">"
+		for _, operator := range []string{"===", "==", "~=", ">=", ">"} {
+			if rest, found := strings.CutPrefix(specifier, operator); found {
+				bound := strings.TrimSuffix(strings.TrimSpace(rest), ".*")
+				if v, err := pep440.Parse(bound); err == nil {
+					return v.BaseVersion()
+				}
+				return bound
+			}
+		}
+	}
+	return ""
 }

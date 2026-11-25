@@ -1,0 +1,27 @@
+version = 1
+requires-python = ">=3.12"
+
+[[package]]
+name = "locked-project"
+version = "0.1.0"
+source = { virtual = "." }
+
+[[package]]
+name = "requests"
+version = "2.32.5"
+source = { registry = "https://pypi.org/simple" }
+
+[[package]]
+name = "numpy"
+version = "1.26.4"
+source = { registry = "https://pypi.org/simple" }
+
+[[package]]
+name = "numpy"
+version = "2.1.0"
+source = { registry = "https://pypi.org/simple" }
+
+[[package]]
+name = "corp-utils"
+version = "1.4.0"
+source = { registry = "https://pypi.internal.example.com/simple" }

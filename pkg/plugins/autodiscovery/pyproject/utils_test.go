@@ -161,3 +161,24 @@ func TestDependencyGroupRequirements(t *testing.T) {
 		})
 	}
 }
+
+func TestDeclaredLowerBound(t *testing.T) {
+	for constraint, want := range map[string]string{
+		">=2.28":       "2.28",
+		">=2.28,<3":    "2.28",
+		"<3, >= 2.28":  "2.28",
+		"~=1.4.2":      "1.4.2",
+		"==1.2.3":      "1.2.3",
+		"==1.*":        "1",
+		">=2.28.post1": "2.28",
+		">=1.0.dev0":   "1.0",
+		">=2.0rc1,<3":  "2.0",
+		">1.0":         "1.0",
+		"<3.0":         "",
+		"!=1.5":        "",
+		"":             "",
+		"<=2.0,!=1.5":  "",
+	} {
+		assert.Equal(t, want, declaredLowerBound(constraint), constraint)
+	}
+}

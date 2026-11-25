@@ -10,6 +10,7 @@ import (
 	"text/template"
 
 	"github.com/BurntSushi/toml"
+	"github.com/Masterminds/semver/v3"
 	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pep503"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
@@ -363,12 +364,24 @@ func (p Pyproject) discoverDependencyManifests() ([][]byte, error) {
 			}
 		}
 
+		// An update held back by the age filter must not fall back below the version in use.
+		var installed lockedVersions
+		if scan == nil && lockSupport.uvLock && p.ageFilter.NeverDowngrade() {
+			lock, err := loadUvLockVersions(dir, p.trustedRegistries)
+			if err != nil {
+				log.Warningf("skipping %q: uv.lock can't be read (%s), so an update could lower the installed versions", relativeFile, err)
+				continue
+			}
+			installed = lock.installed
+		}
+
 		file := discoveredFile{
 			relativeFile: relativeFile,
 			projectName:  projectName,
 			workdir:      workdir,
 			lockSupport:  lockSupport,
 			scan:         scan,
+			installed:    installed,
 		}
 
 		// Process [project.dependencies] — the main dependency group.
@@ -445,6 +458,20 @@ type discoveredFile struct {
 	lockSupport lockFileSupport
 	// scan is only set in vulnerability mode.
 	scan *vulnerabilityScan
+	// installed holds the versions uv.lock resolves from a registry. It is only set outside
+	// vulnerability mode, when the age filter doesn't allow a downgrade.
+	installed lockedVersions
+}
+
+// installedVersion returns the version of a dependency an update must not lower: the highest
+// version uv.lock resolves within the declared constraint or, when uv.lock resolves none, the
+// version pinned with "==". It returns "" when neither is known, including when uv.lock only
+// resolves versions outside the constraint, which then stays unbounded, as npm does.
+func (f discoveredFile) installedVersion(dep pythonDependency) string {
+	if _, locked := f.installed[pep503.NormalizeName(dep.Name)]; locked {
+		return f.installed.highestSatisfying(dep.Name, dep.Constraint)
+	}
+	return exactPinnedVersion(dep.Constraint)
 }
 
 // dependencyList is a list of dependencies declared by one table of a pyproject.toml.
@@ -503,7 +530,11 @@ func (p Pyproject) routineManifest(file discoveredFile, deps dependencyList, dep
 		return nil
 	}
 
-	return renderManifest(routineManifestTmpl, p.buildTemplateParams(file, dep, deps.label()))
+	params, ok := p.buildTemplateParams(file, dep, deps.label())
+	if !ok {
+		return nil
+	}
+	return renderManifest(routineManifestTmpl, params)
 }
 
 // securityManifest returns the manifest updating a dependency whose current version has known
@@ -586,7 +617,8 @@ func (p Pyproject) securityTemplateParams(file discoveredFile, dep pythonDepende
 
 // buildTemplateParams constructs the manifestTemplateParams for a single dependency.
 // label is the dependency list label shown in the manifest name, "" for the main dependencies.
-func (p Pyproject) buildTemplateParams(file discoveredFile, dep pythonDependency, label string) manifestTemplateParams {
+// It returns false when no manifest must be generated for the dependency.
+func (p Pyproject) buildTemplateParams(file discoveredFile, dep pythonDependency, label string) (manifestTemplateParams, bool) {
 	// Build a human-readable manifest name that includes the group when set.
 	var manifestName string
 	if label == "" {
@@ -595,33 +627,9 @@ func (p Pyproject) buildTemplateParams(file discoveredFile, dep pythonDependency
 		manifestName = fmt.Sprintf("deps(pypi): bump %q [%s] for %q project", dep.Name, label, file.projectName)
 	}
 
-	// Determine version filter.
-	//
-	// Priority:
-	//   1. User-specified VersionFilter from spec.
-	//   2. Constraint derived from the dependency itself (e.g. ">=2.28").
-	//   3. Wildcard "*" when no version information is present.
-	sourceVersionFilterKind := p.versionFilter.Kind
-	sourceVersionFilterPattern := p.versionFilter.Pattern
-	sourceVersionFilterRegex := p.versionFilter.Regex
-
-	if !p.spec.VersionFilter.IsZero() && dep.Version != "" {
-		var err error
-		sourceVersionFilterPattern, err = p.versionFilter.GreaterThanPattern(dep.Version)
-		if err != nil {
-			log.Debugf("building version filter pattern for %q: %s", dep.Name, err)
-			sourceVersionFilterPattern = p.versionFilter.Pattern
-		}
-	}
-
-	if p.spec.VersionFilter.IsZero() {
-		if dep.Constraint != "" {
-			sourceVersionFilterKind = version.PEP440VERSIONKIND
-			sourceVersionFilterPattern = dep.Constraint
-		} else {
-			sourceVersionFilterKind = version.PEP440VERSIONKIND
-			sourceVersionFilterPattern = "*"
-		}
+	sourceVersionFilterKind, sourceVersionFilterPattern, sourceVersionFilterRegex, ok := p.routineVersionFilter(file, dep)
+	if !ok {
+		return manifestTemplateParams{}, false
 	}
 
 	return manifestTemplateParams{
@@ -632,7 +640,7 @@ func (p Pyproject) buildTemplateParams(file discoveredFile, dep pythonDependency
 		SourceVersionFilterKind:    sourceVersionFilterKind,
 		SourceVersionFilterPattern: sourceVersionFilterPattern,
 		SourceVersionFilterRegex:   sourceVersionFilterRegex,
-		SourceAge:                  p.releaseAge,
+		SourceAge:                  p.ageFilter.Spec,
 		DependencyName:             dep.Name,
 		IndexURL:                   p.spec.IndexURL,
 		TargetID:                   dep.Name,
@@ -641,5 +649,77 @@ func (p Pyproject) buildTemplateParams(file discoveredFile, dep pythonDependency
 		UvEnabled:                  file.lockSupport.uv,
 		LockFile:                   uvLockFile,
 		Workdir:                    file.workdir,
+	}, true
+}
+
+// routineVersionFilter returns the version filter of the source looking for a newer version of a
+// dependency, outside security updates.
+//
+// Priority:
+//  1. User-specified VersionFilter from spec.
+//  2. Constraint derived from the dependency itself (e.g. ">=2.28").
+//  3. Wildcard "*" when no version information is present.
+//
+// Unless the age filter allows a downgrade, the filter never accepts a version lower than the
+// installed one when it's known, so a source whose newer versions are all too recent finds
+// nothing rather than a downgrade. When the filter can't be bounded at the installed version,
+// it returns false, as the update could then lower it.
+func (p Pyproject) routineVersionFilter(file discoveredFile, dep pythonDependency) (kind, pattern, regex string, ok bool) {
+	installed := ""
+	if p.ageFilter.NeverDowngrade() {
+		installed = file.installedVersion(dep)
+	}
+
+	filter := p.versionFilter
+	// A user versionfilter applies from the version the constraint starts from, and from none
+	// when it has no lower bound, as in "foo<3.0". The declared constraint is used as is.
+	current := declaredLowerBound(dep.Constraint)
+	// A pep440 filter is only bounded at a version known to be installed.
+	if filter.Kind == version.PEP440VERSIONKIND {
+		current = ""
+	}
+	if p.spec.VersionFilter.IsZero() {
+		filter = version.Filter{Kind: version.PEP440VERSIONKIND, Pattern: "*", Regex: p.versionFilter.Regex}
+		if dep.Constraint != "" {
+			filter.Pattern = dep.Constraint
+		}
+		current = ""
+	}
+	if installed != "" {
+		current = installed
+	}
+	// A relative pattern, such as "minor", means nothing without a version to start from.
+	isRelative := filter.Kind == version.SEMVERVERSIONKIND && relativeSemverPatterns[filter.Pattern]
+	if current == "" {
+		if isRelative {
+			log.Warningf("skipping %q from %q: the %q versionfilter pattern needs a version to start from, which neither the constraint %q nor uv.lock gives",
+				dep.Name, file.relativeFile, filter.Pattern, dep.Constraint)
+			return "", "", "", false
+		}
+		return filter.Kind, filter.Pattern, filter.Regex, true
+	}
+
+	greaterThanPattern, err := p.ageFilter.GreaterThanPattern(&filter, current)
+	// A semver pattern which can't parse the installed version is left unbounded, without error.
+	if err == nil && installed != "" && filter.Kind == version.SEMVERVERSIONKIND {
+		if _, semverErr := semver.NewVersion(installed); semverErr != nil {
+			err = fmt.Errorf("%q is not a semantic version", installed)
+		}
+	}
+
+	switch {
+	case err == nil:
+		return filter.Kind, greaterThanPattern, filter.Regex, true
+	case installed != "":
+		log.Warningf("skipping %q from %q: the %q versionfilter can't be bounded at the installed version %q (%s), so an update held back by the age filter could lower it. Set \"allowdowngrade\" to true to allow it",
+			dep.Name, file.relativeFile, filter.Kind, installed, err)
+		return "", "", "", false
+	case isRelative:
+		log.Warningf("skipping %q from %q: the %q versionfilter pattern can't start from %q (%s)",
+			dep.Name, file.relativeFile, filter.Pattern, current, err)
+		return "", "", "", false
+	default:
+		log.Debugf("building version filter pattern for %q: %s", dep.Name, err)
+		return filter.Kind, filter.Pattern, filter.Regex, true
 	}
 }
