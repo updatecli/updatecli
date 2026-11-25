@@ -36,6 +36,9 @@ func (e *Engine) Run(ctx context.Context) (err error) {
 	httpclient.EnableHTTPCache()
 	defer httpclient.DisableHTTPCache()
 
+	// pendingUpdates caches, for this run, whether an earlier version filter still has an open pull request or working branch.
+	pendingUpdates := map[string]bool{}
+
 	for i := range e.Pipelines {
 		pipeline := e.Pipelines[i]
 		pipeline.SourceCache = e.sourceCache
@@ -53,6 +56,8 @@ func (e *Engine) Run(ctx context.Context) (err error) {
 		if err != nil {
 			pipeline.Report.Result = result.FAILURE
 			pipeline.Report.Err = err.Error()
+		} else if reason := e.waitingTrack(ctx, pipeline, pendingUpdates); reason != "" {
+			skipWaitingPipeline(pipeline, reason)
 		} else {
 			err = pipeline.Run(ctx)
 		}

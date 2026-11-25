@@ -1,6 +1,13 @@
 package autodiscovery
 
 // Config defines autodiscovery parameters
+//
+// Every generated pipeline gets the labels of the autodiscovery manifest, plus:
+//   - "updatecli.io/autodiscovery": the crawler kind, such as "golang" or "dockerfile".
+//   - "updatecli.io/parent": the pipeline ID of the autodiscovery manifest.
+//   - "updatecli.io/group" and "updatecli.io/track": the group and track names, when set.
+//
+// These labels replace any label with the same key set on the autodiscovery manifest.
 type Config struct {
 	/*
 		Crawlers defines a map of crawler configuration where the key represent the crawler type

@@ -27,6 +27,7 @@ var (
 	}
 )
 
+//nolint:funlen // Let's refactor this function later on
 func (d Dockerfile) generateManifest(
 	globalIgnore MatchingRules,
 	relativeFoundDockerfile, basename, dirname string,
@@ -156,16 +157,32 @@ func (d Dockerfile) generateManifest(
 		registryToken = sourceSpec.Token
 	}
 
-	// If a versionfilter is specified in the manifest then we want to be sure that it takes precedence
+	// If a versionfilter is specified in the manifest then we want to be sure that it takes precedence.
+	// The tag filter derived from the current tag is kept, so that the image variant such as "alpine"
+	// doesn't change: the autodiscovery spec has no tag filter to override it.
 	if !d.spec.VersionFilter.IsZero() {
 		versionFilterKind = d.versionFilter.Kind
 		versionFilterPattern, err = d.versionFilter.GreaterThanPattern(tag)
 		versionFilterRegex = d.versionFilter.Regex
-		tagFilter = ""
 		if err != nil {
 			log.Debugf("building version filter pattern: %s", err)
 			versionFilterPattern = "*"
 		}
+	}
+
+	// When the instruction updates a FROM line directly (no ARG redirection),
+	// pin the matcher to the resolved image reference: image names alone would
+	// match every FROM line sharing that name, such as a builder and a runtime
+	// variant in the same Dockerfile, and the targets would overwrite each other.
+	if strings.EqualFold(targetInstruction, FromInstruction) {
+		imageRef := image
+		if tag != "" {
+			imageRef += ":" + tag
+		}
+		if digest != "" {
+			imageRef += "@" + digest
+		}
+		targetMatcher = imageRef
 	}
 
 	var tmpl *template.Template

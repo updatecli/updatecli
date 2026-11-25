@@ -108,7 +108,7 @@ targets:
 {{- if .ActionID }}
 actions:
   {{ .ActionID }}:
-    title: 'deps: update Docker image "{{ .ImageName }}" to "{{ "{{" }} source "{{ .SourceID }}" {{ "}}" }}"'
+    title: 'deps: update Docker image "{{ .ImageName }}" digest'
 {{ end }}
 sources:
   {{ .SourceID }}-digest:

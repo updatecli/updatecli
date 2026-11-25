@@ -124,6 +124,54 @@ func TestCondition(t *testing.T) {
 			// versions are normalized to semver but condition should match the original PEP 440 form
 			expectedPass: true,
 		},
+		{
+			// 1.0.post1 normalizes to 1.0.0, which designates it as no base release exists.
+			name: "Normalized version only published as a post release passes",
+			spec: Spec{
+				Name:    "testpkg",
+				Version: "1.0.0",
+				URL:     "https://pypi.example.com",
+				Token:   "validtoken",
+				VersionFilter: version.Filter{
+					Kind: "semver",
+				},
+			},
+			mockedBody:           postReleasePackageData,
+			mockedURL:            "https://pypi.example.com/",
+			mockedToken:          "validtoken",
+			mockedHTTPStatusCode: 200,
+			expectedPass:         true,
+		},
+		{
+			// The published 2.31.0 is the padded form of the version checked.
+			name: "Short version is checked as its padded form",
+			spec: Spec{
+				Name:    "requests",
+				Version: "2.31",
+				URL:     "https://pypi.example.com",
+				Token:   "validtoken",
+			},
+			mockedBody:           existingPackageData,
+			mockedURL:            "https://pypi.example.com/",
+			mockedToken:          "validtoken",
+			mockedHTTPStatusCode: 200,
+			expectedPass:         true,
+		},
+		{
+			// The latest release is yanked, which only matters to the source.
+			name: "Condition passes when the latest release is yanked",
+			spec: Spec{
+				Name:    "requests",
+				Version: "2.30.0",
+				URL:     "https://pypi.example.com",
+				Token:   "validtoken",
+			},
+			mockedBody:           yankedLatestPackageData,
+			mockedURL:            "https://pypi.example.com/",
+			mockedToken:          "validtoken",
+			mockedHTTPStatusCode: 200,
+			expectedPass:         true,
+		},
 	}
 
 	for _, tt := range tests {

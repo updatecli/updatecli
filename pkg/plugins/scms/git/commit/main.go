@@ -11,7 +11,7 @@ import (
 
 const (
 	// commitTpl is the template used to generate the commit message
-	commitTpl string = "{{ .Type}}{{if .Scope}}({{.Scope}}){{ end }}: {{ .Title }}" +
+	commitTpl string = "{{if .Type}}{{.Type}}{{if .Scope}}({{.Scope}}){{end}}: {{else}}{{if .Scope}}{{.Scope}}: {{end}}{{end}}{{.Title}}" +
 		"{{ if .Body }}\n\n{{ .Body }}{{ end }}" +
 		"{{ if not .HideCredit }}\n\nMade with ❤️️ by updatecli{{end}}" +
 		"{{ if .Footers }}\n\n{{ .Footers }}{{ end }}"
@@ -32,8 +32,10 @@ type Commit struct {
 	//
 	// remark:
 	//   * see https://www.conventionalcommits.org/en/
+	//   * set type to an explicit empty string to omit the type prefix;
+	//     with a scope, the title is formatted as "scope: title".
 	//
-	Type string `yaml:",omitempty"`
+	Type *string `yaml:",omitempty"`
 	// "scope" defines the conventional commit scope.
 	//
 	// default:
@@ -118,7 +120,11 @@ func (c *Commit) Generate(raw string) (string, error) {
 
 	buffer := new(bytes.Buffer)
 
-	err = t.Execute(buffer, commit)
+	// Render the pointed-to value so an explicit empty type is false in the template.
+	err = t.Execute(buffer, struct {
+		Commit
+		Type string
+	}{Commit: commit, Type: *commit.Type})
 
 	commitMessage := buffer.String()
 
@@ -148,13 +154,13 @@ func (c *Commit) ParseMessage(message string) (Commit, error) {
 	lines := strings.Split(message, "\n")
 
 	placeholders := 0
-	if len(c.Type) > 0 {
+	if c.Type != nil && len(*c.Type) > 0 {
 		// Counting colon and space after type
 		// This must be updated if commitTpl is changed
-		placeholders = placeholders + len(c.Type) + 2
+		placeholders = placeholders + len(*c.Type) + 2
 	}
 	if len(c.Scope) > 0 {
-		// Counting parentheses around the scope
+		// Count parentheses with a type, or colon and space without one.
 		// This must be updated if commitTpl is changed
 		placeholders = placeholders + len(c.Scope) + 2
 	}
@@ -191,8 +197,9 @@ func (c *Commit) ParseMessage(message string) (Commit, error) {
 Validate validates "conventional commit" default parameters.
 */
 func (c *Commit) Validate() error {
-	if len(c.Type) == 0 {
-		c.Type = "chore"
+	if c.Type == nil {
+		defaultType := "chore"
+		c.Type = &defaultType
 	}
 
 	// Warn if deprecated Title field is used

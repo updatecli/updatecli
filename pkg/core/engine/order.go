@@ -70,6 +70,8 @@ func (e *Engine) OrderPipelines() error {
 		}
 	}
 
+	addGateDependencies(e.Pipelines, successors, indegree)
+
 	ready := make([]int, 0, len(nodes))
 	for i := range nodes {
 		if indegree[i] == 0 {
@@ -119,6 +121,30 @@ func (e *Engine) OrderPipelines() error {
 	e.configurations = orderedConfigurations
 
 	return nil
+}
+
+// addGateDependencies makes each pipeline generated from autodiscovery "tracks"
+// run after the pipelines sharing its gate key with an earlier track,
+// so the gate sees their result before deciding whether the pipeline waits.
+// A pipeline that never waits doesn't need their result, so it isn't ordered after them.
+func addGateDependencies(pipelines []*pipeline.Pipeline, successors [][]int, indegree []int) {
+	indicesByGateKey := map[string][]int{}
+	for i, p := range pipelines {
+		if p.Gate != nil {
+			indicesByGateKey[p.Gate.Key] = append(indicesByGateKey[p.Gate.Key], i)
+		}
+	}
+
+	for _, indices := range indicesByGateKey {
+		for _, earlier := range indices {
+			for _, later := range indices {
+				if !pipelines[later].Gate.NoWait && pipelines[earlier].Gate.Rank < pipelines[later].Gate.Rank {
+					successors[earlier] = append(successors[earlier], later)
+					indegree[later]++
+				}
+			}
+		}
+	}
 }
 
 func describeManifestNode(node manifestNode) string {

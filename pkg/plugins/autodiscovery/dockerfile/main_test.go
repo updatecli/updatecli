@@ -1,11 +1,17 @@
 package dockerfile
 
 import (
+	"os"
+	"path/filepath"
+	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/plugins/resources/dockerfile/simpletextparser"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
+	"go.yaml.in/yaml/v4"
 )
 
 func TestDiscoverManifests(t *testing.T) {
@@ -49,7 +55,7 @@ targets:
       file: 'Dockerfile'
       instruction:
         keyword: 'FROM'
-        matcher: 'updatecli/updatecli'
+        matcher: 'updatecli/updatecli:v0.25.0@sha256:1fafb0905264413501df60d90a92ca32df8a2011cbfb4876ddff5ceb20c8f165'
     sourceid: 'updatecli/updatecli-digest'
 `},
 		},
@@ -113,7 +119,7 @@ targets:
       file: 'Dockerfile'
       instruction:
         keyword: 'FROM'
-        matcher: 'updatecli/updatecli'
+        matcher: 'updatecli/updatecli:v0.25.0@sha256:1fafb0905264413501df60d90a92ca32df8a2011cbfb4876ddff5ceb20c8f165'
     sourceid: 'updatecli/updatecli'
 `},
 		},
@@ -185,7 +191,7 @@ targets:
       file: 'Dockerfile'
       instruction:
         keyword: 'FROM'
-        matcher: 'python'
+        matcher: 'python:3.13'
     sourceid: 'python-digest'
 `},
 		},
@@ -255,7 +261,7 @@ targets:
       file: 'Dockerfile'
       instruction:
         keyword: 'FROM'
-        matcher: 'opensuse'
+        matcher: 'opensuse:15.4'
     sourceid: 'opensuse'
 `},
 		},
@@ -324,7 +330,7 @@ sources:
     kind: 'dockerimage'
     spec:
       image: 'python'
-      tagfilter: ''
+      tagfilter: '^\d*(\.\d*){1}-slim$'
       versionfilter:
         kind: 'regex/semver'
         pattern: '>=3.14'
@@ -337,8 +343,57 @@ targets:
       file: 'Dockerfile'
       instruction:
         keyword: 'FROM'
-        matcher: 'python'
+        matcher: 'python:3.14-slim'
     sourceid: 'python'
+`},
+		},
+		{
+			name:          "Scenario 9: Same image with different variant tags",
+			rootDir:       "testdata/multi-variant",
+			digest:        false,
+			versionFilter: nil,
+			expectedPipelines: []string{`name: 'deps(dockerfile): bump "caddy" tag'
+sources:
+  caddy:
+    name: 'get latest image tag for "caddy"'
+    kind: 'dockerimage'
+    spec:
+      image: 'caddy'
+      tagfilter: '^\d*(\.\d*){2}-builder$'
+      versionfilter:
+        kind: 'semver'
+        pattern: '>=2.11.4-builder'
+targets:
+  caddy:
+    name: 'deps: update Docker image "caddy" to "{{ source "caddy" }}"'
+    kind: 'dockerfile'
+    spec:
+      file: 'Dockerfile'
+      instruction:
+        keyword: 'FROM'
+        matcher: 'caddy:2.11.4-builder'
+    sourceid: 'caddy'
+`, `name: 'deps(dockerfile): bump "caddy" tag'
+sources:
+  caddy:
+    name: 'get latest image tag for "caddy"'
+    kind: 'dockerimage'
+    spec:
+      image: 'caddy'
+      tagfilter: '^\d*(\.\d*){2}-alpine$'
+      versionfilter:
+        kind: 'semver'
+        pattern: '>=2.11.4-alpine'
+targets:
+  caddy:
+    name: 'deps: update Docker image "caddy" to "{{ source "caddy" }}"'
+    kind: 'dockerfile'
+    spec:
+      file: 'Dockerfile'
+      instruction:
+        keyword: 'FROM'
+        matcher: 'caddy:2.11.4-alpine'
+    sourceid: 'caddy'
 `},
 		},
 	}
@@ -374,4 +429,107 @@ targets:
 		})
 	}
 
+}
+
+func TestDigestOnlyActionTitle(t *testing.T) {
+	dir := t.TempDir()
+	content := "ARG TAG=trixie-slim@sha256:" + strings.Repeat("0", 64) + "\nFROM debian:${TAG}\n"
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "Dockerfile"), []byte(content), 0o600))
+
+	dockerfile, err := New(Spec{}, dir, "", "pr")
+	require.NoError(t, err)
+	manifests, err := dockerfile.DiscoverManifests()
+	require.NoError(t, err)
+	require.Len(t, manifests, 1)
+
+	var manifest struct {
+		Actions map[string]struct{ Title string }
+	}
+	require.NoError(t, yaml.Unmarshal(manifests[0], &manifest))
+	assert.Equal(t, `deps: update Docker image "debian" digest`, manifest.Actions["pr"].Title)
+}
+
+// TestGeneratedFromTargetsUpdateOnlyTheirOwnLine feeds the matchers produced by
+// the autodiscovery through the same simple text parser a dockerfile target
+// uses at runtime. On a Dockerfile reusing one image with two variant tags,
+// each generated target must rewrite exactly its own FROM line and leave the
+// other one untouched, otherwise the targets overwrite each other.
+func TestGeneratedFromTargetsUpdateOnlyTheirOwnLine(t *testing.T) {
+	digest := false
+	dockerfile, err := New(Spec{Digest: &digest}, "testdata/multi-variant", "", "")
+	require.NoError(t, err)
+
+	rawPipelines, err := dockerfile.DiscoverManifests()
+	require.NoError(t, err)
+	require.Len(t, rawPipelines, 2)
+
+	matcherRegex := regexp.MustCompile(`(?m)^\s*matcher: '([^']+)'$`)
+	keywordRegex := regexp.MustCompile(`(?m)^\s*keyword: '([^']+)'$`)
+
+	var generatedMatchers []string
+	for _, rawPipeline := range rawPipelines {
+		pipeline := string(rawPipeline)
+
+		keyword := keywordRegex.FindStringSubmatch(pipeline)
+		require.Len(t, keyword, 2)
+		require.Equal(t, "FROM", keyword[1])
+
+		matcher := matcherRegex.FindStringSubmatch(pipeline)
+		require.Len(t, matcher, 2)
+		generatedMatchers = append(generatedMatchers, matcher[1])
+	}
+	require.ElementsMatch(t, []string{"caddy:2.11.4-builder", "caddy:2.11.4-alpine"}, generatedMatchers)
+
+	originalContent, err := os.ReadFile(filepath.Join("testdata", "multi-variant", "Dockerfile"))
+	require.NoError(t, err)
+
+	// Each target resolves to a newer tag of its own variant; the pinned
+	// matcher restricts which FROM line the target is allowed to rewrite.
+	testdata := []struct {
+		name                string
+		matcher             string
+		sourceValue         string
+		expectedChangedLine int
+		expectedDockerfile  []string
+	}{
+		{
+			name:                "the builder target only updates the builder FROM line",
+			matcher:             "caddy:2.11.4-builder",
+			sourceValue:         "2.11.5-builder",
+			expectedChangedLine: 1,
+			expectedDockerfile: []string{
+				"FROM caddy:2.11.5-builder AS builder",
+				"RUN xcaddy build",
+				"FROM caddy:2.11.4-alpine",
+			},
+		},
+		{
+			name:                "the alpine target only updates the alpine FROM line",
+			matcher:             "caddy:2.11.4-alpine",
+			sourceValue:         "2.11.5-alpine",
+			expectedChangedLine: 3,
+			expectedDockerfile: []string{
+				"FROM caddy:2.11.4-builder AS builder",
+				"RUN xcaddy build",
+				"FROM caddy:2.11.5-alpine",
+			},
+		},
+	}
+
+	for _, tt := range testdata {
+		t.Run(tt.name, func(t *testing.T) {
+			parser, err := simpletextparser.NewSimpleTextDockerfileParser(map[string]string{
+				"keyword": "FROM",
+				"matcher": tt.matcher,
+			})
+			require.NoError(t, err)
+
+			updatedContent, changedLines, err := parser.ReplaceInstructions(originalContent, tt.sourceValue, "")
+			require.NoError(t, err)
+			require.Len(t, changedLines, 1)
+			require.Contains(t, changedLines, tt.expectedChangedLine)
+
+			assert.Equal(t, strings.Join(tt.expectedDockerfile, "\n")+"\n", string(updatedContent))
+		})
+	}
 }

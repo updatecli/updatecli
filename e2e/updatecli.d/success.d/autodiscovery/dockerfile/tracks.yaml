@@ -1,0 +1,33 @@
+name: "[jenkinsci/docker] Dockerfile autodiscovery using several tracks and groups"
+pipelineid: e2e/autodiscovery/dockerfile/tracks
+scms:
+  jenkins-docker:
+    kind: git
+    spec:
+      url: https://github.com/jenkinsci/docker.git
+      branch: master
+
+autodiscovery:
+  scmid: jenkins-docker
+  groupby: individual
+  crawlers:
+    dockerfile:
+      digest: false
+      # Each track gets its own pipelines.
+      # The "major" ones wait while a "minor" update is pending for the same image.
+      tracks:
+        - name: minor
+          versionfilter:
+            kind: semver
+            pattern: minor
+        - name: major
+          versionfilter:
+            kind: semver
+            pattern: majoronly
+      # Matching images are updated together, in one pipeline per track.
+      groups:
+        - name: base
+          only:
+            - images:
+                - "debian"
+                - "alpine"
