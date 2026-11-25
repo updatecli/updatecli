@@ -1,6 +1,7 @@
 package yaml
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"os"
@@ -10,6 +11,7 @@ import (
 	"github.com/goccy/go-yaml/parser"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/scm"
 	"github.com/updatecli/updatecli/pkg/core/result"
 	"github.com/updatecli/updatecli/pkg/core/text"
@@ -2103,8 +2105,9 @@ func Test_MatchPathEdgeCases(t *testing.T) {
 		require.Len(t, docFile.Docs, 1)
 
 		idx := indexDocument(docFile.Docs[0])
-		found, missing, err := idx.matchPath(docFile.Docs[0].Body, "$..child.target")
+		found, positions, missing, err := idx.matchPath(docFile.Docs[0].Body, "$..child.target")
 		require.NoError(t, err)
+		assert.Equal(t, 1, positions)
 		assert.Equal(t, 0, missing)
 		require.Len(t, found, 1)
 		assert.Equal(t, "old", found[0].String())
@@ -2166,9 +2169,10 @@ func Test_MatchPathEdgeCases(t *testing.T) {
 
 		idx := indexDocument(docFile.Docs[0])
 		key := "$.root" + strings.Repeat("[*]", levels+1) + ".image"
-		found, missing, err := idx.matchPath(docFile.Docs[0].Body, key)
+		found, positions, missing, err := idx.matchPath(docFile.Docs[0].Body, key)
 		require.NoError(t, err)
 		assert.Empty(t, found)
+		assert.Equal(t, 0, positions)
 		assert.Greater(t, missing, 0)
 	})
 
@@ -2179,7 +2183,7 @@ func Test_MatchPathEdgeCases(t *testing.T) {
 
 		idx := indexDocument(docFile.Docs[0])
 		key := "$.root" + strings.Repeat("[*]", maxMatchDepth+5)
-		_, _, err = idx.matchPath(docFile.Docs[0].Body, key)
+		_, _, _, err = idx.matchPath(docFile.Docs[0].Body, key)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "maximum depth")
 	})
@@ -2536,6 +2540,95 @@ a:
 		require.NoError(t, readErr)
 		assert.Equal(t, content, string(onDisk))
 		assert.False(t, gotResult.Changed)
+	})
+
+	t.Run("Partial match across deduplicated merged anchors reports 1 of 3 and updates shared anchor once", func(t *testing.T) {
+		content := `x-common: &common
+  image: nginx:1.29
+services:
+  - <<: *common
+  - <<: *common
+  - ports:
+      - "80:80"
+`
+		wanted := `x-common: &common
+  image: nginx:1.30
+services:
+  - <<: *common
+  - <<: *common
+  - ports:
+      - "80:80"
+`
+
+		docFile, err := parser.ParseBytes([]byte(content), parser.ParseComments)
+		require.NoError(t, err)
+		require.Len(t, docFile.Docs, 1)
+
+		idx := indexDocument(docFile.Docs[0])
+		found, positions, missing, err := idx.matchPath(docFile.Docs[0].Body, "$.services[*].image")
+		require.NoError(t, err)
+		assert.Len(t, found, 1)
+		assert.Equal(t, 2, positions)
+		assert.Equal(t, 1, missing)
+
+		t.Run("strict error reports 1 of 3", func(t *testing.T) {
+			t.Chdir(t.TempDir())
+			require.NoError(t, os.WriteFile("test.yaml", []byte(content), 0600))
+
+			mockedText := text.MockTextRetriever{
+				Contents: map[string]string{"test.yaml": content},
+			}
+			y, err := New(Spec{
+				File:  "test.yaml",
+				Key:   "$.services[*].image",
+				Value: "nginx:1.30",
+			})
+			require.NoError(t, err)
+			y.contentRetriever = &mockedText
+
+			gotResult := result.Target{}
+			err = y.Target(context.Background(), "nginx:1.29", nil, pathresolver.Resolver{}, false, &gotResult)
+			require.Error(t, err)
+			assert.ErrorContains(t, err, "is missing from 1 of the 3 nodes it selects")
+			assert.False(t, gotResult.Changed)
+			assert.Equal(t, content, mockedText.Contents["test.yaml"])
+			onDisk, readErr := os.ReadFile("test.yaml")
+			require.NoError(t, readErr)
+			assert.Equal(t, content, string(onDisk))
+		})
+
+		t.Run("searchpattern logs 1 of 3 and updates shared anchor once with aliases preserved", func(t *testing.T) {
+			t.Chdir(t.TempDir())
+			require.NoError(t, os.WriteFile("test.yaml", []byte(content), 0600))
+
+			prevLevel := log.GetLevel()
+			log.SetLevel(log.DebugLevel)
+			defer log.SetLevel(prevLevel)
+
+			var logs bytes.Buffer
+			stopCapture := log.Capture(&logs)
+			defer stopCapture()
+
+			mockedText := text.MockTextRetriever{
+				Contents: map[string]string{"test.yaml": content},
+			}
+			y, err := New(Spec{
+				File:          "test.yaml",
+				Key:           "$.services[*].image",
+				Value:         "nginx:1.30",
+				SearchPattern: true,
+			})
+			require.NoError(t, err)
+			y.contentRetriever = &mockedText
+
+			gotResult := result.Target{}
+			require.NoError(t, y.Target(context.Background(), "nginx:1.29", nil, pathresolver.Resolver{}, false, &gotResult))
+			assert.True(t, gotResult.Changed)
+			assert.Equal(t, result.ATTENTION, gotResult.Result)
+			assert.Equal(t, "nginx:1.29", gotResult.Information)
+			assert.Equal(t, wanted, mockedText.Contents["test.yaml"])
+			assert.Contains(t, logs.String(), "is missing from 1 of the 3 nodes it selects")
+		})
 	})
 }
 

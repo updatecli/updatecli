@@ -84,7 +84,7 @@ func (y Yaml) goYamlTarget(valueToWrite string, resultTarget *result.Target, dry
 				// Aliases and merge keys are invisible to that query, so a document
 				// that uses them gets a second walk before the key is declared missing.
 				docIndex := indexDocument(doc)
-				node, matched, missing, filterErr, throughAlias, locateErr := locateDocumentTargets(doc, urlPath, key, docIndex)
+				node, matched, positions, missing, filterErr, throughAlias, locateErr := locateDocumentTargets(doc, urlPath, key, docIndex)
 				if locateErr != nil {
 					return 0, ignoredFiles, fmt.Errorf("searching for key %q in document index %d of file %q: %w", key, index, originFilePath, locateErr)
 				}
@@ -96,13 +96,13 @@ func (y Yaml) goYamlTarget(valueToWrite string, resultTarget *result.Target, dry
 				// the manifest asks for. spec.searchpattern asks for that
 				// tolerance explicitly, so it updates what it found instead.
 				case filterErr == nil && len(matched) > 0 && missing > 0 && !y.spec.SearchPattern:
-					errMsg = append(errMsg, fmt.Sprintf("key %q from file %q is missing from %d of the %d nodes it selects in document index %d", key, originFilePath, missing, missing+len(matched), index))
+					errMsg = append(errMsg, fmt.Sprintf("key %q from file %q is missing from %d of the %d nodes it selects in document index %d", key, originFilePath, missing, missing+positions, index))
 
 				// A null value is an existing node that holds nothing, so when we
 				// may create the key we overwrite it instead of updating it.
 				case filterErr == nil && len(matched) > 0 && (!y.spec.CreateMissingKey || !isNullNode(node)):
 					if missing > 0 {
-						log.Debugf("key %q from file %q is missing from %d of the %d nodes it selects in document %d, updating the %d nodes holding it", key, originFilePath, missing, missing+len(matched), index, len(matched))
+						log.Debugf("key %q from file %q is missing from %d of the %d nodes it selects in document %d, updating the %d nodes holding it", key, originFilePath, missing, missing+positions, index, len(matched))
 					}
 
 					changed, err := y.updateNode(yamlFile, index, doc, urlPath, matched, key, valueToWrite, nodeToWrite, resultTarget, originFilePath, dryRun, docIndex, throughAlias)
@@ -486,39 +486,42 @@ func indexDocument(doc *ast.DocumentNode) *anchorIndex {
 	return idx
 }
 
-// locateDocumentTargets returns the nodes selected by key. When goccy's path query
-// cannot see through an alias or a merge key, the document's own anchor index is
-// used instead. throughAlias reports that the match was found by that fallback, so
-// the update must edit the anchored node rather than call ReplaceWithNode.
-func locateDocumentTargets(doc *ast.DocumentNode, urlPath *goyaml.Path, key string, idx *anchorIndex) (ast.Node, []ast.Node, int, error, bool, error) {
+// locateDocumentTargets returns the deduplicated nodes selected by key together
+// with the count of matched positions before deduplication and the count of
+// missing positions. When goccy's path query cannot see through an alias or a
+// merge key, the document's own anchor index is used instead. throughAlias
+// reports that the match was found by that fallback, so the update must edit
+// the anchored node rather than call ReplaceWithNode.
+func locateDocumentTargets(doc *ast.DocumentNode, urlPath *goyaml.Path, key string, idx *anchorIndex) (ast.Node, []ast.Node, int, int, error, bool, error) {
 	node, filterErr := urlPath.FilterNode(doc.Body)
 
 	var matched []ast.Node
+	var positions int
 	var missing int
 	if filterErr == nil {
 		var err error
-		matched, missing, err = matchedNodes(node, key)
+		matched, positions, missing, err = matchedNodes(node, key)
 		if err != nil {
-			return nil, nil, 0, nil, false, err
+			return nil, nil, 0, 0, nil, false, err
 		}
 	}
 
 	recursive := hasRecursiveSelector(key)
 	if (filterErr != nil || len(matched) == 0 || missing > 0 || recursive) && idx != nil && (idx.hasAlias || idx.hasMergeKey) {
-		found, foundMissing, err := idx.matchPath(doc.Body, key)
+		found, foundPositions, foundMissing, err := idx.matchPath(doc.Body, key)
 		if err != nil {
-			return nil, nil, 0, nil, false, err
+			return nil, nil, 0, 0, nil, false, err
 		}
 		// goccy stops evaluating a path at a recursive selector and ignores any
 		// trailing segments, so it can return an ancestor node even when the
 		// full path has no match. Prefer matchPath's full-path result for
 		// recursive paths even when found is empty.
-		if recursive || (len(found) > 0 && (filterErr != nil || len(matched) == 0 || hasAdditionalNodes(found, matched) || foundMissing < missing)) {
-			return node, found, foundMissing, nil, true, nil
+		if recursive || (len(found) > 0 && (filterErr != nil || len(matched) == 0 || hasAdditionalNodes(found, matched) || foundMissing < missing || foundPositions > positions)) {
+			return node, found, foundPositions, foundMissing, nil, true, nil
 		}
 	}
 
-	return node, matched, missing, filterErr, false, nil
+	return node, matched, positions, missing, filterErr, false, nil
 }
 
 func hasRecursiveSelector(key string) bool {
@@ -808,9 +811,10 @@ type matchState struct {
 }
 
 type matchResult struct {
-	nodes   []ast.Node
-	missing int
-	empty   bool
+	nodes     []ast.Node
+	positions int
+	missing   int
+	empty     bool
 }
 
 type pathMatcher struct {
@@ -821,18 +825,19 @@ type pathMatcher struct {
 	steps      int
 }
 
-// matchPath walks key across aliases and << merge keys. It returns the nodes that
-// hold the addressed value (still wrapped in an alias or an anchor when that is
-// how they appear in the document) together with how many wildcard positions
-// lacked a match.
-func (idx *anchorIndex) matchPath(root ast.Node, key string) ([]ast.Node, int, error) {
+// matchPath walks key across aliases and << merge keys. It returns the
+// deduplicated nodes that hold the addressed value (still wrapped in an alias
+// or an anchor when that is how they appear in the document), the number of
+// successful match positions before deduplication, and how many wildcard
+// positions lacked a match.
+func (idx *anchorIndex) matchPath(root ast.Node, key string) ([]ast.Node, int, int, error) {
 	if root == nil {
-		return nil, 0, nil
+		return nil, 0, 0, nil
 	}
 
 	elements, err := splitYamlPathKey(key)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, 0, err
 	}
 
 	matcher := &pathMatcher{
@@ -844,10 +849,10 @@ func (idx *anchorIndex) matchPath(root ast.Node, key string) ([]ast.Node, int, e
 
 	res, _, err := matcher.matchFrom(root, 0, 0)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, 0, err
 	}
 
-	return dedupeASTNodes(res.nodes), res.missing, nil
+	return dedupeASTNodes(res.nodes), res.positions, res.missing, nil
 }
 
 func (m *pathMatcher) consumeStep() error {
@@ -859,13 +864,13 @@ func (m *pathMatcher) consumeStep() error {
 	return nil
 }
 
-func addMissing(a, b int) int {
+func addMatchCount(a, b int) int {
 	if b <= 0 {
 		return a
 	}
-	const maxMissing = 1<<30 - 1
-	if a >= maxMissing || b >= maxMissing-a {
-		return maxMissing
+	const maxMatchCount = 1<<30 - 1
+	if a >= maxMatchCount || b >= maxMatchCount-a {
+		return maxMatchCount
 	}
 
 	return a + b
@@ -897,7 +902,7 @@ func (m *pathMatcher) matchFrom(node ast.Node, step int, depth int) (matchResult
 		if node == nil {
 			return matchResult{}, false, nil
 		}
-		return matchResult{nodes: []ast.Node{node}}, false, nil
+		return matchResult{nodes: []ast.Node{node}, positions: 1}, false, nil
 	}
 
 	if depth > maxMatchDepth {
@@ -1038,10 +1043,11 @@ func (m *pathMatcher) matchAll(node ast.Node, nextStep int, depth int) (matchRes
 	}
 
 	var (
-		matched  []ast.Node
-		missing  int
-		hitCycle bool
-		sawEmpty bool
+		matched   []ast.Node
+		positions int
+		missing   int
+		hitCycle  bool
+		sawEmpty  bool
 	)
 	seenNodes := map[ast.Node]struct{}{}
 	for _, value := range sequence.Values {
@@ -1050,7 +1056,7 @@ func (m *pathMatcher) matchAll(node ast.Node, nextStep int, depth int) (matchRes
 		}
 		if value == nil {
 			if nextStep < len(m.elements) {
-				missing = addMissing(missing, 1)
+				missing = addMatchCount(missing, 1)
 			}
 			continue
 		}
@@ -1061,11 +1067,12 @@ func (m *pathMatcher) matchAll(node ast.Node, nextStep int, depth int) (matchRes
 		}
 		hitCycle = hitCycle || subCycle
 		sawEmpty = sawEmpty || sub.empty
+		positions = addMatchCount(positions, sub.positions)
 
 		if nextStep < len(m.elements) {
-			missing = addMissing(missing, sub.missing)
+			missing = addMatchCount(missing, sub.missing)
 			if len(sub.nodes) == 0 && sub.missing == 0 && !sub.empty {
-				missing = addMissing(missing, 1)
+				missing = addMatchCount(missing, 1)
 			}
 		}
 
@@ -1076,9 +1083,10 @@ func (m *pathMatcher) matchAll(node ast.Node, nextStep int, depth int) (matchRes
 	}
 
 	return matchResult{
-		nodes:   matched,
-		missing: missing,
-		empty:   len(matched) == 0 && missing == 0 && sawEmpty,
+		nodes:     matched,
+		positions: positions,
+		missing:   missing,
+		empty:     len(matched) == 0 && missing == 0 && sawEmpty,
 	}, hitCycle, nil
 }
 
@@ -1174,10 +1182,11 @@ func (m *pathMatcher) collectMappingValues(mapping *ast.MappingNode, depth int, 
 
 func (m *pathMatcher) matchRecursive(node ast.Node, name string, step int, depth int) (matchResult, bool, error) {
 	var (
-		matched  []ast.Node
-		missing  int
-		hitCycle bool
-		sawEmpty bool
+		matched   []ast.Node
+		positions int
+		missing   int
+		hitCycle  bool
+		sawEmpty  bool
 	)
 	seenNodes := map[ast.Node]struct{}{}
 
@@ -1200,7 +1209,8 @@ func (m *pathMatcher) matchRecursive(node ast.Node, name string, step int, depth
 				}
 				hitCycle = hitCycle || subCycle
 				sawEmpty = sawEmpty || sub.empty
-				missing = addMissing(missing, sub.missing)
+				positions = addMatchCount(positions, sub.positions)
+				missing = addMatchCount(missing, sub.missing)
 				matched, err = m.appendUniqueNodes(matched, seenNodes, sub.nodes)
 				if err != nil {
 					return matchResult{}, false, err
@@ -1212,7 +1222,8 @@ func (m *pathMatcher) matchRecursive(node ast.Node, name string, step int, depth
 			}
 			hitCycle = hitCycle || subCycle
 			sawEmpty = sawEmpty || sub.empty
-			missing = addMissing(missing, sub.missing)
+			positions = addMatchCount(positions, sub.positions)
+			missing = addMatchCount(missing, sub.missing)
 			matched, err = m.appendUniqueNodes(matched, seenNodes, sub.nodes)
 			if err != nil {
 				return matchResult{}, false, err
@@ -1220,9 +1231,10 @@ func (m *pathMatcher) matchRecursive(node ast.Node, name string, step int, depth
 		}
 
 		return matchResult{
-			nodes:   matched,
-			missing: missing,
-			empty:   len(matched) == 0 && missing == 0 && sawEmpty,
+			nodes:     matched,
+			positions: positions,
+			missing:   missing,
+			empty:     len(matched) == 0 && missing == 0 && sawEmpty,
 		}, hitCycle, nil
 	}
 
@@ -1240,7 +1252,8 @@ func (m *pathMatcher) matchRecursive(node ast.Node, name string, step int, depth
 			}
 			hitCycle = hitCycle || subCycle
 			sawEmpty = sawEmpty || sub.empty
-			missing = addMissing(missing, sub.missing)
+			positions = addMatchCount(positions, sub.positions)
+			missing = addMatchCount(missing, sub.missing)
 			matched, err = m.appendUniqueNodes(matched, seenNodes, sub.nodes)
 			if err != nil {
 				return matchResult{}, false, err
@@ -1249,9 +1262,10 @@ func (m *pathMatcher) matchRecursive(node ast.Node, name string, step int, depth
 	}
 
 	return matchResult{
-		nodes:   matched,
-		missing: missing,
-		empty:   len(matched) == 0 && missing == 0 && sawEmpty,
+		nodes:     matched,
+		positions: positions,
+		missing:   missing,
+		empty:     len(matched) == 0 && missing == 0 && sawEmpty,
 	}, hitCycle, nil
 }
 
