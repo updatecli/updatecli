@@ -3,6 +3,7 @@ package gitea
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"strings"
 	"time"
 
@@ -16,6 +17,13 @@ const (
 	// pageTimeout bounds each API page request.
 	pageTimeout = 30 * time.Second
 )
+
+// ReleaseListUnavailableError means the first page of releases returned 403 or 404.
+// A condition can check whether the repository has the releases unit disabled.
+type ReleaseListUnavailableError struct{ err error }
+
+func (e *ReleaseListUnavailableError) Error() string { return e.err.Error() }
+func (e *ReleaseListUnavailableError) Unwrap() error { return e.err }
 
 // ListReleases retrieves every release of a repository, newest first,
 // without applying any filter. Drafts are included.
@@ -37,6 +45,9 @@ func ListReleases(ctx context.Context, c client.Client, owner, repository string
 		)
 		cancel()
 		if err != nil {
+			if page == 1 && resp != nil && (resp.Status == http.StatusForbidden || resp.Status == http.StatusNotFound) {
+				return nil, &ReleaseListUnavailableError{err}
+			}
 			return nil, err
 		}
 
