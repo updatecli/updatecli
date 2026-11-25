@@ -249,6 +249,14 @@ func (y Yaml) createKey(doc *ast.DocumentNode, key, valueToWrite string, resultT
 // update of an anchored node keeps the &anchor. ReplaceWithNode stays in place for
 // matches that never touch an anchor or an alias.
 func (y Yaml) updateNode(yamlFile *ast.File, index int, doc *ast.DocumentNode, urlPath *goyaml.Path, matched []ast.Node, key, valueToWrite string, nodeToWrite ast.Node, resultTarget *result.Target, originFilePath string, dryRun bool, docIndex *anchorIndex, throughAlias bool) (bool, error) {
+	if !y.spec.AppendToArray && !throughAlias && hasTerminalWildcard(key) {
+		expanded, err := docIndex.expandTerminalWildcard(matched)
+		if err != nil {
+			return false, fmt.Errorf("resolving key %q in file %q: %w", key, originFilePath, err)
+		}
+		matched = expanded
+	}
+
 	resolved, err := docIndex.resolveMatches(matched)
 	if err != nil {
 		return false, fmt.Errorf("resolving key %q in file %q: %w", key, originFilePath, err)
@@ -571,6 +579,50 @@ func hasAdditionalNodes(found, matched []ast.Node) bool {
 	}
 	for _, node := range found {
 		if _, ok := seen[node]; !ok {
+			return true
+		}
+	}
+
+	return false
+}
+
+// hasTerminalWildcard reports whether key ends with a "[*]" selector.
+func hasTerminalWildcard(key string) bool {
+	elements, err := splitYamlPathKey(key)
+	if err != nil || len(elements) == 0 {
+		return false
+	}
+
+	return elements[len(elements)-1].raw == "[*]"
+}
+
+// expandTerminalWildcard swaps each sequence goccy returned for a terminal "[*]"
+// for the entries it holds, since a replacement writes those entries rather than
+// the sequence. The swap only happens for a sequence holding an alias or an
+// anchored entry, so alias resolution sees it; any other sequence is left to
+// ReplaceWithNode as before.
+func (idx *anchorIndex) expandTerminalWildcard(matched []ast.Node) ([]ast.Node, error) {
+	expanded := make([]ast.Node, 0, len(matched))
+	for _, node := range matched {
+		value, _, err := idx.resolve(node)
+		if err != nil {
+			return nil, err
+		}
+		sequence, ok := value.(*ast.SequenceNode)
+		if !ok || !holdsAliasOrAnchor(sequence) {
+			expanded = append(expanded, node)
+			continue
+		}
+		expanded = append(expanded, sequence.Values...)
+	}
+
+	return expanded, nil
+}
+
+func holdsAliasOrAnchor(sequence *ast.SequenceNode) bool {
+	for _, entry := range sequence.Values {
+		switch entry.(type) {
+		case *ast.AliasNode, *ast.AnchorNode:
 			return true
 		}
 	}

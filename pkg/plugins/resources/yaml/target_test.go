@@ -1465,28 +1465,6 @@ selected: *base
 			wantedResult: false,
 		},
 		{
-			name: "Append to a sequence holding an unresolved alias entry returns an error (issue #11053)",
-			spec: Spec{
-				File:          "test.yaml",
-				Key:           "$.selected",
-				Value:         "c",
-				AppendToArray: true,
-			},
-			files: map[string]file{
-				"test.yaml": {
-					filePath:         "test.yaml",
-					originalFilePath: "test.yaml",
-				},
-			},
-			inputSourceValue: "c",
-			mockedContents: map[string]string{
-				"test.yaml": `base: &base [*missing]
-selected: *base
-`,
-			},
-			wantedError: true,
-		},
-		{
 			name: "Anchors are scoped per document (issue #11053)",
 			spec: Spec{
 				File:  "test.yaml",
@@ -2642,7 +2620,50 @@ func Test_TargetNestedAnchorReplacement(t *testing.T) {
 		wantedChanged  bool
 		wantedError    bool
 		wantedErrMatch string
+		appendToArray  bool
 	}{
+		{
+			name:  "Append to a sequence holding an unresolved alias entry returns an error and leaves the file unchanged",
+			key:   "$.selected",
+			value: "c",
+			content: `base: &base [*missing]
+selected: *base
+`,
+			wantedContent: `base: &base [*missing]
+selected: *base
+`,
+			appendToArray:  true,
+			wantedError:    true,
+			wantedErrMatch: `unresolved yaml alias "missing"`,
+		},
+		{
+			name:  "Terminal wildcard updates the anchor behind an alias entry",
+			key:   "$.items[*]",
+			value: "updated",
+			content: `tag: &tag old
+items: [*tag]
+`,
+			wantedContent: `tag: &tag updated
+items: [*tag]
+`,
+			wantedChanged: true,
+		},
+		{
+			name:  "Terminal wildcard updates alias and inline entries together",
+			key:   "$.items[*]",
+			value: "updated",
+			content: `tag: &tag old
+items:
+  - *tag
+  - inline
+`,
+			wantedContent: `tag: &tag updated
+items:
+  - *tag
+  - updated
+`,
+			wantedChanged: true,
+		},
 		{
 			name:  "Rejects alias replacement that would leave a dangling nested anchor",
 			key:   "$.selected",
@@ -2831,9 +2852,10 @@ other: *tag
 			}
 
 			y, err := New(Spec{
-				File:  "test.yaml",
-				Key:   tt.key,
-				Value: tt.value,
+				File:          "test.yaml",
+				Key:           tt.key,
+				Value:         tt.value,
+				AppendToArray: tt.appendToArray,
 			})
 			require.NoError(t, err)
 			y.contentRetriever = &mockedText
