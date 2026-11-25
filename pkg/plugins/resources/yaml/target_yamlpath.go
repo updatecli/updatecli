@@ -83,6 +83,15 @@ func (y *Yaml) goYamlPathTarget(valueToWrite string, resultTarget *result.Target
 					continue
 				}
 
+				// An alias node's Value is the alias name ("image"), not the
+				// anchored scalar. Follow node.Alias and collapse every alias of
+				// the same anchor to one node so the value is written once and
+				// both &anchor and *alias survive re-encoding.
+				nodes, err = dereferenceAliases(nodes)
+				if err != nil {
+					return 0, ignoredFiles, fmt.Errorf("resolving yaml alias for key %q in file %q: %w", key, originFilePath, err)
+				}
+
 				foundAny = true
 				docsMatched++
 				var oldVersion string
@@ -196,4 +205,46 @@ func (y *Yaml) goYamlPathTarget(valueToWrite string, resultTarget *result.Target
 		}
 	}
 	return notChanged, ignoredFiles, nil
+}
+
+// dereferenceAliases follows Alias nodes to the value they reference and keeps one
+// entry per resolved node. Several aliases of one anchor must be updated once:
+// writing the new scalar into the alias node itself replaces the alias name.
+func dereferenceAliases(nodes []*yaml.Node) ([]*yaml.Node, error) { //nolint:forbidigo // yamlpath only accepts go.yaml.in/yaml/v3 nodes
+	resolved := make([]*yaml.Node, 0, len(nodes)) //nolint:forbidigo // yamlpath only accepts go.yaml.in/yaml/v3 nodes
+	seen := map[*yaml.Node]struct{}{}             //nolint:forbidigo // yamlpath only accepts go.yaml.in/yaml/v3 nodes
+	for _, node := range nodes {
+		target, err := derefAlias(node)
+		if err != nil {
+			return nil, err
+		}
+		if target == nil {
+			continue
+		}
+		if _, ok := seen[target]; ok {
+			continue
+		}
+		seen[target] = struct{}{}
+		resolved = append(resolved, target)
+	}
+
+	return resolved, nil
+}
+
+// derefAlias walks a chain of aliases. A nil Alias is a dangling reference, and a
+// repeated node is a cycle; both are reported instead of being written through.
+func derefAlias(node *yaml.Node) (*yaml.Node, error) { //nolint:forbidigo // yamlpath only accepts go.yaml.in/yaml/v3 nodes
+	seen := map[*yaml.Node]struct{}{}                //nolint:forbidigo // yamlpath only accepts go.yaml.in/yaml/v3 nodes
+	for node != nil && node.Kind == yaml.AliasNode { //nolint:forbidigo // yamlpath only accepts go.yaml.in/yaml/v3 nodes
+		if _, ok := seen[node]; ok {
+			return nil, fmt.Errorf("cycle in yaml alias %q", node.Value) //nolint:forbidigo // yamlpath only accepts go.yaml.in/yaml/v3 nodes
+		}
+		seen[node] = struct{}{}
+		if node.Alias == nil { //nolint:forbidigo // yamlpath only accepts go.yaml.in/yaml/v3 nodes
+			return nil, fmt.Errorf("unresolved yaml alias %q", node.Value) //nolint:forbidigo // yamlpath only accepts go.yaml.in/yaml/v3 nodes
+		}
+		node = node.Alias //nolint:forbidigo // yamlpath only accepts go.yaml.in/yaml/v3 nodes
+	}
+
+	return node, nil
 }
