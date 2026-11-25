@@ -197,22 +197,32 @@ func parsePEP508(dep string) (pythonDependency, error) {
 
 // declaredLowerBound returns the release a PEP 440 constraint starts from, such as "2.28" for
 // ">=2.28,<3" or ">=2.28.post1", and "1" for "==1.*", or "" when it sets no lower bound, such as
-// "<3.0" or "!=1.5". The release leaves out pre, post, dev and local segments, which a semantic
-// version can't hold.
+// "<3.0" or "!=1.5". With several lower bounds, such as in constraints combined from several
+// declarations, the highest one applies. The release leaves out pre, post, dev and local
+// segments, which a semantic version can't hold.
 func declaredLowerBound(constraint string) string {
-	constraint = strings.TrimSpace(constraint)
-	for _, specifier := range strings.Split(constraint, ",") {
+	var highest string
+	var highestVersion pep440.Version
+	var parsed bool
+	for _, specifier := range strings.Split(strings.TrimSpace(constraint), ",") {
 		specifier = strings.TrimSpace(specifier)
 		// Longer operators first, so ">=" isn't taken for ">"
 		for _, operator := range []string{"===", "==", "~=", ">=", ">"} {
-			if rest, found := strings.CutPrefix(specifier, operator); found {
-				bound := strings.TrimSuffix(strings.TrimSpace(rest), ".*")
-				if v, err := pep440.Parse(bound); err == nil {
-					return v.BaseVersion()
-				}
-				return bound
+			rest, found := strings.CutPrefix(specifier, operator)
+			if !found {
+				continue
 			}
+			bound := strings.TrimSuffix(strings.TrimSpace(rest), ".*")
+			v, err := pep440.Parse(bound)
+			switch {
+			case err != nil && highest == "":
+				// Not a PEP 440 version: kept as is, unless a valid bound is found
+				highest = bound
+			case err == nil && (!parsed || v.GreaterThan(highestVersion)):
+				highest, highestVersion, parsed = v.BaseVersion(), v, true
+			}
+			break
 		}
 	}
-	return ""
+	return highest
 }

@@ -5,12 +5,14 @@ import (
 	"fmt"
 	"path"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 	"text/template"
 
 	"github.com/BurntSushi/toml"
 	"github.com/Masterminds/semver/v3"
+	pep440 "github.com/aquasecurity/go-pep440-version"
 	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pep503"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/version"
@@ -152,7 +154,8 @@ type vulnerabilityScan struct {
 	// lockErr reports a uv.lock present but unreadable.
 	lockErr error
 	// handled holds the "name==version" pairs already turned into a manifest, so a package
-	// listed in several groups at the same version gives a single manifest.
+	// listed in several groups, or by several members of a workspace, at the same version gives
+	// a single manifest.
 	handled map[string]bool
 	// resolved holds the normalized names for which a current version was found at least once.
 	resolved map[string]bool
@@ -164,12 +167,14 @@ type vulnerabilityScan struct {
 	forked map[string]bool
 }
 
-// newVulnerabilityScan prepares the vulnerability scan of the pyproject.toml in dir.
-// hasUvLock reports whether a uv.lock sits next to it, as detected by detectLockFileSupport.
+// newVulnerabilityScan prepares the vulnerability scan of a pyproject.toml whose uv.lock, if
+// any, is in lockDir: next to it, or at the root of its workspace.
+// hasUvLock reports whether that uv.lock exists, as detected by detectLockFileSupport.
 // trustedRegistries holds the normalized URLs of pypi.org and its trusted mirrors.
-func newVulnerabilityScan(dir string, hasUvLock bool, trustedRegistries map[string]bool) *vulnerabilityScan {
+// handled is shared by the pyproject.toml files sharing lockDir.
+func newVulnerabilityScan(lockDir string, hasUvLock bool, trustedRegistries map[string]bool, handled map[string]bool) *vulnerabilityScan {
 	scan := &vulnerabilityScan{
-		handled:          map[string]bool{},
+		handled:          handled,
 		resolved:         map[string]bool{},
 		unresolved:       map[string]string{},
 		forked:           map[string]bool{},
@@ -180,7 +185,7 @@ func newVulnerabilityScan(dir string, hasUvLock bool, trustedRegistries map[stri
 		return scan
 	}
 
-	lock, err := loadUvLockVersions(dir, trustedRegistries)
+	lock, err := loadUvLockVersions(lockDir, trustedRegistries)
 	if err != nil {
 		scan.lockErr = err
 		return scan
@@ -317,25 +322,50 @@ func (p Pyproject) discoverDependencyManifests() ([][]byte, error) {
 		return nil, err
 	}
 
+	// handledByLock holds, for each uv.lock directory, the packages turned into security manifests.
+	handledByLock := map[string]map[string]bool{}
+
+	// A first pass reads every pyproject.toml, so that the declarations sharing a uv.lock are all
+	// known before the single manifest updating each of their packages is generated.
+	var projects []foundProject
+	locks := map[string]*lockState{}
 	for _, foundFile := range foundFiles {
 		log.Debugf("parsing file %q", foundFile)
-
-		dir := filepath.Dir(foundFile)
-
-		lockSupport, skip := detectLockFileSupport(dir, p.uvAvailable)
-		if skip {
-			if p.spec.Vulnerability == nil {
-				log.Warning("skipping, uv.lock detected but Updatecli couldn't detect the uv command to update it in case of a pyproject.toml update")
-				continue
-			}
-			// uv.lock can still be read, so the manifests report vulnerable packages without updating them.
-			log.Warningf("uv.lock detected in %q but Updatecli couldn't detect the uv command, so security manifests only report vulnerable packages", dir)
-		}
 
 		data, err := loadPyprojectData(foundFile)
 		if err != nil {
 			log.Debugln(err)
 			continue
+		}
+
+		dir := filepath.Dir(foundFile)
+
+		// A workspace member is locked by the uv.lock at the workspace root, where uv runs. The
+		// root may sit above "rootdir", so the search goes up to the root directory.
+		lockDir := searchUvLock(dir, p.rootDir)
+		if lockDir == "" {
+			lockDir = dir
+		}
+
+		if locks[lockDir] == nil {
+			locks[lockDir] = newLockState()
+		}
+		locks[lockDir].addConstraints(data)
+
+		projects = append(projects, foundProject{file: foundFile, lockDir: lockDir, data: data})
+	}
+
+	for _, project := range projects {
+		foundFile, lockDir, data := project.file, project.lockDir, project.data
+
+		lockSupport, skip := detectLockFileSupport(lockDir, p.uvAvailable)
+		if skip {
+			if p.spec.Vulnerability == nil {
+				log.Warningf("skipping %q, uv.lock detected in %q but Updatecli couldn't detect the uv command to update it in case of a pyproject.toml update", foundFile, lockDir)
+				continue
+			}
+			// uv.lock can still be read, so the manifests report vulnerable packages without updating them.
+			log.Warningf("uv.lock detected in %q but Updatecli couldn't detect the uv command, so security manifests only report vulnerable packages", lockDir)
 		}
 
 		relativeFile, err := filepath.Rel(p.rootDir, foundFile)
@@ -344,7 +374,7 @@ func (p Pyproject) discoverDependencyManifests() ([][]byte, error) {
 			continue
 		}
 
-		workdir, err := filepath.Rel(p.rootDir, dir)
+		workdir, err := filepath.Rel(p.rootDir, lockDir)
 		if err != nil {
 			log.Debugln(err)
 			continue
@@ -354,7 +384,11 @@ func (p Pyproject) discoverDependencyManifests() ([][]byte, error) {
 
 		var scan *vulnerabilityScan
 		if p.spec.Vulnerability != nil {
-			scan = newVulnerabilityScan(dir, lockSupport.uvLock, p.trustedRegistries)
+			// The members of a workspace share its uv.lock, so a package is updated once for all of them.
+			if handledByLock[lockDir] == nil {
+				handledByLock[lockDir] = map[string]bool{}
+			}
+			scan = newVulnerabilityScan(lockDir, lockSupport.uvLock, p.trustedRegistries, handledByLock[lockDir])
 
 			// Without readable uv.lock, neither the current versions nor where packages come
 			// from are known, and an exact pin may belong to a private or git package.
@@ -364,15 +398,20 @@ func (p Pyproject) discoverDependencyManifests() ([][]byte, error) {
 			}
 		}
 
-		// An update held back by the age filter must not fall back below the version in use.
+		// The installed versions tell the packages uv.lock resolves at several versions, and keep
+		// an update held back by the age filter from falling back below the version in use.
 		var installed lockedVersions
-		if scan == nil && lockSupport.uvLock && p.ageFilter.NeverDowngrade() {
-			lock, err := loadUvLockVersions(dir, p.trustedRegistries)
-			if err != nil {
+		if scan == nil && lockSupport.uvLock {
+			lock, err := loadUvLockVersions(lockDir, p.trustedRegistries)
+			switch {
+			case err == nil:
+				installed = lock.installed
+			case p.ageFilter.NeverDowngrade():
 				log.Warningf("skipping %q: uv.lock can't be read (%s), so an update could lower the installed versions", relativeFile, err)
 				continue
+			default:
+				log.Debugf("reading the uv.lock of %q: %s", relativeFile, err)
 			}
-			installed = lock.installed
 		}
 
 		file := discoveredFile{
@@ -382,6 +421,7 @@ func (p Pyproject) discoverDependencyManifests() ([][]byte, error) {
 			lockSupport:  lockSupport,
 			scan:         scan,
 			installed:    installed,
+			lock:         locks[lockDir],
 		}
 
 		// Process [project.dependencies] — the main dependency group.
@@ -452,15 +492,100 @@ type discoveredFile struct {
 	relativeFile string
 	// projectName is the [project] name, used in manifest names.
 	projectName string
-	// workdir is the pyproject.toml directory, relative to the root directory, where uv runs.
+	// workdir is the uv.lock directory, relative to the root directory, where uv runs: the
+	// pyproject.toml directory or, for a workspace member, the workspace root.
 	workdir string
 	// lockSupport tells which lock files the generated targets update.
 	lockSupport lockFileSupport
 	// scan is only set in vulnerability mode.
 	scan *vulnerabilityScan
-	// installed holds the versions uv.lock resolves from a registry. It is only set outside
-	// vulnerability mode, when the age filter doesn't allow a downgrade.
+	// installed holds the versions uv.lock resolves from a registry. It is set outside
+	// vulnerability mode whenever uv.lock can be read: it tells the packages resolved at several
+	// versions, and the versions an age filter not allowing a downgrade bounds the filter at.
 	installed lockedVersions
+	// lock holds what the pyproject.toml files sharing the uv.lock, such as workspace members,
+	// share in routine mode.
+	lock *lockState
+}
+
+// foundProject is a pyproject.toml read by the first discovery pass.
+type foundProject struct {
+	// file is the pyproject.toml path.
+	file string
+	// lockDir is the directory of its uv.lock, or its own directory when it has none.
+	lockDir string
+	// data is the pyproject.toml content.
+	data pyprojectTOML
+}
+
+// lockState holds what the pyproject.toml files sharing one uv.lock share in routine mode.
+type lockState struct {
+	// constraints maps the normalized name of a package to the distinct constraints its
+	// declarations set, in every table of every pyproject.toml sharing the uv.lock.
+	constraints map[string][]string
+	// bumped holds the normalized names of the packages a routine manifest already re-locks.
+	bumped map[string]bool
+}
+
+// newLockState returns an empty lockState.
+func newLockState() *lockState {
+	return &lockState{constraints: map[string][]string{}, bumped: map[string]bool{}}
+}
+
+// addConstraints records the constraints of every dependency the pyproject.toml declares.
+func (l *lockState) addConstraints(data pyprojectTOML) {
+	requirements := append([]string{}, data.Project.Dependencies...)
+	for _, group := range data.Project.OptionalDependencies {
+		requirements = append(requirements, group...)
+	}
+	// The second pass reports unsupported group values and entries, so they are left out silently.
+	for _, group := range data.DependencyGroups {
+		entries, _ := dependencyGroupEntries(group)
+		for _, entry := range entries {
+			if requirement, ok := entry.(string); ok {
+				requirements = append(requirements, requirement)
+			}
+		}
+	}
+
+	for _, requirement := range requirements {
+		dep, err := parsePEP508(requirement)
+		if err != nil || dep.Constraint == "" {
+			continue
+		}
+		name := pep503.NormalizeName(dep.Name)
+		if !slices.Contains(l.constraints[name], dep.Constraint) {
+			l.constraints[name] = append(l.constraints[name], dep.Constraint)
+		}
+	}
+}
+
+// combinedConstraint returns the constraint accepting the versions every declaration of the
+// package accepts, as uv.lock must satisfy them all: their PEP 440 specifiers joined by commas.
+// Environment markers aren't read, so a declaration uv doesn't apply, such as one for a Python
+// version the project doesn't support, would restrict it too. When uv.lock resolves the
+// package at locked, a single version, only the declarations it satisfies are kept, as uv's
+// resolution tells the ones that apply.
+func (l *lockState) combinedConstraint(name, locked string) string {
+	var lockedVersion pep440.Version
+	checkLocked := false
+	if v, err := pep440.Parse(locked); locked != "" && err == nil {
+		lockedVersion, checkLocked = v, true
+	}
+
+	var constraints []string
+	for _, constraint := range l.constraints[pep503.NormalizeName(name)] {
+		if checkLocked {
+			specifiers, err := pep440.NewSpecifiers(constraint, pep440.WithPreRelease(true))
+			if err == nil && !specifiers.Check(lockedVersion) {
+				log.Debugf("leaving out the constraint %q of %q, which the version %q uv.lock resolves doesn't satisfy", constraint, name, locked)
+				continue
+			}
+		}
+		constraints = append(constraints, constraint)
+	}
+	sort.Strings(constraints)
+	return strings.Join(constraints, ",")
 }
 
 // installedVersion returns the version of a dependency an update must not lower: the highest
@@ -530,10 +655,38 @@ func (p Pyproject) routineManifest(file discoveredFile, deps dependencyList, dep
 		return nil
 	}
 
+	// One uv.lock pins one version of a package, so a single manifest re-locks it, rather than
+	// one per group or workspace member opening conflicting pull requests. Its version must
+	// satisfy every declaration sharing the uv.lock.
+	if file.lockSupport.uv {
+		name := pep503.NormalizeName(dep.Name)
+		if file.lock.bumped[name] {
+			log.Debugf("skipping %q from %q, already updated in the uv.lock of %q", dep.Name, file.relativeFile, file.workdir)
+			return nil
+		}
+		file.lock.bumped[name] = true
+
+		// "uv lock --upgrade-package" applies one version to every fork, which fails when the
+		// declarations, split by environment markers, require different ones.
+		versions := file.installed[name]
+		if len(versions) > 1 {
+			log.Warningf("skipping %q from %q: uv.lock resolves it at several versions (%s), which a single upgrade can't target",
+				dep.Name, file.relativeFile, strings.Join(versions, ", "))
+			return nil
+		}
+
+		locked := ""
+		if len(versions) == 1 {
+			locked = versions[0]
+		}
+		dep.Constraint = file.lock.combinedConstraint(name, locked)
+	}
+
 	params, ok := p.buildTemplateParams(file, dep, deps.label())
 	if !ok {
 		return nil
 	}
+
 	return renderManifest(routineManifestTmpl, params)
 }
 

@@ -8,7 +8,16 @@
 // Other tables, such as [tool.poetry], [tool.uv] dev-dependencies, and [build-system], are
 // not read.
 //
-// The package manager is detected from the lock file sitting next to each pyproject.toml.
+// The package manager is detected from the lock file sitting next to each pyproject.toml or,
+// for a uv workspace member, at the workspace root, where uv then runs. As uv does, the closest
+// parent pyproject.toml decides: the project is a member when it declares [tool.uv.workspace]
+// with "members" patterns including the project and "exclude" ones not. Otherwise the project
+// is its own workspace root.
+// A package is updated by a single manifest per uv.lock, even when several groups or workspace
+// members declare it. Its source looks for a version every declaration accepts, their
+// constraints joined. A package uv.lock resolves at several versions, as declarations split by
+// environment markers require, is skipped with a warning: one "uv lock --upgrade-package"
+// can't update every fork.
 // Only uv is supported today, through uv.lock:
 //
 //   - uv.lock present and the uv command available: a pypi source and a shell target running
@@ -152,7 +161,7 @@ type Spec struct {
 	//       doesn't apply either.
 	//     * "versionfilter", as the version is the lowest one without known vulnerabilities.
 	//     * "indexurl", as the OSV database only covers packages published on pypi.org.
-	//   * the current version is the version resolved in the uv.lock next to the pyproject.toml or,
+	//   * the current version is the version resolved in the uv.lock of the pyproject.toml or,
 	//     without one, the version pinned with "==" in pyproject.toml. With a uv.lock, a package
 	//     it doesn't resolve has no current version, even when pinned.
 	//     Packages without an identifiable current version are ignored, as are packages uv.lock

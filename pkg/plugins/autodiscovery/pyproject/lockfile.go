@@ -2,17 +2,20 @@ package pyproject
 
 import (
 	"fmt"
+	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
 
 	"github.com/BurntSushi/toml"
 	pep440 "github.com/aquasecurity/go-pep440-version"
+	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/plugins/utils/pep503"
 )
 
 const (
-	// uvLockFile is the name of the lock file uv writes next to pyproject.toml.
+	// uvLockFile is the name of the lock file uv writes next to pyproject.toml, or at the
+	// root of a uv workspace.
 	uvLockFile = "uv.lock"
 	// pypiRegistry is the registry uv.lock records for packages resolved from pypi.org.
 	pypiRegistry = "https://pypi.org/simple"
@@ -138,4 +141,114 @@ func (l lockedVersions) highestSatisfying(name, constraint string) string {
 		}
 	}
 	return highest
+}
+
+// uvWorkspace mirrors the [tool.uv.workspace] table of a pyproject.toml, nil when it has none.
+type uvWorkspace struct {
+	Tool struct {
+		Uv struct {
+			Workspace *struct {
+				Members []string `toml:"members"`
+				Exclude []string `toml:"exclude"`
+			} `toml:"workspace"`
+		} `toml:"uv"`
+	} `toml:"tool"`
+}
+
+// searchUvLock returns the directory of the uv.lock of the pyproject.toml in dir, "" when it has
+// none. Without a uv.lock next to it, the workspace root is looked up as uv does from the
+// project: the closest pyproject.toml of a parent directory, up to rootDir, decides. When it
+// declares a [tool.uv.workspace] including the project, its uv.lock applies. Any other
+// pyproject.toml, such as a project without a workspace or one only configuring tools, makes
+// the project its own workspace root, so it has no uv.lock.
+func searchUvLock(dir, rootDir string) string {
+	projectDir, rootDir := filepath.Clean(dir), filepath.Clean(rootDir)
+
+	if isLockFileDetected(filepath.Join(projectDir, uvLockFile)) {
+		return projectDir
+	}
+
+	if relative, err := filepath.Rel(rootDir, projectDir); err != nil || relative == "." || relative == ".." || strings.HasPrefix(relative, ".."+string(filepath.Separator)) {
+		// Only the directory of the searched pyproject.toml can be looked up
+		return ""
+	}
+
+	for dir = filepath.Dir(projectDir); ; dir = filepath.Dir(dir) {
+		if isLockFileDetected(filepath.Join(dir, pyprojectFile)) {
+			// As uv does, the closest pyproject.toml decides, whether it includes the project or not.
+			if !workspaceIncludes(dir, projectDir) {
+				log.Debugf("%q is not a member of a uv workspace at %q", projectDir, dir)
+				return ""
+			}
+			if !isLockFileDetected(filepath.Join(dir, uvLockFile)) {
+				return ""
+			}
+			return dir
+		}
+
+		if dir == rootDir || filepath.Dir(dir) == dir {
+			return ""
+		}
+	}
+}
+
+// workspaceIncludes reports whether the pyproject.toml in dir declares a uv workspace whose
+// members include projectDir: matching a "members" pattern and none of the "exclude" ones.
+// Patterns are globs relative to dir, where "**" matches any number of directories.
+func workspaceIncludes(dir, projectDir string) bool {
+	pyprojectPath := filepath.Join(dir, pyprojectFile)
+
+	var data uvWorkspace
+	if _, err := toml.DecodeFile(pyprojectPath, &data); err != nil {
+		log.Debugf("parsing %q: %s", pyprojectPath, err)
+		return false
+	}
+	workspace := data.Tool.Uv.Workspace
+	if workspace == nil {
+		return false
+	}
+
+	member, err := filepath.Rel(dir, projectDir)
+	if err != nil {
+		return false
+	}
+	segments := strings.Split(filepath.ToSlash(member), "/")
+
+	matches := func(patterns []string) bool {
+		for _, pattern := range patterns {
+			pattern = strings.TrimPrefix(path.Clean(filepath.ToSlash(pattern)), "./")
+			if matchGlobSegments(strings.Split(pattern, "/"), segments) {
+				return true
+			}
+		}
+		return false
+	}
+
+	return matches(workspace.Members) && !matches(workspace.Exclude)
+}
+
+// matchGlobSegments reports whether the segments of a path match those of a glob pattern,
+// where "**" matches any number of segments.
+func matchGlobSegments(pattern, segments []string) bool {
+	if len(pattern) == 0 {
+		return len(segments) == 0
+	}
+
+	head, rest := pattern[0], pattern[1:]
+
+	if head == "**" {
+		for i := range len(segments) + 1 {
+			if matchGlobSegments(rest, segments[i:]) {
+				return true
+			}
+		}
+		return false
+	}
+
+	if len(segments) == 0 {
+		return false
+	}
+
+	matched, err := path.Match(head, segments[0])
+	return err == nil && matched && matchGlobSegments(rest, segments[1:])
 }

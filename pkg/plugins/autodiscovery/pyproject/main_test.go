@@ -895,8 +895,7 @@ func TestNewAgeNeverDowngrades(t *testing.T) {
 			name: "the default age bounds the constraint at the version uv.lock resolves",
 			expectedPatterns: map[string]string{
 				"requests": ">=2.32.5, >=2.28",
-				// Resolved at several versions, the highest one is kept
-				"numpy": ">=2.1.0, >=1.20",
+				// Resolved at several versions, numpy is skipped: one upgrade can't target every fork
 				// Resolved from another registry, still the version in use
 				"corp-utils": ">=1.4.0",
 			},
@@ -906,7 +905,6 @@ func TestNewAgeNeverDowngrades(t *testing.T) {
 			spec: Spec{VersionFilter: version.Filter{Kind: "semver", Pattern: "minor"}},
 			expectedPatterns: map[string]string{
 				"requests":   ">=2.32.5, 2.x",
-				"numpy":      ">=2.1.0, 2.x",
 				"corp-utils": ">=1.4.0, 1.x",
 			},
 		},
@@ -915,7 +913,6 @@ func TestNewAgeNeverDowngrades(t *testing.T) {
 			spec: Spec{VersionFilter: version.Filter{Kind: "pep440", Pattern: "<3"}},
 			expectedPatterns: map[string]string{
 				"requests":   ">=2.32.5, <3",
-				"numpy":      ">=2.1.0, <3",
 				"corp-utils": ">=1.4.0, <3",
 			},
 		},
@@ -924,7 +921,6 @@ func TestNewAgeNeverDowngrades(t *testing.T) {
 			spec: Spec{Age: &age.AutodiscoverySpec{Spec: age.Spec{Minimum: "7d"}, AllowDowngrade: new(true)}},
 			expectedPatterns: map[string]string{
 				"requests":   ">=2.28",
-				"numpy":      ">=1.20",
 				"corp-utils": "*",
 			},
 		},
@@ -933,7 +929,6 @@ func TestNewAgeNeverDowngrades(t *testing.T) {
 			spec: Spec{Age: &age.AutodiscoverySpec{}},
 			expectedPatterns: map[string]string{
 				"requests":   ">=2.28",
-				"numpy":      ">=1.20",
 				"corp-utils": "*",
 			},
 		},
@@ -947,7 +942,7 @@ func TestNewAgeNeverDowngrades(t *testing.T) {
 
 			manifests, err := p.DiscoverManifests()
 			require.NoError(t, err)
-			require.Len(t, manifests, len(tt.expectedPatterns))
+			require.Len(t, manifests, len(tt.expectedPatterns), "manifests: %s", manifests)
 
 			for _, manifest := range manifests {
 				var found bool
@@ -1041,7 +1036,7 @@ func TestNewAgeNeverDowngradesPEP440Versions(t *testing.T) {
 
 			manifests, err := p.DiscoverManifests()
 			require.NoError(t, err)
-			require.Len(t, manifests, len(tt.expectedPatterns))
+			require.Len(t, manifests, len(tt.expectedPatterns), "manifests: %s", manifests)
 
 			for _, manifest := range manifests {
 				var found bool
@@ -1078,6 +1073,93 @@ func TestRoutineVersionFilterPEP440WithoutInstalledVersion(t *testing.T) {
 	_, pattern, _, ok = p.routineVersionFilter(discoveredFile{}, dep)
 	require.True(t, ok)
 	assert.Equal(t, ">=2.5.0, <3.0", pattern)
+}
+
+func TestSearchUvLock(t *testing.T) {
+	root := "testdata/uv_workspace"
+
+	// The workspace root and its members share the root uv.lock
+	assert.Equal(t, root, searchUvLock(root, root))
+	assert.Equal(t, root, searchUvLock(root+"/packages/api", root))
+	// As in uv, a project nested in another project is its own workspace root, even when an
+	// outer workspace matches it: the closest pyproject.toml decides
+	assert.Equal(t, "", searchUvLock(root+"/libs/x/sub", root))
+	assert.Equal(t, root+"/libs/x", searchUvLock(root+"/libs/x", root))
+	// A project the workspace doesn't include, or excludes, has no uv.lock
+	assert.Equal(t, "", searchUvLock(root+"/tools/standalone", root))
+	assert.Equal(t, "", searchUvLock(root+"/packages/legacy", root))
+	// The search doesn't go above the root directory
+	assert.Equal(t, "", searchUvLock(root+"/packages/api", root+"/packages"))
+	// A uv.lock next to the pyproject.toml always applies
+	assert.Equal(t, "testdata/simple_project", searchUvLock("testdata/simple_project", "testdata"))
+}
+
+func TestMatchGlobSegments(t *testing.T) {
+	assert.True(t, matchGlobSegments([]string{"packages", "*"}, []string{"packages", "api"}))
+	assert.False(t, matchGlobSegments([]string{"packages", "*"}, []string{"packages", "api", "sub"}))
+	assert.True(t, matchGlobSegments([]string{"libs", "**", "sub"}, []string{"libs", "sub"}))
+	assert.True(t, matchGlobSegments([]string{"libs", "**", "sub"}, []string{"libs", "x", "y", "sub"}))
+	assert.False(t, matchGlobSegments([]string{"libs", "**", "sub"}, []string{"libs", "x"}))
+}
+
+func TestDiscoverManifestsUvWorkspace(t *testing.T) {
+	p, err := New(Spec{}, "testdata/uv_workspace", "", "")
+	require.NoError(t, err)
+	p.uvAvailable = true
+
+	manifests, err := p.DiscoverManifests()
+	require.NoError(t, err)
+
+	byName := map[string]string{}
+	for _, manifest := range manifests {
+		name := strings.SplitN(string(manifest), "\n", 2)[0]
+		byName[name] = string(manifest)
+	}
+
+	// requests, declared by the root and a member, is re-locked by a single manifest, the
+	// first one found, rather than by one per project opening conflicting pull requests. Its
+	// version must satisfy both declarations, ">=2.28" and ">=2.28,<2.33".
+	require.Len(t, byName, 3, "manifests: %v", byName)
+	apiRequests, found := byName[`name: 'deps(pypi): bump "requests" for "api" project'`]
+	require.True(t, found, "manifests: %v", byName)
+	assert.Contains(t, apiRequests, "pattern: '>=2.32.5, >=2.28,>=2.28,<2.33'\n")
+	assert.NotContains(t, byName, `name: 'deps(pypi): bump "requests" for "ws-root" project'`)
+
+	// A workspace member is bounded at the version the root uv.lock resolves, and uv runs at the root
+	api := byName[`name: 'deps(pypi): bump "fastapi" for "api" project'`]
+	assert.Contains(t, api, "pattern: '>=0.115.0, >=0.100'\n")
+	assert.Contains(t, api, "workdir: '.'\n")
+
+	// A project the workspace doesn't include gets no uv target and no bound
+	standalone := byName[`name: 'deps(pypi): bump "flask" for "standalone" project'`]
+	assert.Contains(t, standalone, "pattern: '>=3.0'\n")
+	assert.NotContains(t, standalone, "targets:")
+}
+
+func TestDiscoverSecurityManifestsUvWorkspace(t *testing.T) {
+	p, err := New(map[string]interface{}{"vulnerability": map[string]interface{}{}}, "testdata/uv_workspace", "", "")
+	require.NoError(t, err)
+	p.uvAvailable = true
+
+	manifests, err := p.DiscoverManifests()
+	require.NoError(t, err)
+
+	// requests, declared by the root and a member, is updated once in the shared uv.lock
+	var names []string
+	for _, manifest := range manifests {
+		names = append(names, strings.SplitN(string(manifest), "\n", 2)[0])
+		assert.Contains(t, string(manifest), "workdir: '.'\n")
+	}
+	assert.ElementsMatch(t, []string{
+		`name: 'deps(pypi): bump "fastapi" to {{ source "fastapi" }}'`,
+		`name: 'deps(pypi): bump "requests" to {{ source "requests" }}'`,
+	}, names)
+
+	for _, manifest := range manifests {
+		if strings.Contains(string(manifest), `"fastapi"`) {
+			assert.Contains(t, string(manifest), "version: '0.115.0'\n")
+		}
+	}
 }
 
 func TestRoutineVersionFilterSemverWithoutLowerBound(t *testing.T) {
@@ -1123,4 +1205,46 @@ func TestRoutineVersionFilterSemverWithoutLowerBound(t *testing.T) {
 	_, pattern, _, ok = p.routineVersionFilter(discoveredFile{installed: lockedVersions{"foo": {"2.5.0"}}}, dep)
 	require.True(t, ok)
 	assert.Equal(t, ">=2.5.0, 2.x", pattern)
+}
+
+func TestDiscoverManifestsUvWorkspaceMemberRootDir(t *testing.T) {
+	// "rootdir" pointing at a workspace member still finds the uv.lock at the workspace root
+	p, err := New(Spec{RootDir: "packages/api"}, "testdata/uv_workspace", "", "")
+	require.NoError(t, err)
+	p.uvAvailable = true
+
+	manifests, err := p.DiscoverManifests()
+	require.NoError(t, err)
+	require.Len(t, manifests, 2)
+
+	for _, manifest := range manifests {
+		assert.Contains(t, string(manifest), "workdir: '.'\n")
+		assert.Contains(t, string(manifest), "uv lock --upgrade-package")
+	}
+	assert.Contains(t, string(manifests[0])+string(manifests[1]), "pattern: '>=0.115.0, >=0.100'\n")
+}
+
+func TestLockStateCombinedConstraint(t *testing.T) {
+	lock := newLockState()
+	lock.addConstraints(pyprojectTOML{})
+	data, err := loadPyprojectData("testdata/uv_workspace/packages/api/pyproject.toml")
+	require.NoError(t, err)
+	lock.addConstraints(data)
+	data, err = loadPyprojectData("testdata/uv_workspace/pyproject.toml")
+	require.NoError(t, err)
+	lock.addConstraints(data)
+
+	// Every distinct declaration counts, in a stable order, so the source picks a version all accept
+	assert.Equal(t, ">=2.28,>=2.28,<2.33", lock.combinedConstraint("Requests", ""))
+	assert.Equal(t, ">=2.28,>=2.28,<2.33", lock.combinedConstraint("Requests", "2.32.5"))
+	assert.Equal(t, ">=0.100", lock.combinedConstraint("fastapi", ""))
+	assert.Equal(t, "", lock.combinedConstraint("unknown", ""))
+
+	// A declaration uv doesn't apply, which the locked version doesn't satisfy, is left out
+	lock.constraints["foo"] = []string{">=2", "<2"}
+	assert.Equal(t, ">=2", lock.combinedConstraint("foo", "2.5"))
+	assert.Equal(t, "<2,>=2", lock.combinedConstraint("foo", ""))
+
+	// Relative patterns start from the highest lower bound of the combined constraint
+	assert.Equal(t, "2.10", declaredLowerBound(">=2.0,<2.30,>=2.10"))
 }
