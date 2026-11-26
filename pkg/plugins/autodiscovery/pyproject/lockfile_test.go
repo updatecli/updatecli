@@ -8,22 +8,27 @@ import (
 )
 
 func TestExactPinnedVersion(t *testing.T) {
-	testdata := map[string]string{
-		"==1.2.3":       "1.2.3",
-		"== 1.2.3":      "1.2.3",
-		"==1.0b2":       "1.0b2",
-		"==1.*":         "",
-		"===1.2.3":      "",
-		">=1.2":         "",
-		"~=1.2":         "",
-		"==1.2,<2":      "",
-		"":              "",
-		"==1.0.post1":   "1.0.post1",
-		"==2.0.0+local": "2.0.0+local",
+	testdata := []struct {
+		constraint string
+		expected   string
+	}{
+		{constraint: "==1.2.3", expected: "1.2.3"},
+		{constraint: "== 1.2.3", expected: "1.2.3"},
+		{constraint: "==1.0b2", expected: "1.0b2"},
+		{constraint: "==1.*", expected: ""},
+		{constraint: "===1.2.3", expected: ""},
+		{constraint: ">=1.2", expected: ""},
+		{constraint: "~=1.2", expected: ""},
+		{constraint: "==1.2,<2", expected: ""},
+		{constraint: "", expected: ""},
+		{constraint: "==1.0.post1", expected: "1.0.post1"},
+		{constraint: "==2.0.0+local", expected: "2.0.0+local"},
 	}
 
-	for constraint, expected := range testdata {
-		assert.Equal(t, expected, exactPinnedVersion(constraint), constraint)
+	for _, tt := range testdata {
+		t.Run(tt.constraint, func(t *testing.T) {
+			assert.Equal(t, tt.expected, exactPinnedVersion(tt.constraint))
+		})
 	}
 }
 

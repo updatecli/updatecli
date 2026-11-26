@@ -163,22 +163,31 @@ func TestDependencyGroupRequirements(t *testing.T) {
 }
 
 func TestDeclaredLowerBound(t *testing.T) {
-	for constraint, want := range map[string]string{
-		">=2.28":       "2.28",
-		">=2.28,<3":    "2.28",
-		"<3, >= 2.28":  "2.28",
-		"~=1.4.2":      "1.4.2",
-		"==1.2.3":      "1.2.3",
-		"==1.*":        "1",
-		">=2.28.post1": "2.28",
-		">=1.0.dev0":   "1.0",
-		">=2.0rc1,<3":  "2.0",
-		">1.0":         "1.0",
-		"<3.0":         "",
-		"!=1.5":        "",
-		"":             "",
-		"<=2.0,!=1.5":  "",
-	} {
-		assert.Equal(t, want, declaredLowerBound(constraint), constraint)
+	testdata := []struct {
+		constraint string
+		expected   string
+	}{
+		{constraint: ">=2.28", expected: "2.28"},
+		{constraint: ">=2.28,<3", expected: "2.28"},
+		{constraint: "<3, >= 2.28", expected: "2.28"},
+		{constraint: "~=1.4.2", expected: "1.4.2"},
+		{constraint: "==1.2.3", expected: "1.2.3"},
+		{constraint: "==1.*", expected: "1"},
+		{constraint: ">=2.28.post1", expected: "2.28"},
+		{constraint: ">=1.0.dev0", expected: "1.0"},
+		{constraint: ">=2.0rc1,<3", expected: "2.0"},
+		{constraint: ">1.0", expected: "1.0"},
+		// Constraints combined from several declarations start from the highest lower bound
+		{constraint: ">=2.0,<2.30,>=2.10", expected: "2.10"},
+		{constraint: "<3.0", expected: ""},
+		{constraint: "!=1.5", expected: ""},
+		{constraint: "", expected: ""},
+		{constraint: "<=2.0,!=1.5", expected: ""},
+	}
+
+	for _, tt := range testdata {
+		t.Run(tt.constraint, func(t *testing.T) {
+			assert.Equal(t, tt.expected, declaredLowerBound(tt.constraint))
+		})
 	}
 }
