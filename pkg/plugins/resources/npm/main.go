@@ -341,8 +341,21 @@ func (n *Npm) getVersions(ctx context.Context) (v string, versions []string, err
 	}
 
 	publishedVersions := []string{}
+	deprecatedVersions := []string{}
 	for _, value := range n.data.Versions {
+		if message, ok := value.Deprecated.(string); ok && message != "" {
+			deprecatedVersions = append(deprecatedVersions, value.Version)
+			continue
+		}
 		publishedVersions = append(publishedVersions, value.Version)
+	}
+
+	// A deprecated version, such as react-native "1000.0.0", must never be suggested, unless
+	// the maintainers deprecated every version.
+	if len(publishedVersions) == 0 {
+		publishedVersions = deprecatedVersions
+	} else if len(deprecatedVersions) > 0 {
+		log.Debugf("ignoring deprecated versions of the npm package %q: %v\n", n.spec.Name, deprecatedVersions)
 	}
 
 	// Discard the versions published outside of the age window, if any is defined.

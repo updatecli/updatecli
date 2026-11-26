@@ -33,6 +33,9 @@ func TestSource(t *testing.T) {
 	// partiallyDatedPackageData is a registry response reporting no release date for "0.2.0"
 	partiallyDatedPackageData := strings.Replace(existingPackageData, `,"0.2.0":"2014-09-12T20:06:33.167Z"`, "", 1)
 	require.NotEqual(t, existingPackageData, partiallyDatedPackageData)
+	// onlyLatestDeprecatedPackageData keeps "0.2.0" deprecated, but not "0.1.0"
+	onlyLatestDeprecatedPackageData := strings.Replace(existingPackageData, `"deprecated":"Critical`, `"deprecated":false,"x":"`, 1)
+	require.NotEqual(t, existingPackageData, onlyLatestDeprecatedPackageData)
 
 	tests := []struct {
 		name                 string
@@ -77,6 +80,24 @@ func TestSource(t *testing.T) {
 			mockedToken:          "mytoken",
 			mockedUrl:            "https://mycustomregistry.updatecli.io",
 			expectedResult:       "0.2.0",
+		},
+		{
+			name: "Deprecated version is never suggested",
+			spec: Spec{
+				Name: "axios",
+				VersionFilter: version.Filter{
+					Kind:    "semver",
+					Pattern: ">=0.1.0",
+				},
+				URL:           "https://mycustomregistry.updatecli.io",
+				RegistryToken: "mytoken",
+			},
+			mockedResponse:       true,
+			mockedBody:           onlyLatestDeprecatedPackageData,
+			mockedHTTPStatusCode: 200,
+			mockedToken:          "mytoken",
+			mockedUrl:            "https://mycustomregistry.updatecli.io",
+			expectedResult:       "0.1.0",
 		},
 		{
 			name: "Failing case of retrieving latest axios version using private registry but bad token",

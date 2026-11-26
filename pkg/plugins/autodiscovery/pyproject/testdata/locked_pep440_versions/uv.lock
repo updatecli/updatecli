@@ -1,0 +1,22 @@
+version = 1
+requires-python = ">=3.12"
+
+[[package]]
+name = "pep440-project"
+version = "0.1.0"
+source = { virtual = "." }
+
+[[package]]
+name = "torch"
+version = "2.1.0+cpu"
+source = { registry = "https://download.pytorch.org/whl/cpu" }
+
+[[package]]
+name = "foo"
+version = "1.0.post1"
+source = { registry = "https://pypi.org/simple" }
+
+[[package]]
+name = "bar"
+version = "2.0b1"
+source = { registry = "https://pypi.org/simple" }

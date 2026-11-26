@@ -570,10 +570,11 @@ func (f *Filter) GreaterThanPattern(version string) (string, error) {
 }
 
 // GreaterThanPatternWithoutDowngrade returns the same pattern as GreaterThanPattern, except
-// that a semver pattern never accepts a version lower than the given one. A source whose
-// newest versions are filtered out, such as by an age filter, then finds nothing rather than
-// falling back to an older version. A custom semver constraint is bounded the same way, unless
-// it already rejects every version lower than the given one.
+// that a semver or pep440 pattern never accepts a version lower than the given one. A source
+// whose newest versions are filtered out, such as by an age filter, then finds nothing rather
+// than falling back to an older version. A custom semver constraint is bounded the same way,
+// unless it already rejects every version lower than the given one. A pep440 pattern is always
+// bounded, a redundant bound being harmless, and it returns an error when it can't be.
 func (f *Filter) GreaterThanPatternWithoutDowngrade(version string) (string, error) {
 	return f.greaterThanPattern(version, withLowerBound)
 }
@@ -743,7 +744,10 @@ func (f *Filter) greaterThanPattern(version string, mode lowerBoundMode) (string
 		}
 
 	case PEP440VERSIONKIND:
-		return f.Pattern, nil
+		if mode != withLowerBound {
+			return f.Pattern, nil
+		}
+		return boundPEP440Pattern(f.Pattern, version)
 	}
 	return "", &ErrUnsupportedVersionKind{Kind: f.Kind}
 }

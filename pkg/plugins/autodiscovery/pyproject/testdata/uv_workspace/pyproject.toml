@@ -1,0 +1,11 @@
+[project]
+name = "ws-root"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "requests>=2.28",
+]
+
+[tool.uv.workspace]
+members = ["packages/*", "libs/**/sub"]
+exclude = ["packages/legacy"]

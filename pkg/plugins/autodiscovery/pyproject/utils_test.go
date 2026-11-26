@@ -35,6 +35,16 @@ func TestParsePEP508(t *testing.T) {
 			expected: pythonDependency{Name: "black", Constraint: "==24.1.0", Version: "24.1.0"},
 		},
 		{
+			name:     "Constraint between parentheses",
+			input:    "requests (==2.25.0)",
+			expected: pythonDependency{Name: "requests", Constraint: "==2.25.0", Version: "2.25.0"},
+		},
+		{
+			name:     "Extras and constraints between parentheses",
+			input:    "requests[socks] ( >=2.0, <3 ) ; python_version >= '3.12'",
+			expected: pythonDependency{Name: "requests", Extras: "socks", Constraint: ">=2.0, <3", Version: "2.0"},
+		},
+		{
 			name:     "No version",
 			input:    "numpy",
 			expected: pythonDependency{Name: "numpy"},
@@ -148,6 +158,36 @@ func TestDependencyGroupRequirements(t *testing.T) {
 	for _, tt := range testdata {
 		t.Run(tt.name, func(t *testing.T) {
 			assert.Equal(t, tt.expected, dependencyGroupRequirements(tt.input))
+		})
+	}
+}
+
+func TestDeclaredLowerBound(t *testing.T) {
+	testdata := []struct {
+		constraint string
+		expected   string
+	}{
+		{constraint: ">=2.28", expected: "2.28"},
+		{constraint: ">=2.28,<3", expected: "2.28"},
+		{constraint: "<3, >= 2.28", expected: "2.28"},
+		{constraint: "~=1.4.2", expected: "1.4.2"},
+		{constraint: "==1.2.3", expected: "1.2.3"},
+		{constraint: "==1.*", expected: "1"},
+		{constraint: ">=2.28.post1", expected: "2.28"},
+		{constraint: ">=1.0.dev0", expected: "1.0"},
+		{constraint: ">=2.0rc1,<3", expected: "2.0"},
+		{constraint: ">1.0", expected: "1.0"},
+		// Constraints combined from several declarations start from the highest lower bound
+		{constraint: ">=2.0,<2.30,>=2.10", expected: "2.10"},
+		{constraint: "<3.0", expected: ""},
+		{constraint: "!=1.5", expected: ""},
+		{constraint: "", expected: ""},
+		{constraint: "<=2.0,!=1.5", expected: ""},
+	}
+
+	for _, tt := range testdata {
+		t.Run(tt.constraint, func(t *testing.T) {
+			assert.Equal(t, tt.expected, declaredLowerBound(tt.constraint))
 		})
 	}
 }

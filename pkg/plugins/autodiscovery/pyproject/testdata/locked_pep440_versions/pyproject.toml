@@ -1,0 +1,8 @@
+[project]
+name = "pep440-project"
+requires-python = ">=3.12"
+dependencies = [
+    "torch>=2.0",
+    "foo>=1.0",
+    "bar>=1.0",
+]
