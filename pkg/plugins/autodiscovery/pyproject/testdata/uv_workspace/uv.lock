@@ -1,0 +1,22 @@
+version = 1
+requires-python = ">=3.12"
+
+[[package]]
+name = "ws-root"
+version = "0.1.0"
+source = { virtual = "." }
+
+[[package]]
+name = "api"
+version = "0.1.0"
+source = { editable = "packages/api" }
+
+[[package]]
+name = "fastapi"
+version = "0.115.0"
+source = { registry = "https://pypi.org/simple" }
+
+[[package]]
+name = "requests"
+version = "2.32.5"
+source = { registry = "https://pypi.org/simple" }
