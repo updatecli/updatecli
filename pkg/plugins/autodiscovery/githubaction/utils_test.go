@@ -1,6 +1,8 @@
 package githubaction
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -36,6 +38,33 @@ func TestSearchWorkflowFiles(t *testing.T) {
 	}
 
 	assert.Equal(t, expectedWorkflowFiles, g.workflowFiles)
+}
+
+func TestSearchNestedWorkflows(t *testing.T) {
+	// A workflows directory above the checkout doesn't make its contents workflows.
+	root := filepath.Join(t.TempDir(), ".forgejo", "workflows", "checkout")
+	scope := filepath.FromSlash(".forgejo/workflows/e2e")
+	workflow := filepath.Join(root, scope, "github.yml")
+	gitea := filepath.Join(root, ".gitea/workflows/e2e/ci.yml")
+	for _, file := range []string{
+		workflow, gitea,
+		filepath.Join(root, ".github/workflows/e2e/ci.yml"),
+		filepath.Join(root, "archive.forgejo/workflows/e2e/ci.yml"),
+	} {
+		require.NoError(t, os.MkdirAll(filepath.Dir(file), 0o750))
+		require.NoError(t, os.WriteFile(file, nil, 0o600))
+	}
+
+	for _, dir := range []string{"", scope} {
+		g, err := New(Spec{RootDir: dir}, root, "", "")
+		require.NoError(t, err)
+		require.NoError(t, g.searchWorkflowFiles(filepath.Join(root, dir)))
+		want := []string{workflow}
+		if dir == "" {
+			want = append(want, gitea)
+		}
+		assert.ElementsMatch(t, want, g.workflowFiles, "rootdir %q", dir)
+	}
 }
 
 func TestSearchCompositeActionsFiles(t *testing.T) {

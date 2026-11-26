@@ -35,19 +35,12 @@ func (g *GitHubAction) searchWorkflowFiles(rootDir string) error {
 					continue
 				}
 
-				// Ensure our file is in a .github/workflows directory
-				workflow := filepath.Dir(path)
-				if filepath.Base(workflow) != "workflows" {
-					continue
+				dir := filepath.Dir(path)
+				direct := filepath.Base(dir) == "workflows" &&
+					slices.Contains([]string{".github", ".gitea", ".forgejo"}, filepath.Base(filepath.Dir(dir)))
+				if direct || (info.Mode().IsRegular() && g.isNestedWorkflow(rootDir, path)) {
+					g.workflowFiles = append(g.workflowFiles, path)
 				}
-
-				workflowDirname := filepath.Dir(workflow)
-
-				if !slices.Contains([]string{".github", ".gitea", ".forgejo"}, filepath.Base(workflowDirname)) {
-					continue
-				}
-
-				g.workflowFiles = append(g.workflowFiles, path)
 			}
 		}
 
@@ -61,6 +54,20 @@ func (g *GitHubAction) searchWorkflowFiles(rootDir string) error {
 	log.Debugf("%d GitHub workflow(s) found", len(g.workflowFiles))
 
 	return nil
+}
+
+func (g *GitHubAction) isNestedWorkflow(searchDir, file string) bool {
+	rel, err := filepath.Rel(searchDir, file)
+	if err != nil {
+		return false
+	}
+	// Only add workflows that the generated targets can address relative to the checkout.
+	rel = filepath.Join(g.spec.RootDir, rel)
+	if !filepath.IsLocal(rel) {
+		return false
+	}
+	name := "/" + filepath.ToSlash(rel)
+	return strings.Contains(name, "/.forgejo/workflows/") || strings.Contains(name, "/.gitea/workflows/")
 }
 
 // searchCompositeActionsFiles will look, recursively, for every files containing a GitHub composite action file from a root directory.

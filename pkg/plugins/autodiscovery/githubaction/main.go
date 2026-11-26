@@ -53,7 +53,8 @@ type Spec struct {
 	//   * the pattern is matched against the file name only, not against its path, so a
 	//     pattern such as ".github/workflows/*.yaml" never matches.
 	//   * a workflow file must sit directly inside a "workflows" directory whose parent is
-	//     ".github", ".gitea", or ".forgejo".
+	//     ".github". For Gitea and Forgejo, the crawler also searches workflow subdirectories
+	//     when "rootdir" is unset or relative to the checkout.
 	//
 	Files []string `yaml:",omitempty"`
 	// "actions" defines the composite action name patterns the crawler searches for.
