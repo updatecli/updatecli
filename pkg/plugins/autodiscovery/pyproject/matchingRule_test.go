@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/updatecli/updatecli/pkg/plugins/utils/pep503"
 )
 
 func TestMatchingRulesValidate(t *testing.T) {
@@ -30,6 +31,21 @@ func TestMatchingRulesValidate(t *testing.T) {
 			name: "rule with packages should pass",
 			rules: MatchingRules{
 				{Packages: map[string]string{"requests": ""}},
+			},
+			expectError: false,
+		},
+		{
+			name: "two spellings of one package with different versions are rejected",
+			rules: MatchingRules{
+				{Packages: map[string]string{"Typing_Extensions": "", "typing-extensions": ">=4"}},
+			},
+			expectError: true,
+			errorMsg:    "lists the package \"typing-extensions\" twice with different versions",
+		},
+		{
+			name: "two spellings of one package with the same version are accepted",
+			rules: MatchingRules{
+				{Packages: map[string]string{"Jinja2": ">=3.1", "jinja2": ">=3.1"}},
 			},
 			expectError: false,
 		},
@@ -115,6 +131,25 @@ func TestIsMatchingRules(t *testing.T) {
 			},
 			filePath:       "subdir/pyproject.toml",
 			expectedResult: false,
+		},
+		{
+			name: "package names match once normalized",
+			rules: MatchingRules{
+				{Packages: map[string]string{"typing-extensions": ">=4"}},
+			},
+			filePath:       "pyproject.toml",
+			packageName:    "Typing_Extensions",
+			packageVersion: "4.12.2",
+			expectedResult: true,
+		},
+		{
+			name: "rule package names match once normalized",
+			rules: MatchingRules{
+				{Packages: map[string]string{"Requests": ""}},
+			},
+			filePath:       "pyproject.toml",
+			packageName:    "requests",
+			expectedResult: true,
 		},
 		{
 			name: "package name matches",
@@ -288,11 +323,12 @@ func TestIsMatchingRules(t *testing.T) {
 
 	for _, d := range dataset {
 		t.Run(d.name, func(t *testing.T) {
+			// As New and the discovery do: rules and group names are normalized before matching.
 			var groups []string
 			if d.dependencyGroup != "" {
-				groups = []string{d.dependencyGroup}
+				groups = []string{pep503.NormalizeName(d.dependencyGroup)}
 			}
-			got := d.rules.isMatchingRules(d.rootDir, d.filePath, d.packageName, d.packageVersion, groups)
+			got := d.rules.normalized().isMatchingRules(d.rootDir, d.filePath, d.packageName, d.packageVersion, groups)
 			assert.Equal(t, d.expectedResult, got)
 		})
 	}

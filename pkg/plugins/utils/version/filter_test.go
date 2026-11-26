@@ -4,6 +4,7 @@ import (
 	"errors"
 	"testing"
 
+	pep440 "github.com/aquasecurity/go-pep440-version"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -974,6 +975,134 @@ func TestRank(t *testing.T) {
 			}
 			assert.Equal(t, tt.want, gotVersions)
 			assert.Equal(t, tt.versions, versions, "the versions given mustn't be modified")
+		})
+	}
+}
+
+func TestGreaterThanPatternWithoutDowngradePEP440(t *testing.T) {
+	tests := []struct {
+		pattern string
+		version string
+		want    string
+	}{
+		{pattern: "*", version: "2.32.5", want: ">=2.32.5"},
+		{pattern: "", version: "2.32.5", want: ">=2.32.5"},
+		{pattern: ">=2.28", version: "2.32.5", want: ">=2.32.5, >=2.28"},
+		{pattern: ">=2.28,<3", version: "2.32.5", want: ">=2.32.5, >=2.28,<3"},
+		{pattern: "~=1.4 || >=2.0", version: "1.4.2", want: ">=1.4.2, ~=1.4 || >=1.4.2, >=2.0"},
+		// A local version can't be named in a specifier, its public version bounds it
+		{pattern: ">=2.0", version: "2.1.0+cpu", want: ">=2.1.0, >=2.0"},
+		{pattern: "==2.1.0+cpu", version: "2.1.0+cpu", want: ">=2.1.0, ==2.1.0+cpu"},
+		// A pre-release bounds a group at its release, unless the group names a pre-release
+		{pattern: ">=1.0", version: "2.0b1", want: ">=2.0, >=1.0"},
+		{pattern: "*", version: "2.0.dev3", want: ">=2.0"},
+		{pattern: ">=2.0a1", version: "2.0b1", want: ">=2.0b1, >=2.0a1"},
+		{pattern: ">=1.0 || >=2.0rc1", version: "2.0b1", want: ">=2.0, >=1.0 || >=2.0b1, >=2.0rc1"},
+		// A post release is a release
+		{pattern: ">=1.0", version: "1.0.post1", want: ">=1.0.post1, >=1.0"},
+		// A dev release of a post release is bounded at that post release, not below it
+		{pattern: ">=0.9", version: "1.0.post1.dev2", want: ">=1.0.post1, >=0.9"},
+		{pattern: "*", version: "1.0a1.post1.dev2", want: ">=1.0"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.pattern+" "+tt.version, func(t *testing.T) {
+			filter := Filter{Kind: PEP440VERSIONKIND, Pattern: tt.pattern}
+			got, err := filter.GreaterThanPatternWithoutDowngrade(tt.version)
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, got)
+
+			_, err = pep440.NewSpecifiers(got)
+			require.NoError(t, err, "the bounded pattern must be a valid PEP 440 specifier")
+
+			// Without an age filter, or when a downgrade is allowed, the pattern is left as it was
+			for _, greaterThanPattern := range []func(string) (string, error){filter.GreaterThanPattern, filter.GreaterThanPatternAllowingDowngrade} {
+				unbounded, err := greaterThanPattern(tt.version)
+				require.NoError(t, err)
+				assert.Equal(t, tt.pattern, unbounded)
+			}
+		})
+	}
+}
+
+// TestGreaterThanPatternNeverDowngradesPEP440 checks that a bounded pep440 pattern never picks
+// a version lower than the current one, while still accepting the current one.
+func TestGreaterThanPatternNeverDowngradesPEP440(t *testing.T) {
+	filter := Filter{Kind: PEP440VERSIONKIND, Pattern: ">=2.28"}
+	pattern, err := filter.GreaterThanPatternWithoutDowngrade("2.32.5")
+	require.NoError(t, err)
+
+	bounded := Filter{Kind: PEP440VERSIONKIND, Pattern: pattern}
+
+	_, err = bounded.Search([]string{"2.28.0", "2.32.4"})
+	assert.Error(t, err, "pattern %q must not accept a version lower than 2.32.5", pattern)
+
+	found, err := bounded.Search([]string{"2.28.0", "2.32.4", "2.32.5"})
+	require.NoError(t, err)
+	assert.Equal(t, "2.32.5", found.GetVersion())
+}
+
+func TestGreaterThanPatternWithoutDowngradePEP440Errors(t *testing.T) {
+	tests := []struct {
+		pattern string
+		version string
+	}{
+		// A current version that isn't PEP 440 can't bound the pattern
+		{pattern: ">=2.28", version: "not a version"},
+		// A pattern that isn't a PEP 440 specifier can't be bounded
+		{pattern: "^2.28", version: "2.32.5"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.pattern+" "+tt.version, func(t *testing.T) {
+			filter := Filter{Kind: PEP440VERSIONKIND, Pattern: tt.pattern}
+			_, err := filter.GreaterThanPatternWithoutDowngrade(tt.version)
+			assert.Error(t, err)
+		})
+	}
+}
+
+// TestGreaterThanPatternPEP440KeepsPreReleasesOut checks that a pre-release in use doesn't make a
+// bounded pattern accept newer pre-releases, nor the local version in use fail the search.
+func TestGreaterThanPatternPEP440KeepsPreReleasesOut(t *testing.T) {
+	filter := Filter{Kind: PEP440VERSIONKIND, Pattern: ">=1.0"}
+	pattern, err := filter.GreaterThanPatternWithoutDowngrade("2.0b1")
+	require.NoError(t, err)
+
+	found, err := (&Filter{Kind: PEP440VERSIONKIND, Pattern: pattern}).Search([]string{"1.9", "2.0b1", "2.0", "2.1a1"})
+	require.NoError(t, err)
+	assert.Equal(t, "2.0", found.GetVersion())
+
+	filter = Filter{Kind: PEP440VERSIONKIND, Pattern: ">=2.0"}
+	pattern, err = filter.GreaterThanPatternWithoutDowngrade("2.1.0+cpu")
+	require.NoError(t, err)
+
+	found, err = (&Filter{Kind: PEP440VERSIONKIND, Pattern: pattern}).Search([]string{"2.0.0", "2.1.0", "2.2.0"})
+	require.NoError(t, err)
+	assert.Equal(t, "2.2.0", found.GetVersion())
+}
+
+// TestGreaterThanPatternPEP440NeverBelowInstalled checks that a bound built from a pre-release,
+// dev or post release in use never accepts a version lower than it.
+func TestGreaterThanPatternPEP440NeverBelowInstalled(t *testing.T) {
+	versions := []string{"0.9", "1.0", "1.0.post0", "1.0.post1.dev1", "1.0.post1.dev2", "1.0.post1", "1.1"}
+	for _, installed := range []string{"1.0.post1.dev2", "1.0.post1", "1.0a1", "1.0.dev3", "1.0"} {
+		t.Run(installed, func(t *testing.T) {
+			filter := Filter{Kind: PEP440VERSIONKIND, Pattern: ">=0.9"}
+			pattern, err := filter.GreaterThanPatternWithoutDowngrade(installed)
+			require.NoError(t, err)
+
+			installedVersion, err := pep440.Parse(installed)
+			require.NoError(t, err)
+			specifiers, err := pep440.NewSpecifiers(pattern, pep440.WithPreRelease(true))
+			require.NoError(t, err)
+			for _, candidate := range versions {
+				v, err := pep440.Parse(candidate)
+				require.NoError(t, err)
+				if specifiers.Check(v) {
+					assert.False(t, v.LessThan(installedVersion), "%q accepts %q, lower than %q", pattern, candidate, installed)
+				}
+			}
 		})
 	}
 }
