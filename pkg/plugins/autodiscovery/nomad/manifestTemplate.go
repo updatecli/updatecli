@@ -22,8 +22,8 @@ conditions:
       {{- end }}
 {{- end }}
 `
-	// manifestTemplate is the Go template used to generate Docker compose manifests
-	manifestTemplateLatest string = `name: 'deps(dockercompose): bump "{{ .ImageName }}" tag'
+	// manifestTemplateLatest is the Go template used to generate Nomad manifests
+	manifestTemplateLatest string = `name: 'deps(nomad): bump "{{ .ImageName }}" tag'
 {{- if .ActionID }}
 actions:
   {{ .ActionID }}:

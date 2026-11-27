@@ -175,7 +175,7 @@ targets:
 			rootDir:          "testdata/registryMappings",
 			digest:           false,
 			registryMappings: map[string]string{"my-registry.com/ghcr-io/": "ghcr.io/"},
-			expectedPipelines: []string{`name: 'deps(dockercompose): bump "my-registry.com/ghcr-io/updatecli/updatecli" tag'
+			expectedPipelines: []string{`name: 'deps(nomad): bump "my-registry.com/ghcr-io/updatecli/updatecli" tag'
 sources:
   default:
     name: 'get latest image tag for "ghcr.io/updatecli/updatecli"'
