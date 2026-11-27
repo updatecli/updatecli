@@ -10,7 +10,9 @@ import (
 )
 
 // useTempConfigDir points os.UserConfigDir at a temporary directory so tests never
-// touch the developer's real Updatecli configuration.
+// touch the developer's real Updatecli configuration. It returns the directory
+// os.UserConfigDir itself will resolve to, which on Darwin is a "Library/Application
+// Support" subdirectory of HOME rather than HOME directly.
 func useTempConfigDir(t *testing.T) string {
 	t.Helper()
 
@@ -25,7 +27,10 @@ func useTempConfigDir(t *testing.T) string {
 	APIURLSelector = ""
 	t.Cleanup(func() { APIURLSelector = previous })
 
-	return dir
+	userConfigDir, err := os.UserConfigDir()
+	require.NoError(t, err)
+
+	return userConfigDir
 }
 
 func TestUpdateConfigFileRoundTrip(t *testing.T) {
