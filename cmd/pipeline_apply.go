@@ -74,6 +74,7 @@ func init() {
 	addDisableChangelogFlag(pipelineApplyCmd, &disableChangelog)
 	addValidateSchemaFlag(pipelineApplyCmd, &validateSchema)
 	addRelativePathsFlag(pipelineApplyCmd, &relativePaths)
+	addDevFlag(pipelineApplyCmd)
 	addExportReportToYAMLFlag(pipelineApplyCmd, &exportReportToYAML)
 	addDisableUdashReportFlag(pipelineApplyCmd, &disableUdashReport)
 

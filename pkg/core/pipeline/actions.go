@@ -7,6 +7,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/updatecli/updatecli/pkg/core/config"
 	"github.com/updatecli/updatecli/pkg/core/log"
 	"github.com/updatecli/updatecli/pkg/core/pipeline/action"
 	"github.com/updatecli/updatecli/pkg/core/reports"
@@ -373,4 +374,71 @@ func (p *Pipeline) actionReportID() string {
 		name = p.Name
 	}
 	return fmt.Sprintf("%x", sha256.Sum256([]byte(name)))
+}
+
+// initActions builds the actions of the pipeline from the manifest configuration.
+func (p *Pipeline) initActions(config *config.Config) error {
+	// Actions publish to the remote, which a local checkout never does. They also need the
+	// concrete scm handler a local checkout wraps, so they are left out entirely.
+	if p.Options.IsLocalScm() {
+		if len(config.Spec.Actions) > 0 {
+			log.Infof("Skipping %d action(s) of pipeline %q: the pipeline runs against the local checkout %q",
+				len(config.Spec.Actions), p.Name, p.Options.LocalScmDirectory)
+		}
+		return nil
+	}
+
+	for id, actionConfig := range config.Spec.Actions {
+		var err error
+
+		// avoid gosec G601: Reassign the loop iteration variable to a local variable so the pointer address is correct
+		actionConfig := actionConfig
+
+		SCM, ok := p.SCMs[actionConfig.ScmID]
+
+		// Validate that scm ID exists
+		if !ok {
+			return fmt.Errorf("scms ID %q referenced by the action id %q does not exist",
+				actionConfig.ScmID,
+				id)
+		}
+
+		p.Actions[id], err = action.New(
+			&actionConfig,
+			&SCM)
+
+		if err != nil {
+			return err
+		}
+
+	}
+
+	return nil
+}
+
+// updateActions refreshes the configuration and scm of every action after the manifest is
+// rendered again. Like initActions, it leaves actions out against a local checkout.
+func (p *Pipeline) updateActions() error {
+	if p.Options.IsLocalScm() {
+		return nil
+	}
+
+	for id := range p.Config.Spec.Actions {
+		action := p.Actions[id]
+
+		action.Title = p.Config.Spec.Actions[id].Title
+		action.Config = p.Config.Spec.Actions[id]
+
+		if len(p.Config.Spec.Actions[id].ScmID) > 0 {
+			sc, ok := p.SCMs[p.Config.Spec.Actions[id].ScmID]
+			if !ok {
+				return fmt.Errorf("scm id %q doesn't exist", p.Config.Spec.Actions[id].ScmID)
+			}
+
+			action.Scm = &sc
+		}
+		p.Actions[id] = action
+	}
+
+	return nil
 }
