@@ -34,6 +34,7 @@ func TestSearchWorkflowFiles(t *testing.T) {
 		"testdata/lockfile/.github/workflows/other.yaml",
 		"testdata/lockfile/.github/workflows/pinned.yaml",
 		"testdata/lockfile_invalid/.github/workflows/ci.yaml",
+		"testdata/registryMappings/.github/workflows/updatecli.yaml",
 		"testdata/updatecli/.github/workflows/updatecli.yaml",
 	}
 

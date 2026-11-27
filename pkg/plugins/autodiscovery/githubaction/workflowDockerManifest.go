@@ -71,7 +71,11 @@ func (g GitHubAction) getDockerManifest(spec *dockerGHAManifestSpec) ([]byte, er
 		}
 	}
 
-	sourceSpec := dockerimage.NewDockerImageSpecFromImage(imageName, imageTag, g.spec.CredentialsDocker)
+	// New versions are looked up under the upstream name, while the target keeps
+	// the image name written in the file.
+	sourceImageName := g.spec.RegistryMappings.Resolve(imageName)
+
+	sourceSpec := dockerimage.NewDockerImageSpecFromImage(sourceImageName, imageTag, g.spec.CredentialsDocker)
 
 	versionFilterKind := g.versionFilter.Kind
 	versionFilterPattern := g.versionFilter.Pattern
@@ -121,41 +125,62 @@ func (g GitHubAction) getDockerManifest(spec *dockerGHAManifestSpec) ([]byte, er
 		return nil, nil
 	}
 
+	// A mirror may not serve a version found upstream yet, or may serve it under
+	// another digest, so the target only runs once the mirror has what it writes.
+	// Every template writes the "digest" source with digest enabled, else the "image" one.
+	mirrorConditionSourceID := "image"
+	if g.digest {
+		mirrorConditionSourceID = "digest"
+	}
+	mirrorCredential, _ := dockerimage.RegistryCredentials(imageName, g.spec.CredentialsDocker)
+
 	targetPrefix := imageName + ":"
 	if strings.HasPrefix(spec.Image, "docker://") {
 		targetPrefix = "docker://" + imageName + ":"
 	}
 
 	params := struct {
-		ActionName           string
-		ActionID             string
-		ImageName            string
-		ImageTag             string
-		ImageArchitecture    string
-		TargetName           string
-		TargetFile           string
-		TargetKey            string
-		TargetPrefix         string
-		TagFilter            string
-		VersionFilterKind    string
-		VersionFilterPattern string
-		VersionFilterRegex   string
-		ScmID                string
+		ActionName              string
+		ActionID                string
+		ImageName               string
+		SourceImageName         string
+		ImageTag                string
+		ImageArchitecture       string
+		TargetName              string
+		TargetFile              string
+		TargetKey               string
+		TargetPrefix            string
+		TagFilter               string
+		VersionFilterKind       string
+		VersionFilterPattern    string
+		VersionFilterRegex      string
+		ScmID                   string
+		MirrorCondition         bool
+		MirrorConditionSourceID string
+		MirrorUsername          string
+		MirrorPassword          string
+		MirrorToken             string
 	}{
-		ActionName:           spec.ActionName,
-		ActionID:             g.actionID,
-		ImageName:            imageName,
-		ImageTag:             imageTag,
-		ImageArchitecture:    architecture,
-		TargetName:           fmt.Sprintf(`deps: bump docker image %q in %q to {{ source %q }}`, imageName, spec.RelativeFoundFile, imageName),
-		TargetFile:           spec.RelativeFoundFile,
-		TargetKey:            spec.TargetKey,
-		TargetPrefix:         targetPrefix,
-		TagFilter:            tagFilter,
-		VersionFilterKind:    versionFilterKind,
-		VersionFilterPattern: versionFilterPattern,
-		VersionFilterRegex:   versionFilterRegex,
-		ScmID:                g.scmID,
+		ActionName:              spec.ActionName,
+		ActionID:                g.actionID,
+		ImageName:               imageName,
+		SourceImageName:         sourceImageName,
+		ImageTag:                imageTag,
+		ImageArchitecture:       architecture,
+		TargetName:              fmt.Sprintf(`deps: bump docker image %q in %q to {{ source %q }}`, imageName, spec.RelativeFoundFile, imageName),
+		TargetFile:              spec.RelativeFoundFile,
+		TargetKey:               spec.TargetKey,
+		TargetPrefix:            targetPrefix,
+		TagFilter:               tagFilter,
+		VersionFilterKind:       versionFilterKind,
+		VersionFilterPattern:    versionFilterPattern,
+		VersionFilterRegex:      versionFilterRegex,
+		ScmID:                   g.scmID,
+		MirrorCondition:         sourceImageName != imageName,
+		MirrorConditionSourceID: mirrorConditionSourceID,
+		MirrorUsername:          mirrorCredential.Username,
+		MirrorPassword:          mirrorCredential.Password,
+		MirrorToken:             mirrorCredential.Token,
 	}
 
 	manifest := bytes.Buffer{}
