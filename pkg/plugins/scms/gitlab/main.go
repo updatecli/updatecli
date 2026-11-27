@@ -29,7 +29,7 @@ const (
 Updatecli clones the repository, reads files from it, and commits and pushes the changes made by targets.
 */
 type Spec struct {
-	client.Spec `yaml:",inline,omitempty"`
+	client.Spec `yaml:",inline,omitempty" mapstructure:",squash"`
 	// "commitmessage" defines the settings used to generate commit messages.
 	//
 	// remark:
