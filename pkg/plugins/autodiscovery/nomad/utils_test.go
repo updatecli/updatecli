@@ -2,6 +2,8 @@ package nomad
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -23,6 +25,7 @@ func TestSearchFiles(t *testing.T) {
 			expectedFiles: []string{
 				"testdata/containerd/redis.nomad",
 				"testdata/podman/cache.nomad",
+				"testdata/registryMappings/nomad.hcl",
 				"testdata/simple/nomad.hcl",
 				"testdata/variable/grafana.nomad",
 			},
@@ -78,12 +81,13 @@ func TestGetNomadSpecFromFile(t *testing.T) {
 			filename: "testdata/variable/grafana.nomad",
 			expectedNomadSpecs: []nomadDockerSpec{
 				{
-					File:      "testdata/variable/grafana.nomad",
-					Value:     "grafana/grafana:latest",
-					GroupName: "grafana",
-					TaskName:  "grafana",
-					JobName:   "grafana",
-					Path:      "variable.image_tag.default",
+					File:          "testdata/variable/grafana.nomad",
+					Value:         "grafana/grafana:latest",
+					GroupName:     "grafana",
+					TaskName:      "grafana",
+					JobName:       "grafana",
+					Path:          "variable.image_tag.default",
+					VariableValue: "latest",
 				},
 			},
 		},
@@ -146,4 +150,36 @@ func TestGetVariableName(t *testing.T) {
 			assert.Equal(t, tt.expected, got)
 		})
 	}
+}
+
+// TestGetNomadSpecFromFileVariableBeforeTag checks a variable followed by more text in the
+// image attribute, such as "${var.image}:2", has no value recorded: the target can't update
+// the tag through it, even when the variable value happens to end like the tag.
+func TestGetNomadSpecFromFileVariableBeforeTag(t *testing.T) {
+	file := filepath.Join(t.TempDir(), "redis.nomad")
+	require.NoError(t, os.WriteFile(file, []byte(`variable "image" {
+  type    = string
+  default = "redis-2"
+}
+
+job "redis" {
+  group "redis" {
+    task "redis" {
+      driver = "docker"
+      config {
+        image = "${var.image}:2"
+      }
+    }
+  }
+}
+`), 0o600))
+
+	got, err := getNomadDockerSpecFromFile(file)
+	require.NoError(t, err)
+	require.Len(t, got, 1)
+	assert.Equal(t, "redis-2:2", got[0].Value)
+	assert.Empty(t, got[0].VariableValue)
+
+	_, ok := nomadTargetPrefix(got[0], "redis-2")
+	assert.False(t, ok)
 }

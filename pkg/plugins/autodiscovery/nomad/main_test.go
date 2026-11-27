@@ -15,6 +15,7 @@ func TestDiscoverManifests(t *testing.T) {
 		digest            bool
 		scmID             string
 		actionID          string
+		registryMappings  map[string]string
 		expectedPipelines []string
 	}{
 		{
@@ -169,6 +170,41 @@ targets:
       - addprefix: 'docker.io/library/redis:'
 `},
 		},
+		{
+			name:             "Scenario - registry mappings",
+			rootDir:          "testdata/registryMappings",
+			digest:           false,
+			registryMappings: map[string]string{"my-registry.com/ghcr-io/": "ghcr.io/"},
+			expectedPipelines: []string{`name: 'deps(nomad): bump "my-registry.com/ghcr-io/updatecli/updatecli" tag'
+sources:
+  default:
+    name: 'get latest image tag for "ghcr.io/updatecli/updatecli"'
+    kind: 'dockerimage'
+    spec:
+      image: 'ghcr.io/updatecli/updatecli'
+      tagfilter: '^v\d*(\.\d*){2}$'
+      versionfilter:
+        kind: 'semver'
+        pattern: '>=v0.67.0'
+conditions:
+  default-mirror:
+    name: 'check container image "my-registry.com/ghcr-io/updatecli/updatecli:{{ source "default" }}" is available on the mirror'
+    kind: 'dockerimage'
+    sourceid: 'default'
+    spec:
+      image: 'my-registry.com/ghcr-io/updatecli/updatecli'
+targets:
+  default:
+    name: 'deps(nomad): update Docker image "my-registry.com/ghcr-io/updatecli/updatecli" to "{{ source "default" }}"'
+    kind: 'hcl'
+    spec:
+      file: 'nomad.hcl'
+      path: 'job.mirrored.group.updatecli.task.updatecli.config.image'
+    sourceid: 'default'
+    transformers:
+      - addprefix: 'my-registry.com/ghcr-io/updatecli/updatecli:'
+`},
+		},
 	}
 
 	for _, tt := range testdata {
@@ -176,7 +212,8 @@ targets:
 			digest := tt.digest
 			nomad, err := New(
 				Spec{
-					Digest: &digest,
+					Digest:           &digest,
+					RegistryMappings: tt.registryMappings,
 				}, tt.rootDir, tt.scmID, tt.actionID)
 
 			require.NoError(t, err)

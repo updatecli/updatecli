@@ -122,7 +122,11 @@ func (k Ko) generateContainerManifest(targetKey, image, relativeFoundKoFile stri
 		}
 	}
 
-	sourceSpec := dockerimage.NewDockerImageSpecFromImage(imageName, imageTag, k.spec.Auths)
+	// New versions are looked up under the upstream name, while the target keeps
+	// the image name written in the file.
+	sourceImageName := k.spec.RegistryMappings.Resolve(imageName)
+
+	sourceSpec := dockerimage.NewDockerImageSpecFromImage(sourceImageName, imageTag, k.spec.Auths)
 	if sourceSpec == nil && !k.digest {
 		log.Infoln("No source spec detected")
 		return nil, nil
@@ -159,6 +163,16 @@ func (k Ko) generateContainerManifest(targetKey, image, relativeFoundKoFile stri
 		}
 	}
 
+	// A mirror may not serve a version found upstream yet, or may serve it under
+	// another digest, so the target only runs once the mirror has what it writes.
+	sourceId := imageName
+	mirrorCondition := sourceImageName != imageName
+	mirrorConditionSourceID := sourceId
+	if k.digest {
+		mirrorConditionSourceID = sourceId + "-digest"
+	}
+	mirrorCredential, _ := dockerimage.RegistryCredentials(imageName, k.spec.Auths)
+
 	var tmpl *template.Template
 	if k.digest && sourceSpec != nil {
 		tmpl, err = template.New("manifest").Parse(manifestTemplateDigestAndLatest)
@@ -180,36 +194,41 @@ func (k Ko) generateContainerManifest(targetKey, image, relativeFoundKoFile stri
 		return nil, nil
 	}
 
-	sourceId := imageName
-
 	params := struct {
-		ActionID             string
-		ManifestName         string
-		ImageName            string
-		ImageTag             string
-		SourceID             string
-		SourceName           string
-		SourceKind           string
-		SourceTagFilter      string
-		VersionFilterKind    string
-		VersionFilterPattern string
-		VersionFilterRegex   string
-		RegistryUsername     string
-		RegistryPassword     string
-		RegistryToken        string
-		TargetID             string
-		TargetKey            string
-		TargetPrefix         string
-		TargetFile           string
-		TargetName           string
-		ScmID                string
+		ActionID                string
+		ManifestName            string
+		ImageName               string
+		SourceImageName         string
+		ImageTag                string
+		SourceID                string
+		SourceName              string
+		SourceKind              string
+		SourceTagFilter         string
+		VersionFilterKind       string
+		VersionFilterPattern    string
+		VersionFilterRegex      string
+		RegistryUsername        string
+		RegistryPassword        string
+		RegistryToken           string
+		TargetID                string
+		TargetKey               string
+		TargetPrefix            string
+		TargetFile              string
+		TargetName              string
+		ScmID                   string
+		MirrorCondition         bool
+		MirrorConditionSourceID string
+		MirrorUsername          string
+		MirrorPassword          string
+		MirrorToken             string
 	}{
 		ActionID:         k.actionID,
 		ManifestName:     fmt.Sprintf("deps: bump container image %q", imageName),
 		ImageName:        imageName,
+		SourceImageName:  sourceImageName,
 		ImageTag:         imageTag,
 		SourceID:         sourceId,
-		SourceName:       fmt.Sprintf("get latest container image tag for %q", imageName),
+		SourceName:       fmt.Sprintf("get latest container image tag for %q", sourceImageName),
 		SourceKind:       "dockerimage",
 		SourceTagFilter:  tagFilter,
 		TargetID:         imageName,
@@ -225,6 +244,12 @@ func (k Ko) generateContainerManifest(targetKey, image, relativeFoundKoFile stri
 		VersionFilterPattern: versionFilterPattern,
 		VersionFilterRegex:   versionFilterRegex,
 		ScmID:                k.scmID,
+
+		MirrorCondition:         mirrorCondition,
+		MirrorConditionSourceID: mirrorConditionSourceID,
+		MirrorUsername:          mirrorCredential.Username,
+		MirrorPassword:          mirrorCredential.Password,
+		MirrorToken:             mirrorCredential.Token,
 	}
 
 	manifest := bytes.Buffer{}

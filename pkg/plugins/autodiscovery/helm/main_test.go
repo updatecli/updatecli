@@ -19,6 +19,7 @@ func TestDiscoverManifests(t *testing.T) {
 		rootDir           string
 		digest            bool
 		auths             map[string]docker.InlineKeyChain
+		registryMappings  map[string]string
 		expectedPipelines []string
 	}{
 		{
@@ -472,6 +473,201 @@ targets:
     sourceid: 'image-digest'
 `},
 		},
+		{
+			name:             "Registry mappings",
+			rootDir:          "testdata-registryMappings/chart",
+			registryMappings: map[string]string{"my-registry.com/ghcr-io/": "ghcr.io/"},
+			expectedPipelines: []string{`name: 'deps(helm): bump image "my-registry.com/ghcr-io/updatecli/updatecli" tag for chart "mirrored"'
+sources:
+  image:
+    name: 'get latest image tag for "ghcr.io/updatecli/updatecli"'
+    kind: 'dockerimage'
+    spec:
+      image: 'ghcr.io/updatecli/updatecli'
+      tagfilter: '^v\d*(\.\d*){2}$'
+      versionfilter:
+        kind: 'semver'
+        pattern: '>=v0.67.0'
+conditions:
+  my-registry.com_ghcr-io_updatecli_updatecli-registry:
+    disablesourceinput: true
+    name: 'Ensure container registry "my-registry.com" is specified'
+    kind: 'yaml'
+    spec:
+      file: 'mirrored/values.yaml'
+      key: '$.image.registry'
+      value: 'my-registry.com'
+  my-registry.com_ghcr-io_updatecli_updatecli-repository:
+    disablesourceinput: true
+    name: 'Ensure container repository "ghcr-io/updatecli/updatecli" is specified'
+    kind: 'yaml'
+    spec:
+      file: 'mirrored/values.yaml'
+      key: '$.image.repository'
+      value: 'ghcr-io/updatecli/updatecli'
+  my-registry.com_ghcr-io_updatecli_updatecli-mirror:
+    name: 'check container image "my-registry.com/ghcr-io/updatecli/updatecli:{{ source "image" }}" is available on the mirror'
+    kind: 'dockerimage'
+    sourceid: 'image'
+    spec:
+      image: 'my-registry.com/ghcr-io/updatecli/updatecli'
+targets:
+  my-registry.com_ghcr-io_updatecli_updatecli:
+    name: 'deps(helm): bump image "my-registry.com/ghcr-io/updatecli/updatecli" tag'
+    kind: 'helmchart'
+    spec:
+      file: 'values.yaml'
+      name: 'mirrored'
+      key: '$.image.tag'
+      skippackaging: false
+      versionincrement: ''
+    sourceid: 'image'
+`,
+				`name: 'deps(helm): bump image "my-registry.com/ghcr-io/updatecli/updatecli" tag for chart "mirrored"'
+sources:
+  image:
+    name: 'get latest image tag for "ghcr.io/updatecli/updatecli"'
+    kind: 'dockerimage'
+    spec:
+      image: 'ghcr.io/updatecli/updatecli'
+      tagfilter: '^v\d*(\.\d*){2}$'
+      versionfilter:
+        kind: 'semver'
+        pattern: '>=v0.67.0'
+conditions:
+  my-registry.com_ghcr-io_updatecli_updatecli-repository:
+    disablesourceinput: true
+    name: 'Ensure container repository "my-registry.com/ghcr-io/updatecli/updatecli" is specified'
+    kind: 'yaml'
+    spec:
+      file: 'mirrored/values.yaml'
+      key: '$.images.updatecli.repository'
+      value: 'my-registry.com/ghcr-io/updatecli/updatecli'
+  my-registry.com_ghcr-io_updatecli_updatecli-mirror:
+    name: 'check container image "my-registry.com/ghcr-io/updatecli/updatecli:{{ source "image" }}" is available on the mirror'
+    kind: 'dockerimage'
+    sourceid: 'image'
+    spec:
+      image: 'my-registry.com/ghcr-io/updatecli/updatecli'
+targets:
+  my-registry.com_ghcr-io_updatecli_updatecli:
+    name: 'deps(helm): bump image "my-registry.com/ghcr-io/updatecli/updatecli" tag'
+    kind: 'helmchart'
+    spec:
+      file: 'values.yaml'
+      name: 'mirrored'
+      key: '$.images.updatecli.tag'
+      skippackaging: false
+      versionincrement: ''
+    sourceid: 'image'
+`},
+		},
+		{
+			name:             "Registry mappings with digest",
+			rootDir:          "testdata-registryMappings/chart",
+			digest:           true,
+			registryMappings: map[string]string{"my-registry.com/ghcr-io/": "ghcr.io/"},
+			expectedPipelines: []string{`name: 'deps(helm): bump image "my-registry.com/ghcr-io/updatecli/updatecli" digest for chart "mirrored"'
+sources:
+  image:
+    name: 'get latest "ghcr.io/updatecli/updatecli" container tag'
+    kind: 'dockerimage'
+    spec:
+      image: 'ghcr.io/updatecli/updatecli'
+      tagfilter: '^v\d*(\.\d*){2}$'
+      versionfilter:
+        kind: 'semver'
+        pattern: '>=v0.67.0'
+  image-digest:
+    name: 'get latest image "ghcr.io/updatecli/updatecli" digest'
+    kind: 'dockerdigest'
+    spec:
+      image: 'ghcr.io/updatecli/updatecli'
+      tag: '{{ source "image" }}'
+    dependson:
+      - 'image'
+conditions:
+  my-registry.com_ghcr-io_updatecli_updatecli-registry:
+    disablesourceinput: true
+    name: 'Ensure container registry "my-registry.com" is specified'
+    kind: 'yaml'
+    spec:
+      file: 'mirrored/values.yaml'
+      key: '$.image.registry'
+      value: 'my-registry.com'
+  my-registry.com_ghcr-io_updatecli_updatecli-repository:
+    disablesourceinput: true
+    name: 'Ensure container repository "ghcr-io/updatecli/updatecli" is specified'
+    kind: 'yaml'
+    spec:
+      file: 'mirrored/values.yaml'
+      key: '$.image.repository'
+      value: 'ghcr-io/updatecli/updatecli'
+  my-registry.com_ghcr-io_updatecli_updatecli-mirror:
+    name: 'check container image "my-registry.com/ghcr-io/updatecli/updatecli:{{ source "image-digest" }}" is available on the mirror'
+    kind: 'dockerimage'
+    sourceid: 'image-digest'
+    spec:
+      image: 'my-registry.com/ghcr-io/updatecli/updatecli'
+targets:
+  my-registry.com_ghcr-io_updatecli_updatecli:
+    name: 'deps(helm): bump image "my-registry.com/ghcr-io/updatecli/updatecli" digest'
+    kind: 'helmchart'
+    spec:
+      file: 'values.yaml'
+      name: 'mirrored'
+      key: '$.image.tag'
+      skippackaging: false
+      versionincrement: ''
+    sourceid: 'image-digest'
+`,
+				`name: 'deps(helm): bump image "my-registry.com/ghcr-io/updatecli/updatecli" digest for chart "mirrored"'
+sources:
+  image:
+    name: 'get latest "ghcr.io/updatecli/updatecli" container tag'
+    kind: 'dockerimage'
+    spec:
+      image: 'ghcr.io/updatecli/updatecli'
+      tagfilter: '^v\d*(\.\d*){2}$'
+      versionfilter:
+        kind: 'semver'
+        pattern: '>=v0.67.0'
+  image-digest:
+    name: 'get latest image "ghcr.io/updatecli/updatecli" digest'
+    kind: 'dockerdigest'
+    spec:
+      image: 'ghcr.io/updatecli/updatecli'
+      tag: '{{ source "image" }}'
+    dependson:
+      - 'image'
+conditions:
+  my-registry.com_ghcr-io_updatecli_updatecli-repository:
+    disablesourceinput: true
+    name: 'Ensure container repository "my-registry.com/ghcr-io/updatecli/updatecli" is specified'
+    kind: 'yaml'
+    spec:
+      file: 'mirrored/values.yaml'
+      key: '$.images.updatecli.repository'
+      value: 'my-registry.com/ghcr-io/updatecli/updatecli'
+  my-registry.com_ghcr-io_updatecli_updatecli-mirror:
+    name: 'check container image "my-registry.com/ghcr-io/updatecli/updatecli:{{ source "image-digest" }}" is available on the mirror'
+    kind: 'dockerimage'
+    sourceid: 'image-digest'
+    spec:
+      image: 'my-registry.com/ghcr-io/updatecli/updatecli'
+targets:
+  my-registry.com_ghcr-io_updatecli_updatecli:
+    name: 'deps(helm): bump image "my-registry.com/ghcr-io/updatecli/updatecli" digest'
+    kind: 'helmchart'
+    spec:
+      file: 'values.yaml'
+      name: 'mirrored'
+      key: '$.images.updatecli.tag'
+      skippackaging: false
+      versionincrement: ''
+    sourceid: 'image-digest'
+`},
+		},
 	}
 
 	for _, tt := range testdata {
@@ -480,8 +676,9 @@ targets:
 		t.Run(tt.name, func(t *testing.T) {
 			helm, err := New(
 				Spec{
-					Digest: &digest,
-					Auths:  tt.auths,
+					Digest:           &digest,
+					Auths:            tt.auths,
+					RegistryMappings: tt.registryMappings,
 				}, tt.rootDir, "", "")
 
 			require.NoError(t, err)

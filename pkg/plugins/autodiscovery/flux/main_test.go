@@ -17,6 +17,7 @@ func TestDiscoverManifests(t *testing.T) {
 		auths             map[string]docker.InlineKeyChain
 		scmID             string
 		actionID          string
+		registryMappings  map[string]string
 		expectedPipelines []string
 	}{
 		{
@@ -426,6 +427,124 @@ targets:
     sourceid: 'oci-digest'
 `},
 		},
+		{
+			name:             "Scenario - ocirepository with registry mappings",
+			digest:           false,
+			rootDir:          "testdata/ociRepository-registryMappings",
+			registryMappings: map[string]string{"my-registry.com/ghcr-io/": "ghcr.io/"},
+			expectedPipelines: []string{`name: 'deps(flux): bump ociRepository "my-registry.com/ghcr-io/stefanprodan/manifests/podinfo"'
+sources:
+  oci:
+    name: 'Get latest "ghcr.io/stefanprodan/manifests/podinfo" OCI artifact tag'
+    kind: 'dockerimage'
+    spec:
+      image: 'ghcr.io/stefanprodan/manifests/podinfo'
+      tagfilter: '^\d*(\.\d*){2}$'
+      versionfilter:
+        kind: 'semver'
+        pattern: '>=6.5.0'
+conditions:
+  oci-mirror:
+    name: 'check OCI artifact "my-registry.com/ghcr-io/stefanprodan/manifests/podinfo:{{ source "oci" }}" is available on the mirror'
+    kind: 'dockerimage'
+    sourceid: 'oci'
+    spec:
+      image: 'my-registry.com/ghcr-io/stefanprodan/manifests/podinfo'
+targets:
+  oci:
+    name: 'deps(flux): bump OCI repository "my-registry.com/ghcr-io/stefanprodan/manifests/podinfo"'
+    kind: 'yaml'
+    spec:
+      file: 'example.yaml'
+      key: '$.spec.ref.tag'
+      documentindex: 0
+    sourceid: 'oci'
+`},
+		},
+		{
+			name:             "Scenario - ocirepository with registry mappings and digest",
+			digest:           true,
+			rootDir:          "testdata/ociRepository-registryMappings",
+			registryMappings: map[string]string{"my-registry.com/ghcr-io/": "ghcr.io/"},
+			expectedPipelines: []string{`name: 'deps(flux): bump ociRepository "my-registry.com/ghcr-io/stefanprodan/manifests/podinfo"'
+sources:
+  oci:
+    name: 'Get latest "ghcr.io/stefanprodan/manifests/podinfo" OCI artifact tag'
+    kind: 'dockerimage'
+    spec:
+      image: 'ghcr.io/stefanprodan/manifests/podinfo'
+      tagfilter: '^\d*(\.\d*){2}$'
+      versionfilter:
+        kind: 'semver'
+        pattern: '>=6.5.0'
+  oci-digest:
+    name: 'Get latest "ghcr.io/stefanprodan/manifests/podinfo" OCI artifact digest'
+    kind: 'dockerdigest'
+    spec:
+      image: 'ghcr.io/stefanprodan/manifests/podinfo'
+      tag: '{{ source "oci" }}'
+      hidetag: true
+    transformers:
+      - trimprefix: '@'
+    dependson:
+      - 'oci'
+conditions:
+  oci-mirror:
+    name: 'check OCI artifact "my-registry.com/ghcr-io/stefanprodan/manifests/podinfo:{{ source "oci" }}@{{ source "oci-digest" }}" is available on the mirror'
+    kind: 'dockerimage'
+    sourceid: 'oci-digest'
+    spec:
+      image: 'my-registry.com/ghcr-io/stefanprodan/manifests/podinfo'
+    transformers:
+      - addprefix: '{{ source "oci" }}@'
+targets:
+  oci-tag:
+    name: 'deps(flux): bump OCI repository "my-registry.com/ghcr-io/stefanprodan/manifests/podinfo" tag'
+    kind: 'yaml'
+    spec:
+      file: 'example.yaml'
+      key: '$.spec.ref.tag'
+      documentindex: 0
+    sourceid: 'oci'
+  oci-digest:
+    name: 'deps(flux): bump OCI repository "my-registry.com/ghcr-io/stefanprodan/manifests/podinfo" digest'
+    kind: 'yaml'
+    spec:
+      file: 'example.yaml'
+      key: '$.spec.ref.digest'
+      documentindex: 0
+    sourceid: 'oci-digest'
+`, `name: 'deps(flux): bump ociRepository "my-registry.com/ghcr-io/stefanprodan/manifests/podinfo"'
+sources:
+  oci-digest:
+    name: 'Get latest "ghcr.io/stefanprodan/manifests/podinfo" OCI artifact digest'
+    kind: 'dockerdigest'
+    spec:
+      image: 'ghcr.io/stefanprodan/manifests/podinfo'
+      tag: 'latest'
+      hidetag: true
+    transformers:
+      - trimprefix: '@'
+conditions:
+  oci-mirror:
+    name: 'check OCI artifact "my-registry.com/ghcr-io/stefanprodan/manifests/podinfo:latest@{{ source "oci-digest" }}" is available on the mirror'
+    kind: 'dockerimage'
+    sourceid: 'oci-digest'
+    spec:
+      image: 'my-registry.com/ghcr-io/stefanprodan/manifests/podinfo'
+    transformers:
+      - addprefix: 'latest@'
+targets:
+  oci-digest:
+    name: 'deps(flux): bump OCI repository "my-registry.com/ghcr-io/stefanprodan/manifests/podinfo" digest'
+    kind: 'yaml'
+    spec:
+      file: 'example.yaml'
+      key: '$.spec.ref.digest'
+      documentindex: 1
+    sourceid: 'oci-digest'
+`},
+		},
 	}
 
 	for _, tt := range testdata {
@@ -434,8 +553,9 @@ targets:
 			digest := tt.digest
 			flux, err := New(
 				Spec{
-					Digest: &digest,
-					Auths:  tt.auths,
+					Digest:           &digest,
+					Auths:            tt.auths,
+					RegistryMappings: tt.registryMappings,
 				}, tt.rootDir, tt.scmID, tt.actionID)
 
 			require.NoError(t, err)

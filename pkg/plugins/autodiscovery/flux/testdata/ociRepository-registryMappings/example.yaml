@@ -1,0 +1,22 @@
+---
+apiVersion: source.toolkit.fluxcd.io/v1beta2
+kind: OCIRepository
+metadata:
+  name: podinfo
+  namespace: default
+spec:
+  interval: 5m0s
+  url: oci://my-registry.com/ghcr-io/stefanprodan/manifests/podinfo
+  ref:
+    tag: 6.5.0
+---
+apiVersion: source.toolkit.fluxcd.io/v1beta2
+kind: OCIRepository
+metadata:
+  name: podinfo-latest
+  namespace: default
+spec:
+  interval: 5m0s
+  url: oci://my-registry.com/ghcr-io/stefanprodan/manifests/podinfo
+  ref:
+    tag: latest

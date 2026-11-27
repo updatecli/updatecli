@@ -26,9 +26,14 @@ type nomadDockerSpec struct {
 	TaskName  string
 	JobName   string
 	Path      string
+	// VariableValue holds the default value of the variable the image attribute
+	// interpolates, when Path points to that variable.
+	VariableValue string
 }
 
 // discoverDockerDriverManifests generates Updatecli manifests for Nomad job files
+//
+//nolint:funlen // Let's refactor this function later on
 func (n Nomad) discoverDockerDriverManifests() ([][]byte, error) {
 	var manifests [][]byte
 
@@ -124,7 +129,11 @@ func (n Nomad) discoverDockerDriverManifests() ([][]byte, error) {
 				}
 			}
 
-			sourceSpec := dockerimage.NewDockerImageSpecFromImage(imageName, imageTag, n.spec.Auths)
+			// New versions are looked up under the upstream name, while the target keeps
+			// the image name written in the file.
+			sourceImageName := n.spec.RegistryMappings.Resolve(imageName)
+
+			sourceSpec := dockerimage.NewDockerImageSpecFromImage(sourceImageName, imageTag, n.spec.Auths)
 
 			versionFilterKind := n.versionFilter.Kind
 			versionFilterPattern := n.versionFilter.Pattern
@@ -155,9 +164,21 @@ func (n Nomad) discoverDockerDriverManifests() ([][]byte, error) {
 				versionFilterRegex = n.versionFilter.Regex
 				if err != nil {
 					log.Debugf("building version filter pattern: %s", err)
-					sourceSpec.VersionFilter.Pattern = "*"
+					versionFilterPattern = "*"
 				}
 			}
+
+			// A mirror may not serve a version found upstream yet, or may serve it under
+			// another digest, so the target only runs once the mirror has what it writes.
+			// The target writes the tag, or tag@digest, after the image name, either in
+			// the image attribute or in the variable the image attribute interpolates.
+			mirrorCondition := sourceImageName != imageName
+			sourceID := "default"
+			mirrorConditionSourceID := sourceID
+			if n.digest {
+				mirrorConditionSourceID = sourceID + "-digest"
+			}
+			mirrorCredential, _ := dockerimage.RegistryCredentials(imageName, n.spec.Auths)
 
 			var tmpl *template.Template
 			if n.digest && sourceSpec != nil {
@@ -180,45 +201,62 @@ func (n Nomad) discoverDockerDriverManifests() ([][]byte, error) {
 				return nil, nil
 			}
 
-			targetPrefix := ""
-			if strings.HasPrefix(nomadDockerSpec.Path, "job.") {
-				targetPrefix = imageName + ":"
+			targetPrefix, ok := nomadTargetPrefix(nomadDockerSpec, imageName)
+			if !ok {
+				log.Debugf("Ignoring Nomad task %q from %q from %q, as its image tag isn't held by the variable %q\n",
+					nomadDockerSpec.TaskName,
+					basename,
+					dirname,
+					nomadDockerSpec.Path)
+				continue
 			}
 
 			params := struct {
-				ActionID             string
-				ImageName            string
-				ImageTag             string
-				SourceID             string
-				RegistryUsername     string
-				RegistryPassword     string
-				RegistryToken        string
-				TargetID             string
-				TargetFile           string
-				TargetPath           string
-				TargetPrefix         string
-				TagFilter            string
-				VersionFilterKind    string
-				VersionFilterPattern string
-				VersionFilterRegex   string
-				ScmID                string
+				ActionID                string
+				ImageName               string
+				SourceImageName         string
+				ImageTag                string
+				SourceID                string
+				RegistryUsername        string
+				RegistryPassword        string
+				RegistryToken           string
+				TargetID                string
+				TargetFile              string
+				TargetPath              string
+				TargetPrefix            string
+				TagFilter               string
+				VersionFilterKind       string
+				VersionFilterPattern    string
+				VersionFilterRegex      string
+				ScmID                   string
+				MirrorCondition         bool
+				MirrorConditionSourceID string
+				MirrorUsername          string
+				MirrorPassword          string
+				MirrorToken             string
 			}{
-				ActionID:             n.actionID,
-				ImageName:            imageName,
-				ImageTag:             imageTag,
-				SourceID:             "default",
-				RegistryUsername:     registryUsername,
-				RegistryPassword:     registryPassword,
-				RegistryToken:        registryToken,
-				TargetID:             "default",
-				TargetFile:           relativeNomadFile,
-				TargetPath:           nomadDockerSpec.Path,
-				TargetPrefix:         targetPrefix,
-				TagFilter:            tagFilter,
-				VersionFilterKind:    versionFilterKind,
-				VersionFilterPattern: versionFilterPattern,
-				VersionFilterRegex:   versionFilterRegex,
-				ScmID:                n.scmID,
+				ActionID:                n.actionID,
+				ImageName:               imageName,
+				SourceImageName:         sourceImageName,
+				ImageTag:                imageTag,
+				SourceID:                sourceID,
+				RegistryUsername:        registryUsername,
+				RegistryPassword:        registryPassword,
+				RegistryToken:           registryToken,
+				TargetID:                "default",
+				TargetFile:              relativeNomadFile,
+				TargetPath:              nomadDockerSpec.Path,
+				TargetPrefix:            targetPrefix,
+				TagFilter:               tagFilter,
+				VersionFilterKind:       versionFilterKind,
+				VersionFilterPattern:    versionFilterPattern,
+				VersionFilterRegex:      versionFilterRegex,
+				ScmID:                   n.scmID,
+				MirrorCondition:         mirrorCondition,
+				MirrorConditionSourceID: mirrorConditionSourceID,
+				MirrorUsername:          mirrorCredential.Username,
+				MirrorPassword:          mirrorCredential.Password,
+				MirrorToken:             mirrorCredential.Token,
 			}
 
 			manifest := bytes.Buffer{}
@@ -232,4 +270,25 @@ func (n Nomad) discoverDockerDriverManifests() ([][]byte, error) {
 	}
 
 	return manifests, nil
+}
+
+// nomadTargetPrefix returns the text the target writes before the new tag, or tag@digest,
+// and false when the target can't update the image without corrupting the file.
+//
+// An image attribute is rewritten whole, so the prefix is the image name.
+// A variable is rewritten whole too, so the prefix is whatever the variable holds
+// before the tag: empty for "image:${var.tag}", the image name for "${var.image}".
+// When the tag isn't at the end of the variable, as in "${var.image}:1.25",
+// the variable doesn't hold the tag and can't be updated.
+func nomadTargetPrefix(spec nomadDockerSpec, imageName string) (string, bool) {
+	if strings.HasPrefix(spec.Path, "job.") {
+		return imageName + ":", true
+	}
+
+	tagReference, found := strings.CutPrefix(spec.Value, imageName+":")
+	if !found || !strings.HasSuffix(spec.VariableValue, tagReference) {
+		return "", false
+	}
+
+	return strings.TrimSuffix(spec.VariableValue, tagReference), true
 }

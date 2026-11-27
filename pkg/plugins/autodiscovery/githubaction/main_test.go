@@ -37,6 +37,7 @@ func TestDiscoverManifests(t *testing.T) {
 		credentials       map[string]gitProviderToken
 		digest            bool
 		age               age.AutodiscoverySpec
+		registryMappings  map[string]string
 	}{
 		{
 			name:    "Scenario - GitHub Action using Docker image",
@@ -2571,6 +2572,87 @@ targets:
       key: '$.jobs.build.steps[0].uses'
 `},
 		},
+		{
+			name:             "Scenario - Docker image with registry mappings",
+			rootDir:          "testdata/registryMappings",
+			digest:           false,
+			registryMappings: map[string]string{"my-registry.com/ghcr-io/": "ghcr.io/"},
+			expectedPipelines: []string{`name: 'deps: bump Docker image "my-registry.com/ghcr-io/updatecli/updatecli"'
+
+sources:
+  image:
+    name: 'get latest image tag for "ghcr.io/updatecli/updatecli"'
+    kind: 'dockerimage'
+    spec:
+      image: 'ghcr.io/updatecli/updatecli'
+      tagfilter: '^v\d*(\.\d*){2}$'
+      versionfilter:
+        kind: 'semver'
+        pattern: '>=v0.67.0'
+conditions:
+  mirror:
+    name: 'check Docker image "my-registry.com/ghcr-io/updatecli/updatecli:{{ source "image" }}" is available on the mirror'
+    kind: 'dockerimage'
+    sourceid: 'image'
+    spec:
+      image: 'my-registry.com/ghcr-io/updatecli/updatecli'
+targets:
+  workflow:
+    name: 'deps: bump Docker image "my-registry.com/ghcr-io/updatecli/updatecli" to {{ source "image" }}'
+    kind: 'yaml'
+    spec:
+      file: '.github/workflows/updatecli.yaml'
+      key: '$.jobs.updatecli.steps[0].uses'
+    sourceid: 'image'
+    transformers:
+      - addprefix: 'docker://my-registry.com/ghcr-io/updatecli/updatecli:'
+`},
+		},
+		{
+			name:             "Scenario - Docker image with registry mappings and digest",
+			rootDir:          "testdata/registryMappings",
+			digest:           true,
+			registryMappings: map[string]string{"my-registry.com/ghcr-io/": "ghcr.io/"},
+			expectedPipelines: []string{`name: 'deps: bump Docker image digest for "my-registry.com/ghcr-io/updatecli/updatecli"'
+
+sources:
+  image:
+    name: 'get latest image tag for "ghcr.io/updatecli/updatecli"'
+    kind: 'dockerimage'
+    spec:
+      image: 'ghcr.io/updatecli/updatecli'
+      tagfilter: '^v\d*(\.\d*){2}$'
+      versionfilter:
+        kind: 'semver'
+        pattern: '>=v0.67.0'
+
+  digest:
+    name: 'get image "ghcr.io/updatecli/updatecli" digest for tag {{ source "image" }}'
+    kind: 'dockerdigest'
+    spec:
+      image: 'ghcr.io/updatecli/updatecli'
+      tag: '{{ source "image" }}'
+    dependson:
+      - 'image'
+conditions:
+  mirror:
+    name: 'check Docker image "my-registry.com/ghcr-io/updatecli/updatecli:{{ source "digest" }}" is available on the mirror'
+    kind: 'dockerimage'
+    sourceid: 'digest'
+    spec:
+      image: 'my-registry.com/ghcr-io/updatecli/updatecli'
+targets:
+  workflow:
+    name: 'deps: bump Docker image digest for "my-registry.com/ghcr-io/updatecli/updatecli" to {{ source "digest" }}'
+    kind: 'yaml'
+    spec:
+      file: '.github/workflows/updatecli.yaml'
+      key: '$.jobs.updatecli.steps[0].uses'
+    sourceid: 'digest'
+    transformers:
+      - addprefix: 'docker://my-registry.com/ghcr-io/updatecli/updatecli:'
+`},
+		},
 	}
 
 	for _, tt := range testdata {
@@ -2578,9 +2660,10 @@ targets:
 		t.Run(tt.name, func(t *testing.T) {
 			g, err := New(
 				Spec{
-					Credentials: tt.credentials,
-					Digest:      &tt.digest,
-					Age:         tt.age,
+					Credentials:      tt.credentials,
+					Digest:           &tt.digest,
+					Age:              tt.age,
+					RegistryMappings: tt.registryMappings,
 				}, tt.rootDir, "", "")
 
 			require.NoError(t, err)

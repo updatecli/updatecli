@@ -161,6 +161,13 @@ func sanitizeRegistryEndpoint(repository string) string {
 	return ref.Context().RegistryStr()
 }
 
+// RegistryCredentials returns the credentials from auths for the registry hosting image,
+// and whether some were found.
+func RegistryCredentials(image string, auths map[string]docker.InlineKeyChain) (docker.InlineKeyChain, bool) {
+	credential, found := auths[sanitizeRegistryEndpoint(image)]
+	return credential, found
+}
+
 // NewDockerImageSpecFromImage return a new docker image specification using an image provided as parameter
 func NewDockerImageSpecFromImage(image, tag string, auths map[string]docker.InlineKeyChain) *Spec {
 	tagFilter, err := getTagFilterFromValue(tag)
@@ -184,7 +191,7 @@ func NewDockerImageSpecFromImage(image, tag string, auths map[string]docker.Inli
 
 	registry := sanitizeRegistryEndpoint(image)
 
-	credential, found := auths[registry]
+	credential, found := RegistryCredentials(image, auths)
 	switch found {
 	case true:
 		if credential.Password != "" {

@@ -1,0 +1,5 @@
+apiVersion: v2
+name: mirrored
+description: Test images pulled through a registry mirror
+type: application
+version: 0.1.0

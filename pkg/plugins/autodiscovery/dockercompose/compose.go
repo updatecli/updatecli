@@ -32,6 +32,7 @@ type dockerComposeService struct {
 
 type dockercomposeServicesList []dockerComposeService
 
+//nolint:funlen // Let's refactor this function later on
 func (d DockerCompose) discoverDockerComposeImageManifests() ([][]byte, error) {
 	var manifests [][]byte
 
@@ -129,7 +130,11 @@ func (d DockerCompose) discoverDockerComposeImageManifests() ([][]byte, error) {
 				}
 			}
 
-			sourceSpec := dockerimage.NewDockerImageSpecFromImage(imageName, imageTag, d.spec.Auths)
+			// New versions are looked up under the upstream name, while the target keeps
+			// the image name written in the file.
+			sourceImageName := d.spec.RegistryMappings.Resolve(imageName)
+
+			sourceSpec := dockerimage.NewDockerImageSpecFromImage(sourceImageName, imageTag, d.spec.Auths)
 
 			versionFilterKind := d.versionFilter.Kind
 			versionFilterPattern := d.versionFilter.Pattern
@@ -170,6 +175,15 @@ func (d DockerCompose) discoverDockerComposeImageManifests() ([][]byte, error) {
 				architecture = arch
 			}
 
+			// A mirror may not serve a version found upstream yet, or may serve it under
+			// another digest, so the target only runs once the mirror has what it writes.
+			mirrorCondition := sourceImageName != imageName
+			mirrorConditionSourceID := svc.Name
+			if d.digest {
+				mirrorConditionSourceID = svc.Name + "-digest"
+			}
+			mirrorCredential, _ := dockerimage.RegistryCredentials(imageName, d.spec.Auths)
+
 			var tmpl *template.Template
 			if d.digest && sourceSpec != nil {
 				tmpl, err = template.New("manifest").Parse(manifestTemplateDigestAndLatest)
@@ -192,41 +206,53 @@ func (d DockerCompose) discoverDockerComposeImageManifests() ([][]byte, error) {
 			}
 
 			params := struct {
-				ActionID             string
-				ImageName            string
-				ImageTag             string
-				ImageArchitecture    string
-				SourceID             string
-				RegistryUsername     string
-				RegistryPassword     string
-				RegistryToken        string
-				TargetID             string
-				TargetFile           string
-				TargetKey            string
-				TargetPrefix         string
-				TagFilter            string
-				VersionFilterKind    string
-				VersionFilterPattern string
-				VersionFilterRegex   string
-				ScmID                string
+				ActionID                string
+				ImageName               string
+				SourceImageName         string
+				ImageTag                string
+				ImageArchitecture       string
+				SourceID                string
+				RegistryUsername        string
+				RegistryPassword        string
+				RegistryToken           string
+				TargetID                string
+				TargetFile              string
+				TargetKey               string
+				TargetPrefix            string
+				TagFilter               string
+				VersionFilterKind       string
+				VersionFilterPattern    string
+				VersionFilterRegex      string
+				ScmID                   string
+				MirrorCondition         bool
+				MirrorConditionSourceID string
+				MirrorUsername          string
+				MirrorPassword          string
+				MirrorToken             string
 			}{
-				ActionID:             d.actionID,
-				ImageName:            imageName,
-				ImageTag:             imageTag,
-				ImageArchitecture:    architecture,
-				RegistryUsername:     registryUsername,
-				RegistryPassword:     registryPassword,
-				RegistryToken:        registryToken,
-				SourceID:             svc.Name,
-				TargetID:             svc.Name,
-				TargetFile:           relativeFoundDockerComposeFile,
-				TargetKey:            fmt.Sprintf("$.services.%s.image", svc.Name),
-				TargetPrefix:         imageName + ":",
-				TagFilter:            tagFilter,
-				VersionFilterKind:    versionFilterKind,
-				VersionFilterPattern: versionFilterPattern,
-				VersionFilterRegex:   versionFilterRegex,
-				ScmID:                d.scmID,
+				ActionID:                d.actionID,
+				ImageName:               imageName,
+				SourceImageName:         sourceImageName,
+				ImageTag:                imageTag,
+				ImageArchitecture:       architecture,
+				RegistryUsername:        registryUsername,
+				RegistryPassword:        registryPassword,
+				RegistryToken:           registryToken,
+				SourceID:                svc.Name,
+				TargetID:                svc.Name,
+				TargetFile:              relativeFoundDockerComposeFile,
+				TargetKey:               fmt.Sprintf("$.services.%s.image", svc.Name),
+				TargetPrefix:            imageName + ":",
+				TagFilter:               tagFilter,
+				VersionFilterKind:       versionFilterKind,
+				VersionFilterPattern:    versionFilterPattern,
+				VersionFilterRegex:      versionFilterRegex,
+				ScmID:                   d.scmID,
+				MirrorCondition:         mirrorCondition,
+				MirrorConditionSourceID: mirrorConditionSourceID,
+				MirrorUsername:          mirrorCredential.Username,
+				MirrorPassword:          mirrorCredential.Password,
+				MirrorToken:             mirrorCredential.Token,
 			}
 
 			manifest := bytes.Buffer{}

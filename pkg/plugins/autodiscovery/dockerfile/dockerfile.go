@@ -130,7 +130,11 @@ func (d Dockerfile) generateManifest(
 		}
 	}
 
-	sourceSpec := dockerimage.NewDockerImageSpecFromImage(image, tag, d.spec.Auths)
+	// New versions are looked up under the upstream name, while the target keeps
+	// the image name written in the file.
+	sourceImage := d.spec.RegistryMappings.Resolve(image)
+
+	sourceSpec := dockerimage.NewDockerImageSpecFromImage(sourceImage, tag, d.spec.Auths)
 
 	if sourceSpec == nil && !d.digest {
 		log.Debugln("no source spec detected")
@@ -185,6 +189,14 @@ func (d Dockerfile) generateManifest(
 		targetMatcher = imageRef
 	}
 
+	// A mirror may not serve a version found upstream yet, or may serve it under
+	// another digest, so the target only runs once the mirror has what it writes.
+	mirrorConditionSourceID := image
+	if d.digest {
+		mirrorConditionSourceID = image + "-digest"
+	}
+	mirrorCredential, _ := dockerimage.RegistryCredentials(image, d.spec.Auths)
+
 	var tmpl *template.Template
 	if d.digest && sourceSpec != nil {
 		tmpl, err = template.New("manifest").Parse(manifestTemplateDigestAndLatest)
@@ -207,39 +219,51 @@ func (d Dockerfile) generateManifest(
 	}
 
 	params := struct {
-		ActionID             string
-		ImageName            string
-		ImageTag             string
-		ScmID                string
-		SourceID             string
-		RegistryUsername     string
-		RegistryPassword     string
-		RegistryToken        string
-		TargetID             string
-		TargetFile           string
-		TargetKeyword        string
-		TargetMatcher        string
-		TagFilter            string
-		VersionFilterKind    string
-		VersionFilterPattern string
-		VersionFilterRegex   string
+		ActionID                string
+		ImageName               string
+		SourceImageName         string
+		ImageTag                string
+		ScmID                   string
+		SourceID                string
+		RegistryUsername        string
+		RegistryPassword        string
+		RegistryToken           string
+		TargetID                string
+		TargetFile              string
+		TargetKeyword           string
+		TargetMatcher           string
+		TagFilter               string
+		VersionFilterKind       string
+		VersionFilterPattern    string
+		VersionFilterRegex      string
+		MirrorCondition         bool
+		MirrorConditionSourceID string
+		MirrorUsername          string
+		MirrorPassword          string
+		MirrorToken             string
 	}{
-		ActionID:             d.actionID,
-		ImageName:            image,
-		ImageTag:             tag,
-		ScmID:                d.scmID,
-		SourceID:             image,
-		RegistryUsername:     registryUsername,
-		RegistryPassword:     registryPassword,
-		RegistryToken:        registryToken,
-		TargetID:             image,
-		TargetFile:           relativeFoundDockerfile,
-		TargetKeyword:        targetInstruction,
-		TargetMatcher:        targetMatcher,
-		TagFilter:            tagFilter,
-		VersionFilterKind:    versionFilterKind,
-		VersionFilterPattern: versionFilterPattern,
-		VersionFilterRegex:   versionFilterRegex,
+		ActionID:                d.actionID,
+		ImageName:               image,
+		SourceImageName:         sourceImage,
+		ImageTag:                tag,
+		ScmID:                   d.scmID,
+		SourceID:                image,
+		RegistryUsername:        registryUsername,
+		RegistryPassword:        registryPassword,
+		RegistryToken:           registryToken,
+		TargetID:                image,
+		TargetFile:              relativeFoundDockerfile,
+		TargetKeyword:           targetInstruction,
+		TargetMatcher:           targetMatcher,
+		TagFilter:               tagFilter,
+		VersionFilterKind:       versionFilterKind,
+		VersionFilterPattern:    versionFilterPattern,
+		VersionFilterRegex:      versionFilterRegex,
+		MirrorCondition:         sourceImage != image,
+		MirrorConditionSourceID: mirrorConditionSourceID,
+		MirrorUsername:          mirrorCredential.Username,
+		MirrorPassword:          mirrorCredential.Password,
+		MirrorToken:             mirrorCredential.Token,
 	}
 
 	manifest := bytes.Buffer{}

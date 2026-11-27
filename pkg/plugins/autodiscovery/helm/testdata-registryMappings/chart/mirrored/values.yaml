@@ -1,0 +1,8 @@
+image:
+  registry: my-registry.com
+  repository: ghcr-io/updatecli/updatecli
+  tag: v0.67.0
+images:
+  updatecli:
+    repository: my-registry.com/ghcr-io/updatecli/updatecli
+    tag: v0.67.0
