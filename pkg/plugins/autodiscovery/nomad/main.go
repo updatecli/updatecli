@@ -59,6 +59,38 @@ type Spec struct {
 	//   ```
 	//
 	Auths map[string]docker.InlineKeyChain `yaml:",omitempty"`
+	// "registrymappings" maps an image name prefix, as written in the Nomad files,
+	// to the image name prefix where Updatecli looks up new tags and digests.
+	//
+	// default:
+	//   empty, new versions are looked up under the image name written in the files.
+	//
+	// remark:
+	//   * use it for images pulled through a mirror, so new versions are looked up upstream
+	//     while the files keep the mirror name.
+	//   * a prefix matches whole path segments only: "my-registry.com/docker-io" matches
+	//     "my-registry.com/docker-io/nginx" but not "my-registry.com/docker-iox/nginx".
+	//   * when several prefixes match, the longest one wins.
+	//   * a prefix can be a full image name, to map a single image, for instance
+	//     when one mirror holds images from several upstream registries.
+	//   * "auths" credentials are picked for the upstream registry for the sources,
+	//     and for the mirror registry for the condition.
+	//   * "ignore" and "only" rules match the image name written in the files.
+	//   * a condition checks the mirror already serves the new tag, or the new tag
+	//     and digest with "digest" enabled, so the files are only updated once the
+	//     mirror has caught up. With "digest" enabled, the mirror must serve the
+	//     image unchanged for its digest to match the upstream one.
+	//
+	// example:
+	//   ```
+	//   registrymappings:
+	//     "my-registry.com/docker-io/": "docker.io/"
+	//     "my-registry.com/ghcr-io/": "ghcr.io/"
+	//     # a single image mirrored under another name
+	//     "my-registry.com/tools/updatecli": "ghcr.io/updatecli/updatecli"
+	//   ```
+	//
+	RegistryMappings docker.RegistryMappings `yaml:",omitempty"`
 	// "filematch" defines the file name patterns the crawler searches for.
 	//
 	// The pattern syntax is:
@@ -157,6 +189,10 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Nomad, error) {
 	// Validate only rules
 	if err := s.Only.Validate(); err != nil {
 		return Nomad{}, fmt.Errorf("invalid only spec: %w", err)
+	}
+
+	if err := s.RegistryMappings.Validate(); err != nil {
+		return Nomad{}, err
 	}
 
 	dir := rootDir

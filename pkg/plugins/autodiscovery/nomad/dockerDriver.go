@@ -29,6 +29,8 @@ type nomadDockerSpec struct {
 }
 
 // discoverDockerDriverManifests generates Updatecli manifests for Nomad job files
+//
+//nolint:funlen // Let's refactor this function later on
 func (n Nomad) discoverDockerDriverManifests() ([][]byte, error) {
 	var manifests [][]byte
 
@@ -124,7 +126,11 @@ func (n Nomad) discoverDockerDriverManifests() ([][]byte, error) {
 				}
 			}
 
-			sourceSpec := dockerimage.NewDockerImageSpecFromImage(imageName, imageTag, n.spec.Auths)
+			// New versions are looked up under the upstream name, while the target keeps
+			// the image name written in the file.
+			sourceImageName := n.spec.RegistryMappings.Resolve(imageName)
+
+			sourceSpec := dockerimage.NewDockerImageSpecFromImage(sourceImageName, imageTag, n.spec.Auths)
 
 			versionFilterKind := n.versionFilter.Kind
 			versionFilterPattern := n.versionFilter.Pattern
@@ -159,6 +165,18 @@ func (n Nomad) discoverDockerDriverManifests() ([][]byte, error) {
 				}
 			}
 
+			// A mirror may not serve a version found upstream yet, or may serve it under
+			// another digest, so the target only runs once the mirror has what it writes.
+			// The target writes the tag, or tag@digest, after the image name, either in
+			// the image attribute or in the variable the image attribute interpolates.
+			mirrorCondition := sourceImageName != imageName
+			sourceID := "default"
+			mirrorConditionSourceID := sourceID
+			if n.digest {
+				mirrorConditionSourceID = sourceID + "-digest"
+			}
+			mirrorCredential, _ := dockerimage.RegistryCredentials(imageName, n.spec.Auths)
+
 			var tmpl *template.Template
 			if n.digest && sourceSpec != nil {
 				tmpl, err = template.New("manifest").Parse(manifestTemplateDigestAndLatest)
@@ -186,39 +204,51 @@ func (n Nomad) discoverDockerDriverManifests() ([][]byte, error) {
 			}
 
 			params := struct {
-				ActionID             string
-				ImageName            string
-				ImageTag             string
-				SourceID             string
-				RegistryUsername     string
-				RegistryPassword     string
-				RegistryToken        string
-				TargetID             string
-				TargetFile           string
-				TargetPath           string
-				TargetPrefix         string
-				TagFilter            string
-				VersionFilterKind    string
-				VersionFilterPattern string
-				VersionFilterRegex   string
-				ScmID                string
+				ActionID                string
+				ImageName               string
+				SourceImageName         string
+				ImageTag                string
+				SourceID                string
+				RegistryUsername        string
+				RegistryPassword        string
+				RegistryToken           string
+				TargetID                string
+				TargetFile              string
+				TargetPath              string
+				TargetPrefix            string
+				TagFilter               string
+				VersionFilterKind       string
+				VersionFilterPattern    string
+				VersionFilterRegex      string
+				ScmID                   string
+				MirrorCondition         bool
+				MirrorConditionSourceID string
+				MirrorUsername          string
+				MirrorPassword          string
+				MirrorToken             string
 			}{
-				ActionID:             n.actionID,
-				ImageName:            imageName,
-				ImageTag:             imageTag,
-				SourceID:             "default",
-				RegistryUsername:     registryUsername,
-				RegistryPassword:     registryPassword,
-				RegistryToken:        registryToken,
-				TargetID:             "default",
-				TargetFile:           relativeNomadFile,
-				TargetPath:           nomadDockerSpec.Path,
-				TargetPrefix:         targetPrefix,
-				TagFilter:            tagFilter,
-				VersionFilterKind:    versionFilterKind,
-				VersionFilterPattern: versionFilterPattern,
-				VersionFilterRegex:   versionFilterRegex,
-				ScmID:                n.scmID,
+				ActionID:                n.actionID,
+				ImageName:               imageName,
+				SourceImageName:         sourceImageName,
+				ImageTag:                imageTag,
+				SourceID:                sourceID,
+				RegistryUsername:        registryUsername,
+				RegistryPassword:        registryPassword,
+				RegistryToken:           registryToken,
+				TargetID:                "default",
+				TargetFile:              relativeNomadFile,
+				TargetPath:              nomadDockerSpec.Path,
+				TargetPrefix:            targetPrefix,
+				TagFilter:               tagFilter,
+				VersionFilterKind:       versionFilterKind,
+				VersionFilterPattern:    versionFilterPattern,
+				VersionFilterRegex:      versionFilterRegex,
+				ScmID:                   n.scmID,
+				MirrorCondition:         mirrorCondition,
+				MirrorConditionSourceID: mirrorConditionSourceID,
+				MirrorUsername:          mirrorCredential.Username,
+				MirrorPassword:          mirrorCredential.Password,
+				MirrorToken:             mirrorCredential.Token,
 			}
 
 			manifest := bytes.Buffer{}

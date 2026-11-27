@@ -23,6 +23,7 @@ func TestSearchFiles(t *testing.T) {
 			expectedFiles: []string{
 				"testdata/containerd/redis.nomad",
 				"testdata/podman/cache.nomad",
+				"testdata/registryMappings/nomad.hcl",
 				"testdata/simple/nomad.hcl",
 				"testdata/variable/grafana.nomad",
 			},
