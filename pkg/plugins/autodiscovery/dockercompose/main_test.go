@@ -16,6 +16,7 @@ func TestDiscoverManifests(t *testing.T) {
 		digest            bool
 		Auths             map[string]docker.InlineKeyChain
 		versionFilter     version.Filter
+		registryMappings  map[string]string
 		expectedPipelines []string
 	}{
 		{
@@ -177,6 +178,41 @@ targets:
 `,
 			},
 		},
+		{
+			name:             "Scenario 4 - registry mappings",
+			rootDir:          "testdata-registry-mappings",
+			digest:           false,
+			registryMappings: map[string]string{"my-registry.com/ghcr-io/": "ghcr.io/"},
+			expectedPipelines: []string{`name: 'deps(dockercompose): bump "my-registry.com/ghcr-io/updatecli/updatecli" tag'
+sources:
+  updatecli:
+    name: 'get latest image tag for "ghcr.io/updatecli/updatecli"'
+    kind: 'dockerimage'
+    spec:
+      image: 'ghcr.io/updatecli/updatecli'
+      tagfilter: '^v\d*(\.\d*){2}$'
+      versionfilter:
+        kind: 'semver'
+        pattern: '>=v0.67.0'
+conditions:
+  updatecli-mirror:
+    name: 'check container image "my-registry.com/ghcr-io/updatecli/updatecli:{{ source "updatecli" }}" is available on the mirror'
+    kind: 'dockerimage'
+    sourceid: 'updatecli'
+    spec:
+      image: 'my-registry.com/ghcr-io/updatecli/updatecli'
+targets:
+  updatecli:
+    name: 'deps: update Docker image "my-registry.com/ghcr-io/updatecli/updatecli" to "{{ source "updatecli" }}"'
+    kind: 'yaml'
+    spec:
+      file: 'compose.yaml'
+      key: '$.services.updatecli.image'
+    sourceid: 'updatecli'
+    transformers:
+      - addprefix: 'my-registry.com/ghcr-io/updatecli/updatecli:'
+`},
+		},
 	}
 
 	for _, tt := range testdata {
@@ -184,9 +220,10 @@ targets:
 			digest := tt.digest
 			composefile, err := New(
 				Spec{
-					Digest:        &digest,
-					Auths:         tt.Auths,
-					VersionFilter: tt.versionFilter,
+					Digest:           &digest,
+					Auths:            tt.Auths,
+					VersionFilter:    tt.versionFilter,
+					RegistryMappings: tt.registryMappings,
 				}, tt.rootDir, "", "")
 
 			require.NoError(t, err)
