@@ -128,6 +128,13 @@ func getNomadDockerSpecFromFile(filename string) ([]nomadDockerSpec, error) {
 
 											path := fmt.Sprintf("job.%s.group.%s.task.%s.config.image", jobName, groupName, taskName)
 											value := imageValue
+											// The target can only update the tag through the variable when the
+											// variable ends the image attribute, as in "nginx:${var.tag}" or "${var.image}".
+											// Otherwise it stays empty, and the image is skipped.
+											variableValue := ""
+											if strings.HasSuffix(imageValue, "}") {
+												variableValue = variables[variableName]
+											}
 											if variableName != "" {
 												value, err = interpolateVariableName(imageValue, variables[variableName])
 												if err != nil {
@@ -138,12 +145,13 @@ func getNomadDockerSpecFromFile(filename string) ([]nomadDockerSpec, error) {
 											}
 
 											results = append(results, nomadDockerSpec{
-												File:      filename,
-												Value:     value,
-												JobName:   jobName,
-												GroupName: groupName,
-												TaskName:  taskName,
-												Path:      path,
+												File:          filename,
+												Value:         value,
+												JobName:       jobName,
+												GroupName:     groupName,
+												TaskName:      taskName,
+												Path:          path,
+												VariableValue: variableValue,
 											})
 										}
 									}

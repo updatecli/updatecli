@@ -26,6 +26,9 @@ type nomadDockerSpec struct {
 	TaskName  string
 	JobName   string
 	Path      string
+	// VariableValue holds the default value of the variable the image attribute
+	// interpolates, when Path points to that variable.
+	VariableValue string
 }
 
 // discoverDockerDriverManifests generates Updatecli manifests for Nomad job files
@@ -198,9 +201,14 @@ func (n Nomad) discoverDockerDriverManifests() ([][]byte, error) {
 				return nil, nil
 			}
 
-			targetPrefix := ""
-			if strings.HasPrefix(nomadDockerSpec.Path, "job.") {
-				targetPrefix = imageName + ":"
+			targetPrefix, ok := nomadTargetPrefix(nomadDockerSpec, imageName)
+			if !ok {
+				log.Debugf("Ignoring Nomad task %q from %q from %q, as its image tag isn't held by the variable %q\n",
+					nomadDockerSpec.TaskName,
+					basename,
+					dirname,
+					nomadDockerSpec.Path)
+				continue
 			}
 
 			params := struct {
@@ -262,4 +270,25 @@ func (n Nomad) discoverDockerDriverManifests() ([][]byte, error) {
 	}
 
 	return manifests, nil
+}
+
+// nomadTargetPrefix returns the text the target writes before the new tag, or tag@digest,
+// and false when the target can't update the image without corrupting the file.
+//
+// An image attribute is rewritten whole, so the prefix is the image name.
+// A variable is rewritten whole too, so the prefix is whatever the variable holds
+// before the tag: empty for "image:${var.tag}", the image name for "${var.image}".
+// When the tag isn't at the end of the variable, as in "${var.image}:1.25",
+// the variable doesn't hold the tag and can't be updated.
+func nomadTargetPrefix(spec nomadDockerSpec, imageName string) (string, bool) {
+	if strings.HasPrefix(spec.Path, "job.") {
+		return imageName + ":", true
+	}
+
+	tagReference, found := strings.CutPrefix(spec.Value, imageName+":")
+	if !found || !strings.HasSuffix(spec.VariableValue, tagReference) {
+		return "", false
+	}
+
+	return strings.TrimSuffix(spec.VariableValue, tagReference), true
 }
