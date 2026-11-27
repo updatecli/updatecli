@@ -58,7 +58,30 @@ func IsTemplatedString(s string) bool {
 	return false
 }
 
-func getFieldValueByQuery(conf interface{}, query []string) (value string, err error) {
+// getFieldValueByQuery returns the string value located at the given query path.
+func getFieldValueByQuery(conf interface{}, query []string) (string, error) {
+	field, err := lookupFieldByQuery(conf, query)
+	if err != nil {
+		return "", err
+	}
+	return field.String(), nil
+}
+
+// getFieldBoolByQuery returns the boolean value located at the given query path.
+func getFieldBoolByQuery(conf interface{}, query []string) (bool, error) {
+	field, err := lookupFieldByQuery(conf, query)
+	if err != nil {
+		return false, err
+	}
+	if field.Kind() != reflect.Bool {
+		return false, fmt.Errorf("field %q is not a boolean", strings.Join(query, "."))
+	}
+	return field.Bool(), nil
+}
+
+// lookupFieldByQuery traverses conf following the case-insensitive query path
+// and returns the resolved reflect.Value.
+func lookupFieldByQuery(conf interface{}, query []string) (reflect.Value, error) {
 	if query == nil {
 		query = make([]string, 0)
 	}
@@ -116,20 +139,14 @@ func getFieldValueByQuery(conf interface{}, query []string) (value string, err e
 			"Configuration `%s` does not have the field `%s`",
 			ValueIface.Type(),
 			query[0])
-		return "", ErrNoKeyDefined
+		return reflect.Value{}, ErrNoKeyDefined
 	}
 
 	if len(query) > 1 {
-		value, err = getFieldValueByQuery(Field.Interface(), query[1:])
-		if err != nil {
-			return "", err
-		}
-
-	} else if len(query) == 1 {
-		return Field.String(), nil
+		return lookupFieldByQuery(Field.Interface(), query[1:])
 	}
 
-	return value, nil
+	return Field, nil
 }
 
 // unmarshalConfigSpec unmarshal an Updatecli config spec

@@ -53,6 +53,10 @@ func (s *Source) Run(ctx context.Context, sourceCache *cache.SourceCache) (err e
 	defer s.Result.SetConsoleOutput(&consoleOutput)
 	defer stopCapture()
 
+	// The source is being executed: mark it as finalized so a reference to it
+	// can be distinguished from a source still pending execution.
+	s.Result.IsRun = true
+
 	var scmIdentity *cache.SCMIdentity
 	if s.Scm != nil {
 		sourceBranch, _, _ := (*s.Scm).GetBranches()
