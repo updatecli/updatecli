@@ -18,6 +18,7 @@ func TestDiscoverManifests(t *testing.T) {
 		rootDir           string
 		digest            bool
 		flavor            string
+		registryMappings  map[string]string
 		expectedPipelines []string
 	}{
 		{
@@ -302,6 +303,88 @@ targets:
       - addprefix: 'ghcr.io/updatecli/updatecli:'
 `},
 		},
+		{
+			name:             "Scenario - registry mappings",
+			rootDir:          "testdata/registryMappings",
+			digest:           false,
+			flavor:           FlavorKubernetes,
+			registryMappings: map[string]string{"my-registry.com/ghcr-io/": "ghcr.io/"},
+			expectedPipelines: []string{`name: 'deps: bump container image "updatecli"'
+sources:
+  updatecli:
+    name: 'get latest container image tag for "ghcr.io/updatecli/updatecli"'
+    kind: 'dockerimage'
+    spec:
+      image: 'ghcr.io/updatecli/updatecli'
+      tagfilter: '^v\d*(\.\d*){2}$'
+      versionfilter:
+        kind: 'semver'
+        pattern: '>=v0.67.0'
+conditions:
+  updatecli-mirror:
+    name: 'check container image "my-registry.com/ghcr-io/updatecli/updatecli:{{ source "updatecli" }}" is available on the mirror'
+    kind: 'dockerimage'
+    sourceid: 'updatecli'
+    spec:
+      image: 'my-registry.com/ghcr-io/updatecli/updatecli'
+targets:
+  updatecli:
+    name: 'deps: bump container image "my-registry.com/ghcr-io/updatecli/updatecli" to {{ source "updatecli" }}'
+    kind: 'yaml'
+    spec:
+      file: 'pod.yaml'
+      key: "$.spec.containers[0].image"
+      documentindex: 0
+    sourceid: 'updatecli'
+    transformers:
+      - addprefix: 'my-registry.com/ghcr-io/updatecli/updatecli:'
+`},
+		},
+		{
+			name:             "Scenario - registry mappings with digest",
+			rootDir:          "testdata/registryMappings",
+			digest:           true,
+			flavor:           FlavorKubernetes,
+			registryMappings: map[string]string{"my-registry.com/ghcr-io/": "ghcr.io/"},
+			expectedPipelines: []string{`name: 'deps: bump container image "updatecli"'
+sources:
+  updatecli:
+    name: 'get latest container image tag for "ghcr.io/updatecli/updatecli"'
+    kind: 'dockerimage'
+    spec:
+      image: 'ghcr.io/updatecli/updatecli'
+      tagfilter: '^v\d*(\.\d*){2}$'
+      versionfilter:
+        kind: 'semver'
+        pattern: '>=v0.67.0'
+  updatecli-digest:
+    name: 'get latest container image digest for "ghcr.io/updatecli/updatecli:v0.67.0"'
+    kind: 'dockerdigest'
+    spec:
+      image: 'ghcr.io/updatecli/updatecli'
+      tag: '{{ source "updatecli" }}'
+    dependson:
+      - 'updatecli'
+conditions:
+  updatecli-mirror:
+    name: 'check container image "my-registry.com/ghcr-io/updatecli/updatecli:{{ source "updatecli-digest" }}" is available on the mirror'
+    kind: 'dockerimage'
+    sourceid: 'updatecli-digest'
+    spec:
+      image: 'my-registry.com/ghcr-io/updatecli/updatecli'
+targets:
+  updatecli:
+    name: 'deps: bump container image digest for "my-registry.com/ghcr-io/updatecli/updatecli:{{ source "updatecli" }}"'
+    kind: 'yaml'
+    spec:
+      file: 'pod.yaml'
+      key: "$.spec.containers[0].image"
+      documentindex: 0
+    sourceid: 'updatecli-digest'
+    transformers:
+      - addprefix: 'my-registry.com/ghcr-io/updatecli/updatecli:'
+`},
+		},
 	}
 
 	for _, tt := range testdata {
@@ -309,7 +392,8 @@ targets:
 			digest := tt.digest
 			pod, err := New(
 				Spec{
-					Digest: &digest,
+					Digest:           &digest,
+					RegistryMappings: tt.registryMappings,
 				}, tt.rootDir, "", "", tt.flavor)
 
 			require.NoError(t, err)

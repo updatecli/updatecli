@@ -32,6 +32,7 @@ func TestSearchFiles(t *testing.T) {
 				"testdata/latest/pod.yaml",
 				"testdata/multipleDocuments/manifest.yaml",
 				"testdata/prow/prow.yaml",
+				"testdata/registryMappings/pod.yaml",
 				"testdata/success/pod.yaml",
 				"testdata/template/deployment.yaml",
 			},

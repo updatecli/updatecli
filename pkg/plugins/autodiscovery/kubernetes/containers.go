@@ -85,7 +85,11 @@ func (k Kubernetes) generateContainerManifest(targetKey, containerName, containe
 		}
 	}
 
-	sourceSpec := dockerimage.NewDockerImageSpecFromImage(imageName, imageTag, k.spec.Auths)
+	// New versions are looked up under the upstream name, while the target keeps
+	// the image name written in the file.
+	sourceImageName := k.spec.RegistryMappings.Resolve(imageName)
+
+	sourceSpec := dockerimage.NewDockerImageSpecFromImage(sourceImageName, imageTag, k.spec.Auths)
 	if sourceSpec == nil && !k.digest {
 		log.Infoln("No source spec detected")
 		return nil, nil
@@ -122,6 +126,15 @@ func (k Kubernetes) generateContainerManifest(targetKey, containerName, containe
 		}
 	}
 
+	// A mirror may not serve a version found upstream yet, or may serve it under
+	// another digest, so the target only runs once the mirror has what it writes.
+	mirrorCondition := sourceImageName != imageName
+	mirrorConditionSourceID := containerName
+	if k.digest {
+		mirrorConditionSourceID = containerName + "-digest"
+	}
+	mirrorCredential, _ := dockerimage.RegistryCredentials(imageName, k.spec.Auths)
+
 	var tmpl *template.Template
 	if k.digest && sourceSpec != nil {
 		tmpl, err = template.New("manifest").Parse(manifestTemplateDigestAndLatest)
@@ -146,43 +159,55 @@ func (k Kubernetes) generateContainerManifest(targetKey, containerName, containe
 	sourceId := containerName
 
 	params := struct {
-		ActionID             string
-		ManifestName         string
-		ImageName            string
-		ImageTag             string
-		SourceID             string
-		SourceTagFilter      string
-		VersionFilterKind    string
-		VersionFilterPattern string
-		VersionFilterRegex   string
-		RegistryUsername     string
-		RegistryPassword     string
-		RegistryToken        string
-		TargetID             string
-		TargetKey            string
-		TargetPrefix         string
-		TargetFile           string
-		TargetYamlDocument   int
-		ScmID                string
+		ActionID                string
+		ManifestName            string
+		ImageName               string
+		SourceImageName         string
+		ImageTag                string
+		SourceID                string
+		SourceTagFilter         string
+		VersionFilterKind       string
+		VersionFilterPattern    string
+		VersionFilterRegex      string
+		RegistryUsername        string
+		RegistryPassword        string
+		RegistryToken           string
+		TargetID                string
+		TargetKey               string
+		TargetPrefix            string
+		TargetFile              string
+		TargetYamlDocument      int
+		ScmID                   string
+		MirrorCondition         bool
+		MirrorConditionSourceID string
+		MirrorUsername          string
+		MirrorPassword          string
+		MirrorToken             string
 	}{
-		ActionID:             k.actionID,
-		ManifestName:         fmt.Sprintf("deps: bump container image %q%s", containerName, manifestNameSuffix),
-		ImageName:            imageName,
-		ImageTag:             imageTag,
-		SourceID:             sourceId,
-		SourceTagFilter:      tagFilter,
-		RegistryUsername:     registryUsername,
-		RegistryPassword:     registryPassword,
-		RegistryToken:        registryToken,
-		TargetID:             containerName,
-		TargetPrefix:         imageName + ":",
-		TargetKey:            targetKey,
-		TargetFile:           relativeFoundKubernetesFile,
-		TargetYamlDocument:   yamlDocument,
-		VersionFilterKind:    versionFilterKind,
-		VersionFilterPattern: versionFilterPattern,
-		VersionFilterRegex:   versionFilterRegex,
-		ScmID:                k.scmID,
+		ActionID:                k.actionID,
+		ManifestName:            fmt.Sprintf("deps: bump container image %q%s", containerName, manifestNameSuffix),
+		ImageName:               imageName,
+		SourceImageName:         sourceImageName,
+		ImageTag:                imageTag,
+		SourceID:                sourceId,
+		SourceTagFilter:         tagFilter,
+		RegistryUsername:        registryUsername,
+		RegistryPassword:        registryPassword,
+		RegistryToken:           registryToken,
+		TargetID:                containerName,
+		TargetPrefix:            imageName + ":",
+		TargetKey:               targetKey,
+		TargetFile:              relativeFoundKubernetesFile,
+		TargetYamlDocument:      yamlDocument,
+		VersionFilterKind:       versionFilterKind,
+		VersionFilterPattern:    versionFilterPattern,
+		VersionFilterRegex:      versionFilterRegex,
+		ScmID:                   k.scmID,
+		MirrorCondition:         mirrorCondition,
+		MirrorConditionSourceID: mirrorConditionSourceID,
+		MirrorUsername:          mirrorCredential.Username,
+		MirrorPassword:          mirrorCredential.Password,
+		MirrorToken:             mirrorCredential.Token,
 	}
 
 	manifest := bytes.Buffer{}
