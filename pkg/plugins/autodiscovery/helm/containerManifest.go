@@ -1,6 +1,26 @@
 package helm
 
 const (
+	// manifestTemplateMirrorCondition checks that the mirror serves the version
+	// the target is about to write, when the image is looked up upstream.
+	// It is inserted at the end of the "conditions" section.
+	manifestTemplateMirrorCondition string = `{{- if .MirrorCondition }}
+  {{ .TargetID }}-mirror:
+    name: 'check container image "{{ .ImageName }}:{{ "{{" }} source "{{ .MirrorConditionSourceID }}" {{ "}}" }}" is available on the mirror'
+    kind: 'dockerimage'
+    sourceid: '{{ .MirrorConditionSourceID }}'
+    spec:
+      image: '{{ .ImageName }}'
+      {{- if .MirrorUsername }}
+      username: '{{ .MirrorUsername }}'
+      {{- end }}
+      {{- if .MirrorPassword }}
+      password: '{{ .MirrorPassword }}'
+      {{- end }}
+      {{- if .MirrorToken }}
+      token: '{{ .MirrorToken }}'
+      {{- end }}
+{{- end }}`
 	manifestTemplateLatest string = `name: 'deps(helm): bump image "{{ .ImageName }}" tag for chart "{{ .ChartName }}"'
 {{- if .ActionID }}
 actions:
@@ -9,7 +29,7 @@ actions:
 {{ end }}
 sources:
   image:
-    name: 'get latest image tag for "{{ .ImageName }}"'
+    name: 'get latest image tag for "{{ .SourceImageName }}"'
     kind: 'dockerimage'
     spec:
       image: '{{ .SourceImageName }}'
@@ -54,6 +74,7 @@ conditions:
       file: '{{ .File }}'
       key: '{{ .ConditionRepositoryKey }}'
       value: '{{ .ConditionRepositoryValue }}'
+` + manifestTemplateMirrorCondition + `
 targets:
   {{ .TargetID }}:
     name: 'deps(helm): bump image "{{ .ImageName }}" tag'
@@ -77,7 +98,7 @@ actions:
 {{ end }}
 sources:
   image:
-    name: 'get latest "{{ .ImageName }}" container tag'
+    name: 'get latest "{{ .SourceImageName }}" container tag'
     kind: 'dockerimage'
     spec:
       image: '{{ .SourceImageName }}'
@@ -98,10 +119,10 @@ sources:
       password: '{{ .RegistryPassword }}'
       {{- end }}
   image-digest:
-    name: 'get latest image "{{ .ImageName }}" digest'
+    name: 'get latest image "{{ .SourceImageName }}" digest'
     kind: 'dockerdigest'
     spec:
-      image: '{{ .ImageName }}'
+      image: '{{ .SourceImageName }}'
       tag: '{{ "{{" }} source "image" {{ "}}" }}'
       {{- if .RegistryUsername }}
       username: '{{ .RegistryUsername }}'
@@ -139,6 +160,7 @@ conditions:
       file: '{{ .File }}'
       key: '{{ .ConditionRepositoryKey }}'
       value: '{{ .ConditionRepositoryValue }}'
+` + manifestTemplateMirrorCondition + `
 targets:
   {{ .TargetID }}:
     name: 'deps(helm): bump image "{{ .ImageName }}" digest'
@@ -162,10 +184,10 @@ actions:
 {{ end }}
 sources:
   image-digest:
-    name: 'get latest image "{{ .ImageName }}" digest'
+    name: 'get latest image "{{ .SourceImageName }}" digest'
     kind: 'dockerdigest'
     spec:
-      image: '{{ .ImageName }}'
+      image: '{{ .SourceImageName }}'
       tag: '{{ .ImageTag }}'
       {{- if .RegistryUsername }}
       username: '{{ .RegistryUsername }}'
@@ -201,6 +223,7 @@ conditions:
       file: '{{ .File }}'
       key: '{{ .ConditionRepositoryKey }}'
       value: '{{ .ConditionRepositoryValue }}'
+` + manifestTemplateMirrorCondition + `
 targets:
   {{ .TargetID }}:
     name: 'deps(helm): bump image "{{ .ImageName }}" digest'

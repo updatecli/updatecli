@@ -170,8 +170,13 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 				}
 			}
 
+			// New versions are looked up under the upstream name, while the target keeps
+			// the image name written in the values file. When registry and repository
+			// are separate keys, the mapping applies to the image name made of both.
+			sourceImageName := h.spec.RegistryMappings.Resolve(imageName)
+
 			// Try to be smart by detecting the best versionfilter
-			sourceSpec := dockerimage.NewDockerImageSpecFromImage(imageName, imageTag, h.spec.Auths)
+			sourceSpec := dockerimage.NewDockerImageSpecFromImage(sourceImageName, imageTag, h.spec.Auths)
 
 			versionFilterKind := h.versionFilter.Kind
 			versionFilterPattern := h.versionFilter.Pattern
@@ -187,8 +192,6 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 				versionFilterPattern = sourceSpec.VersionFilter.Pattern
 				versionFilterRegex = sourceSpec.VersionFilter.Regex
 				tagFilter = sourceSpec.TagFilter
-				imageName = sourceSpec.Image
-				imageTag = sourceSpec.Tag
 
 				registryPassword = sourceSpec.Password
 				registryUsername = sourceSpec.Username
@@ -209,6 +212,15 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 					}
 				}
 			}
+
+			// A mirror may not serve a version found upstream yet, or may serve it under
+			// another digest, so the target only runs once the mirror has what it writes.
+			mirrorCondition := sourceImageName != imageName
+			mirrorConditionSourceID := "image"
+			if h.digest {
+				mirrorConditionSourceID = "image-digest"
+			}
+			mirrorCredential, _ := dockerimage.RegistryCredentials(imageName, h.spec.Auths)
 
 			var tmpl *template.Template
 			if h.digest && sourceSpec != nil {
@@ -261,6 +273,11 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 				TargetChartVersionIncrement string
 				File                        string
 				ScmID                       string
+				MirrorCondition             bool
+				MirrorConditionSourceID     string
+				MirrorUsername              string
+				MirrorPassword              string
+				MirrorToken                 string
 			}{
 				ActionID:                    h.actionID,
 				ImageName:                   imageName,
@@ -278,7 +295,7 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 				SourceVersionFilterKind:     versionFilterKind,
 				SourceVersionFilterPattern:  versionFilterPattern,
 				SourceVersionFilterRegex:    versionFilterRegex,
-				SourceImageName:             imageName,
+				SourceImageName:             sourceImageName,
 				SourceTagFilter:             tagFilter,
 				RegistryUsername:            registryUsername,
 				RegistryPassword:            registryPassword,
@@ -291,6 +308,11 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 				TargetFile:                  filepath.Base(foundValueFile),
 				File:                        relativeFoundValueFile,
 				ScmID:                       h.scmID,
+				MirrorCondition:             mirrorCondition,
+				MirrorConditionSourceID:     mirrorConditionSourceID,
+				MirrorUsername:              mirrorCredential.Username,
+				MirrorPassword:              mirrorCredential.Password,
+				MirrorToken:                 mirrorCredential.Token,
 			}
 
 			manifest := bytes.Buffer{}
