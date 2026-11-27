@@ -23,11 +23,11 @@ func (m RegistryMappings) Validate() error {
 	var validationErrors []string
 
 	// Sorted, so that the error message is the same on every run.
-	froms := slices.Sorted(maps.Keys(m))
+	fromKeys := slices.Sorted(maps.Keys(m))
 	// seen maps a mirror prefix, as Resolve compares it, to the key it comes from.
 	seen := make(map[string]string, len(m))
 
-	for _, from := range froms {
+	for _, from := range fromKeys {
 		to := m[from]
 
 		if strings.Trim(from, "/") == "" {
