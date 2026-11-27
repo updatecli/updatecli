@@ -23,6 +23,7 @@ func TestSearchFiles(t *testing.T) {
 				"testdata/multi-variable/Dockerfile",
 				"testdata/multi-variant/Dockerfile",
 				"testdata/python-slim/Dockerfile",
+				"testdata/registryMappings/Dockerfile",
 				"testdata/scratch-and-base/Dockerfile",
 				"testdata/similar-stage-and-image/Dockerfile",
 				"testdata/updatecli-action/Dockerfile",

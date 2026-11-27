@@ -21,6 +21,7 @@ func TestDiscoverManifests(t *testing.T) {
 		rootDir           string
 		digest            bool
 		versionFilter     *version.Filter
+		registryMappings  map[string]string
 		expectedPipelines []string
 	}{
 		{
@@ -396,6 +397,41 @@ targets:
     sourceid: 'caddy'
 `},
 		},
+		{
+			name:             "Scenario 10: Registry mappings",
+			rootDir:          "testdata/registryMappings",
+			digest:           false,
+			registryMappings: map[string]string{"my-registry.com/ghcr-io/": "ghcr.io/"},
+			expectedPipelines: []string{`name: 'deps(dockerfile): bump "my-registry.com/ghcr-io/updatecli/updatecli" tag'
+sources:
+  my-registry.com/ghcr-io/updatecli/updatecli:
+    name: 'get latest image tag for "ghcr.io/updatecli/updatecli"'
+    kind: 'dockerimage'
+    spec:
+      image: 'ghcr.io/updatecli/updatecli'
+      tagfilter: '^v\d*(\.\d*){2}$'
+      versionfilter:
+        kind: 'semver'
+        pattern: '>=v0.67.0'
+conditions:
+  my-registry.com/ghcr-io/updatecli/updatecli-mirror:
+    name: 'check Docker image "my-registry.com/ghcr-io/updatecli/updatecli:{{ source "my-registry.com/ghcr-io/updatecli/updatecli" }}" is available on the mirror'
+    kind: 'dockerimage'
+    sourceid: 'my-registry.com/ghcr-io/updatecli/updatecli'
+    spec:
+      image: 'my-registry.com/ghcr-io/updatecli/updatecli'
+targets:
+  my-registry.com/ghcr-io/updatecli/updatecli:
+    name: 'deps: update Docker image "my-registry.com/ghcr-io/updatecli/updatecli" to "{{ source "my-registry.com/ghcr-io/updatecli/updatecli" }}"'
+    kind: 'dockerfile'
+    spec:
+      file: 'Dockerfile'
+      instruction:
+        keyword: 'FROM'
+        matcher: 'my-registry.com/ghcr-io/updatecli/updatecli:v0.67.0'
+    sourceid: 'my-registry.com/ghcr-io/updatecli/updatecli'
+`},
+		},
 	}
 
 	for _, tt := range testdata {
@@ -403,7 +439,8 @@ targets:
 		t.Run(tt.name, func(t *testing.T) {
 			digest := tt.digest
 			spec := Spec{
-				Digest: &digest,
+				Digest:           &digest,
+				RegistryMappings: tt.registryMappings,
 			}
 			if tt.versionFilter != nil {
 				spec.VersionFilter = *tt.versionFilter
