@@ -364,9 +364,7 @@ func (w Woodpecker) discoverWorkflowImageManifests() ([][]byte, error) {
 				versionFilterRegex = w.versionFilter.Regex
 				if err != nil {
 					log.Debugf("building version filter pattern: %s", err)
-					if sourceSpec != nil {
-						sourceSpec.VersionFilter.Pattern = "*"
-					}
+					versionFilterPattern = "*"
 				}
 			}
 

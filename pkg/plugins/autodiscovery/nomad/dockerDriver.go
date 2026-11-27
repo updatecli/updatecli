@@ -161,7 +161,7 @@ func (n Nomad) discoverDockerDriverManifests() ([][]byte, error) {
 				versionFilterRegex = n.versionFilter.Regex
 				if err != nil {
 					log.Debugf("building version filter pattern: %s", err)
-					sourceSpec.VersionFilter.Pattern = "*"
+					versionFilterPattern = "*"
 				}
 			}
 

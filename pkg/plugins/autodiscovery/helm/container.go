@@ -207,9 +207,7 @@ func (h Helm) discoverHelmContainerManifests() ([][]byte, error) {
 				versionFilterRegex = h.versionFilter.Regex
 				if err != nil {
 					log.Debugf("building version filter pattern: %s", err)
-					if sourceSpec != nil {
-						sourceSpec.VersionFilter.Pattern = "*"
-					}
+					versionFilterPattern = "*"
 				}
 			}
 

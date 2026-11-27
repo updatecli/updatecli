@@ -100,7 +100,7 @@ func (g GitHubAction) getDockerManifest(spec *dockerGHAManifestSpec) ([]byte, er
 		versionFilterRegex = g.versionFilter.Regex
 		if err != nil {
 			log.Debugf("building version filter pattern: %s", err)
-			sourceSpec.VersionFilter.Pattern = "*"
+			versionFilterPattern = "*"
 		}
 	}
 
