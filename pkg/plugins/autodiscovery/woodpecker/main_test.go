@@ -13,6 +13,7 @@ func TestDiscoverManifests(t *testing.T) {
 		name              string
 		rootDir           string
 		digest            bool
+		registryMappings  map[string]string
 		expectedPipelines []string
 	}{
 		{
@@ -297,6 +298,84 @@ targets:
 `,
 			},
 		},
+		{
+			name:             "Scenario - registry mappings",
+			rootDir:          "testdata/registryMappings",
+			digest:           false,
+			registryMappings: map[string]string{"my-registry.com/ghcr-io/": "ghcr.io/"},
+			expectedPipelines: []string{`name: 'deps(woodpecker): bump "my-registry.com/ghcr-io/updatecli/updatecli" tag'
+sources:
+  updatecli:
+    name: 'get latest image tag for "ghcr.io/updatecli/updatecli"'
+    kind: 'dockerimage'
+    spec:
+      image: 'ghcr.io/updatecli/updatecli'
+      tagfilter: '^v\d*(\.\d*){2}$'
+      versionfilter:
+        kind: 'semver'
+        pattern: '>=v0.67.0'
+conditions:
+  updatecli-mirror:
+    name: 'check image "my-registry.com/ghcr-io/updatecli/updatecli:{{ source "updatecli" }}" is available on the mirror'
+    kind: 'dockerimage'
+    sourceid: 'updatecli'
+    spec:
+      image: 'my-registry.com/ghcr-io/updatecli/updatecli'
+targets:
+  updatecli:
+    name: 'deps: update Woodpecker image "my-registry.com/ghcr-io/updatecli/updatecli" to "{{ source "updatecli" }}"'
+    kind: 'yaml'
+    spec:
+      file: '.woodpecker.yml'
+      key: '$.steps[0].image'
+    sourceid: 'updatecli'
+    transformers:
+      - addprefix: 'my-registry.com/ghcr-io/updatecli/updatecli:'
+`},
+		},
+		{
+			name:             "Scenario - registry mappings with digest",
+			rootDir:          "testdata/registryMappings",
+			digest:           true,
+			registryMappings: map[string]string{"my-registry.com/ghcr-io/": "ghcr.io/"},
+			expectedPipelines: []string{`name: 'deps(woodpecker): bump "my-registry.com/ghcr-io/updatecli/updatecli" digest'
+sources:
+  updatecli:
+    name: 'get latest image tag for "ghcr.io/updatecli/updatecli"'
+    kind: 'dockerimage'
+    spec:
+      image: 'ghcr.io/updatecli/updatecli'
+      tagfilter: '^v\d*(\.\d*){2}$'
+      versionfilter:
+        kind: 'semver'
+        pattern: '>=v0.67.0'
+  updatecli-digest:
+    name: 'get latest image "ghcr.io/updatecli/updatecli" digest'
+    kind: 'dockerdigest'
+    spec:
+      image: 'ghcr.io/updatecli/updatecli'
+      tag: '{{ source "updatecli" }}'
+    dependson:
+      - 'updatecli'
+conditions:
+  updatecli-mirror:
+    name: 'check image "my-registry.com/ghcr-io/updatecli/updatecli:{{ source "updatecli-digest" }}" is available on the mirror'
+    kind: 'dockerimage'
+    sourceid: 'updatecli-digest'
+    spec:
+      image: 'my-registry.com/ghcr-io/updatecli/updatecli'
+targets:
+  updatecli:
+    name: 'deps: update Woodpecker image "my-registry.com/ghcr-io/updatecli/updatecli" to "{{ source "updatecli" }}"'
+    kind: 'yaml'
+    spec:
+      file: '.woodpecker.yml'
+      key: '$.steps[0].image'
+    sourceid: 'updatecli-digest'
+    transformers:
+      - addprefix: 'my-registry.com/ghcr-io/updatecli/updatecli:'
+`},
+		},
 	}
 
 	for _, tt := range testdata {
@@ -304,7 +383,8 @@ targets:
 			digest := tt.digest
 			woodpecker, err := New(
 				Spec{
-					Digest: &digest,
+					Digest:           &digest,
+					RegistryMappings: tt.registryMappings,
 				}, tt.rootDir, "", "")
 
 			require.NoError(t, err)

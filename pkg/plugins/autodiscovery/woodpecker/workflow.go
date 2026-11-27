@@ -234,6 +234,14 @@ func getImagesFromWorkflow(workflow *Workflow) []imageInfo {
 	return images
 }
 
+// targetSourceID returns the ID of the source whose value the target writes after the image name.
+func targetSourceID(sourceID string, digest bool) string {
+	if digest {
+		return sourceID + "-digest"
+	}
+	return sourceID
+}
+
 // discoverWorkflowImageManifests generates Updatecli manifests for Woodpecker workflow files
 func (w Woodpecker) discoverWorkflowImageManifests() ([][]byte, error) {
 	var manifests [][]byte
@@ -321,7 +329,11 @@ func (w Woodpecker) discoverWorkflowImageManifests() ([][]byte, error) {
 				}
 			}
 
-			sourceSpec := dockerimage.NewDockerImageSpecFromImage(imageName, imageTag, w.spec.Auths)
+			// New versions are looked up under the upstream name, while the target keeps
+			// the image name written in the file.
+			sourceImageName := w.spec.RegistryMappings.Resolve(imageName)
+
+			sourceSpec := dockerimage.NewDockerImageSpecFromImage(sourceImageName, imageTag, w.spec.Auths)
 
 			versionFilterKind := w.versionFilter.Kind
 			versionFilterPattern := w.versionFilter.Pattern
@@ -358,6 +370,10 @@ func (w Woodpecker) discoverWorkflowImageManifests() ([][]byte, error) {
 				}
 			}
 
+			// A mirror may not serve a version found upstream yet, or may serve it under
+			// another digest, so the target only runs once the mirror has what it writes.
+			mirrorCredential, _ := dockerimage.RegistryCredentials(imageName, w.spec.Auths)
+
 			var tmpl *template.Template
 			if w.digest && sourceSpec != nil {
 				tmpl, err = template.New("manifest").Parse(manifestTemplateDigestAndLatest)
@@ -380,39 +396,51 @@ func (w Woodpecker) discoverWorkflowImageManifests() ([][]byte, error) {
 			}
 
 			params := struct {
-				ActionID             string
-				ImageName            string
-				ImageTag             string
-				SourceID             string
-				RegistryUsername     string
-				RegistryPassword     string
-				RegistryToken        string
-				TargetID             string
-				TargetFile           string
-				TargetKey            string
-				TargetPrefix         string
-				TagFilter            string
-				VersionFilterKind    string
-				VersionFilterPattern string
-				VersionFilterRegex   string
-				ScmID                string
+				ActionID                string
+				ImageName               string
+				SourceImageName         string
+				ImageTag                string
+				SourceID                string
+				RegistryUsername        string
+				RegistryPassword        string
+				RegistryToken           string
+				TargetID                string
+				TargetFile              string
+				TargetKey               string
+				TargetPrefix            string
+				TagFilter               string
+				VersionFilterKind       string
+				VersionFilterPattern    string
+				VersionFilterRegex      string
+				ScmID                   string
+				MirrorCondition         bool
+				MirrorConditionSourceID string
+				MirrorUsername          string
+				MirrorPassword          string
+				MirrorToken             string
 			}{
-				ActionID:             w.actionID,
-				ImageName:            imageName,
-				ImageTag:             imageTag,
-				SourceID:             img.Name,
-				RegistryUsername:     registryUsername,
-				RegistryPassword:     registryPassword,
-				RegistryToken:        registryToken,
-				TargetID:             img.Name,
-				TargetFile:           relativeWorkflowFile,
-				TargetKey:            img.Key,
-				TargetPrefix:         imageName + ":",
-				TagFilter:            tagFilter,
-				VersionFilterKind:    versionFilterKind,
-				VersionFilterPattern: versionFilterPattern,
-				VersionFilterRegex:   versionFilterRegex,
-				ScmID:                w.scmID,
+				ActionID:                w.actionID,
+				ImageName:               imageName,
+				SourceImageName:         sourceImageName,
+				ImageTag:                imageTag,
+				SourceID:                img.Name,
+				RegistryUsername:        registryUsername,
+				RegistryPassword:        registryPassword,
+				RegistryToken:           registryToken,
+				TargetID:                img.Name,
+				TargetFile:              relativeWorkflowFile,
+				TargetKey:               img.Key,
+				TargetPrefix:            imageName + ":",
+				TagFilter:               tagFilter,
+				VersionFilterKind:       versionFilterKind,
+				VersionFilterPattern:    versionFilterPattern,
+				VersionFilterRegex:      versionFilterRegex,
+				ScmID:                   w.scmID,
+				MirrorCondition:         sourceImageName != imageName,
+				MirrorConditionSourceID: targetSourceID(img.Name, w.digest),
+				MirrorUsername:          mirrorCredential.Username,
+				MirrorPassword:          mirrorCredential.Password,
+				MirrorToken:             mirrorCredential.Token,
 			}
 
 			manifest := bytes.Buffer{}

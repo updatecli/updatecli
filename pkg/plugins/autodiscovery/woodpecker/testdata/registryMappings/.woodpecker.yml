@@ -1,0 +1,5 @@
+steps:
+  - name: updatecli
+    image: my-registry.com/ghcr-io/updatecli/updatecli:v0.67.0
+    commands:
+      - updatecli version
