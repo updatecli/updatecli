@@ -1,6 +1,31 @@
 package flux
 
 const (
+	// ociRepositoryManifestTemplateMirrorCondition checks that the mirror serves the version
+	// the targets are about to write, when the artifact is looked up upstream.
+	ociRepositoryManifestTemplateMirrorCondition string = `{{- if .MirrorCondition }}
+conditions:
+  oci-mirror:
+    name: 'check OCI artifact "{{ .OCIName }}:{{ .MirrorConditionPrefix }}{{ "{{" }} source "{{ .MirrorConditionSourceID }}" {{ "}}" }}" is available on the mirror'
+    kind: 'dockerimage'
+    sourceid: '{{ .MirrorConditionSourceID }}'
+    spec:
+      image: '{{ .OCIName }}'
+      {{- if .MirrorUsername }}
+      username: '{{ .MirrorUsername }}'
+      {{- end }}
+      {{- if .MirrorPassword }}
+      password: '{{ .MirrorPassword }}'
+      {{- end }}
+      {{- if .MirrorToken }}
+      token: '{{ .MirrorToken }}'
+      {{- end }}
+    {{- if .MirrorConditionPrefix }}
+    transformers:
+      - addprefix: '{{ .MirrorConditionPrefix }}'
+    {{- end }}
+{{- end }}
+`
 	// ociRepositoryManifestTemplateLatest is the Go template used to generate Flux manifests for ocirepository resources without digest
 	ociRepositoryManifestTemplateLatest string = `name: 'deps(flux): bump ociRepository "{{ .OCIName }}"'
 {{- if .ActionID }}
@@ -10,10 +35,10 @@ actions:
 {{- end }}
 sources:
   oci:
-    name: 'Get latest "{{ .OCIName }}" OCI artifact tag'
+    name: 'Get latest "{{ .SourceOCIName }}" OCI artifact tag'
     kind: 'dockerimage'
     spec:
-      image: '{{ .OCIName }}'
+      image: '{{ .SourceOCIName }}'
       tagfilter: '{{ .TagFilter }}'
       versionfilter:
         kind: '{{ .VersionFilterKind }}'
@@ -30,7 +55,7 @@ sources:
       {{- if .RegistryToken }}
       token: '{{ .RegistryToken }}'
       {{- end }}
-targets:
+` + ociRepositoryManifestTemplateMirrorCondition + `targets:
   oci:
     name: 'deps(flux): bump OCI repository "{{ .OCIName }}"'
     kind: 'yaml'
@@ -52,10 +77,10 @@ actions:
 {{- end }}
 sources:
   oci:
-    name: 'Get latest "{{ .OCIName }}" OCI artifact tag'
+    name: 'Get latest "{{ .SourceOCIName }}" OCI artifact tag'
     kind: 'dockerimage'
     spec:
-      image: '{{ .OCIName }}'
+      image: '{{ .SourceOCIName }}'
       tagfilter: '{{ .TagFilter }}'
       versionfilter:
         kind: '{{ .VersionFilterKind }}'
@@ -73,10 +98,10 @@ sources:
       token: '{{ .RegistryToken }}'
       {{- end }}
   oci-digest:
-    name: 'Get latest "{{ .OCIName }}" OCI artifact digest'
+    name: 'Get latest "{{ .SourceOCIName }}" OCI artifact digest'
     kind: 'dockerdigest'
     spec:
-      image: '{{ .OCIName }}'
+      image: '{{ .SourceOCIName }}'
       tag: '{{ "{{" }} source "oci" {{ "}}" }}'
       hidetag: true
       {{- if .RegistryUsername }}
@@ -92,7 +117,7 @@ sources:
       - trimprefix: '@'
     dependson:
       - 'oci'
-targets:
+` + ociRepositoryManifestTemplateMirrorCondition + `targets:
   oci-tag:
     name: 'deps(flux): bump OCI repository "{{ .OCIName }}" tag'
     kind: 'yaml'
@@ -125,10 +150,10 @@ actions:
 {{- end }}
 sources:
   oci-digest:
-    name: 'Get latest "{{ .OCIName }}" OCI artifact digest'
+    name: 'Get latest "{{ .SourceOCIName }}" OCI artifact digest'
     kind: 'dockerdigest'
     spec:
-      image: '{{ .OCIName }}'
+      image: '{{ .SourceOCIName }}'
       tag: '{{ .OCIVersion }}'
       hidetag: true
       {{- if .RegistryUsername }}
@@ -142,7 +167,7 @@ sources:
       {{- end }}
     transformers:
       - trimprefix: '@'
-targets:
+` + ociRepositoryManifestTemplateMirrorCondition + `targets:
   oci-digest:
     name: 'deps(flux): bump OCI repository "{{ .OCIName }}" digest'
     kind: 'yaml'

@@ -59,7 +59,11 @@ func (f Flux) discoverOCIRepositoryManifests() [][]byte {
 			registryPassword := ""
 			registryToken := ""
 
-			sourceSpec := dockerimage.NewDockerImageSpecFromImage(ociName, ociVersion, f.spec.Auths)
+			// New versions are looked up under the upstream name, while the targets keep
+			// the URL written in the file.
+			sourceOCIName := f.spec.RegistryMappings.Resolve(ociName)
+
+			sourceSpec := dockerimage.NewDockerImageSpecFromImage(sourceOCIName, ociVersion, f.spec.Auths)
 			if sourceSpec != nil {
 				versionFilterKind = sourceSpec.VersionFilter.Kind
 				versionFilterPattern = sourceSpec.VersionFilter.Pattern
@@ -80,6 +84,21 @@ func (f Flux) discoverOCIRepositoryManifests() [][]byte {
 					versionFilterPattern = ociVersion
 				}
 			}
+
+			// A mirror may not serve a version found upstream yet, or may serve it under
+			// another digest, so the targets only run once the mirror has what they write.
+			// With digest enabled, the targets write the tag and the digest to separate keys,
+			// so the condition checks "<tag>@<digest>" built from both.
+			mirrorConditionSourceID := "oci"
+			mirrorConditionPrefix := ""
+			if f.digest {
+				mirrorConditionSourceID = "oci-digest"
+				mirrorConditionPrefix = ociVersion + "@"
+				if sourceSpec != nil {
+					mirrorConditionPrefix = `{{ source "oci" }}@`
+				}
+			}
+			mirrorCredential, _ := dockerimage.RegistryCredentials(ociName, f.spec.Auths)
 
 			var tmpl *template.Template
 			if f.digest && sourceSpec != nil {
@@ -106,34 +125,48 @@ func (f Flux) discoverOCIRepositoryManifests() [][]byte {
 			}
 
 			params := struct {
-				ActionID             string
-				TargetYAMLDocument   int
-				OCIName              string
-				OCIVersion           string
-				File                 string
-				ImageName            string
-				VersionFilterKind    string
-				VersionFilterPattern string
-				VersionFilterRegex   string
-				RegistryUsername     string
-				RegistryPassword     string
-				RegistryToken        string
-				ScmID                string
-				TagFilter            string
+				ActionID                string
+				TargetYAMLDocument      int
+				OCIName                 string
+				SourceOCIName           string
+				OCIVersion              string
+				File                    string
+				ImageName               string
+				VersionFilterKind       string
+				VersionFilterPattern    string
+				VersionFilterRegex      string
+				RegistryUsername        string
+				RegistryPassword        string
+				RegistryToken           string
+				ScmID                   string
+				TagFilter               string
+				MirrorCondition         bool
+				MirrorConditionSourceID string
+				MirrorConditionPrefix   string
+				MirrorUsername          string
+				MirrorPassword          string
+				MirrorToken             string
 			}{
-				ActionID:             f.actionID,
-				OCIName:              ociName,
-				OCIVersion:           ociVersion,
-				File:                 relativeFoundFluxFile,
-				VersionFilterKind:    versionFilterKind,
-				VersionFilterPattern: versionFilterPattern,
-				VersionFilterRegex:   versionFilterRegex,
-				ScmID:                f.scmID,
-				RegistryUsername:     registryUsername,
-				RegistryPassword:     registryPassword,
-				RegistryToken:        registryToken,
-				TagFilter:            tagFilter,
-				TargetYAMLDocument:   index,
+				ActionID:                f.actionID,
+				OCIName:                 ociName,
+				SourceOCIName:           sourceOCIName,
+				OCIVersion:              ociVersion,
+				File:                    relativeFoundFluxFile,
+				VersionFilterKind:       versionFilterKind,
+				VersionFilterPattern:    versionFilterPattern,
+				VersionFilterRegex:      versionFilterRegex,
+				ScmID:                   f.scmID,
+				RegistryUsername:        registryUsername,
+				RegistryPassword:        registryPassword,
+				RegistryToken:           registryToken,
+				TagFilter:               tagFilter,
+				TargetYAMLDocument:      index,
+				MirrorCondition:         sourceOCIName != ociName,
+				MirrorConditionSourceID: mirrorConditionSourceID,
+				MirrorConditionPrefix:   mirrorConditionPrefix,
+				MirrorUsername:          mirrorCredential.Username,
+				MirrorPassword:          mirrorCredential.Password,
+				MirrorToken:             mirrorCredential.Token,
 			}
 
 			manifest := bytes.Buffer{}

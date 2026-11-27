@@ -43,6 +43,38 @@ type Spec struct {
 	//   ```
 	//
 	Auths map[string]docker.InlineKeyChain `yaml:",omitempty"`
+	// "registrymappings" maps an artifact name prefix, as written in the OCIRepository URLs
+	// without the "oci://" scheme, to the name prefix where Updatecli looks up new tags and digests.
+	//
+	// default:
+	//   empty, new versions are looked up under the URL written in the files.
+	//
+	// remark:
+	//   * it applies to OCIRepository resources only, not to HelmRelease charts.
+	//   * use it for artifacts pulled through a mirror, so new versions are looked up upstream
+	//     while the files keep the mirror URL.
+	//   * a prefix matches whole path segments only: "my-registry.com/ghcr-io" matches
+	//     "my-registry.com/ghcr-io/stefanprodan/manifests/podinfo" but not "my-registry.com/ghcr-iox/podinfo".
+	//   * when several prefixes match, the longest one wins.
+	//   * a prefix can be a full artifact name, to map a single artifact, for instance
+	//     when one mirror holds artifacts from several upstream registries.
+	//   * "auths" credentials are picked for the upstream registry for the sources,
+	//     and for the mirror registry for the condition.
+	//   * "ignore" and "only" rules match the URL written in the files.
+	//   * a condition checks the mirror already serves the new tag, or the new tag
+	//     and digest with "digest" enabled, so the files are only updated once the
+	//     mirror has caught up. With "digest" enabled, the mirror must serve the
+	//     artifact unchanged for its digest to match the upstream one.
+	//
+	// example:
+	//   ```
+	//   registrymappings:
+	//     "my-registry.com/ghcr-io/": "ghcr.io/"
+	//     # a single artifact mirrored under another name
+	//     "my-registry.com/manifests/podinfo": "ghcr.io/stefanprodan/manifests/podinfo"
+	//   ```
+	//
+	RegistryMappings docker.RegistryMappings `yaml:",omitempty"`
 	// "digest" defines whether the generated manifests pin the OCIRepository artifact digest in addition to the tag.
 	//
 	// default:
@@ -170,6 +202,10 @@ func New(spec interface{}, rootDir, scmID, actionID string) (Flux, error) {
 	// Validate only rules
 	if err := s.Only.Validate(); err != nil {
 		return Flux{}, fmt.Errorf("invalid only spec: %w", err)
+	}
+
+	if err := s.RegistryMappings.Validate(); err != nil {
+		return Flux{}, err
 	}
 
 	dir := rootDir

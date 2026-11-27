@@ -30,6 +30,7 @@ func TestSearchFluxFiles(t *testing.T) {
 	expectedOCIRepositoryFile := []string{
 		"testdata/ociRepository/example.yaml",
 		"testdata/ociRepository-latest/example.yaml",
+		"testdata/ociRepository-registryMappings/example.yaml",
 	}
 
 	assert.Equal(t, expectedHelmReleaseFile, f.helmReleaseFiles)
