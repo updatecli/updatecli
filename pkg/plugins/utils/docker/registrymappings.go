@@ -4,8 +4,16 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"net/netip"
+	"regexp"
 	"slices"
 	"strings"
+)
+
+var (
+	// repositoryPathComponent matches a path component of an image name after the registry host,
+	// as the OCI distribution specification allows it: lowercase only.
+	repositoryPathComponent = regexp.MustCompile(`^[a-z0-9]+(?:(?:[._]|__|-+)[a-z0-9]+)*$`)
 )
 
 // RegistryMappings maps an image name prefix, as written in the discovered files,
@@ -23,25 +31,25 @@ func (m RegistryMappings) Validate() error {
 	var validationErrors []string
 
 	// Sorted, so that the error message is the same on every run.
-	fromKeys := slices.Sorted(maps.Keys(m))
+	mirrorPrefixes := slices.Sorted(maps.Keys(m))
 	// seen maps a mirror prefix, as Resolve compares it, to the key it comes from.
 	seen := make(map[string]string, len(m))
 
-	for _, from := range fromKeys {
-		to := m[from]
+	for _, mirrorPrefix := range mirrorPrefixes {
+		to := m[mirrorPrefix]
 
-		if strings.Trim(from, "/") == "" {
-			validationErrors = append(validationErrors, fmt.Sprintf("registry mapping %q => %q: the mirror prefix is empty", from, to))
+		if strings.Trim(mirrorPrefix, "/") == "" {
+			validationErrors = append(validationErrors, fmt.Sprintf("registry mapping %q => %q: the mirror prefix is empty", mirrorPrefix, to))
 		} else {
-			prefix := strings.TrimSuffix(from, "/")
+			prefix := strings.TrimSuffix(mirrorPrefix, "/")
 			if other, found := seen[prefix]; found {
-				validationErrors = append(validationErrors, fmt.Sprintf("registry mapping %q => %q: the mirror prefix is the same as %q", from, to, other))
+				validationErrors = append(validationErrors, fmt.Sprintf("registry mapping %q => %q: the mirror prefix is the same as %q", mirrorPrefix, to, other))
 			}
-			seen[prefix] = from
+			seen[prefix] = mirrorPrefix
 		}
 
 		if err := validateUpstreamPrefix(to); err != nil {
-			validationErrors = append(validationErrors, fmt.Sprintf("registry mapping %q => %q: %s", from, to, err))
+			validationErrors = append(validationErrors, fmt.Sprintf("registry mapping %q => %q: %s", mirrorPrefix, to, err))
 		}
 	}
 
@@ -53,7 +61,7 @@ func (m RegistryMappings) Validate() error {
 }
 
 // validateUpstreamPrefix returns an error if to can't start an image name,
-// such as a prefix holding a tag, a digest or an empty path segment.
+// such as a prefix holding a tag, a digest, an empty path segment or an invalid path component.
 func validateUpstreamPrefix(to string) error {
 	if strings.Trim(to, "/") == "" {
 		return errors.New("the upstream prefix is empty")
@@ -69,15 +77,60 @@ func validateUpstreamPrefix(to string) error {
 			return errors.New("the upstream prefix has an empty path segment")
 		}
 
-		host, port, found := strings.Cut(segment, ":")
-		if !found {
+		// The first segment is the registry host, which may be followed by a port.
+		if i == 0 {
+			if err := validateRegistryHost(segment); err != nil {
+				return err
+			}
 			continue
 		}
 
-		// Only the registry host can hold a ":", followed by a port.
-		if i > 0 || host == "" || port == "" || strings.Trim(port, "0123456789") != "" {
+		if strings.Contains(segment, ":") {
 			return errors.New("the upstream prefix holds a tag")
 		}
+
+		if !repositoryPathComponent.MatchString(segment) {
+			return fmt.Errorf("the upstream prefix has an invalid repository path component %q, only lowercase letters, digits and separators are allowed", segment)
+		}
+	}
+
+	return nil
+}
+
+// validateRegistryHost returns an error if host, the first segment of an upstream prefix,
+// holds a ":" not followed by a port. A bracketed IPv6 address, such as "[::1]" or "[::1]:5000", is accepted.
+func validateRegistryHost(host string) error {
+	port := ""
+	found := false
+
+	if strings.HasPrefix(host, "[") {
+		address, rest, closed := strings.Cut(host[1:], "]")
+		if !closed {
+			return errors.New("the upstream prefix has an unclosed IPv6 address")
+		}
+		if ip, err := netip.ParseAddr(address); err != nil || !ip.Is6() {
+			return fmt.Errorf("the upstream prefix has an invalid IPv6 address %q", address)
+		}
+		if rest == "" {
+			return nil
+		}
+		port, found = strings.CutPrefix(rest, ":")
+		if !found {
+			return errors.New("the upstream prefix has an invalid registry host")
+		}
+	} else {
+		var name string
+		name, port, found = strings.Cut(host, ":")
+		if !found {
+			return nil
+		}
+		if name == "" {
+			return errors.New("the upstream prefix holds a tag")
+		}
+	}
+
+	if port == "" || strings.Trim(port, "0123456789") != "" {
+		return errors.New("the upstream prefix holds a tag")
 	}
 
 	return nil

@@ -156,6 +156,33 @@ func TestRegistryMappingsValidate(t *testing.T) {
 			expectedError: "the upstream prefix has an empty path segment",
 		},
 		{
+			name:     "upstream registry host in uppercase",
+			mappings: RegistryMappings{"my-registry.com/internal/": "Registry.Example.com/team"},
+		},
+		{
+			name:          "upstream prefix with an uppercase repository path",
+			mappings:      RegistryMappings{"my-registry.com/internal/": "registry.example.com/Team"},
+			expectedError: `the upstream prefix has an invalid repository path component "Team"`,
+		},
+		{
+			name:     "upstream registry with a bracketed IPv6 address",
+			mappings: RegistryMappings{"my-registry.com/internal/": "[2001:db8::1]/team"},
+		},
+		{
+			name:     "upstream registry with a bracketed IPv6 address and a port",
+			mappings: RegistryMappings{"my-registry.com/internal/": "[2001:db8::1]:5000/team"},
+		},
+		{
+			name:          "upstream registry with a bracketed IPv6 address and an empty port",
+			mappings:      RegistryMappings{"my-registry.com/internal/": "[2001:db8::1]:/team"},
+			expectedError: "the upstream prefix holds a tag",
+		},
+		{
+			name:          "upstream registry with an invalid bracketed IPv6 address",
+			mappings:      RegistryMappings{"my-registry.com/internal/": "[not-an-ip]:5000/team"},
+			expectedError: `the upstream prefix has an invalid IPv6 address "not-an-ip"`,
+		},
+		{
 			name: "errors are sorted by mirror prefix",
 			mappings: RegistryMappings{
 				"my-registry.com/b": "",
