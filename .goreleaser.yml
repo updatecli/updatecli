@@ -74,7 +74,7 @@ builds:
   - id: updatecli
     env:
       - CGO_ENABLED=0
-    main: ./main.go
+    main: .
     binary: updatecli
     ldflags:
       - -w -s
