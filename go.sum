@@ -271,8 +271,8 @@ github.com/docker/go-metrics v0.1.0 h1:r76KPNpstz+IvQKSWpYegSkkyzex0V3A1ZGVx6bhG
 github.com/docker/go-metrics v0.1.0/go.mod h1:PciI3sONtB051kXALN1JoIlpcu54E1FuPh+4DuqEzyw=
 github.com/docker/go-units v0.5.0 h1:69rxXcBk27SvSaaxTtLh/8llcHD8vYHT7WSdRZ/jvr4=
 github.com/docker/go-units v0.5.0/go.mod h1:fgPhTUdO+D/Jk86RDLlptpiXQzgHJF7gydDDbaIK4Dk=
-github.com/drone/go-scm v1.42.22 h1:rMG+OPWPQVzdIhgp/aTLyeEN0vElAhl2k4Vyl/AB4Ig=
-github.com/drone/go-scm v1.42.22/go.mod h1:xgTuJHyL1HeSnutw+9RxOaekJjb1xpfNYGvmKVqCjuE=
+github.com/drone/go-scm v1.42.23 h1:6RUDwEP9MUWuIOfx6bTK2HKgX2rzuajfiWPeRGsWVH4=
+github.com/drone/go-scm v1.42.23/go.mod h1:xgTuJHyL1HeSnutw+9RxOaekJjb1xpfNYGvmKVqCjuE=
 github.com/dylibso/observe-sdk/go v0.0.0-20240819160327-2d926c5d788a h1:UwSIFv5g5lIvbGgtf3tVwC7Ky9rmMFBp0RMs+6f6YqE=
 github.com/dylibso/observe-sdk/go v0.0.0-20240819160327-2d926c5d788a/go.mod h1:C8DzXehI4zAbrdlbtOByKX6pfivJTBiV9Jjqv56Yd9Q=
 github.com/ebitengine/purego v0.10.1 h1:dewVBCBT2GaMu1SrNTYxQhgQBethzfhiwvZiLGP/qyY=
