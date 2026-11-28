@@ -5,7 +5,7 @@ go 1.27.4
 retract v0.999.0 // Published accidentally.
 
 require (
-	cuelang.org/go v0.17.1
+	cuelang.org/go v0.18.0
 	dario.cat/mergo v1.0.2
 	gitea.dev/sdk v1.5.1
 	github.com/BurntSushi/toml v1.6.0
