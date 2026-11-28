@@ -1008,3 +1008,286 @@ github:
 		})
 	}
 }
+
+// Test_TargetAnchorsAliases covers issue #11053: updating a key whose value is an
+// *alias, or an &anchor, rewrites the anchored value and keeps both in place.
+func Test_TargetAnchorsAliases(t *testing.T) {
+	const compose = `x-image: &image nginx:1.29
+services:
+  web:
+    image: *image
+`
+	const composeUpdated = `x-image: &image nginx:1.30
+services:
+  web:
+    image: *image
+`
+	bothEngines := []string{"", "yamlpath"}
+
+	tests := []struct {
+		name          string
+		engines       []string
+		keys          []string
+		value         string
+		comment       string
+		appendToArray bool
+		createMissing bool
+		documentIndex *int
+		dryRun        bool
+		content       string
+		want          string
+		wantChanged   bool
+		wantInfo      string
+		wantErr       bool
+	}{
+		{
+			name:        "alias update rewrites the anchored value",
+			engines:     bothEngines,
+			keys:        []string{"$.services.web.image"},
+			content:     compose,
+			want:        composeUpdated,
+			wantChanged: true,
+			wantInfo:    "nginx:1.29",
+		},
+		{
+			name:        "direct anchor update keeps the anchor",
+			engines:     bothEngines,
+			keys:        []string{"$.x-image"},
+			content:     compose,
+			want:        composeUpdated,
+			wantChanged: true,
+		},
+		{
+			name:    "several aliases of one anchor update it once",
+			engines: bothEngines,
+			keys:    []string{"$.services.web.image", "$.services.api.image"},
+			content: `x-image: &image nginx:1.29
+services:
+  web:
+    image: *image
+  api:
+    image: *image
+`,
+			want: `x-image: &image nginx:1.30
+services:
+  web:
+    image: *image
+  api:
+    image: *image
+`,
+			wantChanged: true,
+		},
+		{
+			name:    "wildcard over an alias and an inline value updates both",
+			engines: []string{""},
+			keys:    []string{"$.services[*].image"},
+			content: `x-image: &image nginx:1.29
+services:
+  - image: *image
+  - image: nginx:1.28
+  - image: *image
+`,
+			want: `x-image: &image nginx:1.30
+services:
+  - image: *image
+  - image: nginx:1.30
+  - image: *image
+`,
+			wantChanged: true,
+		},
+		{
+			name:     "alias already holding the value is a no-op",
+			engines:  bothEngines,
+			keys:     []string{"$.services.web.image"},
+			content:  composeUpdated,
+			want:     composeUpdated,
+			wantInfo: "nginx:1.30",
+		},
+		{
+			name:        "dry run reports the change without writing",
+			engines:     bothEngines,
+			keys:        []string{"$.services.web.image"},
+			dryRun:      true,
+			content:     compose,
+			want:        compose,
+			wantChanged: true,
+			wantInfo:    "nginx:1.29",
+		},
+		{
+			name:    "comments are kept and the new comment goes on the anchored value",
+			engines: bothEngines,
+			keys:    []string{"$.services.web.image"},
+			comment: "updated",
+			content: `# shared image
+x-image: &image nginx:1.29
+services:
+  web:
+    # web image
+    image: *image
+`,
+			want: `# shared image
+x-image: &image nginx:1.30 # updated
+services:
+  web:
+    # web image
+    image: *image
+`,
+			wantChanged: true,
+		},
+		{
+			name:          "an alias binds to the anchor of its own document",
+			engines:       bothEngines,
+			keys:          []string{"$.services.web.image"},
+			documentIndex: ptrInt(1),
+			content: `x-image: &image nginx:1.29
+services:
+  web:
+    image: *image
+---
+x-image: &image nginx:1.28
+services:
+  web:
+    image: *image
+`,
+			want: `x-image: &image nginx:1.29
+services:
+  web:
+    image: *image
+---
+x-image: &image nginx:1.30
+services:
+  web:
+    image: *image
+`,
+			wantChanged: true,
+		},
+		{
+			name:    "an alias binds to the closest preceding anchor",
+			engines: []string{""},
+			keys:    []string{"$.services.web.image"},
+			content: `old: &image nginx:1.27
+x-image: &image nginx:1.29
+services:
+  web:
+    image: *image
+`,
+			want: `old: &image nginx:1.27
+x-image: &image nginx:1.30
+services:
+  web:
+    image: *image
+`,
+			wantChanged: true,
+		},
+		{
+			name:    "dangling alias is an error",
+			engines: bothEngines,
+			keys:    []string{"$.image"},
+			content: "image: *missing\n",
+			wantErr: true,
+		},
+		{
+			name:          "append to an aliased sequence updates the anchored sequence",
+			engines:       []string{""},
+			keys:          []string{"$.services.items"},
+			value:         "c",
+			appendToArray: true,
+			content: `x-list: &list
+  - a
+  - b
+services:
+  items: *list
+`,
+			want: `x-list: &list
+  - a
+  - b
+  - c
+services:
+  items: *list
+`,
+			wantChanged: true,
+		},
+		{
+			name:          "append skips a value already held through an alias entry",
+			engines:       []string{""},
+			keys:          []string{"$.selected"},
+			value:         "c",
+			appendToArray: true,
+			content: `item: &item c
+selected: [*item]
+`,
+			want: `item: &item c
+selected: [*item]
+`,
+		},
+		{
+			name:          "createmissingkey under a merge key adds a local override",
+			engines:       []string{""},
+			keys:          []string{"$.svc.image"},
+			createMissing: true,
+			content: `x-base: &base
+  image: nginx:1.29
+svc:
+  <<: *base
+`,
+			want: `x-base: &base
+  image: nginx:1.29
+svc:
+  <<: *base
+  image: nginx:1.30
+`,
+			wantChanged: true,
+		},
+	}
+
+	for _, tt := range tests {
+		for _, engine := range tt.engines {
+			name := tt.name
+			if engine != "" {
+				name += " (" + engine + ")"
+			}
+			t.Run(name, func(t *testing.T) {
+				value := tt.value
+				if value == "" {
+					value = "nginx:1.30"
+				}
+				spec := Spec{
+					File:          "test.yaml",
+					Value:         value,
+					Comment:       tt.comment,
+					Engine:        engine,
+					AppendToArray: tt.appendToArray,
+					DocumentIndex: tt.documentIndex,
+
+					CreateMissingKey: tt.createMissing,
+				}
+				if len(tt.keys) == 1 {
+					spec.Key = tt.keys[0]
+				} else {
+					spec.Keys = tt.keys
+				}
+
+				mockedText := text.MockTextRetriever{Contents: map[string]string{"test.yaml": tt.content}}
+				y, err := New(spec)
+				require.NoError(t, err)
+				y.contentRetriever = &mockedText
+				y.files = map[string]file{"test.yaml": {filePath: "test.yaml", originalFilePath: "test.yaml"}}
+				defer os.Remove("test.yaml")
+
+				gotResult := result.Target{}
+				gotErr := y.Target(context.Background(), "", nil, pathresolver.Resolver{}, tt.dryRun, &gotResult)
+				if tt.wantErr {
+					assert.Error(t, gotErr)
+					return
+				}
+
+				require.NoError(t, gotErr)
+				assert.Equal(t, tt.wantChanged, gotResult.Changed)
+				assert.Equal(t, tt.want, mockedText.Contents["test.yaml"])
+				if tt.wantInfo != "" {
+					assert.Equal(t, tt.wantInfo, gotResult.Information)
+				}
+			})
+		}
+	}
+}

@@ -250,14 +250,41 @@ func (y Yaml) createKey(doc *ast.DocumentNode, key, valueToWrite string, resultT
 // than one for a wildcard or a recursive selector. It reports whether the document
 // was modified.
 func (y Yaml) updateNode(yamlFile *ast.File, index int, doc *ast.DocumentNode, urlPath *goyaml.Path, matched []ast.Node, key, valueToWrite string, nodeToWrite ast.Node, resultTarget *result.Target, originFilePath string, dryRun bool) (bool, error) {
+	anchors := indexAnchors(doc)
+	resolved, err := anchors.resolveAll(matched)
+	if err != nil {
+		return false, fmt.Errorf("resolving key %q in file %q: %w", key, originFilePath, err)
+	}
+	values := make([]ast.Node, len(resolved))
+	usesAnchor := false
+	for i, match := range resolved {
+		values[i] = match.value
+		usesAnchor = usesAnchor || match.anchor != nil
+	}
+
 	if y.spec.AppendToArray {
-		sequences, err := appendTargetSequences(matched, key, originFilePath)
+		sequences, err := appendTargetSequences(values, key, originFilePath)
 		if err != nil {
 			return false, err
 		}
 
 		appended := false
+		seen := map[*ast.SequenceNode]struct{}{}
 		for _, sequence := range sequences {
+			// Several aliases of one anchored sequence must only append once.
+			if _, ok := seen[sequence]; ok {
+				continue
+			}
+			seen[sequence] = struct{}{}
+
+			holds, err := anchors.sequenceHolds(sequence, valueToWrite)
+			if err != nil {
+				return false, fmt.Errorf("appending to key %q from file %q: %w", key, originFilePath, err)
+			}
+			if holds {
+				continue
+			}
+
 			sequenceAppended, err := appendToSequence(sequence, valueToWrite, y.spec.Comment)
 			if err != nil {
 				return false, fmt.Errorf("appending to key %q from file %q: %w", key, originFilePath, err)
@@ -284,12 +311,12 @@ func (y Yaml) updateNode(yamlFile *ast.File, index int, doc *ast.DocumentNode, u
 		return true, nil
 	}
 
-	oldVersion := matchedValues(matched)
+	oldVersion := matchedValues(values)
 	resultTarget.Information = oldVersion
 
 	// Every selected node must already hold the value for the target to be a no-op,
 	// as ReplaceWithNode rewrites all of them at once.
-	if alreadySet(matched, valueToWrite) {
+	if alreadySet(values, valueToWrite) {
 		resultTarget.Description = fmt.Sprintf("%s\nkey %q already set to %q, from file %q",
 			resultTarget.Description,
 			key,
@@ -298,14 +325,22 @@ func (y Yaml) updateNode(yamlFile *ast.File, index int, doc *ast.DocumentNode, u
 		return false, nil
 	}
 
-	tmpYAMLFile := ast.File{
-		Name: yamlFile.Name,
+	if usesAnchor {
+		// ReplaceWithNode would write the scalar over an *alias, or drop an
+		// &anchor, so the anchored value is rewritten in place instead.
+		if err := y.updateAnchored(resolved, anchors, valueToWrite); err != nil {
+			return false, fmt.Errorf("replacing yaml key %q: %w", key, err)
+		}
+	} else {
+		tmpYAMLFile := ast.File{
+			Name: yamlFile.Name,
+		}
+		tmpYAMLFile.Docs = append(tmpYAMLFile.Docs, doc)
+		if err := urlPath.ReplaceWithNode(&tmpYAMLFile, nodeToWrite); err != nil {
+			return false, fmt.Errorf("replacing yaml key %q: %w", key, err)
+		}
+		yamlFile.Docs[index].Body = tmpYAMLFile.Docs[0].Body
 	}
-	tmpYAMLFile.Docs = append(tmpYAMLFile.Docs, doc)
-	if err := urlPath.ReplaceWithNode(&tmpYAMLFile, nodeToWrite); err != nil {
-		return false, fmt.Errorf("replacing yaml key %q: %w", key, err)
-	}
-	yamlFile.Docs[index].Body = tmpYAMLFile.Docs[0].Body
 
 	resultTarget.Description = fmt.Sprintf("%s\nkey %q%supdated from %q to %q, in file %q",
 		resultTarget.Description,
@@ -354,4 +389,160 @@ func alreadySet(matched []ast.Node, valueToWrite string) bool {
 	}
 
 	return len(matched) > 0
+}
+
+// anchorIndex binds the aliases of one YAML document to their anchors. YAML gives
+// each document its own anchor scope, and an alias refers to the closest preceding
+// anchor of that name. parents records the slot holding each mapping value or
+// sequence entry, so a plain node selected next to an alias can be replaced alone.
+type anchorIndex struct {
+	aliases map[*ast.AliasNode]*ast.AnchorNode
+	parents map[ast.Node]func(ast.Node) error
+	current map[string]*ast.AnchorNode
+}
+
+// resolvedMatch is a selected node once aliases and anchors are followed. anchor
+// is the anchor holding value, or nil for a plain node.
+type resolvedMatch struct {
+	node   ast.Node
+	value  ast.Node
+	anchor *ast.AnchorNode
+}
+
+func indexAnchors(doc *ast.DocumentNode) *anchorIndex {
+	idx := &anchorIndex{
+		aliases: map[*ast.AliasNode]*ast.AnchorNode{},
+		parents: map[ast.Node]func(ast.Node) error{},
+		current: map[string]*ast.AnchorNode{},
+	}
+	if doc != nil && doc.Body != nil {
+		ast.Walk(idx, doc.Body)
+	}
+
+	return idx
+}
+
+// Visit walks the document in order, so each alias binds to the anchor defined
+// last before it.
+func (idx *anchorIndex) Visit(node ast.Node) ast.Visitor {
+	switch n := node.(type) {
+	case *ast.MappingValueNode:
+		if _, ok := idx.parents[n.Value]; !ok {
+			idx.parents[n.Value] = n.Replace
+		}
+	case *ast.SequenceNode:
+		for i, value := range n.Values {
+			if _, ok := idx.parents[value]; !ok {
+				idx.parents[value] = func(v ast.Node) error { return n.Replace(i, v) }
+			}
+		}
+	case *ast.AnchorNode:
+		if n.Name != nil {
+			idx.current[n.Name.String()] = n
+		}
+	case *ast.AliasNode:
+		if n.Value != nil {
+			if anchor, ok := idx.current[n.Value.String()]; ok {
+				idx.aliases[n] = anchor
+			}
+		}
+	}
+
+	return idx
+}
+
+// resolve follows an alias to its anchor and an anchor to the value it holds. An
+// alias without a preceding anchor is reported rather than overwritten.
+func (idx *anchorIndex) resolve(node ast.Node) (resolvedMatch, error) {
+	match := resolvedMatch{node: node, value: node}
+	if alias, ok := node.(*ast.AliasNode); ok {
+		anchor, found := idx.aliases[alias]
+		if !found {
+			return match, fmt.Errorf("unresolved yaml alias %q", alias.String())
+		}
+		match.value = anchor
+	}
+	if anchor, ok := match.value.(*ast.AnchorNode); ok {
+		match.anchor, match.value = anchor, anchor.Value
+	}
+
+	return match, nil
+}
+
+func (idx *anchorIndex) resolveAll(nodes []ast.Node) ([]resolvedMatch, error) {
+	resolved := make([]resolvedMatch, 0, len(nodes))
+	for _, node := range nodes {
+		match, err := idx.resolve(node)
+		if err != nil {
+			return nil, err
+		}
+		resolved = append(resolved, match)
+	}
+
+	return resolved, nil
+}
+
+// sequenceHolds reports whether sequence already holds value, comparing what an
+// *alias entry refers to rather than the alias name.
+func (idx *anchorIndex) sequenceHolds(sequence *ast.SequenceNode, value string) (bool, error) {
+	for _, entry := range sequence.Values {
+		match, err := idx.resolve(entry)
+		if err != nil {
+			return false, err
+		}
+		if match.anchor == nil {
+			continue
+		}
+		var decoded string
+		if err := goyaml.NodeToValue(match.value, &decoded); err == nil && decoded == value {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
+// updateAnchored writes valueToWrite once into each anchor reached by resolved,
+// keeping the &anchor and every *alias, and replaces plain nodes in their slot.
+func (y Yaml) updateAnchored(resolved []resolvedMatch, idx *anchorIndex, valueToWrite string) error {
+	done := map[ast.Node]struct{}{}
+	for _, match := range resolved {
+		target := ast.Node(match.anchor)
+		if match.anchor == nil {
+			target = match.node
+		}
+		if _, ok := done[target]; ok {
+			continue
+		}
+		done[target] = struct{}{}
+
+		// Each write needs its own node: column adjustment mutates it.
+		fresh, err := goyaml.ValueToNode(valueToWrite)
+		if err != nil {
+			return fmt.Errorf("parsing value to write: %w", err)
+		}
+		if y.spec.Comment != "" {
+			if err := setNodeComment(fresh, y.spec.Comment); err != nil {
+				log.Errorf("error setting comment: %s", err)
+			}
+		}
+
+		if match.anchor != nil {
+			if old := match.anchor.Value; old != nil && old.GetToken() != nil && fresh.GetToken() != nil {
+				fresh.AddColumn(old.GetToken().Position.Column - fresh.GetToken().Position.Column)
+			}
+			match.anchor.Value = fresh
+			continue
+		}
+
+		replace, ok := idx.parents[match.node]
+		if !ok {
+			return fmt.Errorf("cannot locate yaml node %q", match.node.String())
+		}
+		if err := replace(fresh); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
