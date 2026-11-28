@@ -48,7 +48,7 @@ require (
 	github.com/minamijoyo/hcledit v0.2.19
 	github.com/minamijoyo/tfupdate v0.10.3
 	github.com/mitchellh/hashstructure v1.1.0
-	github.com/moby/buildkit v0.35.0
+	github.com/moby/buildkit v0.35.1
 	github.com/muesli/mango-cobra v1.3.0
 	github.com/muesli/roff v0.1.0
 	github.com/muesli/termenv v0.16.0
